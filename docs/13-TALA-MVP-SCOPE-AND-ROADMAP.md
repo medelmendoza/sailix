@@ -319,3 +319,17 @@ Built exactly as recommended in §15.4, after you asked to proceed with the next
 - **Mobile:** Account → "Switch organization" appears only with 2+ organizations and lists the others. `switchOrganization()` leaves the authenticated area first (so no old-organization screen can read or refetch), cancels and clears the whole query cache, calls the switch endpoint, then loads `/me` with the new token and stores it. Failures: refused or offline → stays in the current organization and Home explains why; expired session → signed out with a notice; new organization cannot be loaded → nothing of either session stays on the device.
 - **Tests:** backend 327 (+2: `/me` lists only own usable organizations with exactly one `current`; switch to a suspended organization refused and current token still valid); mobile 123 (+9: switch request carries only the membership id, cache wiped, new token and tenant hint used afterwards, refused/offline/expired/new-org-unloadable paths, same-organization no-op, UI shows nothing for single-organization users and excludes the current one); web 88 and Playwright 26 unchanged and green.
 - **Not done:** web has no switcher (sign out and in, as before); Android and on-device behaviour unverified (see §15.1/§15.6); "join a second organization" remains deferred (§15.5).
+
+## 17. T0 outcome — Tala API verification (done; awaiting review)
+
+**D-T1 was approved on 2026-10-13 with these specifics:** host `tala-v3-server.btsolve.com`, one dedicated test account, **read-only**, **HTTPS only**. I pointed out that this host is the Flutter app's live host (`liveUrl`), i.e. production; you confirmed "It is production, but the account is a dedicated test account". You also said "HTTP"; I used HTTPS regardless (credentials never go over HTTP, condition 1) — the server supports it.
+Full results: `docs/reference/tala-analysis/04-t0-verification-results.md`. Headlines:
+1. **HTTPS works** (valid cert, HSTS). Plain HTTP also answers and does not redirect. → D-T2 satisfied for this host.
+2. **Tokens are 365-day HS384 JWTs** (access and refresh); refresh endpoint not found/probed. → encrypted server-side storage, relink on 401/expiry.
+3. **Roles and the team join code exist server-side and are returned to the client.** → gateway must never pass them to mobile.
+4. **Path ids are not answered with 403** (fake team/user → 200 empty or 404): ownership checks on the Tala side are unproven. → the gateway builds paths only from its own stored link.
+5. **Quiz payloads include the answer key** and scoring is client-side. → scores are self-reported (D-T8) unless Tala re-validates; **not tested** (would need a write).
+6. Garbage token → HTTP 500; missing token → 403. → map upstream 5xx to `module_unavailable`, never to "expired".
+7. Test account has only video/pdf/up_quiz materials; EPUB/legacy quiz untested (D-T6 exclusions stay).
+**No M3 work was started.** M3 (gateway + link flow + read-only course list) is the next step and needs your go-ahead; decisions I need for it: (a) read-only course/progress view only, or also score submission (then D-T8 needs a write test with your approval); (b) how to relink when a year-long token eventually expires; (c) whether to ask the Tala owner about HTTP redirect, 403 vs 200 on foreign ids, and a refresh endpoint before launch.
+

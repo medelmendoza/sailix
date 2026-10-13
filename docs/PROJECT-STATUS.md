@@ -74,3 +74,6 @@ Read-only. Branch `medel_dev_march2025`, HEAD `2094806`, 66 pre-existing uncommi
 | 2026-10-13 | Bug found by Playwright: unauthenticated API call without `Accept: application/json` returned 500; fixed + regression test | Fixed |
 | 2026-10-13 | Simulator touch injection did not work on iOS 17.5 or 26.3 under Xcode 27, so UI behaviour is NOT verified on a simulator | Open — needs tooling decision |
 | 2026-10-13 | User asked to proceed with the next unblocked item; built organization switching (docs/13 §16). M3/T0 still blocked on D-T1 | Implemented; stopped for review |
+| 2026-10-13 | **D-T1 approved**: production host `tala-v3-server.btsolve.com` (confirmed production by the owner), dedicated test account, read-only, HTTPS only (owner said HTTP; HTTPS used because credentials must not go over HTTP) | T0 run: 24 requests, shape-only output |
+| 2026-10-13 | T0 complete (docs/13 §17, tala-analysis/04): HTTPS available; 365-day JWTs; roles + join code exposed; weak/unclear path-id authorization; quiz answer keys sent to clients | Awaiting review; M3 not started |
+
