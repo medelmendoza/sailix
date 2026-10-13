@@ -55,6 +55,8 @@ class DatabaseSeeder extends Seeder
             'totp_secret' => env('SEED_DEMO_TOTP_SECRET', self::DEMO_TOTP_SECRET), 'totp_confirmed_at' => now(), 'totp_last_step' => null,
         ])->save();
 
+        $this->call(CrewPortalDemoSeeder::class);
+
         $this->command?->info('Demo tenants SFAI and ACME seeded (admin.<code> / crew.<code>) and superadmin root@example.test (see README for the demo TOTP secret).');
     }
 }

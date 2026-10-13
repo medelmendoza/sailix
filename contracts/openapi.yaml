@@ -13,6 +13,8 @@ tags:
   - { name: auth, description: 'Login, logout, token rotation and invitations' }
   - { name: me, description: 'The authenticated principal' }
   - { name: announcements, description: "The caller's organization announcements" }
+  - { name: documents, description: "The caller's own documents (Files)" }
+  - { name: finance, description: "The caller's own payslips and cash advances" }
   - { name: todos, description: "The caller's own to-dos" }
   - { name: tenant, description: "Tenant administration (caller's own tenant only)" }
   - { name: modules, description: 'Module gateways (Tala, read-only in the MVP)' }
@@ -715,6 +717,419 @@ paths:
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+  /document-types:
+    get:
+      tags: [documents]
+      operationId: listDocumentTypes
+      summary: The document types of the caller's organization (active ones)
+      responses:
+        '200':
+          description: Types.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/DocumentType' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /documents:
+    get:
+      tags: [documents]
+      operationId: listMyDocuments
+      summary: The caller's own documents
+      description: >
+        `status` is approved (default), pending, rejected or review (waiting or sent back). `expiry_status` and `counts` are
+        computed on the server: a document is expiring within 90 days of its expiry date.
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [approved, pending, rejected, review] } }
+      responses:
+        '200':
+          description: Documents, soonest-expiring first.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MemberDocumentList' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [documents]
+      operationId: submitDocument
+      summary: Submit a new document for the agency to approve
+      description: >
+        Multipart. The owner, organization and status come from the session (the document starts as `pending`). The file
+        must be a PDF, JPEG or PNG judged by its content, within the organization's `upload_max_mb`. Limited to 30 per hour.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/DocumentInput' }
+      responses:
+        '201':
+          description: Submitted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CrewDocument' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /documents/{documentId}:
+    get:
+      tags: [documents]
+      operationId: getMyDocument
+      summary: One of the caller's own documents
+      parameters:
+        - { $ref: '#/components/parameters/DocumentId' }
+      responses:
+        '200':
+          description: The document.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CrewDocument' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /documents/{documentId}/file:
+    get:
+      tags: [documents]
+      operationId: getMyDocumentFile
+      summary: The stored file of one of the caller's own documents
+      description: Streams the PDF or image with `nosniff` and no caching. Someone else's document is `404`.
+      parameters:
+        - { $ref: '#/components/parameters/DocumentId' }
+      responses:
+        '200':
+          description: The file.
+          content:
+            application/pdf: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+            image/png: { schema: { type: string, format: binary } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /documents/{documentId}/resubmit:
+    post:
+      tags: [documents]
+      operationId: resubmitDocument
+      summary: Correct and send again a document that is waiting or was sent back
+      description: 'Multipart; send only what changes (a new file replaces the old one). An approved document is `409 document_approved`.'
+      parameters:
+        - { $ref: '#/components/parameters/DocumentId' }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/DocumentInput' }
+      responses:
+        '200':
+          description: Back to `pending`.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CrewDocument' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /finance/status:
+    get:
+      tags: [finance]
+      operationId: getFinanceStatus
+      summary: Whether the payslips are unlocked for this sign-in
+      responses:
+        '200':
+          description: Status.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/FinanceStatus' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /finance/unlock:
+    post:
+      tags: [finance]
+      operationId: unlockFinance
+      summary: Re-enter the password to open the payslips for a few minutes
+      description: >
+        Replaces the old client-side birthdate gate with a server-enforced step-up. The unlock belongs to this sign-in only.
+        A wrong password is `422 invalid_password` (audited, never with the password); limited to 5 a minute.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string, maxLength: 1024 }
+      responses:
+        '200':
+          description: Unlocked.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/FinanceStatus' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /payslips:
+    get:
+      tags: [finance]
+      operationId: listMyPayslips
+      summary: The caller's own payslips, newest first (needs the step-up when the organization requires it)
+      description: '`kind` is allotment (regular and special together, the default), final, regular or special. Held payslips are never listed. `403 step_up_required` when locked.'
+      parameters:
+        - { name: kind, in: query, schema: { type: string, enum: [allotment, final, regular, special] } }
+      responses:
+        '200':
+          description: Payslip summaries.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/PayslipSummary' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /payslips/{payslipId}:
+    get:
+      tags: [finance]
+      operationId: getMyPayslip
+      summary: One of the caller's own payslips with its deductions
+      description: >
+        Every amount is the server's own value (never recompute it). The bank account number is masked to its last four
+        digits. Someone else's payslip is `404`. `403 step_up_required` when locked.
+      parameters:
+        - { $ref: '#/components/parameters/PayslipId' }
+      responses:
+        '200':
+          description: The payslip.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/PayslipDetail' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /loans:
+    get:
+      tags: [finance]
+      operationId: listMyLoans
+      summary: The caller's own cash advances with totals per currency
+      description: Not behind the step-up. `totals` is what is still being deducted each period (running loans only), per currency.
+      responses:
+        '200':
+          description: Cash advances.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoanList' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /tenant/document-types:
+    get:
+      tags: [tenant]
+      operationId: listTenantDocumentTypes
+      summary: All document types of the caller's organization (including switched-off ones)
+      description: Requires `documents.manage`.
+      responses:
+        '200':
+          description: Types.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/DocumentType' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [tenant]
+      operationId: createDocumentType
+      summary: Add a document type
+      description: Requires `documents.manage`. Names are unique per organization (`409 document_type_exists`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DocumentTypeInput' }
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/DocumentType' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /tenant/document-types/{documentTypeId}:
+    patch:
+      tags: [tenant]
+      operationId: updateDocumentType
+      summary: Rename or switch a document type on or off
+      description: Requires `documents.manage`.
+      parameters:
+        - { $ref: '#/components/parameters/DocumentTypeId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DocumentTypeInput' }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/DocumentType' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [tenant]
+      operationId: deleteDocumentType
+      summary: Delete a document type nobody uses
+      description: 'Requires `documents.manage`. A type that documents refer to is `409 document_type_in_use`; switch it off instead.'
+      parameters:
+        - { $ref: '#/components/parameters/DocumentTypeId' }
+      responses:
+        '204': { description: Deleted. }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+  /tenant/documents:
+    get:
+      tags: [tenant]
+      operationId: listTenantDocuments
+      summary: The documents members of the organization submitted (oldest first, for review)
+      description: Requires `documents.manage`.
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [pending, approved, rejected] } }
+        - { name: membership_id, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200':
+          description: Page of documents with their owner.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CrewDocumentPage' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /tenant/documents/{documentId}/file:
+    get:
+      tags: [tenant]
+      operationId: getTenantDocumentFile
+      summary: The stored file of a document in the caller's organization
+      description: Requires `documents.manage`.
+      parameters:
+        - { $ref: '#/components/parameters/DocumentId' }
+      responses:
+        '200':
+          description: The file.
+          content:
+            application/pdf: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+            image/png: { schema: { type: string, format: binary } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /tenant/documents/{documentId}/approve:
+    post:
+      tags: [tenant]
+      operationId: approveDocument
+      summary: Approve a pending document
+      description: Requires `documents.manage`. Only a pending document (`409 not_pending`).
+      parameters:
+        - { $ref: '#/components/parameters/DocumentId' }
+      responses:
+        '200':
+          description: Approved.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CrewDocument' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+  /tenant/documents/{documentId}/reject:
+    post:
+      tags: [tenant]
+      operationId: rejectDocument
+      summary: Send a pending document back with a reason
+      description: Requires `documents.manage`. The member sees the reason and may resubmit. Only a pending document (`409 not_pending`).
+      parameters:
+        - { $ref: '#/components/parameters/DocumentId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 1, maxLength: 500 }
+      responses:
+        '200':
+          description: Rejected.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CrewDocument' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /tenant:
     get:
       tags: [tenant]
@@ -1679,6 +2094,21 @@ components:
       name: laravel_session
       description: Sanctum SPA cookie session (web). Mutations require X-XSRF-TOKEN. Cookie name is configurable (SESSION_COOKIE).
   parameters:
+    DocumentId:
+      name: documentId
+      in: path
+      required: true
+      schema: { type: string, minLength: 36, maxLength: 36, pattern: '^[0-9a-fA-F-]+$' }
+    DocumentTypeId:
+      name: documentTypeId
+      in: path
+      required: true
+      schema: { type: string, minLength: 36, maxLength: 36, pattern: '^[0-9a-fA-F-]+$' }
+    PayslipId:
+      name: payslipId
+      in: path
+      required: true
+      schema: { type: string, minLength: 36, maxLength: 36, pattern: '^[0-9a-fA-F-]+$' }
     TodoId:
       name: todoId
       in: path
@@ -1853,6 +2283,180 @@ components:
             data:
               type: array
               items: { $ref: '#/components/schemas/DeletionRequest' }
+    DocumentType:
+      type: object
+      required: [id, name, short_name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        short_name: { type: [string, 'null'] }
+        is_active: { type: boolean, description: 'Present on the administrator views.' }
+    DocumentTypeInput:
+      type: object
+      description: All required when creating; send only what changes when editing.
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        short_name: { type: [string, 'null'], maxLength: 40 }
+        is_active: { type: boolean }
+    CrewDocument:
+      type: object
+      required: [id, status, type, number, grade, location, school, issued_on, expires_on, expiry_status, rejection_reason, file, submitted_at, reviewed_at]
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [pending, approved, rejected] }
+        type: { $ref: '#/components/schemas/DocumentType' }
+        number: { type: [string, 'null'] }
+        grade: { type: [string, 'null'] }
+        location: { type: [string, 'null'], description: 'Place of issue.' }
+        school: { type: [string, 'null'] }
+        issued_on: { type: [string, 'null'], format: date }
+        expires_on: { type: [string, 'null'], format: date }
+        expiry_status: { type: string, enum: [none, valid, expiring, expired], description: 'Computed on the server.' }
+        rejection_reason: { type: [string, 'null'], description: 'Only while rejected.' }
+        file:
+          type: object
+          required: [name, type, size]
+          properties:
+            name: { type: string }
+            type: { type: string, enum: [application/pdf, image/jpeg, image/png] }
+            size: { type: integer }
+        submitted_at: { type: string, format: date-time }
+        reviewed_at: { type: [string, 'null'], format: date-time }
+        owner:
+          type: object
+          description: Present on the administrator views only.
+          properties:
+            id: { type: string }
+            user:
+              type: object
+              properties:
+                id: { type: string }
+                username: { type: string }
+                email: { type: string }
+    MemberDocumentList:
+      type: object
+      required: [data, counts]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/CrewDocument' }
+        counts:
+          type: object
+          required: [expired, expiring]
+          properties:
+            expired: { type: integer, minimum: 0 }
+            expiring: { type: integer, minimum: 0 }
+    CrewDocumentPage:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/CrewDocument' }
+    DocumentInput:
+      type: object
+      required: []
+      description: '`document_type_id` and `file` are required when submitting; send only what changes when resubmitting.'
+      properties:
+        document_type_id: { type: string }
+        number: { type: string, maxLength: 80 }
+        grade: { type: string, maxLength: 80 }
+        location: { type: string, maxLength: 120 }
+        school: { type: string, maxLength: 120 }
+        issued_on: { type: string, format: date }
+        expires_on: { type: string, format: date, description: 'Not before the issue date.' }
+        file: { type: string, format: binary, description: 'PDF, JPEG or PNG.' }
+    FinanceStatus:
+      type: object
+      required: [step_up, unlocked, unlock_seconds]
+      properties:
+        step_up: { type: string, enum: [password, none] }
+        unlocked: { type: boolean }
+        unlock_seconds: { type: integer }
+    PayslipSummary:
+      type: object
+      required: [id, kind, pay_date, period_label, vessel_name, net_amount, is_dollar]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [regular, special, final] }
+        pay_date: { type: string, format: date }
+        period_label: { type: string }
+        vessel_name: { type: string }
+        net_amount: { type: string, description: 'Decimal string with two places; the server value.' }
+        is_dollar: { type: boolean }
+    PayslipDetail:
+      type: object
+      required: [id, kind, pay_date, period_label, vessel_name, is_dollar, net_amount, deductions]
+      description: Every money field is a decimal string (or null) and the server's own value.
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [regular, special, final] }
+        pay_date: { type: string, format: date }
+        period_label: { type: string }
+        vessel_name: { type: string }
+        full_vessel_name: { type: [string, 'null'] }
+        position: { type: [string, 'null'] }
+        address: { type: [string, 'null'] }
+        depart_date: { type: [string, 'null'], format: date }
+        payroll_date: { type: [string, 'null'], format: date }
+        payee_name: { type: [string, 'null'] }
+        bank_code: { type: [string, 'null'] }
+        account_number: { type: [string, 'null'], description: 'Masked: only the last four characters.' }
+        is_dollar: { type: boolean, description: 'Net amount is in dollars when true, pesos otherwise.' }
+        exchange_rate: { type: [string, 'null'] }
+        pay_usd: { type: [string, 'null'] }
+        pay_peso: { type: [string, 'null'] }
+        adjustment: { type: [string, 'null'] }
+        adjustment_detail: { type: [string, 'null'] }
+        signon_adjustment: { type: [string, 'null'] }
+        union_dues: { type: [string, 'null'] }
+        bank_charges: { type: [string, 'null'] }
+        withholding_tax: { type: [string, 'null'] }
+        mpfee: { type: [string, 'null'] }
+        sss_total: { type: [string, 'null'] }
+        employee_sss: { type: [string, 'null'] }
+        employee_philhealth: { type: [string, 'null'] }
+        employee_pagibig: { type: [string, 'null'] }
+        deductions:
+          type: array
+          items:
+            type: object
+            required: [description, amount]
+            properties:
+              description: { type: string }
+              amount: { type: string }
+        deductions_total: { type: [string, 'null'] }
+        net_amount: { type: string }
+    Loan:
+      type: object
+      required: [id, code, description, loan_amount, deduct_amount, paid_amount, balance, is_dollar, is_stopped]
+      properties:
+        id: { type: string }
+        code: { type: string }
+        description: { type: string }
+        loan_date: { type: [string, 'null'], format: date }
+        start_of_deduction: { type: [string, 'null'], format: date }
+        loan_amount: { type: string }
+        deduct_amount: { type: string }
+        paid_amount: { type: string }
+        balance: { type: string }
+        is_dollar: { type: boolean }
+        is_stopped: { type: boolean }
+        remarks: { type: [string, 'null'] }
+    LoanList:
+      type: object
+      required: [data, totals]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Loan' }
+        totals:
+          type: object
+          required: [php, usd]
+          properties:
+            php: { type: string }
+            usd: { type: string }
     Todo:
       type: object
       required: [id, description, due_date, is_done, done_at, created_at]

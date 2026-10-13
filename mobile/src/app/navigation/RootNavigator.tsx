@@ -12,8 +12,14 @@ import { TodosScreen } from '@/features/todos/TodosScreen';
 import { AnnouncementScreen } from '@/features/announcements/AnnouncementScreen';
 import { AnnouncementsScreen } from '@/features/announcements/AnnouncementsScreen';
 import { useUnreadCount } from '@/features/announcements/api';
+import { DocumentFormScreen } from '@/features/files/DocumentFormScreen';
+import { DocumentScreen } from '@/features/files/DocumentScreen';
+import { DocumentViewerScreen } from '@/features/files/DocumentViewerScreen';
 import { FilesScreen } from '@/features/files/FilesScreen';
 import { FinanceScreen } from '@/features/finance/FinanceScreen';
+import { LoansScreen } from '@/features/finance/LoansScreen';
+import { PayslipListScreen } from '@/features/finance/PayslipListScreen';
+import { PayslipScreen } from '@/features/finance/PayslipScreen';
 import { ServicesScreen } from '@/features/services/ServicesScreen';
 import { AccountScreen } from '@/features/account/AccountScreen';
 import { ChangePasswordScreen } from '@/features/account/ChangePasswordScreen';
@@ -218,6 +224,30 @@ export function RootNavigator() {
           component={ChangePasswordScreen}
           options={{ title: 'Change password' }}
         />
+        <AppStack.Screen
+          name="Document"
+          component={DocumentScreen}
+          options={{ title: 'Document' }}
+        />
+        <AppStack.Screen
+          name="DocumentForm"
+          component={DocumentFormScreen}
+          options={({ route }) => ({ title: route.params?.id ? 'Send again' : 'Add a document' })}
+        />
+        <AppStack.Screen
+          name="DocumentViewer"
+          component={DocumentViewerScreen}
+          options={({ route }) => ({ title: route.params.name })}
+        />
+        <AppStack.Screen
+          name="PayslipList"
+          component={PayslipListScreen}
+          options={({ route }) => ({
+            title: route.params.kind === 'final' ? 'Final pay' : 'Allotment',
+          })}
+        />
+        <AppStack.Screen name="Payslip" component={PayslipScreen} options={{ title: 'Payslip' }} />
+        <AppStack.Screen name="Loans" component={LoansScreen} options={{ title: 'Cash advance' }} />
         <AppStack.Screen name="Todos" component={TodosScreen} options={{ title: 'To-do list' }} />
         <AppStack.Screen name="Account" component={AccountScreen} options={{ title: 'Account' }} />
         <AppStack.Screen

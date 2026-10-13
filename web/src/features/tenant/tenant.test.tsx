@@ -488,6 +488,173 @@ describe('settings and account', () => {
     expect(screen.getByText(/Nothing is deleted automatically/)).toBeInTheDocument();
   });
 
+  describe('documents', () => {
+    const doc = (over: Record<string, unknown> = {}) => ({
+      id: 'd1',
+      status: 'pending',
+      type: { id: 't1', name: 'Passport', short_name: null },
+      number: 'P123',
+      grade: null,
+      location: null,
+      school: null,
+      issued_on: '2024-01-01',
+      expires_on: '2030-01-01',
+      expiry_status: 'valid',
+      rejection_reason: null,
+      file: { name: 'p.pdf', type: 'application/pdf', size: 100 },
+      submitted_at: '2026-10-02T10:00:00+00:00',
+      reviewed_at: null,
+      owner: { id: 'm1', user: { id: 'u1', username: 'crew1', email: 'crew1@example.test' } },
+      ...over,
+    });
+
+    it('lists what is waiting for review by default, with who sent it', async () => {
+      asTenantAdmin();
+      const urls: URL[] = [];
+      server.use(
+        http.get(
+          `${V1}/tenant/documents`,
+          ({ request }) => (urls.push(new URL(request.url)), HttpResponse.json(pageOf([doc()]))),
+        ),
+      );
+      renderApp('/app/documents');
+      expect(await screen.findByText('Passport')).toBeInTheDocument();
+      expect(screen.getByText('crew1@example.test')).toBeInTheDocument();
+      expect(screen.getByText('Waiting for review')).toBeInTheDocument();
+      expect(urls[0]!.searchParams.get('status')).toBe('pending');
+    });
+
+    it('asks before approving, then approves', async () => {
+      asTenantAdmin();
+      const approved = capture();
+      server.use(
+        http.get(`${V1}/tenant/documents`, () => HttpResponse.json(pageOf([doc()]))),
+        http.post(`${V1}/tenant/documents/d1/approve`, async ({ request }) => {
+          await approved.record(request);
+          return HttpResponse.json({ data: doc({ status: 'approved' }) });
+        }),
+      );
+      const { user } = renderApp('/app/documents');
+      await user.click(await screen.findByRole('button', { name: /^Approve Passport/ }));
+      const confirm = await screen.findByRole('alertdialog');
+      expect(approved.calls).toHaveLength(0);
+      await user.click(within(confirm).getByRole('button', { name: 'Approve' }));
+      await waitFor(() => expect(approved.calls).toHaveLength(1));
+    });
+
+    it('needs a reason to send a document back, and sends it', async () => {
+      asTenantAdmin();
+      const rejected = capture<Record<string, unknown>>();
+      server.use(
+        http.get(`${V1}/tenant/documents`, () => HttpResponse.json(pageOf([doc()]))),
+        http.post(`${V1}/tenant/documents/d1/reject`, async ({ request }) => {
+          await rejected.record(request);
+          return HttpResponse.json({ data: doc({ status: 'rejected' }) });
+        }),
+      );
+      const { user } = renderApp('/app/documents');
+      await user.click(await screen.findByRole('button', { name: /^Send back Passport/ }));
+      const dialog = await screen.findByRole('dialog');
+      await user.click(within(dialog).getByRole('button', { name: 'Send back' }));
+      expect(await within(dialog).findByText('Tell the member what to fix.')).toBeInTheDocument();
+      expect(rejected.calls).toHaveLength(0);
+      await user.type(within(dialog).getByLabelText('Reason'), 'Scan is cut off');
+      await user.click(within(dialog).getByRole('button', { name: 'Send back' }));
+      await waitFor(() => expect(rejected.calls).toHaveLength(1));
+      expect(rejected.calls[0]!.body).toEqual({ reason: 'Scan is cut off' });
+    });
+
+    it('offers no review buttons for an approved document, and shows a reason as plain text', async () => {
+      asTenantAdmin();
+      server.use(
+        http.get(`${V1}/tenant/documents`, () =>
+          HttpResponse.json(
+            pageOf([
+              doc({ status: 'approved' }),
+              doc({ id: 'd2', status: 'rejected', rejection_reason: 'Blurry <b>photo</b>' }),
+            ]),
+          ),
+        ),
+      );
+      renderApp('/app/documents');
+      await screen.findAllByText('Passport');
+      expect(screen.queryByRole('button', { name: /^Approve Passport/ })).toBeNull();
+      expect(screen.getByText('Blurry <b>photo</b>')).toBeInTheDocument();
+    });
+
+    it('is blocked for someone without the ability', async () => {
+      asTenantAdmin(makeMe({ abilities: ['tenant.view', 'users.view'] }));
+      renderApp('/app/documents');
+      expect(await screen.findByText('You do not have access to this page')).toBeInTheDocument();
+    });
+  });
+
+  describe('document types', () => {
+    const type = (over: Record<string, unknown> = {}) => ({
+      id: 'ty1',
+      name: 'Passport',
+      short_name: 'PP',
+      is_active: true,
+      ...over,
+    });
+
+    it('lists the types with their state', async () => {
+      asTenantAdmin();
+      server.use(
+        http.get(`${V1}/tenant/document-types`, () =>
+          HttpResponse.json({
+            data: [type(), type({ id: 'ty2', name: 'Old visa', is_active: false })],
+          }),
+        ),
+      );
+      renderApp('/app/document-types');
+      expect(await screen.findByText('Passport')).toBeInTheDocument();
+      expect(screen.getByText('In use')).toBeInTheDocument();
+      expect(screen.getByText('Switched off')).toBeInTheDocument();
+    });
+
+    it('adds a type with only the fields of the form', async () => {
+      asTenantAdmin();
+      const created = capture<Record<string, unknown>>();
+      server.use(
+        http.get(`${V1}/tenant/document-types`, () => HttpResponse.json({ data: [] })),
+        http.post(`${V1}/tenant/document-types`, async ({ request }) => {
+          await created.record(request);
+          return HttpResponse.json({ data: type() }, { status: 201 });
+        }),
+      );
+      const { user } = renderApp('/app/document-types');
+      await user.click(await screen.findByRole('button', { name: 'New document type' }));
+      const dialog = await screen.findByRole('dialog');
+      await user.type(within(dialog).getByLabelText('Name'), 'Visa');
+      await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+      await waitFor(() => expect(created.calls).toHaveLength(1));
+      expect(created.calls[0]!.body).toEqual({ name: 'Visa', short_name: null });
+    });
+
+    it('does not save an empty name', async () => {
+      asTenantAdmin();
+      const created = capture();
+      server.use(
+        http.get(`${V1}/tenant/document-types`, () => HttpResponse.json({ data: [] })),
+        http.post(
+          `${V1}/tenant/document-types`,
+          async ({ request }) => (
+            await created.record(request),
+            HttpResponse.json({ data: type() }, { status: 201 })
+          ),
+        ),
+      );
+      const { user } = renderApp('/app/document-types');
+      await user.click(await screen.findByRole('button', { name: 'New document type' }));
+      await user.click(
+        within(await screen.findByRole('dialog')).getByRole('button', { name: 'Save' }),
+      );
+      expect(await screen.findByText('Enter a name.')).toBeInTheDocument();
+      expect(created.calls).toHaveLength(0);
+    });
+  });
+
   describe('to-dos', () => {
     const open = {
       id: 't1',

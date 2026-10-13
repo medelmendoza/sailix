@@ -2,6 +2,11 @@ import { api } from '@/services/api/client';
 import { useSessionStore } from '@/store/sessionStore';
 import {
   demoAnnouncements,
+  demoDocuments,
+  demoDocumentTypes,
+  demoLoans,
+  demoPayslipDetail,
+  demoPayslips,
   demoTodos,
   demoCourses,
   demoDeck,
@@ -11,7 +16,7 @@ import {
 } from './data';
 
 /** Answers every request the app makes with sample data, in place of the network. Demo mode only. */
-function respond(method: string, path: string): unknown {
+function respond(method: string, path: string, params: Record<string, unknown> = {}): unknown {
   if (method === 'GET' && path === '/me') return { data: demoMe };
   if (method === 'GET' && path === '/modules/tala/courses') return { data: demoCourses };
   if (method === 'GET' && path === '/announcements')
@@ -21,6 +26,24 @@ function respond(method: string, path: string): unknown {
       meta: { current_page: 1, per_page: 20, total: 3, last_page: 1 },
       unread_count: demoAnnouncements.filter((a) => !a.is_read).length,
     };
+  if (method === 'GET' && path === '/document-types') return { data: demoDocumentTypes };
+  if (method === 'GET' && path === '/documents') {
+    const view = params.status === 'review' ? 'review' : 'approved';
+    return { data: demoDocuments[view], counts: { expired: 1, expiring: 1 } };
+  }
+  const docOne = /^\/documents\/(\w+)$/.exec(path);
+  if (method === 'GET' && docOne) {
+    return {
+      data:
+        [...demoDocuments.approved, ...demoDocuments.review].find((d) => d.id === docOne[1]) ??
+        demoDocuments.approved[0],
+    };
+  }
+  if (method === 'GET' && path === '/payslips')
+    return { data: params.kind === 'final' ? demoPayslips.final : demoPayslips.allotment };
+  const slipOne = /^\/payslips\/(\w+)$/.exec(path);
+  if (method === 'GET' && slipOne) return { data: demoPayslipDetail(slipOne[1]!) };
+  if (method === 'GET' && path === '/loans') return demoLoans;
   if (method === 'GET' && path === '/todos') {
     const open = demoTodos.filter((t) => !t.is_done);
     return {
@@ -60,7 +83,11 @@ function respond(method: string, path: string): unknown {
 /** Signs in with sample data and routes every API call to it. Never touches the network or secure storage. */
 export function installDemo(): void {
   api.defaults.adapter = async (config) => {
-    const body = respond((config.method ?? 'get').toUpperCase(), config.url ?? '');
+    const body = respond(
+      (config.method ?? 'get').toUpperCase(),
+      config.url ?? '',
+      (config.params ?? {}) as Record<string, unknown>,
+    );
     return { data: body, status: 200, statusText: 'OK', headers: {}, config };
   };
   useSessionStore.setState({

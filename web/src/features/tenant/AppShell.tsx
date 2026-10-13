@@ -12,6 +12,8 @@ interface NavItem {
 // Menu entries follow the abilities returned by /me. This is cosmetic: the API re-checks every call.
 const NAV: NavItem[] = [
   { to: '/app', label: 'Dashboard', end: true },
+  { to: '/app/documents', label: 'Documents', ability: 'documents.manage' },
+  { to: '/app/document-types', label: 'Document types', ability: 'documents.manage' },
   { to: '/app/todos', label: 'To-dos', ability: 'todos.manage' },
   { to: '/app/announcements', label: 'Announcements', ability: 'announcements.manage' },
   { to: '/app/members', label: 'Members', ability: 'users.view' },

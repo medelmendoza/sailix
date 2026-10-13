@@ -6,6 +6,8 @@ import type {
   Announcement,
   AnnouncementInput,
   AuditEntry,
+  CrewDocument,
+  DocumentType,
   DeletionRequest,
   Envelope,
   Feedback,
@@ -166,6 +168,79 @@ export function useDeleteTodo() {
       toast.success('To-do deleted.');
       void qc.invalidateQueries({ queryKey: ['todos'] });
       void qc.invalidateQueries({ queryKey: ['audit'] });
+    },
+    onError: (e) => toast.error(describeError(e)),
+  });
+}
+
+export function useDocuments(params: ListParams) {
+  return useQuery({
+    queryKey: ['documents', params],
+    queryFn: async () => (await api.get<Page<CrewDocument>>('/tenant/documents', { params })).data,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useReviewDocument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason?: string }) =>
+      (
+        await api.post<Envelope<CrewDocument>>(
+          `/tenant/documents/${id}/${reason === undefined ? 'approve' : 'reject'}`,
+          reason === undefined ? {} : { reason },
+        )
+      ).data.data,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['documents'] });
+      void qc.invalidateQueries({ queryKey: ['audit'] });
+    },
+  });
+}
+
+/** Opens a document in a new tab. The file is fetched with the admin's own session (it is never at a public address). */
+export async function openDocumentFile(id: string): Promise<void> {
+  const res = await api.get<Blob>(`/tenant/documents/${id}/file`, { responseType: 'blob' });
+  const url = URL.createObjectURL(res.data);
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+export function useDocumentTypes() {
+  return useQuery({
+    queryKey: ['document-types'],
+    queryFn: async () =>
+      (await api.get<Envelope<DocumentType[]>>('/tenant/document-types')).data.data,
+  });
+}
+
+export function useSaveDocumentType() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      input,
+    }: {
+      id?: string;
+      input: { name?: string; short_name?: string | null; is_active?: boolean };
+    }) =>
+      id
+        ? (await api.patch<Envelope<DocumentType>>(`/tenant/document-types/${id}`, input)).data.data
+        : (await api.post<Envelope<DocumentType>>('/tenant/document-types', input)).data.data,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['document-types'] }),
+  });
+}
+
+export function useDeleteDocumentType() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/tenant/document-types/${id}`);
+    },
+    onSuccess: () => {
+      toast.success('Document type deleted.');
+      void qc.invalidateQueries({ queryKey: ['document-types'] });
     },
     onError: (e) => toast.error(describeError(e)),
   });

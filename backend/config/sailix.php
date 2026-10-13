@@ -1,6 +1,13 @@
 <?php
 
 return [
+    // Crew documents are stored on a PRIVATE disk (never web-served). Switch to an s3 disk in production once the
+    // storage decision is made (docs/16); nothing else changes.
+    'documents' => ['disk' => env('SAILIX_DOCUMENTS_DISK', 'local')],
+
+    // How long a password re-entry unlocks the payslips (seconds). Applies when the organization's `payslip_step_up` is `password`.
+    'finance_unlock_ttl' => (int) env('SAILIX_FINANCE_UNLOCK_TTL', 300),
+
     // Mobile token lifetime (sliding, rotated by /auth/token/refresh) and absolute chain limit.
     'token_ttl_days' => (int) env('SAILIX_TOKEN_TTL_DAYS', 30),
     'token_max_days' => (int) env('SAILIX_TOKEN_MAX_DAYS', 90),

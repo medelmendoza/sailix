@@ -40,6 +40,7 @@ export const ADMIN_ABILITIES = [
   'audit.view',
   'announcements.manage',
   'todos.manage',
+  'documents.manage',
   'module.tala.use',
   'module.tala.manage',
 ];

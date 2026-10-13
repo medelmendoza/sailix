@@ -25,19 +25,15 @@ describe('the five tabs (as in the original Sailix, plus Services)', () => {
   });
 
   it.each([
-    ['Files', /^Files/, 'Files'],
-    ['Finance', /^Finance/, 'Finance'],
-  ])(
-    '%s says plainly that it is not available yet instead of pretending to work',
-    async (_n, tab, title) => {
-      signedInAs();
-      await renderApp();
-      await goTo(tab);
-      expect(await screen.findByRole('header', { name: title })).toBeTruthy();
-      expect(screen.getByText('Coming soon')).toBeTruthy();
-      expect(screen.getByText(/not available yet/)).toBeTruthy();
-    },
-  );
+    ['Files', /^Files/],
+    ['Finance', /^Finance/],
+  ])('%s opens its own screen', async (title, tab) => {
+    signedInAs();
+    await renderApp();
+    await goTo(tab);
+    expect(await screen.findByRole('header', { name: title })).toBeTruthy();
+    expect(screen.queryByText('Coming soon')).toBeNull();
+  });
 });
 
 describe('services tab', () => {

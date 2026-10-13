@@ -452,6 +452,329 @@ export interface paths {
         patch: operations["updateTodo"];
         trace?: never;
     };
+    "/document-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The document types of the caller's organization (active ones) */
+        get: operations["listDocumentTypes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller's own documents
+         * @description `status` is approved (default), pending, rejected or review (waiting or sent back). `expiry_status` and `counts` are computed on the server: a document is expiring within 90 days of its expiry date.
+         */
+        get: operations["listMyDocuments"];
+        put?: never;
+        /**
+         * Submit a new document for the agency to approve
+         * @description Multipart. The owner, organization and status come from the session (the document starts as `pending`). The file must be a PDF, JPEG or PNG judged by its content, within the organization's `upload_max_mb`. Limited to 30 per hour.
+         */
+        post: operations["submitDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/{documentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One of the caller's own documents */
+        get: operations["getMyDocument"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/{documentId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The stored file of one of the caller's own documents
+         * @description Streams the PDF or image with `nosniff` and no caching. Someone else's document is `404`.
+         */
+        get: operations["getMyDocumentFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/{documentId}/resubmit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Correct and send again a document that is waiting or was sent back
+         * @description Multipart; send only what changes (a new file replaces the old one). An approved document is `409 document_approved`.
+         */
+        post: operations["resubmitDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/finance/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Whether the payslips are unlocked for this sign-in */
+        get: operations["getFinanceStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/finance/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-enter the password to open the payslips for a few minutes
+         * @description Replaces the old client-side birthdate gate with a server-enforced step-up. The unlock belongs to this sign-in only. A wrong password is `422 invalid_password` (audited, never with the password); limited to 5 a minute.
+         */
+        post: operations["unlockFinance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/payslips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller's own payslips, newest first (needs the step-up when the organization requires it)
+         * @description `kind` is allotment (regular and special together, the default), final, regular or special. Held payslips are never listed. `403 step_up_required` when locked.
+         */
+        get: operations["listMyPayslips"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/payslips/{payslipId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One of the caller's own payslips with its deductions
+         * @description Every amount is the server's own value (never recompute it). The bank account number is masked to its last four digits. Someone else's payslip is `404`. `403 step_up_required` when locked.
+         */
+        get: operations["getMyPayslip"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/loans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller's own cash advances with totals per currency
+         * @description Not behind the step-up. `totals` is what is still being deducted each period (running loans only), per currency.
+         */
+        get: operations["listMyLoans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/document-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * All document types of the caller's organization (including switched-off ones)
+         * @description Requires `documents.manage`.
+         */
+        get: operations["listTenantDocumentTypes"];
+        put?: never;
+        /**
+         * Add a document type
+         * @description Requires `documents.manage`. Names are unique per organization (`409 document_type_exists`).
+         */
+        post: operations["createDocumentType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/document-types/{documentTypeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a document type nobody uses
+         * @description Requires `documents.manage`. A type that documents refer to is `409 document_type_in_use`; switch it off instead.
+         */
+        delete: operations["deleteDocumentType"];
+        options?: never;
+        head?: never;
+        /**
+         * Rename or switch a document type on or off
+         * @description Requires `documents.manage`.
+         */
+        patch: operations["updateDocumentType"];
+        trace?: never;
+    };
+    "/tenant/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The documents members of the organization submitted (oldest first, for review)
+         * @description Requires `documents.manage`.
+         */
+        get: operations["listTenantDocuments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/documents/{documentId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The stored file of a document in the caller's organization
+         * @description Requires `documents.manage`.
+         */
+        get: operations["getTenantDocumentFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/documents/{documentId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a pending document
+         * @description Requires `documents.manage`. Only a pending document (`409 not_pending`).
+         */
+        post: operations["approveDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/documents/{documentId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a pending document back with a reason
+         * @description Requires `documents.manage`. The member sees the reason and may resubmit. Only a pending document (`409 not_pending`).
+         */
+        post: operations["rejectDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenant": {
         parameters: {
             query?: never;
@@ -1108,6 +1431,174 @@ export interface components {
         DeletionRequestPage: components["schemas"]["PageEnvelope"] & {
             data?: components["schemas"]["DeletionRequest"][];
         };
+        DocumentType: {
+            id: string;
+            name: string;
+            short_name: string | null;
+            /** @description Present on the administrator views. */
+            is_active?: boolean;
+        };
+        /** @description All required when creating; send only what changes when editing. */
+        DocumentTypeInput: {
+            name?: string;
+            short_name?: string | null;
+            is_active?: boolean;
+        };
+        CrewDocument: {
+            id: string;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected";
+            type: components["schemas"]["DocumentType"];
+            number: string | null;
+            grade: string | null;
+            /** @description Place of issue. */
+            location: string | null;
+            school: string | null;
+            /** Format: date */
+            issued_on: string | null;
+            /** Format: date */
+            expires_on: string | null;
+            /**
+             * @description Computed on the server.
+             * @enum {string}
+             */
+            expiry_status: "none" | "valid" | "expiring" | "expired";
+            /** @description Only while rejected. */
+            rejection_reason: string | null;
+            file: {
+                name: string;
+                /** @enum {string} */
+                type: "application/pdf" | "image/jpeg" | "image/png";
+                size: number;
+            };
+            /** Format: date-time */
+            submitted_at: string;
+            /** Format: date-time */
+            reviewed_at: string | null;
+            /** @description Present on the administrator views only. */
+            owner?: {
+                id?: string;
+                user?: {
+                    id?: string;
+                    username?: string;
+                    email?: string;
+                };
+            };
+        };
+        MemberDocumentList: {
+            data: components["schemas"]["CrewDocument"][];
+            counts: {
+                expired: number;
+                expiring: number;
+            };
+        };
+        CrewDocumentPage: components["schemas"]["PageEnvelope"] & {
+            data?: components["schemas"]["CrewDocument"][];
+        };
+        /** @description `document_type_id` and `file` are required when submitting; send only what changes when resubmitting. */
+        DocumentInput: {
+            document_type_id?: string;
+            number?: string;
+            grade?: string;
+            location?: string;
+            school?: string;
+            /** Format: date */
+            issued_on?: string;
+            /**
+             * Format: date
+             * @description Not before the issue date.
+             */
+            expires_on?: string;
+            /**
+             * Format: binary
+             * @description PDF, JPEG or PNG.
+             */
+            file?: string;
+        };
+        FinanceStatus: {
+            /** @enum {string} */
+            step_up: "password" | "none";
+            unlocked: boolean;
+            unlock_seconds: number;
+        };
+        PayslipSummary: {
+            id: string;
+            /** @enum {string} */
+            kind: "regular" | "special" | "final";
+            /** Format: date */
+            pay_date: string;
+            period_label: string;
+            vessel_name: string;
+            /** @description Decimal string with two places; the server value. */
+            net_amount: string;
+            is_dollar: boolean;
+        };
+        /** @description Every money field is a decimal string (or null) and the server's own value. */
+        PayslipDetail: {
+            id: string;
+            /** @enum {string} */
+            kind: "regular" | "special" | "final";
+            /** Format: date */
+            pay_date: string;
+            period_label: string;
+            vessel_name: string;
+            full_vessel_name?: string | null;
+            position?: string | null;
+            address?: string | null;
+            /** Format: date */
+            depart_date?: string | null;
+            /** Format: date */
+            payroll_date?: string | null;
+            payee_name?: string | null;
+            bank_code?: string | null;
+            /** @description Masked: only the last four characters. */
+            account_number?: string | null;
+            /** @description Net amount is in dollars when true, pesos otherwise. */
+            is_dollar: boolean;
+            exchange_rate?: string | null;
+            pay_usd?: string | null;
+            pay_peso?: string | null;
+            adjustment?: string | null;
+            adjustment_detail?: string | null;
+            signon_adjustment?: string | null;
+            union_dues?: string | null;
+            bank_charges?: string | null;
+            withholding_tax?: string | null;
+            mpfee?: string | null;
+            sss_total?: string | null;
+            employee_sss?: string | null;
+            employee_philhealth?: string | null;
+            employee_pagibig?: string | null;
+            deductions: {
+                description: string;
+                amount: string;
+            }[];
+            deductions_total?: string | null;
+            net_amount: string;
+        };
+        Loan: {
+            id: string;
+            code: string;
+            description: string;
+            /** Format: date */
+            loan_date?: string | null;
+            /** Format: date */
+            start_of_deduction?: string | null;
+            loan_amount: string;
+            deduct_amount: string;
+            paid_amount: string;
+            balance: string;
+            is_dollar: boolean;
+            is_stopped: boolean;
+            remarks?: string | null;
+        };
+        LoanList: {
+            data: components["schemas"]["Loan"][];
+            totals: {
+                php: string;
+                usd: string;
+            };
+        };
         Todo: {
             id: string;
             /** @description Plain text; show it as text, never as HTML. */
@@ -1456,6 +1947,9 @@ export interface components {
         };
     };
     parameters: {
+        DocumentId: string;
+        DocumentTypeId: string;
+        PayslipId: string;
         TodoId: string;
         AnnouncementId: string;
     };
@@ -2303,6 +2797,531 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listDocumentTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Types. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentType"][];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    listMyDocuments: {
+        parameters: {
+            query?: {
+                status?: "approved" | "pending" | "rejected" | "review";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Documents, soonest-expiring first. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberDocumentList"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    submitDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["DocumentInput"];
+            };
+        };
+        responses: {
+            /** @description Submitted. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CrewDocument"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+        };
+    };
+    getMyDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The document. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CrewDocument"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getMyDocumentFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                    "image/jpeg": string;
+                    "image/png": string;
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    resubmitDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["DocumentInput"];
+            };
+        };
+        responses: {
+            /** @description Back to `pending`. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CrewDocument"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+        };
+    };
+    getFinanceStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Status. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FinanceStatus"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    unlockFinance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    password: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Unlocked. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FinanceStatus"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+        };
+    };
+    listMyPayslips: {
+        parameters: {
+            query?: {
+                kind?: "allotment" | "final" | "regular" | "special";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Payslip summaries. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PayslipSummary"][];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getMyPayslip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                payslipId: components["parameters"]["PayslipId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The payslip. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PayslipDetail"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listMyLoans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cash advances. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoanList"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    listTenantDocumentTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Types. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentType"][];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    createDocumentType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentTypeInput"];
+            };
+        };
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentType"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteDocumentType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentTypeId: components["parameters"]["DocumentTypeId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    updateDocumentType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentTypeId: components["parameters"]["DocumentTypeId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentTypeInput"];
+            };
+        };
+        responses: {
+            /** @description Updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentType"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listTenantDocuments: {
+        parameters: {
+            query?: {
+                status?: "pending" | "approved" | "rejected";
+                membership_id?: string;
+                page?: number;
+                per_page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page of documents with their owner. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrewDocumentPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getTenantDocumentFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                    "image/jpeg": string;
+                    "image/png": string;
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    approveDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Approved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CrewDocument"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    rejectDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: components["parameters"]["DocumentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Rejected. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CrewDocument"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };

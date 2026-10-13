@@ -267,3 +267,165 @@ export const demoTodos = [
     created_at: hoursAgo(96),
   },
 ];
+
+const ymd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const inDays = (n: number) => ymd(new Date(Date.now() + n * 86_400_000));
+const docType = (id: string, name: string) => ({ id, name, short_name: null });
+const doc = (
+  id: string,
+  type: string,
+  status: string,
+  expiry: string,
+  over: Record<string, unknown> = {},
+) => ({
+  id,
+  status,
+  type: docType(`t-${id}`, type),
+  number: `${id.toUpperCase()}-1234`,
+  grade: null,
+  location: 'Manila',
+  school: null,
+  issued_on: inDays(-700),
+  expires_on:
+    expiry === 'none'
+      ? null
+      : inDays(expiry === 'expired' ? -12 : expiry === 'expiring' ? 40 : 900),
+  expiry_status: expiry,
+  rejection_reason: null,
+  file: { name: `${id}.pdf`, type: 'application/pdf', size: 52000 },
+  submitted_at: hoursAgo(300),
+  reviewed_at: status === 'pending' ? null : hoursAgo(200),
+  ...over,
+});
+export const demoDocuments = {
+  approved: [
+    doc('d1', 'Medical Certificate', 'approved', 'expired'),
+    doc('d2', "Seaman's Book", 'approved', 'expiring'),
+    doc('d3', 'Passport', 'approved', 'valid'),
+  ],
+  review: [
+    doc('d4', 'Yellow Fever Vaccination', 'pending', 'none'),
+    doc('d5', 'Certificate of Competency', 'rejected', 'valid', {
+      rejection_reason: 'The scan is cut off at the bottom. Please upload the whole page.',
+    }),
+  ],
+};
+export const demoDocumentTypes = [
+  'Passport',
+  "Seaman's Book",
+  'Medical Certificate',
+  'Basic Safety Training',
+].map((n, i) => ({
+  id: `ty${i}`,
+  name: n,
+  short_name: null,
+}));
+
+const slip = (
+  id: string,
+  kind: string,
+  label: string,
+  ago: number,
+  net: string,
+  dollar = false,
+) => ({
+  id,
+  kind,
+  pay_date: inDays(-ago * 30),
+  period_label: label,
+  vessel_name: 'MV Pacific Dawn',
+  net_amount: net,
+  is_dollar: dollar,
+});
+export const demoPayslips = {
+  allotment: [
+    slip('p1', 'regular', 'September 2026', 0, '19000.00'),
+    slip('p2', 'special', 'Christmas Bonus', 1, '8495.00'),
+    slip('p3', 'regular', 'August 2026', 1, '18820.50'),
+  ],
+  final: [slip('p9', 'final', 'Final Pay', 8, '62455.00')],
+};
+export const demoPayslipDetail = (id: string) => ({
+  id,
+  kind: 'regular',
+  pay_date: inDays(0),
+  period_label: 'September 2026',
+  vessel_name: 'MV Pacific Dawn',
+  full_vessel_name: 'MV Pacific Dawn (Bulk Carrier)',
+  position: 'Able Seaman',
+  address: '12 Harbor St., Manila',
+  depart_date: inDays(-120),
+  payroll_date: inDays(-2),
+  payee_name: 'Demo Crew Spouse',
+  bank_code: 'BDO',
+  account_number: '••••5678',
+  is_dollar: false,
+  exchange_rate: '56.1250',
+  pay_usd: '420.00',
+  pay_peso: '23572.50',
+  adjustment: '35.00',
+  adjustment_detail: 'Overtime adjustment',
+  signon_adjustment: null,
+  union_dues: '15.00',
+  bank_charges: '5.00',
+  withholding_tax: null,
+  mpfee: null,
+  sss_total: '2000.00',
+  employee_sss: '1350.00',
+  employee_philhealth: '450.00',
+  employee_pagibig: '200.00',
+  deductions: [
+    { description: 'Cash advance (Medical)', amount: '1000.00' },
+    { description: 'Cash advance (Tickets)', amount: '750.00' },
+  ],
+  deductions_total: '1750.00',
+  net_amount: id === 'p9' ? '62455.00' : '19000.00',
+});
+export const demoLoans = {
+  data: [
+    {
+      id: 'l1',
+      code: 'MED',
+      description: 'Medical cash advance',
+      loan_date: inDays(-210),
+      start_of_deduction: inDays(-180),
+      loan_amount: '10000.00',
+      deduct_amount: '1000.00',
+      paid_amount: '4000.00',
+      balance: '6000.00',
+      is_dollar: false,
+      is_stopped: false,
+      remarks: null,
+    },
+    {
+      id: 'l2',
+      code: 'TKT',
+      description: 'Airfare advance',
+      loan_date: inDays(-210),
+      start_of_deduction: inDays(-180),
+      loan_amount: '18000.00',
+      deduct_amount: '750.00',
+      paid_amount: '15000.00',
+      balance: '3000.00',
+      is_dollar: false,
+      is_stopped: false,
+      remarks: null,
+    },
+    {
+      id: 'l3',
+      code: 'USD1',
+      description: 'Emergency advance (USD)',
+      loan_date: inDays(-90),
+      start_of_deduction: inDays(-60),
+      loan_amount: '500.00',
+      deduct_amount: '50.00',
+      paid_amount: '100.00',
+      balance: '400.00',
+      is_dollar: true,
+      is_stopped: false,
+      remarks: null,
+    },
+  ],
+  totals: { php: '1750.00', usd: '50.00' },
+};

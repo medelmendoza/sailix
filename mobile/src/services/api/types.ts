@@ -10,6 +10,16 @@ export type SelectionRequired = Schemas['SelectionRequired'];
 export type Profile = Schemas['Profile'];
 export type Announcement = Schemas['Announcement'];
 export type Todo = Schemas['Todo'];
+export type DocumentType = Schemas['DocumentType'];
+export type CrewDocument = Schemas['CrewDocument'];
+export type FinanceStatus = Schemas['FinanceStatus'];
+export type PayslipSummary = Schemas['PayslipSummary'];
+export type PayslipDetail = Schemas['PayslipDetail'];
+export type Loan = Schemas['Loan'];
+export type LoanList = Omit<Schemas['LoanList'], 'data'> & { data: Loan[] };
+export type MemberDocumentList = Omit<Schemas['MemberDocumentList'], 'data'> & {
+  data: CrewDocument[];
+};
 /** `data` is narrowed from the generated unknown[] (allOf with the generic envelope). */
 export type MemberTodoPage = Omit<Schemas['MemberTodoPage'], 'data'> & { data: Todo[] };
 /** The generated page type keeps `data` as unknown[] (allOf with the generic envelope), so it is narrowed here. */

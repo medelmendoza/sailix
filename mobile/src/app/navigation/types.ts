@@ -40,6 +40,12 @@ export type AppStackParamList = {
   };
   Account: undefined;
   Todos: undefined;
+  Document: { id: string };
+  DocumentForm: { id?: string };
+  DocumentViewer: { id: string; name: string };
+  PayslipList: { kind: 'allotment' | 'final' };
+  Payslip: { id: string };
+  Loans: undefined;
   Announcement: { id: string };
   ChangePassword: undefined;
   SendFeedback: undefined;

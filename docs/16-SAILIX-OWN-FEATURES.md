@@ -8,10 +8,10 @@ On 2026-10-13 the product owner said "go with Sailix functionality, leave Tala f
 |---|---|
 | D2 Announcements | **Built** (this document) |
 | To-dos (D4) | **Built** (below). Written but NOT yet run through the checks |
-| Documents (types, upload, review, expiry) | Not started. Needs a file-storage decision and Q-13/14/16 |
-| Finance (payslips, loans) | Not started. Needs G-02 (where the money data comes from) and Q-10 (step-up) |
+| Documents / Files (D3) | **Built on mock data** (below). Real file storage is still a decision |
+| Finance (D5) | **Built on mock data** (below). Where real payslip/loan data comes from (G-02) is still open: nothing in the product can enter it yet |
 | Dashboard | Partly: shows the latest announcements and the Tala learning summary |
-| Tabs: Dashboard, Files, Announcements, Finance, Services | **In place** (docs/07 §7.6). Files and Finance are "Coming soon" placeholders; Services lists Tala and shows SRT, Call-it, Astra as coming soon |
+| Tabs: Dashboard, Files, Announcements, Finance, Services | **In place** (docs/07 §7.6). Services lists Tala and shows SRT, Call-it, Astra as coming soon |
 
 ## D2 Announcements
 
@@ -42,3 +42,28 @@ On 2026-10-13 the product owner said "go with Sailix functionality, leave Tala f
 - **API:** member `GET /todos` (with `open_count`, `overdue_count`), `PATCH /todos/{id}` `{is_done}`; admin `GET|POST /tenant/todos`, `PATCH|DELETE /tenant/todos/{id}`.
 - **Defaults chosen:** the spec has no create/edit in the old app (agency-side only), so the portal is new; no "viewed" flag; the assignee cannot be changed after creation (delete and re-assign); no reminders or push; no offline queue (ticking needs a connection; a failed tick is put back on screen).
 - **State:** written and typechecked-by-edit only. Per the owner's instruction (no checks until asked), the test suites, lint, builds and screenshots were NOT run for this module. Backend tests, web tests and mobile tests for it exist and will run when you ask for the checks. The local database was migrated.
+
+## D3 Documents (Files) and D5 Finance, built from the old app's API and models
+
+The old Sailix backend cannot be run, so these were rebuilt as a NEW backend from the old app's API calls and Dart models (docs/reference/sailix-spec/06, 07; `sailix/lib/providers/*`), with invented demo data (`database/seeders/CrewPortalDemoSeeder.php`, local/testing only; every name, number and amount is made up). The old key `crewID` became the membership.
+
+### Documents (Files tab, web "Documents" and "Document types")
+
+- **Tables:** `document_types` (per organization), `crew_documents` (owner membership, type, number, grade, place of issue, school, issued/expires dates, status pending|approved|rejected, rejection reason, reviewer, and the stored file's disk/path/name/mime/size). The old "pending" list and "approved" list are one table with a status.
+- **Member:** Files tab = Documents (approved, with Expired / Expiring soon / Valid computed ON THE SERVER; expiring = within 90 days) and Pending (waiting or sent back, with the reason), a warning banner with counts, a detail screen, a viewer, and Add / Fix-and-send-again (type picker, number, grade, place, school, dates as `YYYY-MM-DD`, file picker for PDF/JPEG/PNG). An APPROVED document cannot be edited by the member (the old app allowed it, which made approval meaningless).
+- **Admin (web):** Documents (review queue: view file, approve, send back with a reason) and Document types (add / rename / switch off / delete when unused).
+- **Files:** stored on a PRIVATE disk (`SAILIX_DOCUMENTS_DISK`, default local) under a random name; the type is judged by content (PDF/JPEG/PNG only), size limited by the organization's `upload_max_mb`; every read goes through an ownership-checked endpoint (own document, or admin of the same organization) with `nosniff`, no caching and a locked-down CSP. The mobile viewer downloads with the bearer token into a temporary cache file and deletes it on leaving: documents are never kept on the device.
+- **Security:** owner, organization, status and review fields never come from the request; another member's or organization's document is `404`; crew cannot review or manage types; audit records submitted / resubmitted / approved / rejected without numbers or reasons.
+- **Not built:** the camera document SCANNER (native, needs a real-device test; the picker takes a PDF or an existing photo), automatic expiry reminders, per-type required documents, an admin "add a document on a member's behalf".
+
+### Finance (Finance tab)
+
+- **Tables:** `payslips` (regular / special / final; period label, vessel, position, bank, ENCRYPTED account number, exchange rate, pay in USD and PESO, adjustment, union dues, bank charges, withholding tax, management fee, SSS / PhilHealth / Pag-IBIG, deductions total, net amount, hold flag), `payslip_deductions`, `loans` (code, description, dates, loan / deduct / paid / balance amounts, dollar flag, stopped, scholar, cadet, inactive, remarks). Money is stored and returned as the server's own decimal strings; the apps only group digits for reading and never recompute (spec BR-48).
+- **Member:** Finance tab = Allotment (regular and special together) and Final pay, each behind a password step-up, plus Cash advance (totals per currency, each loan with a coloured progress bar: under 50 percent red, under 80 percent orange, else green). Payslip detail hides empty figures, shows deductions, masks the bank account to the last four digits (`••••5678`) and never shows a held payslip.
+- **Step-up (Q-10) now enforced by the SERVER:** the old app compared a typed birthdate on the phone, so the server never saw it. Now `POST /finance/unlock` re-checks the account password; payslip endpoints answer `403 step_up_required` until then. The unlock belongs to ONE sign-in (its token or session) for 5 minutes (`SAILIX_FINANCE_UNLOCK_TTL`), another device starts locked, wrong passwords are rate limited (5 a minute) and audited without the password. An organization can switch it off with its existing setting `payslip_step_up = none`. Cash advance is not gated (as in the old app).
+- **Assumptions to confirm (change if wrong):** the step-up uses the sign-in password, not the birthdate; "total deduction" on Cash advance = what is still being deducted each period (running, not stopped, balance above zero), per currency; held payslips are hidden from members; payslips are never cached on the device.
+- **Not built:** any way for an administrator to ENTER or IMPORT payslips and loans (G-02: payroll system, CSV or manual entry is still undecided), PDF export of a payslip, notifications when a new payslip arrives.
+
+### State
+
+Written and typechecked only. Per the owner's instruction (no checks until asked), the backend/web/mobile test suites, lint, builds and screenshots were NOT run for these modules; tests exist for all three parts. The local database was migrated and seeded (18 documents, 30 payslips, 12 loans across the demo crew). Expect small fixes when the checks run. Also new: the `expo-document-picker` dependency (needs a native rebuild) and an unverified multipart upload from React Native.

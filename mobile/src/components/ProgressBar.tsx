@@ -2,7 +2,16 @@ import { StyleSheet, View } from 'react-native';
 import { colors, gradients, radius, shadows } from '@/constants/theme';
 
 /** Accessible progress bar: announced as a value, not just painted. */
-export function ProgressBar({ percent, label }: { percent: number; label: string }) {
+export function ProgressBar({
+  percent,
+  label,
+  color,
+}: {
+  percent: number;
+  label: string;
+  /** Overrides the brand colour (for example green/orange/red for how far a loan is paid). */
+  color?: string;
+}) {
   const value = Math.max(0, Math.min(100, Math.round(percent)));
   return (
     <View
@@ -12,7 +21,13 @@ export function ProgressBar({ percent, label }: { percent: number; label: string
       accessibilityValue={{ min: 0, max: 100, now: value, text: `${value}%` }}
       style={styles.track}
     >
-      <View style={[styles.fill, { width: `${value}%` }]} />
+      <View
+        style={[
+          styles.fill,
+          { width: `${value}%` },
+          color ? { backgroundColor: color, experimental_backgroundImage: undefined } : null,
+        ]}
+      />
     </View>
   );
 }
