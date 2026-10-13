@@ -18,12 +18,12 @@ const contrast = (a: string, b: string) => {
 describe('colour contrast (WCAG 2.1 AA)', () => {
   // [description, foreground, background, minimum ratio]
   const text: [string, string, string][] = [
-    ['body text on the sand ground', colors.text, colors.background],
-    ['muted text on the sand ground', colors.textMuted, colors.background],
-    ['brand teal as text on the sand ground', colors.primary, colors.background],
-    ['danger text on the sand ground', colors.danger, colors.background],
-    ['warning text on the sand ground', colors.warning, colors.background],
-    ['success text on the sand ground', colors.success, colors.background],
+    ['body text on the cool-white ground', colors.text, colors.background],
+    ['muted text on the cool-white ground', colors.textMuted, colors.background],
+    ['brand teal as text on the cool-white ground', colors.primary, colors.background],
+    ['danger text on the cool-white ground', colors.danger, colors.background],
+    ['warning text on the cool-white ground', colors.warning, colors.background],
+    ['success text on the cool-white ground', colors.success, colors.background],
     ['dark text on the Medium rating button', colors.text, colors.ratingMedium],
     ['white on the Easy rating button', colors.onPrimary, colors.success],
     ['white on the Hard rating button', colors.onPrimary, colors.danger],
@@ -48,7 +48,7 @@ describe('colour contrast (WCAG 2.1 AA)', () => {
     expect(contrast(fg, bg)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('the outline of inputs and option rows is also at least 3:1 against the sand ground', () => {
+  it('the outline of inputs and option rows is also at least 3:1 against the cool-white ground', () => {
     expect(contrast(colors.border, colors.background)).toBeGreaterThanOrEqual(3);
   });
 

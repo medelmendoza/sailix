@@ -1,18 +1,18 @@
 @import 'tailwindcss';
 
-/* "Harbor" tokens, shared with the mobile app: sand ground, white cards, deep teal brand, navy ink. Light theme only for now. */
+/* "Harbor" tokens, shared with the mobile app: cool white ground, white cards, the logo's sail blue, navy ink. Light theme only for now. */
 @theme {
-  --color-brand-900: #07303a;
-  --color-brand-800: #0a4b5a;
-  --color-brand-700: #0a5c6e;
-  --color-accent-600: #0a5c6e;
-  --color-accent-500: #0f7186;
-  --color-accent-100: #e1f0f2;
+  --color-brand-900: #14264a;
+  --color-brand-800: #1f3f7c;
+  --color-brand-700: #355dad;
+  --color-accent-600: #355dad;
+  --color-accent-500: #4a76c4;
+  --color-accent-100: #e3ecf8;
   --color-surface: #ffffff;
-  --color-page: #f4f1ea;
-  --color-ink: #13293d;
-  --color-muted: #4f5f6e;
-  --color-line: #ddd6c8;
+  --color-page: #f4f7fb;
+  --color-ink: #12243d;
+  --color-muted: #51627a;
+  --color-line: #dce4ef;
   --color-ok-bg: #e3f3ea;
   --color-ok-fg: #1f6b4a;
   --color-warn-bg: #fdf0dc;

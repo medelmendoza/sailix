@@ -4,7 +4,7 @@ What stands between "works on the simulator" and "a customer installs it". Items
 
 ## Done in the repository
 
-- **Icon and splash:** the Sailix sail mark (taken from the old Sailix Flutter project's `assets/images/sailix_icon.png`, copy kept in `mobile/assets/brand/`) on white for the app icon, on sand for the splash, an Android adaptive icon (white background, sail foreground, black-silhouette monochrome layer) and a favicon. `expo-splash-screen` configures the splash. The old wordmark (blue-to-green "SAILIX") is not used; the in-app colours are the teal "Harbor" palette, which does not match the logo's blue. Decide whether the app palette should move to the logo's blue (**YOU**).
+- **Icon and splash:** the Sailix sail mark (taken from the old Sailix Flutter project's `assets/images/sailix_icon.png`, copy kept in `mobile/assets/brand/`) on white for the app icon, on a cool white for the splash, an Android adaptive icon (white background, sail foreground, black-silhouette monochrome layer) and a favicon. `expo-splash-screen` configures the splash. The in-app colours now follow the logo: sail blue `#355DAD` as the brand colour, the wordmark's green/teal as decoration, on a cool-white ground. The old wordmark image itself is not used in the app.
 - **Shipped builds cannot point at a developer machine:** staging and production refuse a non-https API address and also localhost, `127.*`, `10.*`, `172.16–31.*`, `192.168.*` and `*.local` (`src/app/config/env.ts`, tested).
 - **Crash handling:** a render error shows a calm "Something went wrong / Try again" screen (no technical text); uncaught JS errors are passed to a reporter. **No crash service is attached** (see below).
 - Demo mode is forced off in production builds (already tested).

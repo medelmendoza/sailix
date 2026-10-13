@@ -46,7 +46,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-video',
     [
       'expo-splash-screen',
-      { backgroundColor: '#F4F1EA', image: './assets/splash-icon.png', imageWidth: 120 },
+      { backgroundColor: '#F4F7FB', image: './assets/splash-icon.png', imageWidth: 120 },
     ],
   ],
   extra: {

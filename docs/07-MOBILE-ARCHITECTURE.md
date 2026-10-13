@@ -69,7 +69,7 @@ Only the *placement* is copied; colours, type and shadows stay the Sailix soft-U
 
 ### 7.2 "Harbor" redesign (replaces the soft-UI look in §7; the screen layout in §7.1 is unchanged)
 
-Warm sand ground, white cards lifted by a soft shadow and a hairline, deep-teal brand (`#0A5C6E`), navy ink, coral/seafoam as decoration only. Same token names, so every screen picked it up; text/background pairs (including on the sand ground) are contrast-tested in `theme.test.ts`. Not done: web admin portal, dark mode, Dynamic Type.
+Warm sand ground, white cards lifted by a soft shadow and a hairline, the Sailix logo's sail blue as the brand colour (`#355DAD`, sampled from the logo), the logo wordmark's green and teal for decoration, navy ink, a little coral. The ground is a cool white (`#F4F7FB`). (This replaced a first teal-and-sand version on 2026-10-13.) Same token names, so every screen picked it up; text/background pairs (including on the sand ground) are contrast-tested in `theme.test.ts`. Not done: web admin portal, dark mode, Dynamic Type.
 
 ### 7.3 Send feedback
 
