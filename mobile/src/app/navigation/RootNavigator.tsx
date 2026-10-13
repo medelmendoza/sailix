@@ -12,6 +12,7 @@ import { RegisterDoneScreen } from '@/features/auth/RegisterDoneScreen';
 import { RegisterScreen } from '@/features/auth/RegisterScreen';
 import { SelectOrganizationScreen } from '@/features/auth/SelectOrganizationScreen';
 import { HomeScreen } from '@/features/home/HomeScreen';
+import { TalaCourseScreen } from '@/features/modules/tala/TalaCourseScreen';
 import { ModuleScreen } from '@/features/modules/ModuleScreen';
 import { useSessionStore } from '@/store/sessionStore';
 import type { AppStackParamList, AuthStackParamList, MainTabParamList } from './types';
@@ -92,6 +93,11 @@ export function RootNavigator() {
           name="Module"
           component={ModuleScreen}
           options={({ route }) => ({ title: route.params.code === 'tala' ? 'Tala' : 'Service' })}
+        />
+        <AppStack.Screen
+          name="TalaCourse"
+          component={TalaCourseScreen}
+          options={({ route }) => ({ title: route.params.name })}
         />
         <AppStack.Screen
           name="ChangePassword"

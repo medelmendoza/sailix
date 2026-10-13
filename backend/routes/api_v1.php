@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Auth\SessionController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
 use App\Http\Controllers\Api\V1\Me;
 use App\Http\Controllers\Api\V1\MeController;
+use App\Http\Controllers\Api\V1\Modules;
 use App\Http\Controllers\Api\V1\Platform;
 use App\Http\Controllers\Api\V1\Tenant;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +47,17 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::get('deletion-requests', [Tenant\DeletionRequestController::class, 'index']);
         Route::get('modules', [Tenant\ModuleController::class, 'index']);
         Route::put('modules/{module}', [Tenant\ModuleController::class, 'update']);
+    });
+
+    // Module gateways: module enabled for the organization + role ability + approved upstream, checked per request.
+    Route::prefix('modules/tala')->middleware('module:tala')->group(function () {
+        Route::get('link', [Modules\TalaController::class, 'link']);
+        Route::post('link', [Modules\TalaController::class, 'store'])->middleware('throttle:module-link');
+        Route::delete('link', [Modules\TalaController::class, 'destroy']);
+        Route::get('courses', [Modules\TalaController::class, 'courses']);
+        Route::get('courses/{assignId}', [Modules\TalaController::class, 'course'])->where('assignId', '[A-Za-z0-9_-]{1,64}');
+        Route::get('courses/{assignId}/materials/{materialId}', [Modules\TalaController::class, 'material'])
+            ->where(['assignId' => '[A-Za-z0-9_-]{1,64}', 'materialId' => '[A-Za-z0-9_-]{1,64}']);
     });
 });
 

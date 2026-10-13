@@ -90,7 +90,14 @@ const MESSAGES: Record<string, string> = {
   tenant_mismatch: 'Your organization changed. Please sign in again.',
   module_disabled: 'This service is not available for your organization.',
   module_forbidden: 'Your role cannot use this service.',
-  module_unavailable: 'This service is not available yet.',
+  module_unavailable: 'This service is not reachable right now. Try again later.',
+  link_failed: 'Tala did not accept that username and password.',
+  team_not_in_organization: "That Tala account does not belong to your organization's team.",
+  external_account_taken: 'That Tala account is already linked to another Sailix user.',
+  different_account_linked: 'You already linked a different Tala account. Disconnect it first.',
+  not_linked: 'Link your Tala account first.',
+  relink_required: 'Your Tala link expired. Please link your account again.',
+  unsupported_material: 'This item is not available in this version of the app.',
   forbidden: 'You are not allowed to do that.',
   not_found: 'That item no longer exists.',
 };
@@ -104,7 +111,10 @@ export function describeError(error: unknown): string {
       ? `Too many attempts. Try again in ${e.retryAfter} seconds.`
       : 'Too many attempts. Try again shortly.';
   }
-  if (e.status !== undefined && e.status >= 500) return GENERIC_ERROR_MESSAGE;
+  if (e.status !== undefined && e.status >= 500) {
+    // Only this stable, content-free code gets its own text; every other 5xx stays generic.
+    return e.code === 'module_unavailable' ? MESSAGES.module_unavailable! : GENERIC_ERROR_MESSAGE;
+  }
   if (e.code && MESSAGES[e.code]) return MESSAGES[e.code]!;
   if (e.status === 422) return 'Please check the highlighted fields.';
   return e.message || GENERIC_ERROR_MESSAGE;

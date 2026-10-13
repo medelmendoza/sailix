@@ -8,6 +8,10 @@ export type MembershipSummary = Schemas['MembershipSummary'];
 export type TokenGrant = Schemas['TokenGrant'];
 export type SelectionRequired = Schemas['SelectionRequired'];
 export type Profile = Schemas['Profile'];
+export type TalaCourse = Schemas['TalaCourse'];
+export type TalaCourseDetail = Schemas['TalaCourseDetail'];
+export type TalaMaterialSummary = Schemas['TalaMaterialSummary'];
+export type TalaMaterial = Schemas['TalaMaterial'];
 
 export interface Envelope<T> {
   data: T;

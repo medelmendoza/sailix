@@ -82,34 +82,43 @@ describe('home', () => {
 
 describe('module screen', () => {
   async function openTala(status: string, enabled = true) {
+    mockApi({ 'GET /modules/tala/courses': { data: { data: [] } } });
     signedInAs(makeMe({ modules: [TALA(status, enabled)] }));
     await renderApp();
     await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
   }
 
-  it('does not pretend content exists: it says course content and linking are not available yet', async () => {
+  it('offers to link an existing account when not linked (and no courses are requested)', async () => {
     await openTala('not_linked');
     expect(await screen.findByText('Not linked')).toBeTruthy();
-    expect(
-      screen.getByText(/courses and account linking are not available in this version/i),
-    ).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /link/i })).toBeNull(); // no fake action
+    expect(screen.getByText('Link your Tala account')).toBeTruthy();
+    expect(screen.getByLabelText('Tala username or email')).toBeTruthy();
+    expect(screen.getByLabelText('Tala password')).toBeTruthy();
   });
 
-  it.each([
-    ['linked', 'Linked', /Your account is linked/],
-    ['needs_relink', 'Needs re-link', /link expired/],
-    ['revoked', 'Access revoked', /was revoked/],
-  ])('describes the %s state', async (status, label, text) => {
-    await openTala(status);
-    expect(await screen.findByText(label)).toBeTruthy();
-    expect(screen.getByText(text)).toBeTruthy();
+  it('shows the courses area when linked', async () => {
+    await openTala('linked');
+    expect(await screen.findByText('Linked')).toBeTruthy();
+    expect(await screen.findByText('No courses assigned')).toBeTruthy();
   });
 
-  it('explains a service the organization turned off, without the "not available yet" notice', async () => {
+  it('asks for a re-link when the link expired, and says revoked access is the administrator’s call', async () => {
+    await openTala('needs_relink');
+    expect(await screen.findByText('Needs re-link')).toBeTruthy();
+    expect(screen.getByText('Link your Tala account again')).toBeTruthy();
+  });
+
+  it('does not offer linking when access was revoked', async () => {
+    await openTala('revoked');
+    expect(await screen.findByText('Access revoked')).toBeTruthy();
+    expect(screen.getByText(/was revoked/)).toBeTruthy();
+    expect(screen.queryByLabelText('Tala password')).toBeNull();
+  });
+
+  it('explains a service the organization turned off, without any link form', async () => {
     await openTala('disabled', false);
     expect(await screen.findByText('Turned off')).toBeTruthy();
     expect(screen.getByText(/turned this service off/i)).toBeTruthy();
-    expect(screen.queryByText(/not available in this version/i)).toBeNull();
+    expect(screen.queryByLabelText('Tala password')).toBeNull();
   });
 });

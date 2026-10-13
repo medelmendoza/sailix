@@ -77,6 +77,13 @@ describe('describeError', () => {
     expect(describeError(err(422, 'validation'))).toBe('Please check the highlighted fields.');
   });
 
+  it('gives only the content-free module_unavailable 503 its own text, never the server detail', () => {
+    expect(describeError(err(503, 'module_unavailable', 'upstream host 10.0.0.5 refused'))).toBe(
+      'This service is not reachable right now. Try again later.',
+    );
+    expect(describeError(err(503, 'other', 'internal detail'))).toMatch(/Something went wrong/);
+  });
+
   it('has a dedicated message for no connection', () => {
     expect(describeError(new AxiosError('offline', 'ERR_NETWORK'))).toMatch(/No connection/);
   });

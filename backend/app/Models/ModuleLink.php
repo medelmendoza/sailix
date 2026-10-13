@@ -24,6 +24,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $access_token
  * @property string|null $refresh_token
  * @property Carbon|null $token_expires_at
+ * @property Carbon|null $linked_at
+ * @property Carbon|null $last_verified_at
  */
 #[Hidden(['access_token', 'refresh_token'])]
 class ModuleLink extends Model

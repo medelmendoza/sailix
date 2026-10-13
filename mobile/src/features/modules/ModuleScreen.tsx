@@ -1,20 +1,24 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, Card, EmptyState, Notice, Screen } from '@/components';
+import { AppText, Button, Card, EmptyState, FormError, Screen } from '@/components';
 import { colors, spacing } from '@/constants/theme';
+import { describeError } from '@/services/api/errors';
 import { useSessionStore } from '@/store/sessionStore';
-import { isModuleContentAvailable, STATUS_DESCRIPTION, STATUS_LABEL } from './availability';
+import { STATUS_DESCRIPTION, STATUS_LABEL } from './availability';
+import { useUnlinkTala } from './tala/api';
+import { TalaCourseList } from './tala/TalaCourseList';
+import { TalaLinkForm } from './tala/TalaLinkForm';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Module'>;
 
-/**
- * Module entry. It shows only what the API says about the caller's access (`/me.modules`). Content and linking
- * arrive with the Sailix gateway (M3); until then this screen says so plainly instead of faking data.
- */
+/** Module entry: what the API says about the caller's access (`/me.modules`), plus the Tala gateway screens. */
 export function ModuleScreen({ route }: Props) {
   const me = useSessionStore((s) => s.me);
   const module = me?.modules.find((m) => m.code === route.params.code);
+  const unlink = useUnlinkTala();
+  const [error, setError] = useState<string | null>(null);
 
   if (!module) {
     return (
@@ -27,25 +31,69 @@ export function ModuleScreen({ route }: Props) {
     );
   }
 
+  const statusCard = (
+    <Card>
+      <AppText variant="caption" style={{ color: colors.textMuted }}>
+        Status
+      </AppText>
+      <AppText variant="heading">{STATUS_LABEL[module.status] ?? module.status}</AppText>
+      <AppText muted>{STATUS_DESCRIPTION[module.status] ?? ''}</AppText>
+    </Card>
+  );
+
+  function confirmDisconnect() {
+    Alert.alert(
+      'Disconnect Tala?',
+      'Sailix removes its saved link to your Tala account. Your Tala account itself is not changed. You can link it again later.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Disconnect',
+          style: 'destructive',
+          onPress: () => {
+            setError(null);
+            unlink.mutate(undefined, { onError: (e) => setError(describeError(e)) });
+          },
+        },
+      ],
+    );
+  }
+
+  if (module.code === 'tala' && module.enabled && module.status === 'linked') {
+    return (
+      <Screen padded={false}>
+        <TalaCourseList
+          header={
+            <View style={styles.wrap}>
+              {statusCard}
+              <FormError message={error} />
+              <Button
+                title="Disconnect Tala"
+                variant="secondary"
+                loading={unlink.isPending}
+                onPress={confirmDisconnect}
+              />
+            </View>
+          }
+        />
+      </Screen>
+    );
+  }
+
+  const canLink =
+    module.code === 'tala' &&
+    module.enabled &&
+    (module.status === 'not_linked' || module.status === 'needs_relink');
+
   return (
-    <Screen>
-      <View style={styles.wrap}>
+    <Screen padded={false}>
+      <ScrollView contentContainerStyle={[styles.wrap, { padding: spacing.lg }]}>
         <AppText variant="title" accessibilityRole="header">
           {module.label}
         </AppText>
-        <Card>
-          <AppText variant="caption" style={{ color: colors.textMuted }}>
-            Status
-          </AppText>
-          <AppText variant="heading">{STATUS_LABEL[module.status] ?? module.status}</AppText>
-          <AppText muted>{STATUS_DESCRIPTION[module.status] ?? ''}</AppText>
-        </Card>
-        {!isModuleContentAvailable(module.code) && module.enabled ? (
-          <Notice
-            message={`${module.label} courses and account linking are not available in this version of the app yet.`}
-          />
-        ) : null}
-      </View>
+        {statusCard}
+        {canLink ? <TalaLinkForm relink={module.status === 'needs_relink'} /> : null}
+      </ScrollView>
     </Screen>
   );
 }

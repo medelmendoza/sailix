@@ -17,5 +17,6 @@ export type MainTabParamList = {
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   Module: { code: string };
+  TalaCourse: { assignId: string; name: string };
   ChangePassword: undefined;
 };

@@ -386,6 +386,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/modules/tala/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * State of the caller's Tala link
+         * @description Requires the Tala module to be provisioned and enabled for the organization and `module.tala.use`. Never returns tokens, the Tala user id, team id or any credential.
+         */
+        get: operations["getTalaLink"];
+        put?: never;
+        /**
+         * Link the caller's existing Tala account
+         * @description Verifies the credentials with Tala over HTTPS, requires the organization's mapped Tala team to be among the account's teams, then stores ONLY encrypted tokens (the password is never stored or logged). One Tala account can belong to one Sailix user; an account cannot be created here. Throttled. Error codes: `link_failed`, `team_not_in_organization`, `external_account_taken`, `different_account_linked`.
+         */
+        post: operations["linkTalaAccount"];
+        /** Remove the caller's Tala link and its stored tokens */
+        delete: operations["unlinkTalaAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/modules/tala/courses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller's assigned Tala courses (read-only)
+         * @description The Tala user and team are taken from the stored link, never from the request. `409 not_linked` / `409 relink_required` when the link is missing or Tala rejected the stored token; `503 module_unavailable` when Tala cannot be reached. Material kinds excluded from the MVP (EPUB, legacy quizzes) are omitted.
+         */
+        get: operations["listTalaCourses"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/modules/tala/courses/{assignId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One assigned course with its materials and stored progress (read-only) */
+        get: operations["getTalaCourse"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/modules/tala/courses/{assignId}/materials/{materialId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Metadata and file address of one video or PDF material of the caller's course
+         * @description Quiz materials are never delivered (their payload contains the answer key; D-T8): `422 unsupported_material`. The material must belong to the caller's own course; the address is returned only when it is https.
+         */
+        get: operations["getTalaMaterial"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/platform/auth/session": {
         parameters: {
             query?: never;
@@ -681,6 +763,54 @@ export interface components {
          * @enum {string}
          */
         ModuleCode: "tala";
+        TalaLink: {
+            /** @enum {string} */
+            status: "not_linked" | "linked" | "needs_relink" | "revoked";
+            /** Format: date-time */
+            linked_at: string | null;
+            /** Format: date-time */
+            last_verified_at: string | null;
+        };
+        TalaCourse: {
+            /** @description Assignment id (the only id the client ever uses) */
+            id: string;
+            name: string;
+            description: string | null;
+            thumbnail_url: string | null;
+            date_from: string | null;
+            date_to: string | null;
+            status: string | null;
+            /** @description As reported by Tala; client-computed scores are self-reported (D-T8) */
+            progress: string | null;
+            total_materials: number;
+        };
+        TalaCourseDetail: components["schemas"]["TalaCourse"] & {
+            materials: components["schemas"]["TalaMaterialSummary"][];
+            /** @description Materials of kinds not supported in the MVP (EPUB, legacy quiz, unknown) that were left out. */
+            hidden_materials: number;
+        };
+        TalaMaterialSummary: {
+            id: string;
+            /** @enum {string} */
+            type: "video" | "pdf" | "quiz";
+            name: string;
+            description: string | null;
+            thumbnail_url: string | null;
+            /** @description false for quizzes: not delivered in this version */
+            viewable: boolean;
+            progress: string | null;
+            status: string | null;
+        };
+        TalaMaterial: {
+            id: string;
+            /** @enum {string} */
+            type: "video" | "pdf";
+            name: string;
+            description: string | null;
+            thumbnail_url: string | null;
+            /** @description https address provided by Tala; access control of the file host is not verified */
+            file_url: string | null;
+        };
         MyModule: {
             code: components["schemas"]["ModuleCode"];
             label: string;
@@ -1474,6 +1604,173 @@ export interface operations {
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    getTalaLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Link state. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TalaLink"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    linkTalaAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    username: string;
+                    password: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Linked. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TalaLink"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    unlinkTalaAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unlinked (idempotent). */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    listTalaCourses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Courses. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TalaCourse"][];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    getTalaCourse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Course detail. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TalaCourseDetail"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    getTalaMaterial: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignId: string;
+                materialId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Material. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TalaMaterial"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
         };
     };
     loginPlatform: {

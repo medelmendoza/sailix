@@ -13,6 +13,7 @@ tags:
   - { name: auth, description: 'Login, logout, token rotation and invitations' }
   - { name: me, description: 'The authenticated principal' }
   - { name: tenant, description: "Tenant administration (caller's own tenant only)" }
+  - { name: modules, description: 'Module gateways (Tala, read-only in the MVP)' }
   - { name: platform, description: 'Superadmin platform administration' }
 security:
   - bearerToken: []
@@ -577,6 +578,145 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /modules/tala/link:
+    get:
+      tags: [modules]
+      operationId: getTalaLink
+      summary: State of the caller's Tala link
+      description: >
+        Requires the Tala module to be provisioned and enabled for the organization and `module.tala.use`.
+        Never returns tokens, the Tala user id, team id or any credential.
+      responses:
+        '200':
+          description: Link state.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TalaLink' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [modules]
+      operationId: linkTalaAccount
+      summary: Link the caller's existing Tala account
+      description: >
+        Verifies the credentials with Tala over HTTPS, requires the organization's mapped Tala team to be among the
+        account's teams, then stores ONLY encrypted tokens (the password is never stored or logged). One Tala account
+        can belong to one Sailix user; an account cannot be created here. Throttled.
+        Error codes: `link_failed`, `team_not_in_organization`, `external_account_taken`, `different_account_linked`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string, maxLength: 255 }
+                password: { type: string, maxLength: 255 }
+      responses:
+        '200':
+          description: Linked.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TalaLink' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [modules]
+      operationId: unlinkTalaAccount
+      summary: Remove the caller's Tala link and its stored tokens
+      responses:
+        '204': { description: Unlinked (idempotent). }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /modules/tala/courses:
+    get:
+      tags: [modules]
+      operationId: listTalaCourses
+      summary: The caller's assigned Tala courses (read-only)
+      description: >
+        The Tala user and team are taken from the stored link, never from the request. `409 not_linked` /
+        `409 relink_required` when the link is missing or Tala rejected the stored token; `503 module_unavailable`
+        when Tala cannot be reached. Material kinds excluded from the MVP (EPUB, legacy quizzes) are omitted.
+      responses:
+        '200':
+          description: Courses.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/TalaCourse' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /modules/tala/courses/{assignId}:
+    get:
+      tags: [modules]
+      operationId: getTalaCourse
+      summary: One assigned course with its materials and stored progress (read-only)
+      parameters:
+        - { name: assignId, in: path, required: true, schema: { type: string, maxLength: 64, pattern: '^[A-Za-z0-9_-]+$' } }
+      responses:
+        '200':
+          description: Course detail.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TalaCourseDetail' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /modules/tala/courses/{assignId}/materials/{materialId}:
+    get:
+      tags: [modules]
+      operationId: getTalaMaterial
+      summary: Metadata and file address of one video or PDF material of the caller's course
+      description: >
+        Quiz materials are never delivered (their payload contains the answer key; D-T8): `422 unsupported_material`.
+        The material must belong to the caller's own course; the address is returned only when it is https.
+      parameters:
+        - { name: assignId, in: path, required: true, schema: { type: string, maxLength: 64, pattern: '^[A-Za-z0-9_-]+$' } }
+        - { name: materialId, in: path, required: true, schema: { type: string, maxLength: 64, pattern: '^[A-Za-z0-9_-]+$' } }
+      responses:
+        '200':
+          description: Material.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TalaMaterial' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
   /platform/auth/session:
     post:
       tags: [platform]
@@ -1111,6 +1251,60 @@ components:
       type: string
       enum: [tala]
       description: Module registry. Only `tala` exists in the MVP; new modules are added here.
+    TalaLink:
+      type: object
+      required: [status, linked_at, last_verified_at]
+      properties:
+        status: { type: string, enum: [not_linked, linked, needs_relink, revoked] }
+        linked_at: { type: [string, 'null'], format: date-time }
+        last_verified_at: { type: [string, 'null'], format: date-time }
+    TalaCourse:
+      type: object
+      required: [id, name, description, thumbnail_url, date_from, date_to, status, progress, total_materials]
+      properties:
+        id: { type: string, description: 'Assignment id (the only id the client ever uses)' }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        thumbnail_url: { type: [string, 'null'] }
+        date_from: { type: [string, 'null'] }
+        date_to: { type: [string, 'null'] }
+        status: { type: [string, 'null'] }
+        progress: { type: [string, 'null'], description: 'As reported by Tala; client-computed scores are self-reported (D-T8)' }
+        total_materials: { type: integer }
+    TalaCourseDetail:
+      allOf:
+        - { $ref: '#/components/schemas/TalaCourse' }
+        - type: object
+          required: [materials, hidden_materials]
+          properties:
+            materials:
+              type: array
+              items: { $ref: '#/components/schemas/TalaMaterialSummary' }
+            hidden_materials:
+              type: integer
+              description: Materials of kinds not supported in the MVP (EPUB, legacy quiz, unknown) that were left out.
+    TalaMaterialSummary:
+      type: object
+      required: [id, type, name, description, thumbnail_url, viewable, progress, status]
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [video, pdf, quiz] }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        thumbnail_url: { type: [string, 'null'] }
+        viewable: { type: boolean, description: 'false for quizzes: not delivered in this version' }
+        progress: { type: [string, 'null'] }
+        status: { type: [string, 'null'] }
+    TalaMaterial:
+      type: object
+      required: [id, type, name, description, thumbnail_url, file_url]
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [video, pdf] }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        thumbnail_url: { type: [string, 'null'] }
+        file_url: { type: [string, 'null'], description: 'https address provided by Tala; access control of the file host is not verified' }
     MyModule:
       type: object
       required: [code, label, enabled, linked, status]

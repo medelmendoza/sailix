@@ -76,4 +76,5 @@ Read-only. Branch `medel_dev_march2025`, HEAD `2094806`, 66 pre-existing uncommi
 | 2026-10-13 | User asked to proceed with the next unblocked item; built organization switching (docs/13 §16). M3/T0 still blocked on D-T1 | Implemented; stopped for review |
 | 2026-10-13 | **D-T1 approved**: production host `tala-v3-server.btsolve.com` (confirmed production by the owner), dedicated test account, read-only, HTTPS only (owner said HTTP; HTTPS used because credentials must not go over HTTP) | T0 run: 24 requests, shape-only output |
 | 2026-10-13 | T0 complete (docs/13 §17, tala-analysis/04): HTTPS available; 365-day JWTs; roles + join code exposed; weak/unclear path-id authorization; quiz answer keys sent to clients | Awaiting review; M3 not started |
+| 2026-10-13 | User approved **M3 read-only**. Implemented gateway (link/unlink/courses/detail/material) + mobile screens; live read-only check against the Tala test account passed | Implemented; stopped for review (docs/13 §18) |
 

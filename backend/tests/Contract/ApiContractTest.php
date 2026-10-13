@@ -6,6 +6,8 @@ use App\Enums\MembershipStatus;
 use App\Enums\Role;
 use App\Mail\PasswordResetLink;
 use App\Models\Membership;
+use App\Support\Settings\SettingsRegistry;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -47,6 +49,43 @@ class ApiContractTest extends TestCase
         [, $m] = $this->makeMember($tenant, Role::TenantAdmin, 'admin1');
 
         return [$this->bearer($this->tokenFor('admin1')), $m];
+    }
+
+    public function test_tala_gateway_operations(): void
+    {
+        $base = 'https://tala.example.com';
+        $this->fakeTalaDns(['tala.example.com' => ['93.184.216.34']]);
+        SettingsRegistry::setPlatform('tala_api_base_url', $base);
+        $tenant = $this->makeTenant('SFAI');
+        $this->makeMember($tenant, Role::Crew, 'crew1');
+        $this->provisionModule($tenant, 'TEAM-1');
+        $h = $this->bearer($this->tokenFor('crew1'));
+
+        Http::fake([
+            "$base/api/v1/login" => Http::response(['accessToken' => 'a.b.c', 'refreshToken' => 'r', 'userId' => 'tu1']),
+            "$base/api/v1/auth/users/tu1/teams" => Http::response([['teamId' => 'TEAM-1']]),
+            "$base/api/v1/auth/users/tu1/teams/TEAM-1/courses" => Http::response([[
+                'assignId' => 'A1', 'courseId' => 'C1', 'status' => 'ongoing', 'progress' => '10',
+                'course' => ['courseName' => 'Safety', 'materialDetails' => [
+                    ['materialId' => 'v1', 'materialType' => 'video', 'materialName' => 'Intro'],
+                    ['materialId' => 'q1', 'materialType' => 'up_quiz', 'materialName' => 'Quiz'],
+                    ['materialId' => 'e1', 'materialType' => 'epub', 'materialName' => 'Book'],
+                ]],
+            ]]),
+            "$base/api/v1/auth/users/tu1/teams/TEAM-1/courses/C1/sync/A1/data" => Http::response(['materials' => ['videos' => [['videoId' => 'v1', 'progress' => '50', 'status' => 'ongoing']]]]),
+            "$base/api/v1/auth/users/teams/TEAM-1/videos/v1" => Http::response(['videoName' => 'Intro', 'videoFileUrl' => 'https://files.example.com/v.mp4']),
+        ]);
+
+        $this->ok($this->fresh()->getJson('/api/v1/modules/tala/link', $h), '/modules/tala/link', 'get', 200);
+        $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses', $h), '/modules/tala/courses', 'get', 409);
+        $this->ok($this->fresh()->postJson('/api/v1/modules/tala/link', [], $h), '/modules/tala/link', 'post', 422);
+        $this->ok($this->fresh()->postJson('/api/v1/modules/tala/link', ['username' => 'm', 'password' => 'p'], $h), '/modules/tala/link', 'post', 200);
+        $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses', $h), '/modules/tala/courses', 'get', 200);
+        $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses/A1', $h), '/modules/tala/courses/{assignId}', 'get', 200);
+        $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses/NOPE', $h), '/modules/tala/courses/{assignId}', 'get', 404);
+        $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses/A1/materials/v1', $h), '/modules/tala/courses/{assignId}/materials/{materialId}', 'get', 200);
+        $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses/A1/materials/q1', $h), '/modules/tala/courses/{assignId}/materials/{materialId}', 'get', 422);
+        $this->ok($this->fresh()->deleteJson('/api/v1/modules/tala/link', [], $h), '/modules/tala/link', 'delete', 204);
     }
 
     public function test_token_auth_operations(): void
