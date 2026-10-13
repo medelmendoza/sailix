@@ -94,7 +94,7 @@ export function useProvisionModule(id: string) {
       ...body
     }: {
       code: string;
-      external_team_id: string;
+      external_team_id?: string;
       enabled: boolean;
     }) =>
       (

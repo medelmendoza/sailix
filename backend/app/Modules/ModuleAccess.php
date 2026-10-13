@@ -29,6 +29,19 @@ final class ModuleAccess
             }
             $link = $links->get($module->value);
 
+            // A built-in module has nothing to link: it is simply available or turned off.
+            if (! $module->requiresEndpoint()) {
+                $out[] = [
+                    'code' => $module->value,
+                    'label' => $module->label(),
+                    'enabled' => $entitlement->isEnabled(),
+                    'linked' => $entitlement->isEnabled(),
+                    'status' => $entitlement->isEnabled() ? 'available' : 'disabled',
+                ];
+
+                continue;
+            }
+
             $out[] = [
                 'code' => $module->value,
                 'label' => $module->label(),

@@ -40,6 +40,18 @@ export type AppStackParamList = {
   };
   Account: undefined;
   Todos: undefined;
+  AstraMenu: undefined;
+  AstraPomodoro: undefined;
+  AstraNoise: undefined;
+  AstraSound: { id: string };
+  AstraRisk: undefined;
+  AstraRca: undefined;
+  AstraWhys: undefined;
+  AstraPmepe: undefined;
+  AstraScaril: undefined;
+  AstraEmails: undefined;
+  AstraEmailStep: { step: 'to-cc' | 'raid' | 'bluf' | 'next' };
+  AstraDoc: { doc: 'bluf' | 'pmepe' | 'scaril' };
   Document: { id: string };
   DocumentForm: { id?: string };
   DocumentViewer: { id: string; name: string };

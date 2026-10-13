@@ -10,11 +10,14 @@ namespace App\Modules;
 enum Module: string
 {
     case Tala = 'tala';
+    /** Built into the app (no upstream system, no linking): an organization simply has it or not. */
+    case Astra = 'astra';
 
     public function label(): string
     {
         return match ($this) {
             self::Tala => 'Tala',
+            self::Astra => 'Astra',
         };
     }
 
@@ -33,6 +36,7 @@ enum Module: string
     {
         return match ($this) {
             self::Tala => true,
+            self::Astra => false,
         };
     }
 
@@ -41,6 +45,7 @@ enum Module: string
     {
         return match ($this) {
             self::Tala => 'tala_api_base_url',
+            self::Astra => '', // no upstream: never read (requiresEndpoint() is false)
         };
     }
 

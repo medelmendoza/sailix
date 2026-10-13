@@ -131,3 +131,32 @@ beforeEach(async () => {
 afterEach(() => {
   assertNoUnhandledApiCalls();
 });
+
+// Astra's native modules: no real audio, wake lock or asset resolution in tests
+jest.mock('expo-keep-awake', () => ({
+  useKeepAwake: jest.fn(),
+  activateKeepAwakeAsync: jest.fn(() => Promise.resolve()),
+  deactivateKeepAwake: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('expo-audio', () => {
+  const player = {
+    play: jest.fn(),
+    pause: jest.fn(),
+    seekTo: jest.fn(() => Promise.resolve()),
+    loop: false,
+    playing: false,
+  };
+  return {
+    useAudioPlayer: jest.fn(() => player),
+    setAudioModeAsync: jest.fn(() => Promise.resolve()),
+    __player: player,
+  };
+});
+jest.mock('expo-asset', () => ({
+  Asset: {
+    fromModule: jest.fn(() => ({
+      downloadAsync: () =>
+        Promise.resolve({ localUri: 'file:///tmp/guide.pdf', uri: 'file:///tmp/guide.pdf' }),
+    })),
+  },
+}));

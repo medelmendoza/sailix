@@ -12,6 +12,20 @@ import { TodosScreen } from '@/features/todos/TodosScreen';
 import { AnnouncementScreen } from '@/features/announcements/AnnouncementScreen';
 import { AnnouncementsScreen } from '@/features/announcements/AnnouncementsScreen';
 import { useUnreadCount } from '@/features/announcements/api';
+import { AstraDocScreen } from '@/features/astra/AstraDocScreen';
+import { AstraMenuScreen } from '@/features/astra/AstraMenuScreen';
+import { NoiseScreen } from '@/features/astra/NoiseScreen';
+import { PomodoroScreen } from '@/features/astra/PomodoroScreen';
+import { SoundScreen } from '@/features/astra/SoundScreen';
+import {
+  EmailsScreen,
+  EmailStepScreen,
+  PmepeScreen,
+  RcaScreen,
+  RiskScreen,
+  ScarilScreen,
+  WhysScreen,
+} from '@/features/astra/StaticScreens';
 import { DocumentFormScreen } from '@/features/files/DocumentFormScreen';
 import { DocumentScreen } from '@/features/files/DocumentScreen';
 import { DocumentViewerScreen } from '@/features/files/DocumentViewerScreen';
@@ -248,6 +262,54 @@ export function RootNavigator() {
         />
         <AppStack.Screen name="Payslip" component={PayslipScreen} options={{ title: 'Payslip' }} />
         <AppStack.Screen name="Loans" component={LoansScreen} options={{ title: 'Cash advance' }} />
+        <AppStack.Screen
+          name="AstraMenu"
+          component={AstraMenuScreen}
+          options={{ title: 'Astra' }}
+        />
+        <AppStack.Screen
+          name="AstraPomodoro"
+          component={PomodoroScreen}
+          options={{ title: 'Pomodoro' }}
+        />
+        <AppStack.Screen
+          name="AstraNoise"
+          component={NoiseScreen}
+          options={{ title: 'Focus and Rest' }}
+        />
+        <AppStack.Screen name="AstraSound" component={SoundScreen} options={{ title: 'Sound' }} />
+        <AppStack.Screen
+          name="AstraRisk"
+          component={RiskScreen}
+          options={{ title: 'Risk management' }}
+        />
+        <AppStack.Screen
+          name="AstraRca"
+          component={RcaScreen}
+          options={{ title: 'Root cause analysis' }}
+        />
+        <AppStack.Screen name="AstraWhys" component={WhysScreen} options={{ title: '5 Whys' }} />
+        <AppStack.Screen
+          name="AstraPmepe"
+          component={PmepeScreen}
+          options={{ title: 'P.M.E.P.E' }}
+        />
+        <AppStack.Screen
+          name="AstraScaril"
+          component={ScarilScreen}
+          options={{ title: 'SCARIL' }}
+        />
+        <AppStack.Screen
+          name="AstraEmails"
+          component={EmailsScreen}
+          options={{ title: 'Military style emails' }}
+        />
+        <AppStack.Screen
+          name="AstraEmailStep"
+          component={EmailStepScreen}
+          options={{ title: 'Email steps' }}
+        />
+        <AppStack.Screen name="AstraDoc" component={AstraDocScreen} options={{ title: 'Guide' }} />
         <AppStack.Screen name="Todos" component={TodosScreen} options={{ title: 'To-do list' }} />
         <AppStack.Screen name="Account" component={AccountScreen} options={{ title: 'Account' }} />
         <AppStack.Screen

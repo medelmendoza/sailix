@@ -117,7 +117,11 @@ export function ServicesScreen({ navigation }: Props) {
           <ServiceCard
             key={m.code}
             module={m}
-            onPress={() => navigation.navigate('Module', { code: m.code })}
+            onPress={() =>
+              m.code === 'astra'
+                ? navigation.navigate('AstraMenu')
+                : navigation.navigate('Module', { code: m.code })
+            }
           />
         ))
       )}

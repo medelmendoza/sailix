@@ -46,3 +46,11 @@ export const TALA = (status: string, enabled = true) => ({
   linked: status === 'linked',
   status: status as 'disabled' | 'not_linked' | 'linked' | 'needs_relink' | 'revoked',
 });
+
+export const ASTRA = (enabled = true) => ({
+  code: 'astra' as const,
+  label: 'Astra',
+  enabled,
+  linked: enabled,
+  status: (enabled ? 'available' : 'disabled') as 'available' | 'disabled',
+});

@@ -20,7 +20,10 @@ export const demoMe = {
     mobile: null,
   },
   abilities: ['module.tala.use'],
-  modules: [{ code: 'tala', label: 'Tala', enabled: true, linked: true, status: 'linked' }],
+  modules: [
+    { code: 'tala', label: 'Tala', enabled: true, linked: true, status: 'linked' },
+    { code: 'astra', label: 'Astra', enabled: true, linked: true, status: 'available' },
+  ],
   memberships: [
     {
       id: 'm1',

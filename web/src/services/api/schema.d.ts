@@ -1685,7 +1685,7 @@ export interface components {
          * @description Module registry. Only `tala` exists in the MVP; new modules are added here.
          * @enum {string}
          */
-        ModuleCode: "tala";
+        ModuleCode: "tala" | "astra";
         TalaLink: {
             /** @enum {string} */
             status: "not_linked" | "linked" | "needs_relink" | "revoked";
@@ -1835,8 +1835,11 @@ export interface components {
             label: string;
             enabled: boolean;
             linked: boolean;
-            /** @enum {string} */
-            status: "disabled" | "not_linked" | "linked" | "needs_relink" | "revoked";
+            /**
+             * @description `available` is for built-in services (Astra) that have nothing to link.
+             * @enum {string}
+             */
+            status: "disabled" | "available" | "not_linked" | "linked" | "needs_relink" | "revoked";
         };
         TenantModule: {
             code: components["schemas"]["ModuleCode"];
@@ -4311,7 +4314,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    external_team_id: string;
+                    /** @description Required for a module that talks to an upstream system (Tala); not accepted for a built-in one (Astra). */
+                    external_team_id?: string;
                     /** @default false */
                     enabled?: boolean;
                 };

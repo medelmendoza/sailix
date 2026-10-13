@@ -1,5 +1,6 @@
 export const STATUS_LABEL: Readonly<Record<string, string>> = {
   disabled: 'Turned off',
+  available: 'Available',
   not_linked: 'Not linked',
   linked: 'Linked',
   needs_relink: 'Needs re-link',
@@ -8,6 +9,7 @@ export const STATUS_LABEL: Readonly<Record<string, string>> = {
 
 export const STATUS_DESCRIPTION: Readonly<Record<string, string>> = {
   disabled: 'Your organization has turned this service off. Contact your administrator.',
+  available: 'Built into Sailix. Open it from Services.',
   not_linked: 'Link your existing account to use this service.',
   linked: 'Your account is linked.',
   needs_relink: 'Your link expired. Link your account again to keep using this service.',

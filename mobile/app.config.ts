@@ -44,6 +44,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ['expo-secure-store', { faceIDPermission: false }],
     'expo-font',
     'expo-video',
+    // Astra's background sounds play only while its screen is open, so no background audio and no microphone are declared
+    ['expo-audio', { microphonePermission: false, enableBackgroundPlayback: false }],
     [
       'expo-splash-screen',
       { backgroundColor: '#F4F7FB', image: './assets/splash-icon.png', imageWidth: 120 },

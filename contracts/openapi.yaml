@@ -2000,9 +2000,8 @@ paths:
           application/json:
             schema:
               type: object
-              required: [external_team_id]
               properties:
-                external_team_id: { type: string, pattern: '^[A-Za-z0-9_-]{1,64}$' }
+                external_team_id: { type: string, pattern: '^[A-Za-z0-9_-]{1,64}$', description: 'Required for a module that talks to an upstream system (Tala); not accepted for a built-in one (Astra).' }
                 enabled: { type: boolean, default: false }
       responses:
         '200':
@@ -2557,7 +2556,7 @@ components:
               items: { $ref: '#/components/schemas/Feedback' }
     ModuleCode:
       type: string
-      enum: [tala]
+      enum: [tala, astra]
       description: Module registry. Only `tala` exists in the MVP; new modules are added here.
     TalaLink:
       type: object
@@ -2731,7 +2730,8 @@ components:
         linked: { type: boolean }
         status:
           type: string
-          enum: [disabled, not_linked, linked, needs_relink, revoked]
+          enum: [disabled, available, not_linked, linked, needs_relink, revoked]
+          description: '`available` is for built-in services (Astra) that have nothing to link.'
     TenantModule:
       type: object
       required: [code, label, entitled, enabled, external_team_id]

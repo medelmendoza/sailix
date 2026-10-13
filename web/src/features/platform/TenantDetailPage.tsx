@@ -264,10 +264,12 @@ function InviteDialog({
   );
 }
 
+/** Modules built into the app: nothing to map to an external team, an organization simply has them or not. */
+const BUILT_IN_MODULES = ['astra'];
+const TEAM_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
 const moduleSchema = z.object({
-  external_team_id: z
-    .string()
-    .regex(/^[A-Za-z0-9_-]{1,64}$/, 'Letters, digits, - and _ only (max 64).'),
+  external_team_id: z.string(),
   enabled: z.enum(['true', 'false']),
 });
 type ModuleValues = z.infer<typeof moduleSchema>;
@@ -289,10 +291,20 @@ function ModuleCard({ tenantId, module }: { tenantId: string; module: PlatformTe
     },
   });
 
+  const builtIn = BUILT_IN_MODULES.includes(module.code);
+
   function submit(v: ModuleValues) {
     setError(null);
+    if (!builtIn && !TEAM_ID.test(v.external_team_id)) {
+      setField('external_team_id', { message: 'Letters, digits, - and _ only (max 64).' });
+      return;
+    }
     provision.mutate(
-      { code: module.code, external_team_id: v.external_team_id, enabled: v.enabled === 'true' },
+      {
+        code: module.code,
+        ...(builtIn ? {} : { external_team_id: v.external_team_id }),
+        enabled: v.enabled === 'true',
+      },
       {
         onSuccess: () => toast.success(`${module.label} saved.`),
         onError: (e) =>
@@ -316,12 +328,19 @@ function ModuleCard({ tenantId, module }: { tenantId: string; module: PlatformTe
     >
       <form onSubmit={handleSubmit(submit)} noValidate className="flex max-w-lg flex-col gap-4">
         <FormError message={error} />
-        <TextField
-          label="External team ID"
-          hint="The team of the external system this organization is bound to. Each team can belong to one organization only."
-          error={formState.errors.external_team_id?.message}
-          {...register('external_team_id')}
-        />
+        {builtIn ? (
+          <p className="text-sm text-muted">
+            Built into the app: there is no external team to map. Switch it on for this organization
+            and its members see it under Services.
+          </p>
+        ) : (
+          <TextField
+            label="External team ID"
+            hint="The team of the external system this organization is bound to. Each team can belong to one organization only."
+            error={formState.errors.external_team_id?.message}
+            {...register('external_team_id')}
+          />
+        )}
         <SelectField
           label="Status"
           options={[
@@ -330,7 +349,7 @@ function ModuleCard({ tenantId, module }: { tenantId: string; module: PlatformTe
           ]}
           {...register('enabled')}
         />
-        {module.entitled && (
+        {module.entitled && !builtIn && (
           <p className="text-xs text-muted">{module.links_count} linked account(s).</p>
         )}
         <div>

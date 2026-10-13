@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ModuleStatus;
 use App\Enums\Role;
 use App\Models\CrewDocument;
 use App\Models\DocumentType;
@@ -10,6 +11,8 @@ use App\Models\Membership;
 use App\Models\Payslip;
 use App\Models\PayslipDeduction;
 use App\Models\Tenant;
+use App\Models\TenantModule;
+use App\Modules\Module;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -30,6 +33,7 @@ class CrewPortalDemoSeeder extends Seeder
         }
 
         foreach (Tenant::query()->whereIn('code', ['SFAI', 'ACME'])->get() as $tenant) {
+            $this->astra($tenant);
             $types = $this->types($tenant);
             foreach (Membership::withoutTenantScope()->where('tenant_id', $tenant->id)->where('role', Role::Crew)->get() as $member) {
                 $this->documents($tenant, $member, $types);
@@ -37,6 +41,14 @@ class CrewPortalDemoSeeder extends Seeder
                 $this->loans($tenant, $member);
             }
         }
+    }
+
+    /** Astra is built into the app: the demo organizations simply have it switched on. */
+    private function astra(Tenant $tenant): void
+    {
+        $row = TenantModule::withoutTenantScope()->where('tenant_id', $tenant->id)->where('module', 'astra')->first()
+            ?? (new TenantModule)->forceFill(['tenant_id' => $tenant->id, 'module' => Module::Astra]);
+        $row->forceFill(['status' => ModuleStatus::Enabled])->save();
     }
 
     /** @return array<string, DocumentType> by short name */

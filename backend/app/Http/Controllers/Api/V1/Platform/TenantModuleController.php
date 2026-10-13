@@ -21,7 +21,7 @@ class TenantModuleController extends Controller
         return response()->json(['data' => $modules->provision(
             $tenant,
             $module,
-            $request->string('external_team_id')->toString(),
+            $module->requiresEndpoint() ? $request->string('external_team_id')->toString() : null,
             $request->boolean('enabled'),
         )]);
     }

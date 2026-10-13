@@ -26,7 +26,7 @@ final class TenantModules
     }
 
     /** @return array{code: string, label: string, entitled: bool, enabled: bool, external_team_id: string|null, links_count: int} */
-    public function provision(Tenant $tenant, Module $module, string $externalTeamId, bool $enabled): array
+    public function provision(Tenant $tenant, Module $module, ?string $externalTeamId, bool $enabled): array
     {
         try {
             DB::transaction(function () use ($tenant, $module, $externalTeamId, $enabled) {
@@ -39,7 +39,7 @@ final class TenantModules
                     throw ApiProblem::conflict('links_exist', 'The team mapping cannot change while accounts are linked. Unlink them first.');
                 }
 
-                $taken = TenantModule::withoutTenantScope()
+                $taken = $externalTeamId !== null && TenantModule::withoutTenantScope()
                     ->where('module', $module->value)->where('external_team_id', $externalTeamId)
                     ->where('tenant_id', '!=', $tenant->getKey())->exists();
                 if ($taken) {
