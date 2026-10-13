@@ -36,8 +36,7 @@ class RequireModule
 
         // Fail closed until the platform has configured an approved HTTPS endpoint (docs/13 D-T2: production
         // HTTPS is unverified, so nothing may reach the upstream by default).
-        $setting = $module->endpointSetting();
-        if ($setting !== null && SettingsRegistry::platform($setting) === null) {
+        if ($module->requiresEndpoint() && SettingsRegistry::platform($module->endpointSetting()) === null) {
             throw new ApiProblem(503, 'module_unavailable', 'This module is not available yet.');
         }
 

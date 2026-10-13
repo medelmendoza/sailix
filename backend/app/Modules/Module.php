@@ -28,8 +28,16 @@ enum Module: string
         return "module.{$this->value}.manage";
     }
 
-    /** Platform setting holding the approved HTTPS origin this module talks to (null = module has no upstream). */
-    public function endpointSetting(): ?string
+    /** Whether the module talks to an upstream system through the gateway (future modules may not). */
+    public function requiresEndpoint(): bool
+    {
+        return match ($this) {
+            self::Tala => true,
+        };
+    }
+
+    /** Platform setting holding the approved HTTPS origin of the upstream (meaningful when requiresEndpoint()). */
+    public function endpointSetting(): string
     {
         return match ($this) {
             self::Tala => 'tala_api_base_url',
