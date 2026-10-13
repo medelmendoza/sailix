@@ -19,7 +19,13 @@ export type AppStackParamList = {
   Module: { code: string };
   TalaStats: undefined;
   TalaCourse: { assignId: string; name: string };
-  TalaFlashcards: { assignId: string; cardId: string; name: string };
+  TalaFlashcards: {
+    assignId: string;
+    cardId: string;
+    name: string;
+    /** Demo builds only (ignored otherwise): open with the answer side showing, for screenshots. */
+    preview?: 'answer';
+  };
   TalaQuiz: { assignId: string; quizId: string; name: string };
   TalaPdf: { name: string; uri: string };
   TalaVideo: {

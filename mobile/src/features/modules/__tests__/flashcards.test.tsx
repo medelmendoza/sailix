@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
-import { Alert, Linking } from 'react-native';
+import { AccessibilityInfo, Alert, Linking } from 'react-native';
 import { makeMe, TALA } from '@/test-utils/fixtures';
 import { mockApi, problem } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
@@ -123,6 +123,34 @@ describe('flashcard study', () => {
     for (const r of ['Easy', 'Medium', 'Hard'])
       expect(screen.getByRole('button', { name: r })).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Medium' }));
+    expect(await screen.findByText(/Card 2 of 3 · Rated 1 of 3/)).toBeTruthy();
+  });
+
+  it('turns the card over: only the side facing the learner is readable, and the next card starts on its question', async () => {
+    await openDeck();
+    await fireEvent.press(await screen.findByRole('button', { name: /^Study flashcards/ }));
+
+    expect(await screen.findByText(/^Question \d$/)).toBeTruthy();
+    expect(screen.getByText('Question')).toBeTruthy(); // the face title, as in the Tala app
+    await fireEvent.press(screen.getByRole('button', { name: 'Show answer' }));
+    expect(await screen.findByText(/^Answer \d$/)).toBeTruthy();
+    expect(screen.queryByText(/^Question \d$/)).toBeNull(); // the question side is turned away
+    expect(screen.queryByRole('button', { name: 'Show answer' })).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Hard' }));
+    expect(await screen.findByText(/^Question \d$/)).toBeTruthy(); // turned back to a new question
+    expect(screen.queryByText(/^Answer \d$/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Hard' })).toBeNull();
+  });
+
+  it('still works when the person asked for reduced motion (the card changes side without turning)', async () => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    await openDeck();
+    await fireEvent.press(await screen.findByRole('button', { name: /^Study flashcards/ }));
+    await screen.findByText(/^Question \d$/);
+    await fireEvent.press(screen.getByRole('button', { name: 'Show answer' }));
+    expect(await screen.findByText(/^Answer \d$/)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Easy' }));
     expect(await screen.findByText(/Card 2 of 3 · Rated 1 of 3/)).toBeTruthy();
   });
 

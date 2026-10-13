@@ -1,10 +1,22 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Image, Linking, ScrollView, StyleSheet } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  AccessibilityInfo,
+  Animated,
+  Easing,
+  Image,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { env } from '@/app/config/env';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText, Button, Card, ErrorState, Notice, SkeletonList } from '@/components';
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, radius, shadows, spacing } from '@/constants/theme';
 import { describeError, toApiError } from '@/services/api/errors';
 import type { TalaDeck } from '@/services/api/types';
 import { scopedKey } from '@/store/scopedKey';
@@ -16,8 +28,6 @@ import { getCachedDeck, getLocalRatings, setCachedDeck, setLocalRatings } from '
 type Props = NativeStackScreenProps<AppStackParamList, 'TalaFlashcards'>;
 type Rating = 'easy' | 'medium' | 'hard';
 type DeckCard = TalaDeck['cards'][number];
-
-const LABEL: Record<Rating, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
 
 function shuffle<T>(items: T[]): T[] {
   const a = [...items];
@@ -70,7 +80,7 @@ function Media({ media, label }: { media: DeckCard['question_media']; label: str
  * (card pictures and media still need a connection).
  */
 export function TalaFlashcardsScreen({ route, navigation }: Props) {
-  const { assignId, cardId } = route.params;
+  const { assignId, cardId, preview } = route.params;
   const deckQuery = useQuery({
     queryKey: scopedKey('tala', 'deck', assignId, cardId),
     gcTime: 0,
@@ -121,6 +131,7 @@ export function TalaFlashcardsScreen({ route, navigation }: Props) {
       deck={data.deck}
       fromCache={data.fromCache}
       initialRatings={data.ratings}
+      previewAnswer={env.demo && preview === 'answer'}
       onBack={() => navigation.goBack()}
     />
   );
@@ -132,6 +143,7 @@ function Study({
   deck,
   fromCache,
   initialRatings,
+  previewAnswer,
   onBack,
 }: {
   assignId: string;
@@ -139,6 +151,7 @@ function Study({
   deck: TalaDeck;
   fromCache: boolean;
   initialRatings: Record<number, Rating>;
+  previewAnswer: boolean;
   onBack: () => void;
 }) {
   const queryClient = useQueryClient();
@@ -146,8 +159,41 @@ function Study({
     const plan = planPass(deck, initialRatings);
     return { ratings: initialRatings, order: plan.order, pos: 0, practice: plan.practice };
   });
-  const [revealed, setRevealed] = useState(false);
+  const [revealed, setRevealed] = useState(previewAnswer);
+  // The back face keeps the card it was turned over on, so it can swing away while the next question swings in.
+  const [backIndex, setBackIndex] = useState<number | null>(null); // null: the current card
   const [done, setDone] = useState(false);
+  const [flip] = useState(() => new Animated.Value(previewAnswer ? 1 : 0));
+  const reduceMotion = useRef(false);
+  const { height } = useWindowDimensions();
+
+  useEffect(() => {
+    void AccessibilityInfo.isReduceMotionEnabled?.()
+      .then((on) => {
+        reduceMotion.current = on;
+      })
+      .catch(() => undefined);
+  }, []);
+
+  /** Turns the card over (1 = answer side) or back (0 = question side). Skipped for people who asked for less motion. */
+  function turn(to: 0 | 1) {
+    if (reduceMotion.current) {
+      flip.setValue(to);
+      return;
+    }
+    Animated.timing(flip, {
+      toValue: to,
+      duration: 480,
+      easing: Easing.inOut(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }
+
+  function reveal(card: DeckCard) {
+    setBackIndex(card.index);
+    setRevealed(true);
+    turn(1);
+  }
   const [error, setError] = useState<string | null>(null);
 
   const rated = Object.keys(session.ratings).length;
@@ -175,6 +221,7 @@ function Study({
     const ratings = { ...session.ratings, [card.index]: rating };
     await setLocalRatings(currentScope(), assignId, cardId, { version: deck.version, ratings });
     setRevealed(false);
+    turn(0);
     const pos = session.pos + 1;
     if (pos >= session.order.length) {
       setSession({ ...session, ratings, pos });
@@ -189,6 +236,7 @@ function Study({
     setDone(false);
     setError(null);
     setRevealed(false);
+    flip.setValue(0);
     setSession({ ...session, order: plan.order, pos: 0, practice: plan.practice });
   }
 
@@ -221,6 +269,11 @@ function Study({
   }
 
   const card = deck.cards[session.order[session.pos]!]!;
+  const back = deck.cards.find((c) => c.index === backIndex) ?? card;
+  const frontTurn = flip.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] });
+  const backTurn = flip.interpolate({ inputRange: [0, 1], outputRange: ['180deg', '360deg'] });
+  const cardHeight = Math.max(320, Math.round(height * 0.5));
+
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <AppText variant="caption" muted>
@@ -228,41 +281,173 @@ function Study({
         {session.practice ? ' · Practice' : ''}
       </AppText>
       {fromCache ? <Notice message="You are studying the copy saved on this device." /> : null}
-      <Card style={{ gap: spacing.md }}>
-        <AppText variant="caption" muted>
-          Question
-        </AppText>
-        {card.question ? <AppText variant="heading">{card.question}</AppText> : null}
-        <Media media={card.question_media} label="Question picture" />
-      </Card>
+
+      <View style={{ height: cardHeight }}>
+        <Face
+          title="Question"
+          text={card.question}
+          media={card.question_media}
+          mediaLabel="Question picture"
+          turn={frontTurn}
+          hidden={revealed}
+        />
+        <Face
+          title="Answer"
+          text={back.answer}
+          media={back.answer_media}
+          mediaLabel="Answer picture"
+          turn={backTurn}
+          hidden={!revealed}
+          accent
+        />
+      </View>
+
       {revealed ? (
         <>
-          <Card style={{ gap: spacing.md }}>
-            <AppText variant="caption" muted>
-              Answer
-            </AppText>
-            {card.answer ? <AppText variant="heading">{card.answer}</AppText> : null}
-            <Media media={card.answer_media} label="Answer picture" />
-          </Card>
-          <AppText muted>How well did you know it?</AppText>
-          {(['easy', 'medium', 'hard'] as const).map((r) => (
-            <Button
-              key={r}
-              title={LABEL[r]}
-              variant={r === 'hard' ? 'secondary' : 'primary'}
-              onPress={() => void rate(card, r)}
+          <AppText muted style={styles.center}>
+            How well did you know it?
+          </AppText>
+          <View style={styles.ratings}>
+            <RoundButton
+              label="Easy"
+              bg={colors.success}
+              fg={colors.onPrimary}
+              onPress={() => void rate(card, 'easy')}
             />
-          ))}
+            <RoundButton
+              label="Medium"
+              bg={colors.ratingMedium}
+              fg={colors.text}
+              onPress={() => void rate(card, 'medium')}
+            />
+            <RoundButton
+              label="Hard"
+              bg={colors.danger}
+              fg={colors.onPrimary}
+              onPress={() => void rate(card, 'hard')}
+            />
+          </View>
         </>
       ) : (
-        <Button title="Show answer" onPress={() => setRevealed(true)} />
+        <View style={styles.ratings}>
+          <RoundButton
+            label="Show answer"
+            text="Answer"
+            bg={colors.primary}
+            fg={colors.onPrimary}
+            onPress={() => reveal(card)}
+          />
+        </View>
       )}
     </ScrollView>
   );
 }
 
+/** One side of the card. A side that is not facing the learner is hidden from screen readers (and from taps). */
+function Face({
+  title,
+  text,
+  media,
+  mediaLabel,
+  turn,
+  hidden,
+  accent,
+}: {
+  title: string;
+  text: string | null;
+  media: DeckCard['question_media'];
+  mediaLabel: string;
+  turn: Animated.AnimatedInterpolation<string>;
+  hidden: boolean;
+  accent?: boolean;
+}) {
+  return (
+    <Animated.View
+      accessibilityElementsHidden={hidden}
+      importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
+      pointerEvents={hidden ? 'none' : 'auto'}
+      style={[
+        styles.face,
+        accent && styles.faceAccent,
+        { transform: [{ perspective: 1200 }, { rotateY: turn }] },
+      ]}
+    >
+      <AppText variant="caption" style={{ color: accent ? colors.success : colors.primary }}>
+        {title}
+      </AppText>
+      <ScrollView contentContainerStyle={styles.faceBody} showsVerticalScrollIndicator={false}>
+        {text ? (
+          <AppText variant="heading" style={styles.center}>
+            {text}
+          </AppText>
+        ) : null}
+        <Media media={media} label={mediaLabel} />
+      </ScrollView>
+    </Animated.View>
+  );
+}
+
+/** The big round buttons of the Tala app: one to turn the card, then Easy / Medium / Hard. */
+function RoundButton({
+  label,
+  text,
+  bg,
+  fg,
+  onPress,
+}: {
+  label: string;
+  text?: string;
+  bg: string;
+  fg: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.round,
+        { backgroundColor: bg },
+        pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] },
+      ]}
+    >
+      <AppText variant="button" style={{ color: fg }}>
+        {(text ?? label).toUpperCase()}
+      </AppText>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
+  center: { textAlign: 'center' },
+  ratings: { flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' },
+  round: {
+    width: 96,
+    height: 96,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: shadows.raised,
+  },
+  face: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backfaceVisibility: 'hidden',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.borderSoft,
+    padding: spacing.xl,
+    gap: spacing.md,
+    boxShadow: shadows.raised,
+  },
+  faceAccent: { backgroundColor: colors.successBg, borderColor: colors.success },
+  faceBody: { flexGrow: 1, justifyContent: 'center', alignItems: 'stretch', gap: spacing.md },
   image: {
     width: '100%',
     height: 220,

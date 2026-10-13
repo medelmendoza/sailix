@@ -21,6 +21,8 @@ export const colors = {
   coral: '#F0A27F',
   coralText: '#A8391A',
   gold: '#B7791F',
+  // flashcard rating buttons (Easy uses `success`, Hard uses `danger`); dark text sits on this amber
+  ratingMedium: '#F2B93B',
   // boundaries of controls that must be identifiable without colour (inputs, option rows): >= 3:1 on sand and white
   border: '#7B8794',
   borderSoft: '#E3DDD0',

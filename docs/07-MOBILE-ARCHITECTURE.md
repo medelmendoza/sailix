@@ -74,3 +74,9 @@ Warm sand ground, white cards lifted by a soft shadow and a hairline, deep-teal 
 ### 7.3 Send feedback
 
 Account > Send feedback posts `{category, message}` to `POST /me/feedback`. The server stamps the organization and member from the session (never the body), limits to 10 a day, and administrators read it at `GET /tenant/feedback` (API only; no web screen yet). It is NOT sent to Tala.
+
+### 7.4 Flashcard study screen (copied from the Tala app, plus a flip)
+
+One large card shows the Question. A big round ANSWER button turns the card over to the Answer side; then three round buttons, Easy (green), Medium (amber), Hard (red), rate the card and turn it back to the next question. Study order and recording are unchanged (unrated cards first in random order, then hard/medium/easy practice; the complete set is sent once every card is rated). The flip is a 480 ms rotation using `Animated` on the native driver; with "reduce motion" on it changes side without turning. Only the side facing the learner is exposed to screen readers. Demo builds accept a `preview: 'answer'` route param so screenshots can show the answer side (ignored otherwise).
+
+Not verified: the motion itself on a device (screenshots show the two resting sides only, and touch input does not work on the simulator here).

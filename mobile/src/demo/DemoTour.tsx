@@ -1,3 +1,4 @@
+import { StackActions } from '@react-navigation/native';
 import { useEffect } from 'react';
 import { navigationRef } from '@/app/navigation/navigationRef';
 
@@ -16,6 +17,15 @@ const STOPS: (() => void)[] = [
       name: 'Safety symbols',
     }),
   () => navigationRef.navigate('MainTabs', { screen: 'Account' }),
+  () =>
+    navigationRef.dispatch(
+      StackActions.push('TalaFlashcards', {
+        assignId: 'A1',
+        cardId: 'c1',
+        name: 'Safety symbols',
+        preview: 'answer',
+      }),
+    ),
 ];
 
 export function DemoTour({ intervalMs = 7000 }: { intervalMs?: number }) {
