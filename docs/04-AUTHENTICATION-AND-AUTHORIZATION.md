@@ -55,3 +55,17 @@ Ownership checks for crew: `record.membership_id === ctx.membership_id` in addit
 
 ### Authorization failure modes to test
 Tenant admin → platform routes (403); crew → tenant admin routes (403); crew A → crew B record in same tenant (404); tenant A admin → tenant B record (404); suspended membership → 403; modified `X-Tenant-Hint` → 409; switched membership → new token, old one valid only for old tenant until revoked.
+
+## 3. Implementation notes and deviations (Phase B, 2026-10-13)
+
+| Topic | Implemented | Difference from the design above |
+|---|---|---|
+| Superadmin session | Separate `platform` guard and `platform_admins` table; TOTP mandatory with replay protection (`totp_last_step`); 30 min idle timeout; `platform:create-admin` CLI creates the admin and prints the TOTP secret once | **One session cookie, not two.** A browser session holds either a tenant login or a platform login; logging into one logs out the other. Guard separation, not cookie separation. |
+| Superadmin enrolment | CLI only; no web enrolment/recovery codes yet | Recovery/rotation flow is a Phase E item |
+| Token lifecycle | 30-day token, rotation via `/auth/token/refresh`, 90-day absolute chain (`chain_started_at`), revoked on suspend/deactivate/archive, member suspension, role change | Values are config (`config/sailix.php`), not yet platform settings |
+| Tenant context | `ResolveTenantContext` (token `membership_id` or server session) re-validates user, membership, tenant status on **every** request; `X-Tenant-Hint` mismatch ⇒ 409; context cleared at end of request | – |
+| Invitations | Platform invites a tenant admin: user + `invited` membership + single-use 72 h token (hash stored). Email via Laravel mail (log driver locally); token is echoed in the response only when `SAILIX_EXPOSE_INVITATION_TOKEN=true` (local/testing) | Provider/templates pending D-11 |
+| Password policy | Platform floor (default 8) in settings; tenant may only raise it (validated + resolved as max) | Invitation acceptance applies the platform floor only (tenant context absent on that public route) |
+| Rate limits | login 5/min per username+IP, 20/min per IP; platform login 5/min; invitation 10/h; API 120/min per principal | – |
+| Not yet built | forgot/reset password, registration, MFA for tenant admins, step-up, device/session list, email verification | Phase D1 / E |
+| `users.display_name` | Added to the login identity so admins without a crew profile have a label | Small addition to docs/03 |

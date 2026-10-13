@@ -6,7 +6,7 @@ Status: PROPOSED. Data classes: seafarer PII (name, DOB, phone, email, address),
 
 | # | Threat | Likelihood / impact | Controls (doc ref) | Verified by |
 |---|---|---|---|---|
-| T1 | Cross-tenant data access | M / Critical | Layers in 03 §4: bound token, fail-closed scope, composite FKs, RLS, policies | Isolation suite (§2) |
+| T1 | Cross-tenant data access | M / Critical | Layers in 03 §4: bound token, fail-closed scope, composite FKs, static/schema checks, policies | Isolation suite (§2) |
 | T2 | Broken object-level authorization (BOLA/IDOR) — the legacy app's known flaw | H / Critical | Identity from token only; UUIDv7 ids; policy on every action; foreign ⇒ 404 | per-endpoint ownership tests |
 | T3 | Privilege escalation (crew→admin, admin→superadmin) | M / Critical | Fixed role map; rank check on assignment; separate platform table/guard/MFA; last-admin guard | role matrix tests |
 | T4 | Tenant context spoofing (header/body/path/query) | H / Critical | Tenant never accepted as input; `X-Tenant-Hint` mismatch ⇒ 409 | spoof tests |

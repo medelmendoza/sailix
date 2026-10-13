@@ -80,7 +80,7 @@ See `01-SPECIFICATION-GAP-ANALYSIS.md` §6 for the full list. The ones that chan
 | D-3 | Tenant = manning agency (`client_code`)? Is SFAI the only launch tenant? |
 | D-4 | Username uniqueness: global, or per agency with an agency code at login? |
 | D-5 | Which tenant staff roles exist besides tenant admin? |
-| D-6 | Database engine (PostgreSQL recommended) and legacy DB engine for migration. |
+| D-6 | Database engine — **DECIDED: MySQL** (user, 2026-10-13). Legacy DB engine still unknown (affects data migration). |
 | D-7 | Monorepo vs separate repos (monorepo recommended). |
 | D-8 | Behaviour of a suspended tenant (block all vs read-only). |
 | D-9 | Data-retention / deletion policy (PII + financial data). |

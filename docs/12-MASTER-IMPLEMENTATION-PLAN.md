@@ -10,17 +10,17 @@ Ordering rule: backend contracts + tenant security first; Phase C gates everythi
 - Acceptance: fresh clone builds each project's empty skeleton; CI green; no secrets in repo.
 - Risks: toolchain drift (PHP 8.5 vs supported range) → pin versions. Tests: CI smoke.
 
-## Phase B — Backend foundation
+## Phase B — Backend foundation (**IMPLEMENTED + TESTED 2026-10-13**; see PROJECT-STATUS for evidence and deviations)
 - Dependencies: A, D-4, D-6, Q-5.
-- Deliverables: Laravel init; Postgres config; migrations for platform + identity (`tenants, users, platform_admins, memberships, tenant_settings, tokens, audit_logs, stored_files`); Sanctum token + SPA flows; `ResolveTenantContext`; role map + policies; tenant lifecycle actions; API versioning, problem+json handler, rate limiters; audit logging; `contracts/openapi.yaml` (auth/me/platform/tenant core) + contract tests.
+- Deliverables: Laravel init; MySQL config; migrations for platform + identity (`tenants, users, platform_admins, memberships, tenant_settings, tokens, audit_logs, stored_files`); Sanctum token + SPA flows; `ResolveTenantContext`; role map + policies; tenant lifecycle actions; API versioning, problem+json handler, rate limiters; audit logging; `contracts/openapi.yaml` (auth/me/platform/tenant core) + contract tests.
 - Acceptance: auth, authorization, lifecycle tests pass; OpenAPI lint passes; migrations run on fresh dev DB.
 - Risks: Sanctum cookie topology (same registrable domain) → verify in staging; MFA library choice. Tests: unit + feature + auth.
 
 ## Phase C — Tenant isolation (hard gate)
 - Dependencies: B.
-- Deliverables: `BelongsToTenant` + fail-closed scope; composite-FK helper macros for migrations; schema-lint test; `TenantAwareJob`; `TenantCache`; tenant-scoped `FileStore`; RLS spike → decision recorded (adopt or documented fallback); isolation suite scaffolding with two seeded tenants and a **sample tenant-owned module** used only for the harness (replaced by real modules in D).
+- Deliverables: `BelongsToTenant` + fail-closed scope; composite-FK helper macros for migrations; schema-lint test; `TenantAwareJob`; `TenantCache`; tenant-scoped `FileStore`; RLS spike **dropped** (MySQL decided, D-6): compensating static checks implemented instead; isolation suite scaffolding with two seeded tenants and a **sample tenant-owned module** used only for the harness (replaced by real modules in D).
 - Acceptance: all 15 isolation checks (09 §2) green including forgotten-filter and cross-tenant FK tests; static checks for scope escape hatch pass.
-- Risks: RLS + pooling complexity; performance of composite indexes. **No business module starts before this passes.**
+- Risks: raw-SQL bypass risk without RLS; performance of composite indexes. **No business module starts before this passes.**
 
 ## Phase D — Core business modules (in dependency order)
 Each module delivers: migration, endpoints, rules, policies, tenant ownership, **isolation tests**, OpenAPI update, web admin screens (if applicable), mobile screens, docs.

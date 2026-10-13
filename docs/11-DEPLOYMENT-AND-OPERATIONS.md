@@ -9,7 +9,7 @@ Status: PROPOSED, provider-agnostic. No hosting vendor is chosen or assumed (D-1
 | Queue worker(s) | Same image, `php artisan queue:work` | separate queues: default, mail, imports |
 | Scheduler | One `schedule:run` instance (or platform cron) | per-tenant fan-out |
 | Web portal | Static build (Vite) on any static host/CDN, same registrable domain as the API for cookie auth | CSP + security headers at the edge |
-| Database | Managed PostgreSQL 16+ (D-6) | PITR backups, non-owner app role, RLS |
+| Database | Managed MySQL 8.4+/9.x (D-6 decided) | PITR/binlog backups, app user with DML-only rights (migrations run under a separate privileged user) |
 | Cache/queue/throttle | Redis (justified by queue + rate-limit + cache; database driver acceptable for small installs) | tenant-prefixed keys |
 | File storage | S3-compatible private bucket, server-side encryption, no public access | keys `tenants/{id}/…` |
 | Email | SMTP/API provider via Laravel mail driver (D-11) | SPF/DKIM/DMARC |

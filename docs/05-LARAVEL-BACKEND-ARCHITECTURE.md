@@ -23,7 +23,8 @@ backend/
 │   ├── Policies/
 │   ├── Actions/                 # RegisterCrew, SubmitCrewDocument, ReviewDocument, ImportPayslips…
 │   ├── Support/Tenancy/         # TenantContext, BelongsToTenant, TenantScope, TenantAwareJob, TenantCache
-│   ├── Platform/                # only place allowed to use withoutTenantScope()
+│   ├── Identity/                # login/token/invitation resolution (cross-tenant by nature)
+│   ├── Platform/                # tenant lifecycle, invitations; with Identity/ the ONLY code allowed to use withoutTenantScope()
 │   ├── Jobs/  Events/  Listeners/  Notifications/
 ├── database/{migrations,factories,seeders}
 ├── routes/api_v1.php  (+ web.php for Sanctum cookie routes)

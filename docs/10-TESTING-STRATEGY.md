@@ -2,7 +2,7 @@
 
 Principle: a feature is not done until its tests ran and passed; gates are executed, never assumed. Environment limits (no device, no simulator) are reported as *not run*.
 
-## 1. Backend (PHPUnit or Pest; PostgreSQL in CI, same engine as prod)
+## 1. Backend (PHPUnit or Pest; MySQL in CI and locally, same engine as prod)
 | Layer | Scope |
 |---|---|
 | Unit | Tenancy support classes, settings registry, role→ability map, money/date helpers, expiry-status rules, state machine for tenant lifecycle |
@@ -11,7 +11,7 @@ Principle: a feature is not done until its tests ran and passed; gates are execu
 | Authorization | Policy matrix generated from the role map (role × action × ownership × tenant) |
 | **Isolation** | The 15-point suite in 09 §2 for **every** tenant module; runs on every PR; failing it blocks merge |
 | Business rules | BR-xx rules turned into tests (expiry colouring inputs, resubmit gating, payslip kind routing, loan totals passthrough, read-state) |
-| DB constraints | Composite-FK rejection of cross-tenant links, unique-per-tenant, RLS behaviour (Postgres) |
+| DB constraints | Composite-FK rejection of cross-tenant links, unique-per-tenant, static tenancy checks (no RLS on MySQL) |
 | Files | Type sniffing, size limits, authorized download, signed-URL expiry, tenant path prefix |
 | Jobs/scheduler | Tenant context restore, fail-closed, per-tenant fan-out, retry |
 | Contract | Responses validated against `contracts/openapi.yaml`; spec lint in CI |

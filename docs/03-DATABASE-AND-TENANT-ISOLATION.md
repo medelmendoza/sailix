@@ -14,9 +14,9 @@ Status: PROPOSED. Entities below come from the Flutter analysis; columns marked 
 | Compliance-driven residency per tenant | No | No | Yes |
 | Laravel ergonomics | Native | Needs tenancy package/hacks | Needs tenancy package |
 
-**Recommendation: A (shared schema) with defence in depth**: global scopes + fail-closed context, composite tenant-aware foreign keys, UUIDv7/ULID keys, and (PostgreSQL) Row-Level Security as a second wall. **Revisit C** if a tenant requires contractual isolation, data residency, or per-tenant restore SLAs — none is evidenced today. Finalization is pending your answers on compliance/scale (D-6, D-9, D-11). ADR-0001.
+**Recommendation: A (shared schema) with defence in depth**: global scopes + fail-closed context, composite tenant-aware foreign keys, UUIDv7 keys, static/schema checks in CI. **Revisit C** if a tenant requires contractual isolation, data residency, or per-tenant restore SLAs — none is evidenced today. Finalization is pending your answers on compliance/scale (D-6, D-9, D-11). ADR-0001.
 
-**Engine:** PostgreSQL 16+ recommended (RLS, partial unique indexes, `jsonb`, composite FKs). MySQL works for A without RLS, losing one isolation layer. Legacy DB engine unknown (D-6).
+**Engine (D-6 decided 2026-10-13): MySQL** (8.4+/9.x; developed against 9.7). InnoDB composite foreign keys, `json` columns, `utf8mb4_0900_ai_ci` collation. Consequences vs the PostgreSQL proposal: **no Row-Level Security** (one fewer independent wall — compensated in §3.6), no partial unique indexes (uniqueness that PostgreSQL would express as partial indexes is enforced in code/transactions), ids are `char(36)` UUIDv7. Usernames/emails/tenant codes are case-insensitively unique because of the collation.
 
 ## 2. Table catalogue
 
@@ -35,7 +35,7 @@ Status: PROPOSED. Entities below come from the Flutter analysis; columns marked 
 | Table | Key columns |
 |---|---|
 | `memberships` | id, tenant_id, user_id, role, status (`pending/active/suspended`), unique(tenant_id,user_id) |
-| `tenant_settings` | tenant_id, key, value (jsonb), unique(tenant_id,key) |
+| `tenant_settings` | tenant_id, key, value (json), unique(tenant_id,key) |
 | `crew_profiles` | tenant_id, membership_id, `crew_code` (the legacy `crewID`), first/middle/last/suffix, mobile, birth_date, email copy? — **PII lives here, tenant-owned** |
 
 ### Tenant-owned business tables (all carry `tenant_id`)
@@ -46,7 +46,7 @@ Status: PROPOSED. Entities below come from the Flutter analysis; columns marked 
 | `document_types` | `/pldocument` | name, short name; tenant-owned (seeded from defaults) [U G-04] |
 | `crew_documents` | DOC-01/03/05/06 | one table with `status` (`pending`,`approved`,`rejected`,`superseded`); doc_type_id, number, grade, location, school, issued_on, expires_on, rejection_reason, reviewed_by/at *(I)*, file ref. Server-computed expiry state (`expired/expiring/none`) via query/accessor, rule thresholds [U Q-12] |
 | `todos` | TODO-01/02 | membership_id, description, due_date, is_done, done_at, created_by *(I)* |
-| `payslips` | FIN-02..04 | kind (`regular/special/final`), vessel_name, `date_pro`, period label, crew/position/address/payee, bank code/account (stored; masked in API), exchange_rate, pay_usd, pay_php, net_amount, is_dollar, sss/philhealth/pagibig, deductions_total; undisplayed legacy fields (`adjustment`, `union_dues`, `mpfee`, …) in `extra jsonb` until Q-7 resolved |
+| `payslips` | FIN-02..04 | kind (`regular/special/final`), vessel_name, `date_pro`, period label, crew/position/address/payee, bank code/account (stored; masked in API), exchange_rate, pay_usd, pay_php, net_amount, is_dollar, sss/philhealth/pagibig, deductions_total; undisplayed legacy fields (`adjustment`, `union_dues`, `mpfee`, …) in `extra json` until Q-7 resolved |
 | `payslip_deductions` | `deductions[]` | payslip_id, descr, amount |
 | `loans` | FIN-05 | code, descr, loan_amount, deduct_amount, paid_amount, balance, is_dollar, flags in `extra` until Q-30 |
 | `payroll_imports` *(I, D-1)* | – | batch id, source, status, row counts, errors; only if ingestion is chosen |
@@ -69,8 +69,7 @@ Not modelled (not evidenced): subscriptions/plans/billing; Tasks module; Call-It
    ```
 4. Uniqueness scoped to tenant: `UNIQUE (tenant_id, crew_code)`, `UNIQUE (tenant_id, user_id)` on memberships, etc. (Global: `users.username`/`email` per D-4.)
 5. Soft deletes only on user-visible business records; never on `audit_logs`.
-6. **PostgreSQL RLS (defence in depth, Phase C decision after spike):** enable on every tenant table:
-   `USING (tenant_id = current_setting('app.tenant_id', true)::uuid)`, app connects as a non-owner role without `BYPASSRLS`; `app.tenant_id` set with `SET LOCAL` inside each request/job transaction (works with transaction-mode pooling). Platform operations use an explicit second connection/role and write audit rows. If the spike shows unacceptable complexity, fall back to global-scope + schema-lint tests and record the decision.
+6. **No RLS on MySQL — compensating controls (Phase B/C):** (a) fail-closed `TenantScope` (queries without a context throw), (b) composite `(tenant_id, id)` FKs reject cross-tenant links, (c) `TenancyStaticChecksTest` fails CI on scope bypass outside `app/Platform` + `app/Identity`, on raw `DB::table()` access to tenant tables, on tenant tables without a scoped model/FK/tenant-leading unique key, and on mass-assignable `tenant_id`, (d) the isolation suite runs on real MySQL, (e) production app credentials get DML only (no `DROP/ALTER`), and (f) any new raw SQL on tenant tables must go through a reviewed helper that adds the tenant predicate. Residual risk: a developer who writes raw SQL via `DB::select()`/`DB::statement()` is not caught by the static checks and would bypass the scope — code review must treat raw SQL on tenant tables as a security-sensitive change. If this risk is unacceptable, revisit database-per-tenant (ADR-0001).
 
 ## 4. Enforcement layers (how a missed filter is still safe)
 
@@ -88,7 +87,7 @@ Not modelled (not evidenced): subscriptions/plans/billing; Tasks module; Call-It
 | Jobs / scheduler | `TenantAwareJob` middleware restores context, **fails if absent**; scheduled commands iterate tenants and dispatch one job per tenant; no job reads across tenants |
 | Notifications | Notifiable resolved through scoped models; email links never embed tenant trust |
 | Cache | Keys `t:{tenant_id}:…` via a helper; global keys explicitly named `g:`; no unscoped `Cache::remember` in tenant code (lint) |
-| DB | Composite FKs + RLS (above) |
+| DB | Composite tenant-aware FKs, tenant-leading unique keys, schema-lint tests; production app user has DML rights only (no DDL). No row-level security on MySQL (see §3.6) |
 | Observability | `tenant_id`, `membership_id`, `request_id` in log context; tenant id never taken from user input |
 
 Tenant context is established once per request/job, immutable, exposed via a request-scoped singleton, and propagated into queued jobs/notifications explicitly (serialised `tenant_id`, re-validated on run: tenant must still be `active`).

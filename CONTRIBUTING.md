@@ -5,7 +5,7 @@ Authoritative design: `docs/`. If code and docs disagree, fix one in the same ch
 ## Global
 - Work only inside this repo. The Flutter project is read-only reference.
 - Backend owns business rules and authorization; clients never enforce them alone.
-- **Tenancy:** never accept a tenant id from a request as authority; never use `withoutTenantScope()` outside `backend/app/Platform/**`; every tenant-owned table/model follows `docs/03`.
+- **Tenancy:** never accept a tenant id from a request as authority; never use `withoutTenantScope()` outside `backend/app/Platform/**` and `backend/app/Identity/**` (login/token resolution; enforced by `TenancyStaticChecksTest`); raw SQL on tenant tables is a security-sensitive change (no RLS on MySQL); every tenant-owned table/model follows `docs/03`.
 - No secrets, tokens, PII, or production data in code, fixtures, logs, or docs.
 - Contract changes: edit `contracts/openapi.yaml` first, then backend + clients in the same PR.
 - Tests ship with the change; isolation tests for every tenant-owned module. Don't disable a security control to make a test pass.

@@ -1,0 +1,195 @@
+<?php
+
+namespace Tests\Contract;
+
+use App\Enums\MembershipStatus;
+use App\Enums\Role;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
+use Osteel\OpenApi\Testing\Exceptions\ValidationException;
+use Osteel\OpenApi\Testing\ValidatorBuilder;
+use Osteel\OpenApi\Testing\ValidatorInterface;
+use Tests\TestCase;
+
+/**
+ * Every response is validated against contracts/openapi.yaml (source of truth, ADR-0006).
+ * A failing test means the implementation and the contract have drifted: fix one in the same change.
+ */
+class ApiContractTest extends TestCase
+{
+    private static ?ValidatorInterface $validator = null;
+
+    private function ok(TestResponse $response, string $path, string $method, ?int $status = null): TestResponse
+    {
+        self::$validator ??= ValidatorBuilder::fromYamlFile(base_path('../contracts/openapi.yaml'))->getValidator();
+        if ($status !== null) {
+            $response->assertStatus($status);
+        }
+        self::$validator->validate($response->baseResponse, $path, strtolower($method));
+
+        return $response;
+    }
+
+    private function fresh(): static
+    {
+        $this->app['auth']->forgetGuards();
+
+        return $this;
+    }
+
+    /** @return array{0: array<string,string>, 1: object} */
+    private function adminToken(): array
+    {
+        $tenant = $this->makeTenant('SFAI');
+        [, $m] = $this->makeMember($tenant, Role::TenantAdmin, 'admin1');
+
+        return [$this->bearer($this->tokenFor('admin1')), $m];
+    }
+
+    public function test_token_auth_operations(): void
+    {
+        $tenant = $this->makeTenant('SFAI');
+        $this->makeMember($tenant, Role::Crew, 'crew1');
+        $multi = $this->makeUser('multi');
+        $ma = $this->makeMembership($this->makeTenant('AAA'), $multi);
+        $this->makeMembership($this->makeTenant('BBB'), $multi);
+        $login = ['username' => 'crew1', 'password' => self::PASSWORD, 'device_name' => 'iPhone'];
+
+        $r = $this->ok($this->postJson('/api/v1/auth/token', $login), '/auth/token', 'post', 200);
+        $token = $r->json('data.token');
+        $this->ok($this->postJson('/api/v1/auth/token', ['username' => 'crew1', 'password' => 'bad-bad-bad', 'device_name' => 'd']), '/auth/token', 'post', 401);
+        $this->ok($this->postJson('/api/v1/auth/token', []), '/auth/token', 'post', 422);
+
+        $sel = $this->ok($this->postJson('/api/v1/auth/token/select', ['ticket' => 'x', 'membership_id' => 'y']), '/auth/token/select', 'post', 401);
+        $this->assertSame('invalid_ticket', $sel->json('code'));
+        $ticket = $this->postJson('/api/v1/auth/token', ['username' => 'multi', 'password' => self::PASSWORD, 'device_name' => 'd']);
+        $this->ok($ticket, '/auth/token', 'post', 200);
+        $this->ok($this->postJson('/api/v1/auth/token/select', ['ticket' => $ticket->json('data.ticket'), 'membership_id' => $ma->id]), '/auth/token/select', 'post', 200);
+
+        $this->fresh();
+        $new = $this->ok($this->postJson('/api/v1/auth/token/refresh', [], $this->bearer($token)), '/auth/token/refresh', 'post', 200)->json('data.token');
+        $this->fresh();
+        $this->ok($this->postJson('/api/v1/auth/token/switch', ['membership_id' => 'nope'], $this->bearer($new)), '/auth/token/switch', 'post', 403);
+        $this->fresh();
+        $this->ok($this->deleteJson('/api/v1/auth/token', [], $this->bearer($new)), '/auth/token', 'delete', 204);
+    }
+
+    public function test_switch_contract(): void
+    {
+        $user = $this->makeUser('multi');
+        $this->makeMembership($this->makeTenant('AAA'), $user);
+        $mb = $this->makeMembership($this->makeTenant('BBB'), $user);
+        $token = $this->tokenFor('multi', 'AAA');
+
+        $this->ok($this->postJson('/api/v1/auth/token/switch', ['membership_id' => $mb->id], $this->bearer($token)), '/auth/token/switch', 'post', 200);
+    }
+
+    public function test_me_and_tenant_operations(): void
+    {
+        [$h, $m] = $this->adminToken();
+
+        $this->ok($this->getJson('/api/v1/me', $h), '/me', 'get', 200);
+        $this->fresh();
+        $this->ok($this->getJson('/api/v1/me'), '/me', 'get', 401);
+        $this->fresh();
+        $this->ok($this->getJson('/api/v1/tenant', $h), '/tenant', 'get', 200);
+        $this->fresh();
+        $this->ok($this->patchJson('/api/v1/tenant', ['settings' => ['display_name' => 'Southfield']], $h), '/tenant', 'patch', 200);
+        $this->fresh();
+        $this->ok($this->patchJson('/api/v1/tenant', ['settings' => ['bogus' => 1]], $h), '/tenant', 'patch', 422);
+        $this->fresh();
+        $this->ok($this->getJson('/api/v1/tenant/users', $h), '/tenant/users', 'get', 200);
+        $this->fresh();
+        $this->ok($this->getJson('/api/v1/tenant/audit-logs', $h), '/tenant/audit-logs', 'get', 200);
+        $this->fresh();
+        $this->ok($this->patchJson("/api/v1/tenant/users/{$m->id}", ['status' => 'suspended'], $h), '/tenant/users/{membership}', 'patch', 409);
+        $this->fresh();
+        $this->ok($this->patchJson('/api/v1/tenant/users/'.Str::uuid(), ['status' => 'suspended'], $h), '/tenant/users/{membership}', 'patch', 404);
+    }
+
+    public function test_tenant_forbidden_and_user_update(): void
+    {
+        $tenant = $this->makeTenant('SFAI');
+        $this->makeMember($tenant, Role::TenantAdmin, 'admin1');
+        [, $crew] = $this->makeMember($tenant, Role::Crew, 'crew1');
+        $this->fresh();
+        $this->ok($this->getJson('/api/v1/tenant', $this->bearer($this->tokenFor('crew1'))), '/tenant', 'get', 403);
+
+        $this->fresh();
+        $h = $this->bearer($this->tokenFor('admin1'));
+        $this->ok($this->patchJson("/api/v1/tenant/users/{$crew->id}", ['status' => 'suspended'], $h), '/tenant/users/{membership}', 'patch', 200);
+    }
+
+    public function test_session_and_invitation_operations(): void
+    {
+        $this->makeMember($this->makeTenant('SFAI'), Role::TenantAdmin, 'admin1');
+
+        $login = $this->spa()->postJson('/api/v1/auth/session', ['username' => 'admin1', 'password' => self::PASSWORD]);
+        $this->ok($login, '/auth/session', 'post', 200);
+        $this->ok($this->fresh()->spa()->postJson('/api/v1/auth/session', ['username' => 'admin1', 'password' => 'bad-bad-bad']), '/auth/session', 'post', 401);
+        $this->ok($this->fresh()->spa()->postJson('/api/v1/auth/session/select', ['ticket' => 'x', 'membership_id' => 'y']), '/auth/session/select', 'post', 401);
+        $this->ok($this->fresh()->postJson('/api/v1/auth/invitations/accept', ['token' => 'bad', 'password' => 'abcdefghij', 'password_confirmation' => 'abcdefghij']), '/auth/invitations/accept', 'post', 422);
+
+        $out = $this->carrySession($login)->fresh()->spa()->deleteJson('/api/v1/auth/session');
+        $this->ok($out, '/auth/session', 'delete', 204);
+    }
+
+    public function test_platform_operations(): void
+    {
+        Mail::fake();
+        [, $secret] = $this->makePlatformAdmin();
+        $login = $this->spa()->postJson('/api/v1/platform/auth/session', ['email' => 'root@example.test', 'password' => self::PASSWORD, 'otp' => $this->otp($secret)]);
+        $this->ok($login, '/platform/auth/session', 'post', 200);
+        $this->ok($this->fresh()->spa()->postJson('/api/v1/platform/auth/session', ['email' => 'root@example.test', 'password' => 'bad-bad-bad', 'otp' => '123456']), '/platform/auth/session', 'post', 401);
+        $this->carrySession($login);
+
+        $p = fn () => $this->fresh()->spa();
+
+        $this->ok($p()->getJson('/api/v1/platform/me'), '/platform/me', 'get', 200);
+        $created = $this->ok($p()->postJson('/api/v1/platform/tenants', ['code' => 'SFAI', 'name' => 'Southfield']), '/platform/tenants', 'post', 201);
+        $id = $created->json('data.id');
+        $this->ok($p()->postJson('/api/v1/platform/tenants', ['code' => 'x', 'name' => '']), '/platform/tenants', 'post', 422);
+        $this->ok($p()->getJson('/api/v1/platform/tenants?filter[status]=provisioning'), '/platform/tenants', 'get', 200);
+        $this->ok($p()->getJson("/api/v1/platform/tenants/$id"), '/platform/tenants/{tenant}', 'get', 200);
+        $this->ok($p()->getJson('/api/v1/platform/tenants/'.Str::uuid()), '/platform/tenants/{tenant}', 'get', 404);
+        $this->ok($p()->patchJson("/api/v1/platform/tenants/$id", ['name' => 'Southfield Agencies']), '/platform/tenants/{tenant}', 'patch', 200);
+
+        $this->ok($p()->postJson("/api/v1/platform/tenants/$id/activate"), '/platform/tenants/{tenant}/{action}', 'post', 422);
+        $inv = $this->ok($p()->postJson("/api/v1/platform/tenants/$id/admins", ['email' => 'boss@example.test']), '/platform/tenants/{tenant}/admins', 'post', 201);
+        $this->ok($p()->postJson("/api/v1/platform/tenants/$id/admins", ['email' => 'not-an-email']), '/platform/tenants/{tenant}/admins', 'post', 422);
+        $this->ok($p()->getJson("/api/v1/platform/tenants/$id/admins"), '/platform/tenants/{tenant}/admins', 'get', 200);
+        $this->postJson('/api/v1/auth/invitations/accept', ['token' => $inv->json('meta.invitation_token'), 'password' => 'Str0ng-passphrase-1', 'password_confirmation' => 'Str0ng-passphrase-1'])->assertNoContent();
+        $this->ok($p()->postJson("/api/v1/platform/tenants/$id/activate"), '/platform/tenants/{tenant}/{action}', 'post', 200);
+        $this->ok($p()->postJson("/api/v1/platform/tenants/$id/activate"), '/platform/tenants/{tenant}/{action}', 'post', 409);
+
+        $this->ok($p()->getJson('/api/v1/platform/settings'), '/platform/settings', 'get', 200);
+        $this->ok($p()->patchJson('/api/v1/platform/settings', ['settings' => ['password_min_length' => 10]]), '/platform/settings', 'patch', 200);
+        $this->ok($p()->patchJson('/api/v1/platform/settings', ['settings' => ['display_name' => 'x']]), '/platform/settings', 'patch', 422);
+        $this->ok($p()->getJson('/api/v1/platform/audit-logs?per_page=5'), '/platform/audit-logs', 'get', 200);
+
+        $out = $p()->deleteJson('/api/v1/platform/auth/session');
+        $this->ok($out, '/platform/auth/session', 'delete', 204);
+        $this->ok($this->carrySession($out)->fresh()->spa()->getJson('/api/v1/platform/tenants'), '/platform/tenants', 'get', 401);
+    }
+
+    public function test_membership_states_in_listings_conform(): void
+    {
+        $tenant = $this->makeTenant('SFAI');
+        $this->makeMember($tenant, Role::TenantAdmin, 'admin1');
+        $this->makeMember($tenant, Role::Crew, 'p', MembershipStatus::Pending);
+        $this->fresh();
+
+        $this->ok($this->getJson('/api/v1/tenant/users?per_page=1&page=2', $this->bearer($this->tokenFor('admin1'))), '/tenant/users', 'get', 200);
+    }
+
+    /** Guards the guard: the validator must actually reject a payload that does not match the contract. */
+    public function test_validator_rejects_a_mismatching_response(): void
+    {
+        $this->makeMember($this->makeTenant('SFAI'), Role::TenantAdmin, 'admin1');
+        $me = $this->getJson('/api/v1/me', $this->bearer($this->tokenFor('admin1')))->assertOk();
+
+        $this->expectException(ValidationException::class);
+        $this->ok($me, '/tenant', 'get'); // a /me payload is not a TenantDetail
+    }
+}
