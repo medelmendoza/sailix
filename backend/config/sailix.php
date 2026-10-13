@@ -25,6 +25,9 @@ return [
         'tala' => [
             // Exact host names the Tala gateway may ever contact (HTTPS only). Empty = nothing is allowed.
             'allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', (string) env('SAILIX_TALA_ALLOWED_HOSTS', ''))))),
+            // Progress submission WRITES to Tala. Off until the owner has approved a write test and the server's
+            // replace/merge behaviour is verified (docs/13 §20). Closed = no upstream call is ever made.
+            'progress_writes' => (bool) env('SAILIX_TALA_PROGRESS_WRITES', false),
         ],
     ],
 

@@ -62,6 +62,28 @@ final class TalaClient
     }
 
     /**
+     * WRITE. Posts a full course snapshot (Tala's sync is snapshot based; server semantics unverified, see docs/13 §20).
+     * Never retried: a second POST could double-apply if the server is not idempotent.
+     *
+     * @param  array<string, mixed>  $courseItem
+     */
+    public function submitSync(string $token, string $userId, string $teamId, array $courseItem): void
+    {
+        $response = $this->send(
+            $this->request()->withToken($token),
+            'POST',
+            '/api/v1/auth/users/'.$this->seg($userId).'/teams/'.$this->seg($teamId).'/courses/sync',
+            ['courseList' => [$courseItem]],
+        );
+        if (in_array($response->status(), [401, 403], true)) {
+            throw new TalaUnauthorized;
+        }
+        if ($response->status() !== 200) {
+            throw new TalaUnavailable('sync rejected');
+        }
+    }
+
+    /**
      * @param  'videos'|'pdf'  $kind
      * @return array<string, mixed>
      */

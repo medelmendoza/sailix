@@ -1,4 +1,9 @@
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+import type {
+  NativeStackNavigationProp,
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
@@ -6,34 +11,82 @@ import { AppText, Button, Card, ErrorState, FormError, Notice, SkeletonList } fr
 import { spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import type { TalaMaterialSummary } from '@/services/api/types';
+import { scopedKey } from '@/store/scopedKey';
 import { fetchTalaMaterial, useTalaCourse } from './api';
+import { deleteDownload, downloadMaterial, listDownloads } from './offline/downloads';
+import { pendingCompletions, queueCompletion, syncOutbox } from './offline/outbox';
+import { savedCopyText } from './TalaCourseList';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'TalaCourse'>;
 
 const TYPE_LABEL: Record<string, string> = { video: 'Video', pdf: 'PDF', quiz: 'Quiz' };
+const isDone = (m: TalaMaterialSummary) => m.status?.toUpperCase() === 'COMPLETED';
 
 export function TalaCourseScreen({ route }: Props) {
   const { assignId } = route.params;
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+  const queryClient = useQueryClient();
   const course = useTalaCourse(assignId);
+  const downloads = useQuery({ queryKey: scopedKey('tala', 'downloads'), queryFn: listDownloads });
+  const outbox = useQuery({ queryKey: scopedKey('tala', 'outbox'), queryFn: pendingCompletions });
   const [error, setError] = useState<string | null>(null);
-  const [opening, setOpening] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
 
-  async function open(material: TalaMaterialSummary) {
+  const refreshLocal = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: scopedKey('tala', 'downloads') }),
+      queryClient.invalidateQueries({ queryKey: scopedKey('tala', 'outbox') }),
+    ]);
+
+  async function guarded(id: string, work: () => Promise<void>) {
     setError(null);
-    setOpening(material.id);
+    setBusy(id);
     try {
-      const detail = await fetchTalaMaterial(assignId, material.id);
-      if (!detail.file_url) {
-        setError('This item has no file to open.');
-        return;
-      }
-      await Linking.openURL(detail.file_url);
+      await work();
     } catch (e) {
-      setError(describeError(e));
+      setError(e instanceof Error && !('kind' in e) ? e.message : describeError(e));
     } finally {
-      setOpening(null);
+      setBusy(null);
     }
   }
+
+  const openOnline = (m: TalaMaterialSummary) =>
+    guarded(m.id, async () => {
+      const detail = await fetchTalaMaterial(assignId, m.id);
+      if (!detail.file_url) throw new Error('This item has no file to open.');
+      await Linking.openURL(detail.file_url);
+    });
+
+  const download = (m: TalaMaterialSummary) =>
+    guarded(m.id, async () => {
+      await downloadMaterial(assignId, { id: m.id, type: m.type as 'video' | 'pdf', name: m.name });
+      await refreshLocal();
+    });
+
+  const remove = (m: TalaMaterialSummary) =>
+    guarded(m.id, async () => {
+      await deleteDownload(m.id);
+      await refreshLocal();
+    });
+
+  const markCompleted = (m: TalaMaterialSummary) =>
+    guarded(m.id, async () => {
+      await queueCompletion(assignId, m.id);
+      await refreshLocal();
+      await syncOutbox(); // delivers now when online, otherwise stays queued
+      await refreshLocal();
+    });
+
+  const syncNow = () =>
+    guarded('sync', async () => {
+      const r = await syncOutbox();
+      await refreshLocal();
+      if (r.stopped === 'offline')
+        throw new Error('Still offline. It will be sent when you are back online.');
+      if (r.stopped === 'relink')
+        throw new Error('Link your Tala account again to send your progress.');
+      if (r.stopped === 'disabled') throw new Error('Sending progress is not enabled.');
+    });
 
   if (course.isPending) return <SkeletonList />;
   if (course.isError) {
@@ -41,7 +94,26 @@ export function TalaCourseScreen({ route }: Props) {
       <ErrorState message={describeError(course.error)} onRetry={() => void course.refetch()} />
     );
   }
-  const c = course.data;
+  const c = course.data.data;
+  const pending = new Set(
+    (outbox.data ?? []).filter((p) => p.assignId === assignId).map((p) => p.materialId),
+  );
+  const downloaded = downloads.data ?? {};
+
+  function openOffline(m: TalaMaterialSummary) {
+    const rec = downloaded[m.id];
+    if (!rec) return;
+    if (m.type === 'pdf') navigation.navigate('TalaPdf', { name: m.name, uri: rec.uri });
+    else {
+      navigation.navigate('TalaVideo', {
+        name: m.name,
+        uri: rec.uri,
+        assignId,
+        materialId: m.id,
+        canComplete: c.progress_submission && !isDone(m),
+      });
+    }
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
@@ -49,30 +121,86 @@ export function TalaCourseScreen({ route }: Props) {
         {c.name}
       </AppText>
       {c.description ? <AppText muted>{c.description}</AppText> : null}
-      <Notice message="You can view your courses here. Taking quizzes and recording progress is not available in this version of the app." />
-      <FormError message={error} />
-      {c.materials.map((m) => (
-        <Card key={m.id} style={{ gap: spacing.sm }}>
-          <View style={{ gap: 2 }}>
-            <AppText variant="heading">{m.name}</AppText>
-            <AppText variant="caption" muted>
-              {TYPE_LABEL[m.type] ?? m.type}
-              {m.progress ? ` · ${m.progress}%` : ''}
-              {m.status ? ` · ${m.status}` : ''}
-            </AppText>
-          </View>
-          {m.viewable ? (
-            <Button
-              title={m.type === 'video' ? 'Watch' : 'Open'}
-              variant="secondary"
-              loading={opening === m.id}
-              onPress={() => void open(m)}
-            />
-          ) : (
-            <AppText muted>Quizzes are not available in this version.</AppText>
-          )}
+      {course.data.fromCache ? <Notice message={savedCopyText(course.data.fetchedAt)} /> : null}
+      <Notice
+        message={
+          c.progress_submission
+            ? 'Quizzes are not available in this version. You can mark videos and documents as completed; this is recorded by you and not checked.'
+            : 'You can view your courses here. Taking quizzes and recording progress is not available in this version of the app.'
+        }
+      />
+      {pending.size > 0 ? (
+        <Card style={{ gap: spacing.sm }}>
+          <AppText>
+            {pending.size} completion{pending.size === 1 ? '' : 's'} waiting to be sent.
+          </AppText>
+          <Button
+            title="Send now"
+            variant="secondary"
+            loading={busy === 'sync'}
+            onPress={() => void syncNow()}
+          />
         </Card>
-      ))}
+      ) : null}
+      <FormError message={error} />
+      {c.materials.map((m) => {
+        const rec = downloaded[m.id];
+        const waiting = pending.has(m.id);
+        const done = isDone(m) || waiting;
+        return (
+          <Card key={m.id} style={{ gap: spacing.sm }}>
+            <View style={{ gap: 2 }}>
+              <AppText variant="heading">{m.name}</AppText>
+              <AppText variant="caption" muted>
+                {TYPE_LABEL[m.type] ?? m.type}
+                {m.progress ? ` · ${m.progress}%` : ''}
+                {waiting ? ' · Completed, waiting to send' : m.status ? ` · ${m.status}` : ''}
+                {rec
+                  ? ` · Saved on this device (${Math.max(1, Math.round(rec.bytes / 1024))} KB)`
+                  : ''}
+              </AppText>
+            </View>
+            {m.viewable ? (
+              <View style={{ gap: spacing.sm }}>
+                {rec ? (
+                  <>
+                    <Button
+                      title={m.type === 'video' ? 'Watch offline copy' : 'Open offline copy'}
+                      variant="secondary"
+                      onPress={() => openOffline(m)}
+                    />
+                    <Button
+                      title="Remove download"
+                      variant="secondary"
+                      loading={busy === m.id}
+                      onPress={() => void remove(m)}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      title="Download for offline"
+                      variant="secondary"
+                      loading={busy === m.id}
+                      onPress={() => void download(m)}
+                    />
+                    <Button
+                      title={m.type === 'video' ? 'Watch' : 'Open'}
+                      variant="secondary"
+                      onPress={() => void openOnline(m)}
+                    />
+                  </>
+                )}
+                {c.progress_submission && !done ? (
+                  <Button title="Mark as completed" onPress={() => void markCompleted(m)} />
+                ) : null}
+              </View>
+            ) : (
+              <AppText muted>Quizzes are not available in this version.</AppText>
+            )}
+          </Card>
+        );
+      })}
       {c.hidden_materials > 0 ? (
         <AppText variant="caption" muted>
           {c.hidden_materials} item(s) in this course are not supported in this version of the app.

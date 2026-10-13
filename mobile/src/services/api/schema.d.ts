@@ -448,6 +448,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/modules/tala/courses/{assignId}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark the caller's own video/PDF materials of a course as completed in Tala (write)
+         * @description Disabled by default (`403 feature_disabled`; see `progress_submission` on the course). The payload sent to Tala is built on the server from Tala's own stored snapshot of this user; the client only names material ids. No score, comment or free text is accepted or forwarded. Completion never goes backwards. Quizzes are refused (`422 unsupported_material`). `409 progress_busy` when another update for the same link is running. Server-side replace/merge semantics of Tala's sync are UNVERIFIED (docs/13 section 20).
+         */
+        post: operations["submitTalaProgress"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/modules/tala/courses/{assignId}/materials/{materialId}": {
         parameters: {
             query?: never;
@@ -785,9 +805,17 @@ export interface components {
             total_materials: number;
         };
         TalaCourseDetail: components["schemas"]["TalaCourse"] & {
+            /** @description Whether this deployment lets the app submit completion to Tala. */
+            progress_submission: boolean;
             materials: components["schemas"]["TalaMaterialSummary"][];
             /** @description Materials of kinds not supported in the MVP (EPUB, legacy quiz, unknown) that were left out. */
             hidden_materials: number;
+        };
+        TalaProgressResult: {
+            /** @description completed/total as stored after the submission */
+            progress: string;
+            status: string;
+            completed: string[];
         };
         TalaMaterialSummary: {
             id: string;
@@ -1739,6 +1767,43 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    submitTalaProgress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    completed: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Submitted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TalaProgressResult"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
         };
     };

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Modules;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\LinkTalaRequest;
+use App\Http\Requests\Modules\SubmitProgressRequest;
 use App\Models\Membership;
 use App\Models\User;
 use App\Modules\Tala\TalaGateway;
@@ -56,6 +57,14 @@ class TalaController extends Controller
     public function material(Request $request, string $assignId, string $materialId): JsonResponse
     {
         return response()->json(['data' => $this->gateway->material($this->membership($request), $assignId, $materialId)]);
+    }
+
+    public function progress(SubmitProgressRequest $request, string $assignId): JsonResponse
+    {
+        /** @var list<string> $ids */
+        $ids = $request->validated('completed');
+
+        return response()->json(['data' => $this->gateway->submitProgress($this->membership($request), $assignId, $ids)]);
     }
 
     private function membership(Request $request): Membership

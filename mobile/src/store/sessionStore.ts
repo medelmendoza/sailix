@@ -4,6 +4,7 @@ import { configureApi, api } from '@/services/api/client';
 import { describeError, toApiError } from '@/services/api/errors';
 import type { Envelope, Me, TokenGrant } from '@/services/api/types';
 import { queryClient } from '@/services/queryClient';
+import { wipeOfflineData } from '@/features/modules/tala/offline/wipe';
 import { clearCredential, loadCredential, saveCredential } from '@/services/storage/secureStore';
 
 /**
@@ -133,6 +134,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     set({ status: 'bootstrapping', switchError: null });
     await queryClient.cancelQueries();
     queryClient.clear();
+    await wipeOfflineData(); // the old organization's saved Tala data must not outlive the switch
 
     let grant: TokenGrant;
     try {
@@ -190,6 +192,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     await queryClient.cancelQueries();
     queryClient.clear();
     await clearCredential();
+    await wipeOfflineData(); // saved courses, downloaded files and unsent completions belong to this session
     // 2. Best effort: ask the server to revoke this device's token (never blocks or fails the sign-out).
     if (revoke && token) {
       try {

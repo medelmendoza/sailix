@@ -13,6 +13,7 @@ use App\Modules\Module;
 use App\Support\ApiProblem;
 use App\Support\Audit;
 use Closure;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Read-only Tala gateway for the authenticated membership (ADR-0018). Every Tala call is made with the user id
@@ -121,7 +122,79 @@ final class TalaGateway
                     'status' => $progress[$m['id']]['status'] ?? null,
                 ], $visible),
                 'hidden_materials' => $hidden,
+                'progress_submission' => $this->progressWritesEnabled(),
             ];
+        });
+    }
+
+    /**
+     * Marks the caller's own video/PDF materials as completed in Tala (write; flag-gated, docs/13 §20).
+     * The payload is built SERVER-SIDE from Tala's own stored snapshot of this user: the client only names material ids.
+     * No score, comment, name or any other client value is forwarded; completion never goes backwards.
+     *
+     * @param  list<string>  $materialIds
+     * @return array<string, mixed>
+     */
+    public function submitProgress(Membership $membership, string $assignId, array $materialIds): array
+    {
+        if (! $this->progressWritesEnabled()) {
+            throw ApiProblem::forbidden('feature_disabled', 'Submitting progress is not enabled.');
+        }
+        $materialIds = array_values(array_unique($materialIds));
+
+        return $this->authorized($membership, function (ModuleLink $link, string $token, string $tala) use ($assignId, $materialIds, $membership) {
+            $assignment = $this->findAssignment($this->assignments($token, $tala, $link), $assignId);
+            $visible = collect($this->materials($assignment)[0])->keyBy('id');
+            foreach ($materialIds as $id) {
+                $summary = $visible->get($id) ?? throw ApiProblem::notFound('Material not found.');
+                if ($summary['type'] === 'quiz') {
+                    throw ApiProblem::invalid('unsupported_material', 'Quizzes are not available in this version.');
+                }
+            }
+
+            $lock = Cache::lock('tala-progress:'.$link->getKey(), 30);
+            if (! $lock->get()) {
+                throw ApiProblem::conflict('progress_busy', 'Another update is in progress. Try again.');
+            }
+            try {
+                $courseId = (string) ($assignment['courseId'] ?? '');
+                $snapshot = $this->client->progress($token, $tala, $link->external_team_id, $courseId, $assignId);
+                $item = $this->syncItem($snapshot, $assignment);
+
+                foreach ($materialIds as $id) {
+                    $kind = $visible[$id]['type'] === 'video' ? 'videos' : 'pdfs';
+                    $idKey = $kind === 'videos' ? 'videoId' : 'pdfId';
+                    $found = false;
+                    foreach ($item['materials'][$kind] as $i => $row) {
+                        if (($row[$idKey] ?? null) === $id) {
+                            $item['materials'][$kind][$i]['status'] = 'COMPLETED';
+                            $found = true;
+                        }
+                    }
+                    if (! $found) {
+                        $item['materials'][$kind][] = $this->newMaterialRow($token, $link, $kind, $id);
+                    }
+                }
+
+                $total = (int) ($assignment['course']['totalMaterial'] ?? 0) ?: count($visible);
+                $done = 0;
+                foreach ($item['materials'] as $group) {
+                    foreach ($group as $row) {
+                        $done += (($row['status'] ?? null) === 'COMPLETED') ? 1 : 0;
+                    }
+                }
+                $before = (int) explode('/', (string) ($snapshot['progress'] ?? '0/0'))[0];
+                $done = max($done, $before); // completion never goes backwards
+                $item['progress'] = $done.'/'.$total;
+                $item['status'] = $done >= $total ? 'COMPLETED' : 'NOT YET COMPLETED';
+
+                $this->client->submitSync($token, $tala, $link->external_team_id, $item);
+                Audit::record('module.tala.progress_submitted', $membership->tenant_id, $link, ['materials' => count($materialIds)]);
+
+                return ['progress' => $item['progress'], 'status' => $item['status'], 'completed' => $materialIds];
+            } finally {
+                $lock->release();
+            }
         });
     }
 
@@ -148,6 +221,58 @@ final class TalaGateway
                 'file_url' => $this->https($raw["{$prefix}FileUrl"] ?? null),
             ];
         });
+    }
+
+    private function progressWritesEnabled(): bool
+    {
+        return (bool) config('sailix.modules.tala.progress_writes');
+    }
+
+    /**
+     * Course-level sync item from Tala's own stored snapshot, restricted to the fields the Tala app itself posts.
+     *
+     * @param  array<string, mixed>  $snapshot
+     * @param  array<string, mixed>  $assignment
+     * @return array<string, mixed>
+     */
+    private function syncItem(array $snapshot, array $assignment): array
+    {
+        $keep = ['assignId', 'courseId', 'courseName', 'courseDescription', 'userId', 'teamId', 'lastName', 'firstName', 'middleName',
+            'dateFrom', 'dateTo', 'dateAssigned', 'assignedBy', 'email', 'status', 'progress', 'syncDate', 'courseTags', 'userTags'];
+        $item = array_intersect_key($snapshot !== [] ? $snapshot : $assignment, array_flip($keep));
+        $materials = is_array($snapshot['materials'] ?? null) ? $snapshot['materials'] : [];
+        foreach (['videos', 'cards', 'quizzes', 'epubs', 'pdfs'] as $group) {
+            $item['materials'][$group] = array_values(array_filter(is_array($materials[$group] ?? null) ? $materials[$group] : [], 'is_array'));
+        }
+
+        return $item;
+    }
+
+    /**
+     * A material the user completed that Tala has no stored row for yet: built from Tala's own metadata.
+     *
+     * @return array<string, mixed>
+     */
+    private function newMaterialRow(string $token, ModuleLink $link, string $kind, string $id): array
+    {
+        $raw = $this->client->material($token, $link->external_team_id, $kind === 'videos' ? 'videos' : 'pdf', $id);
+        $p = $kind === 'videos' ? 'video' : 'pdf';
+        $row = [
+            "{$p}Id" => $id,
+            "{$p}Name" => $raw["{$p}Name"] ?? '',
+            "{$p}Description" => $raw["{$p}Description"] ?? '',
+            "{$p}FileUrl" => $raw["{$p}FileUrl"] ?? '',
+            "{$p}FileName" => $raw["{$p}FileName"] ?? '',
+            "{$p}ThumbnailUrl" => $raw["{$p}ThumbnailUrl"] ?? '',
+            'status' => 'COMPLETED',
+            'progress' => '',
+            'tags' => $raw['tags'] ?? '',
+        ];
+        if ($kind === 'videos') {
+            $row += ['feedback' => 0, 'comment' => ''];
+        }
+
+        return $row;
     }
 
     private function currentLink(Membership $membership): ?ModuleLink

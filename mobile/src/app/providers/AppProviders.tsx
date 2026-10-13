@@ -8,6 +8,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import NetInfo from '@react-native-community/netinfo';
+import { syncOutbox } from '@/features/modules/tala/offline/outbox';
 import { queryClient } from '@/services/queryClient';
 import { useSessionStore } from '@/store/sessionStore';
 
@@ -27,9 +29,19 @@ export function AppProviders({ children }: { children: ReactNode }) {
       if (state === 'active' && session.status === 'authenticated') {
         void session.refreshTokenIfNeeded();
         void session.refreshMe().catch(() => undefined);
+        void syncOutbox().catch(() => undefined);
       }
     });
     return () => sub.remove();
+  }, []);
+
+  // Connection regained: deliver completions recorded while offline.
+  useEffect(() => {
+    return NetInfo.addEventListener((state) => {
+      if (state.isConnected && useSessionStore.getState().status === 'authenticated') {
+        void syncOutbox().catch(() => undefined);
+      }
+    });
   }, []);
 
   if (!fontsLoaded) return null;

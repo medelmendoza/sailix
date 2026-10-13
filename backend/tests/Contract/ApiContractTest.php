@@ -85,6 +85,12 @@ class ApiContractTest extends TestCase
         $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses/NOPE', $h), '/modules/tala/courses/{assignId}', 'get', 404);
         $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses/A1/materials/v1', $h), '/modules/tala/courses/{assignId}/materials/{materialId}', 'get', 200);
         $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses/A1/materials/q1', $h), '/modules/tala/courses/{assignId}/materials/{materialId}', 'get', 422);
+        $this->ok($this->fresh()->postJson('/api/v1/modules/tala/courses/A1/progress', ['completed' => ['v1']], $h), '/modules/tala/courses/{assignId}/progress', 'post', 403);
+        config(['sailix.modules.tala.progress_writes' => true]);
+        Http::fake(["$base/api/v1/auth/users/tu1/teams/TEAM-1/courses/sync" => Http::response([])]);
+        $this->ok($this->fresh()->postJson('/api/v1/modules/tala/courses/A1/progress', ['completed' => ['v1']], $h), '/modules/tala/courses/{assignId}/progress', 'post', 200);
+        $this->ok($this->fresh()->postJson('/api/v1/modules/tala/courses/A1/progress', ['completed' => ['q1']], $h), '/modules/tala/courses/{assignId}/progress', 'post', 422);
+        $this->ok($this->fresh()->postJson('/api/v1/modules/tala/courses/A1/progress', [], $h), '/modules/tala/courses/{assignId}/progress', 'post', 422);
         $this->ok($this->fresh()->deleteJson('/api/v1/modules/tala/link', [], $h), '/modules/tala/link', 'delete', 204);
     }
 

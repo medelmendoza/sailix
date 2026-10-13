@@ -690,6 +690,49 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '503': { $ref: '#/components/responses/Problem' }
+  /modules/tala/courses/{assignId}/progress:
+    post:
+      tags: [modules]
+      operationId: submitTalaProgress
+      summary: Mark the caller's own video/PDF materials of a course as completed in Tala (write)
+      description: >
+        Disabled by default (`403 feature_disabled`; see `progress_submission` on the course). The payload sent to Tala is
+        built on the server from Tala's own stored snapshot of this user; the client only names material ids. No score,
+        comment or free text is accepted or forwarded. Completion never goes backwards. Quizzes are refused
+        (`422 unsupported_material`). `409 progress_busy` when another update for the same link is running.
+        Server-side replace/merge semantics of Tala's sync are UNVERIFIED (docs/13 section 20).
+      parameters:
+        - { name: assignId, in: path, required: true, schema: { type: string, maxLength: 64, pattern: '^[A-Za-z0-9_-]+$' } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [completed]
+              properties:
+                completed:
+                  type: array
+                  minItems: 1
+                  maxItems: 50
+                  items: { type: string, maxLength: 64, pattern: '^[A-Za-z0-9_-]+$' }
+      responses:
+        '200':
+          description: Submitted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TalaProgressResult' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
   /modules/tala/courses/{assignId}/materials/{materialId}:
     get:
       tags: [modules]
@@ -1275,14 +1318,24 @@ components:
       allOf:
         - { $ref: '#/components/schemas/TalaCourse' }
         - type: object
-          required: [materials, hidden_materials]
+          required: [materials, hidden_materials, progress_submission]
           properties:
+            progress_submission:
+              type: boolean
+              description: Whether this deployment lets the app submit completion to Tala.
             materials:
               type: array
               items: { $ref: '#/components/schemas/TalaMaterialSummary' }
             hidden_materials:
               type: integer
               description: Materials of kinds not supported in the MVP (EPUB, legacy quiz, unknown) that were left out.
+    TalaProgressResult:
+      type: object
+      required: [progress, status, completed]
+      properties:
+        progress: { type: string, description: 'completed/total as stored after the submission' }
+        status: { type: string }
+        completed: { type: array, items: { type: string } }
     TalaMaterialSummary:
       type: object
       required: [id, type, name, description, thumbnail_url, viewable, progress, status]

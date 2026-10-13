@@ -3,10 +3,15 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, Card, EmptyState, ErrorState, SkeletonList } from '@/components';
+import { AppText, Card, EmptyState, ErrorState, Notice, SkeletonList } from '@/components';
 import { minTouchTarget, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { useTalaCourses } from './api';
+
+export function savedCopyText(fetchedAt: string | null): string {
+  const when = fetchedAt ? new Date(fetchedAt).toLocaleString() : 'earlier';
+  return `You are viewing the copy saved on this device (${when}). It updates when you are back online.`;
+}
 
 export function TalaCourseList({ header }: { header: React.ReactNode }) {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
@@ -30,36 +35,43 @@ export function TalaCourseList({ header }: { header: React.ReactNode }) {
         <SkeletonList />
       ) : courses.isError ? (
         <ErrorState message={describeError(courses.error)} onRetry={() => void courses.refetch()} />
-      ) : courses.data.length === 0 ? (
-        <EmptyState
-          title="No courses assigned"
-          description="Nothing has been assigned to you in Tala yet."
-        />
       ) : (
-        courses.data.map((c) => (
-          <Pressable
-            key={c.id}
-            accessibilityRole="button"
-            accessibilityLabel={`${c.name}, ${c.total_materials} items`}
-            onPress={() => navigation.navigate('TalaCourse', { assignId: c.id, name: c.name })}
-            style={({ pressed }) => (pressed ? styles.pressed : undefined)}
-          >
-            <Card style={styles.row}>
-              <View style={{ flex: 1, gap: 2 }}>
-                <AppText variant="heading">{c.name}</AppText>
-                {c.date_to ? (
-                  <AppText variant="caption" muted>
-                    Due {c.date_to}
-                  </AppText>
-                ) : null}
-                <AppText variant="caption" muted>
-                  {c.total_materials} items{c.progress ? ` · ${c.progress}% complete` : ''}
-                </AppText>
-              </View>
-              <AppText muted>›</AppText>
-            </Card>
-          </Pressable>
-        ))
+        <>
+          {courses.data.fromCache ? (
+            <Notice message={savedCopyText(courses.data.fetchedAt)} />
+          ) : null}
+          {courses.data.data.length === 0 ? (
+            <EmptyState
+              title="No courses assigned"
+              description="Nothing has been assigned to you in Tala yet."
+            />
+          ) : (
+            courses.data.data.map((c) => (
+              <Pressable
+                key={c.id}
+                accessibilityRole="button"
+                accessibilityLabel={`${c.name}, ${c.total_materials} items`}
+                onPress={() => navigation.navigate('TalaCourse', { assignId: c.id, name: c.name })}
+                style={({ pressed }) => (pressed ? styles.pressed : undefined)}
+              >
+                <Card style={styles.row}>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <AppText variant="heading">{c.name}</AppText>
+                    {c.date_to ? (
+                      <AppText variant="caption" muted>
+                        Due {c.date_to}
+                      </AppText>
+                    ) : null}
+                    <AppText variant="caption" muted>
+                      {c.total_materials} items{c.progress ? ` · ${c.progress}% complete` : ''}
+                    </AppText>
+                  </View>
+                  <AppText muted>›</AppText>
+                </Card>
+              </Pressable>
+            ))
+          )}
+        </>
       )}
     </ScrollView>
   );

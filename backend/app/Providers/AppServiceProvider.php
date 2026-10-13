@@ -60,6 +60,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('module-link', fn (Request $r) => Limit::perMinute(5)->by('mlink:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
         // Every gateway read becomes upstream traffic to a third party we do not operate.
         RateLimiter::for('module-read', fn (Request $r) => Limit::perMinute(60)->by('mread:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
+        RateLimiter::for('module-write', fn (Request $r) => Limit::perMinute(30)->by('mwrite:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
         RateLimiter::for('invitation', fn (Request $r) => Limit::perHour(10)->by('invite:'.$r->ip()));
         RateLimiter::for('api', fn (Request $r) => Limit::perMinute(120)->by('api:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
     }

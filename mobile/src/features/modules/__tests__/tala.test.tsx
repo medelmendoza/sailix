@@ -21,6 +21,7 @@ const course = (over = {}) => ({
 const detail = {
   ...course(),
   hidden_materials: 2,
+  progress_submission: false,
   materials: [
     {
       id: 'v1',

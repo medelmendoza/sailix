@@ -79,4 +79,5 @@ Read-only. Branch `medel_dev_march2025`, HEAD `2094806`, 66 pre-existing uncommi
 | 2026-10-13 | User approved **M3 read-only**. Implemented gateway (link/unlink/courses/detail/material) + mobile screens; live read-only check against the Tala test account passed | Implemented; stopped for review (docs/13 §18) |
 | 2026-10-13 | User asked for M6 hardening (and to check the app on mobile). Delivered docs/13 §19 + docs/14. **CI replay from a fresh clone (NOT a real runner; the repo has no remote): web, mobile (blocking audit gate), backend, OpenAPI lint and Playwright all PASS; the report-only full mobile audit fails as documented.** | Awaiting review |
 | 2026-10-13 | Found and fixed: Tala password appeared in logged stack traces (`zend.exception_ignore_args=Off`); regression test added | Fixed |
+| 2026-10-13 | User asked for offline mode + progress submission. Offline mode built; progress submission built but **OFF**: the production write probe was blocked by the platform permission check and not worked around (docs/13 §20) | Awaiting your decision on the write test |
 

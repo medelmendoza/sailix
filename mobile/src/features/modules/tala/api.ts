@@ -3,6 +3,14 @@ import { api } from '@/services/api/client';
 import { toApiError } from '@/services/api/errors';
 import type { Envelope, TalaCourse, TalaCourseDetail, TalaMaterial } from '@/services/api/types';
 import { scopedKey } from '@/store/scopedKey';
+import { currentScope } from './offline/paths';
+import {
+  getCachedCourse,
+  getCachedCourses,
+  setCachedCourse,
+  setCachedCourses,
+} from './offline/store';
+import { wipeOfflineData } from './offline/wipe';
 import { useSessionStore } from '@/store/sessionStore';
 
 /**
@@ -23,13 +31,27 @@ function noteRelink(error: unknown) {
   }
 }
 
+/** What a screen shows: the data, and whether it is the saved copy (Tala or the network was unreachable). */
+export type Offlineable<T> = { data: T; fromCache: boolean; fetchedAt: string | null };
+
+/** Network failures and upstream outages fall back to the copy saved on this device; everything else is a real error. */
+function usable(e: unknown): boolean {
+  const err = toApiError(e);
+  return err.kind === 'network' || (err.status !== undefined && err.status >= 500);
+}
+
 export function useTalaCourses() {
   return useQuery({
     queryKey: scopedKey('tala', 'courses'),
-    queryFn: async () => {
+    queryFn: async (): Promise<Offlineable<TalaCourse[]>> => {
+      const scope = currentScope();
       try {
-        return (await api.get<Envelope<TalaCourse[]>>(`${base}/courses`)).data.data;
+        const courses = (await api.get<Envelope<TalaCourse[]>>(`${base}/courses`)).data.data;
+        await setCachedCourses(scope, { fetchedAt: new Date().toISOString(), courses });
+        return { data: courses, fromCache: false, fetchedAt: null };
       } catch (e) {
+        const cached = usable(e) ? await getCachedCourses(scope) : null;
+        if (cached) return { data: cached.courses, fromCache: true, fetchedAt: cached.fetchedAt };
         noteRelink(e);
         throw e;
       }
@@ -40,14 +62,19 @@ export function useTalaCourses() {
 export function useTalaCourse(assignId: string) {
   return useQuery({
     queryKey: scopedKey('tala', 'course', assignId),
-    queryFn: async () => {
+    queryFn: async (): Promise<Offlineable<TalaCourseDetail>> => {
+      const scope = currentScope();
       try {
-        return (
+        const course = (
           await api.get<Envelope<TalaCourseDetail>>(
             `${base}/courses/${encodeURIComponent(assignId)}`,
           )
         ).data.data;
+        await setCachedCourse(scope, assignId, { fetchedAt: new Date().toISOString(), course });
+        return { data: course, fromCache: false, fetchedAt: null };
       } catch (e) {
+        const cached = usable(e) ? await getCachedCourse(scope, assignId) : null;
+        if (cached) return { data: cached.course, fromCache: true, fetchedAt: cached.fetchedAt };
         noteRelink(e);
         throw e;
       }
@@ -87,6 +114,7 @@ export function useUnlinkTala() {
     mutationFn: () => api.delete(`${base}/link`),
     onSuccess: async () => {
       queryClient.removeQueries({ queryKey: scopedKey('tala') });
+      await wipeOfflineData(currentScope()); // saved courses, downloads and unsent completions go with the link
       await refreshMe();
     },
   });
