@@ -1,6 +1,14 @@
 import { api } from '@/services/api/client';
 import { useSessionStore } from '@/store/sessionStore';
-import { demoAnnouncements, demoCourses, demoDeck, demoDetail, demoMe, demoQuiz } from './data';
+import {
+  demoAnnouncements,
+  demoTodos,
+  demoCourses,
+  demoDeck,
+  demoDetail,
+  demoMe,
+  demoQuiz,
+} from './data';
 
 /** Answers every request the app makes with sample data, in place of the network. Demo mode only. */
 function respond(method: string, path: string): unknown {
@@ -13,6 +21,16 @@ function respond(method: string, path: string): unknown {
       meta: { current_page: 1, per_page: 20, total: 3, last_page: 1 },
       unread_count: demoAnnouncements.filter((a) => !a.is_read).length,
     };
+  if (method === 'GET' && path === '/todos') {
+    const open = demoTodos.filter((t) => !t.is_done);
+    return {
+      data: demoTodos,
+      links: {},
+      meta: { current_page: 1, per_page: 20, total: demoTodos.length, last_page: 1 },
+      open_count: open.length,
+      overdue_count: 1,
+    };
+  }
   const note = /^\/announcements\/(\w+)(\/read)?$/.exec(path);
   if (note)
     return { data: demoAnnouncements.find((a) => a.id === note[1]) ?? demoAnnouncements[0] };

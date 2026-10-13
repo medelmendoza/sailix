@@ -13,6 +13,7 @@ tags:
   - { name: auth, description: 'Login, logout, token rotation and invitations' }
   - { name: me, description: 'The authenticated principal' }
   - { name: announcements, description: "The caller's organization announcements" }
+  - { name: todos, description: "The caller's own to-dos" }
   - { name: tenant, description: "Tenant administration (caller's own tenant only)" }
   - { name: modules, description: 'Module gateways (Tala, read-only in the MVP)' }
   - { name: platform, description: 'Superadmin platform administration' }
@@ -559,6 +560,156 @@ paths:
       description: Requires `announcements.manage`.
       parameters:
         - { $ref: '#/components/parameters/AnnouncementId' }
+      responses:
+        '204': { description: Deleted. }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /todos:
+    get:
+      tags: [todos]
+      operationId: listMyTodos
+      summary: The caller's own to-dos (open first, soonest due first)
+      description: >
+        Only tasks assigned to the caller's membership. `open_count` and `overdue_count` cover every task of the caller,
+        not only this page.
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [open, done] } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200':
+          description: Page of to-dos.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MemberTodoPage' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /todos/{todoId}:
+    patch:
+      tags: [todos]
+      operationId: setMyTodoDone
+      summary: Tick or untick one of the caller's own to-dos (idempotent)
+      description: Nothing else about the task can be changed by its assignee. Someone else's task is `404`.
+      parameters:
+        - { $ref: '#/components/parameters/TodoId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [is_done]
+              properties:
+                is_done: { type: boolean }
+      responses:
+        '200':
+          description: The updated to-do.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Todo' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /tenant/todos:
+    get:
+      tags: [tenant]
+      operationId: listTenantTodos
+      summary: Every to-do of the caller's organization
+      description: Requires `todos.manage`. Optionally filtered by status or by one assignee.
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [open, done] } }
+        - { name: membership_id, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200':
+          description: Page of to-dos with their assignee.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TodoPage' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [tenant]
+      operationId: createTodos
+      summary: Assign a to-do to one or more members (one task is created per member)
+      description: >
+        Requires `todos.manage`. Every chosen member must be an ACTIVE member of the caller's organization, otherwise
+        nothing is created (`422 invalid_assignee`). The organization and author come from the session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [description, membership_ids]
+              properties:
+                description: { type: string, minLength: 1, maxLength: 500 }
+                due_date: { type: [string, 'null'], format: date }
+                membership_ids:
+                  type: array
+                  minItems: 1
+                  maxItems: 200
+                  items: { type: string }
+      responses:
+        '201':
+          description: The created to-dos, one per member.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Todo' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /tenant/todos/{todoId}:
+    patch:
+      tags: [tenant]
+      operationId: updateTodo
+      summary: Change a to-do's text or due date
+      description: 'Requires `todos.manage`. The assignee cannot be changed; delete the task and assign a new one.'
+      parameters:
+        - { $ref: '#/components/parameters/TodoId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description: { type: string, minLength: 1, maxLength: 500 }
+                due_date: { type: [string, 'null'], format: date }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Todo' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [tenant]
+      operationId: deleteTodo
+      summary: Delete a to-do
+      description: Requires `todos.manage`.
+      parameters:
+        - { $ref: '#/components/parameters/TodoId' }
       responses:
         '204': { description: Deleted. }
         '401': { $ref: '#/components/responses/Problem' }
@@ -1528,6 +1679,11 @@ components:
       name: laravel_session
       description: Sanctum SPA cookie session (web). Mutations require X-XSRF-TOKEN. Cookie name is configurable (SESSION_COOKIE).
   parameters:
+    TodoId:
+      name: todoId
+      in: path
+      required: true
+      schema: { type: string, minLength: 36, maxLength: 36, pattern: '^[0-9a-fA-F-]+$' }
     AnnouncementId:
       name: announcementId
       in: path
@@ -1697,6 +1853,43 @@ components:
             data:
               type: array
               items: { $ref: '#/components/schemas/DeletionRequest' }
+    Todo:
+      type: object
+      required: [id, description, due_date, is_done, done_at, created_at]
+      properties:
+        id: { type: string }
+        description: { type: string, description: 'Plain text; show it as text, never as HTML.' }
+        due_date: { type: [string, 'null'], format: date, description: 'A calendar day (YYYY-MM-DD), not an instant.' }
+        is_done: { type: boolean }
+        done_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+        assignee:
+          type: object
+          description: Present on the administrator's views only.
+          properties:
+            id: { type: string }
+            user:
+              type: object
+              properties:
+                id: { type: string }
+                username: { type: string }
+                email: { type: string }
+    TodoPage:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/Todo' }
+    MemberTodoPage:
+      allOf:
+        - $ref: '#/components/schemas/TodoPage'
+        - type: object
+          required: [open_count, overdue_count]
+          properties:
+            open_count: { type: integer, minimum: 0 }
+            overdue_count: { type: integer, minimum: 0 }
     Announcement:
       type: object
       required: [id, title, body, is_active, expires_at, created_at, updated_at]

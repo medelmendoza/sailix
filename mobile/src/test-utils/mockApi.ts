@@ -21,6 +21,15 @@ export type Route = Reply | ((call: Call) => Reply | Promise<Reply>);
 let unhandled: string[] = [];
 
 const BACKGROUND: Record<string, Route> = {
+  'GET /todos': {
+    data: {
+      data: [],
+      links: {},
+      meta: { current_page: 1, per_page: 20, total: 0, last_page: 1 },
+      open_count: 0,
+      overdue_count: 0,
+    },
+  },
   'GET /announcements': {
     data: {
       data: [],

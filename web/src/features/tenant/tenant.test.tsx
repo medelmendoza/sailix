@@ -488,6 +488,130 @@ describe('settings and account', () => {
     expect(screen.getByText(/Nothing is deleted automatically/)).toBeInTheDocument();
   });
 
+  describe('to-dos', () => {
+    const open = {
+      id: 't1',
+      description: 'Renew passport <b>now</b>',
+      due_date: '2099-01-01',
+      is_done: false,
+      done_at: null,
+      created_at: '2026-10-02T10:00:00+00:00',
+      assignee: { id: 'm1', user: { id: 'u1', username: 'crew1', email: 'crew1@example.test' } },
+    };
+    const late = { ...open, id: 't2', description: 'Late task', due_date: '2020-01-01' };
+    const done = {
+      ...open,
+      id: 't3',
+      description: 'Finished task',
+      is_done: true,
+      done_at: '2026-10-03T09:00:00+00:00',
+    };
+
+    it('lists tasks with who they are for and their state, as plain text', async () => {
+      asTenantAdmin();
+      server.use(
+        http.get(`${V1}/tenant/todos`, () => HttpResponse.json(pageOf([open, late, done]))),
+      );
+      renderApp('/app/todos');
+
+      expect(await screen.findByText('Renew passport <b>now</b>')).toBeInTheDocument();
+      expect(screen.getAllByText('crew1@example.test').length).toBeGreaterThan(0);
+      expect(screen.getByText('Open')).toBeInTheDocument();
+      expect(screen.getByText('Overdue')).toBeInTheDocument();
+      expect(screen.getByText('Done')).toBeInTheDocument();
+    });
+
+    it('filters by status', async () => {
+      asTenantAdmin();
+      const urls: URL[] = [];
+      server.use(
+        http.get(
+          `${V1}/tenant/todos`,
+          ({ request }) => (urls.push(new URL(request.url)), HttpResponse.json(pageOf([]))),
+        ),
+      );
+      const { user } = renderApp('/app/todos');
+      await screen.findByText('No to-dos');
+      await user.selectOptions(screen.getByLabelText('Show'), 'open');
+      await waitFor(() => expect(urls.at(-1)?.searchParams.get('status')).toBe('open'));
+    });
+
+    it('assigns one task to the chosen members only', async () => {
+      asTenantAdmin();
+      const created = capture<Record<string, unknown>>();
+      server.use(
+        http.get(`${V1}/tenant/todos`, () => HttpResponse.json(pageOf([]))),
+        http.get(`${V1}/tenant/users`, () =>
+          HttpResponse.json(pageOf([member({ id: 'm1' }), member({ id: 'm2' })])),
+        ),
+        http.post(`${V1}/tenant/todos`, async ({ request }) => {
+          await created.record(request);
+          return HttpResponse.json({ data: [open, open] }, { status: 201 });
+        }),
+      );
+      const { user } = renderApp('/app/todos');
+      await user.click(await screen.findByRole('button', { name: 'New to-do' }));
+      const dialog = await screen.findByRole('dialog');
+      await user.type(within(dialog).getByLabelText('Task'), 'Sign the form');
+      await user.type(within(dialog).getByLabelText('Due date (optional)'), '2030-05-06');
+      await user.click(await within(dialog).findByLabelText(/user-m1/));
+      await user.click(within(dialog).getByRole('button', { name: 'Assign' }));
+
+      await waitFor(() => expect(created.calls).toHaveLength(1));
+      expect(created.calls[0]!.body).toEqual({
+        description: 'Sign the form',
+        due_date: '2030-05-06',
+        membership_ids: ['m1'],
+      });
+    });
+
+    it('does not send without a task or without anyone chosen', async () => {
+      asTenantAdmin();
+      const created = capture();
+      server.use(
+        http.get(`${V1}/tenant/todos`, () => HttpResponse.json(pageOf([]))),
+        http.get(`${V1}/tenant/users`, () => HttpResponse.json(pageOf([member({ id: 'm1' })]))),
+        http.post(`${V1}/tenant/todos`, async ({ request }) => {
+          await created.record(request);
+          return HttpResponse.json({ data: [] }, { status: 201 });
+        }),
+      );
+      const { user } = renderApp('/app/todos');
+      await user.click(await screen.findByRole('button', { name: 'New to-do' }));
+      const dialog = await screen.findByRole('dialog');
+      await user.click(within(dialog).getByRole('button', { name: 'Assign' }));
+      expect(await within(dialog).findByText('Write the task.')).toBeInTheDocument();
+      await user.type(within(dialog).getByLabelText('Task'), 'Something');
+      await user.click(within(dialog).getByRole('button', { name: 'Assign' }));
+      expect(await within(dialog).findByText('Choose at least one member.')).toBeInTheDocument();
+      expect(created.calls).toHaveLength(0);
+    });
+
+    it('asks before deleting', async () => {
+      asTenantAdmin();
+      const del = capture();
+      server.use(
+        http.get(`${V1}/tenant/todos`, () => HttpResponse.json(pageOf([open]))),
+        http.delete(`${V1}/tenant/todos/t1`, async ({ request }) => {
+          await del.record(request);
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+      const { user } = renderApp('/app/todos');
+      await user.click(await screen.findByRole('button', { name: /^Delete Renew/ }));
+      const confirm = await screen.findByRole('alertdialog');
+      expect(del.calls).toHaveLength(0);
+      await user.click(within(confirm).getByRole('button', { name: 'Delete' }));
+      await waitFor(() => expect(del.calls).toHaveLength(1));
+    });
+
+    it('is blocked for someone without the ability', async () => {
+      asTenantAdmin(makeMe({ abilities: ['tenant.view', 'users.view'] }));
+      renderApp('/app/todos');
+      expect(await screen.findByText('You do not have access to this page')).toBeInTheDocument();
+    });
+  });
+
   describe('announcements', () => {
     const live = {
       id: 'a1',

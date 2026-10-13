@@ -8,6 +8,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText, Button, GlyphIcon, OfflineBanner, TabIcon } from '@/components';
 import { colors, fonts, spacing } from '@/constants/theme';
+import { TodosScreen } from '@/features/todos/TodosScreen';
 import { AnnouncementScreen } from '@/features/announcements/AnnouncementScreen';
 import { AnnouncementsScreen } from '@/features/announcements/AnnouncementsScreen';
 import { useUnreadCount } from '@/features/announcements/api';
@@ -217,6 +218,7 @@ export function RootNavigator() {
           component={ChangePasswordScreen}
           options={{ title: 'Change password' }}
         />
+        <AppStack.Screen name="Todos" component={TodosScreen} options={{ title: 'To-do list' }} />
         <AppStack.Screen name="Account" component={AccountScreen} options={{ title: 'Account' }} />
         <AppStack.Screen
           name="Announcement"

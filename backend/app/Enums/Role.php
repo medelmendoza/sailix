@@ -32,7 +32,7 @@ enum Role: string
     {
         return match ($this) {
             self::TenantAdmin => [
-                'tenant.view', 'tenant.manage', 'users.view', 'users.manage', 'audit.view', 'announcements.manage',
+                'tenant.view', 'tenant.manage', 'users.view', 'users.manage', 'audit.view', 'announcements.manage', 'todos.manage',
                 ...Module::useAbilities(), ...Module::manageAbilities(),
             ],
             self::Crew => Module::useAbilities(),

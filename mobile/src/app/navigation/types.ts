@@ -39,6 +39,7 @@ export type AppStackParamList = {
     canComplete: boolean;
   };
   Account: undefined;
+  Todos: undefined;
   Announcement: { id: string };
   ChangePassword: undefined;
   SendFeedback: undefined;

@@ -13,6 +13,7 @@ import type {
   Membership,
   Page,
   TenantDetail,
+  Todo,
   TenantModule,
 } from '../../services/api/types';
 import { TENANT_SESSION } from '../authentication/session';
@@ -108,6 +109,62 @@ export function useDeleteAnnouncement() {
     onSuccess: () => {
       toast.success('Announcement deleted.');
       void qc.invalidateQueries({ queryKey: ['announcements'] });
+      void qc.invalidateQueries({ queryKey: ['audit'] });
+    },
+    onError: (e) => toast.error(describeError(e)),
+  });
+}
+
+export function useTodos(params: ListParams) {
+  return useQuery({
+    queryKey: ['todos', params],
+    queryFn: async () => (await api.get<Page<Todo>>('/tenant/todos', { params })).data,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useAssignTodo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      description: string;
+      due_date: string | null;
+      membership_ids: string[];
+    }) => (await api.post<Envelope<Todo[]>>('/tenant/todos', input)).data.data,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['todos'] });
+      void qc.invalidateQueries({ queryKey: ['audit'] });
+    },
+  });
+}
+
+export function useUpdateTodo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: { description?: string; due_date?: string | null };
+    }) => (await api.patch<Envelope<Todo>>(`/tenant/todos/${id}`, patch)).data.data,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['todos'] });
+      void qc.invalidateQueries({ queryKey: ['audit'] });
+    },
+  });
+}
+
+export function useDeleteTodo() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/tenant/todos/${id}`);
+    },
+    onSuccess: () => {
+      toast.success('To-do deleted.');
+      void qc.invalidateQueries({ queryKey: ['todos'] });
       void qc.invalidateQueries({ queryKey: ['audit'] });
     },
     onError: (e) => toast.error(describeError(e)),

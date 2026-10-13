@@ -35,6 +35,8 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
     Route::get('announcements', [Me\AnnouncementController::class, 'index']);
     Route::get('announcements/{announcement}', [Me\AnnouncementController::class, 'show']);
     Route::put('announcements/{announcement}/read', [Me\AnnouncementController::class, 'read']);
+    Route::get('todos', [Me\TodoController::class, 'index']);
+    Route::patch('todos/{todo}', [Me\TodoController::class, 'update']);
     Route::post('me/feedback', [Me\FeedbackController::class, 'store'])->middleware('throttle:feedback');
 
     Route::delete('auth/token', [TokenController::class, 'destroy']);
@@ -50,6 +52,10 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::get('audit-logs', [Tenant\AuditLogController::class, 'index']);
         Route::get('deletion-requests', [Tenant\DeletionRequestController::class, 'index']);
         Route::get('feedback', [Tenant\FeedbackController::class, 'index']);
+        Route::get('todos', [Tenant\TodoController::class, 'index']);
+        Route::post('todos', [Tenant\TodoController::class, 'store']);
+        Route::patch('todos/{todo}', [Tenant\TodoController::class, 'update']);
+        Route::delete('todos/{todo}', [Tenant\TodoController::class, 'destroy']);
         Route::get('announcements', [Tenant\AnnouncementController::class, 'index']);
         Route::post('announcements', [Tenant\AnnouncementController::class, 'store']);
         Route::patch('announcements/{announcement}', [Tenant\AnnouncementController::class, 'update']);

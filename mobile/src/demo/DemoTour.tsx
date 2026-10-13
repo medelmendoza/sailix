@@ -5,6 +5,7 @@ import { navigationRef } from '@/app/navigation/navigationRef';
 /** One stop of the scripted tour per interval; lets a build be filmed or screenshotted without anyone touching it. */
 const STOPS: (() => void)[] = [
   () => navigationRef.navigate('MainTabs', { screen: 'Home' }),
+  () => navigationRef.navigate('Todos'),
   () => navigationRef.navigate('MainTabs', { screen: 'Files' }),
   () => navigationRef.navigate('MainTabs', { screen: 'Announcements' }),
   () => navigationRef.navigate('Announcement', { id: 'n1' }),

@@ -228,3 +228,42 @@ export const demoAnnouncements = [
     is_read: true,
   },
 ];
+
+const dayFromNow = (d: number) => {
+  const t = new Date(Date.now() + d * 86_400_000);
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+};
+export const demoTodos = [
+  {
+    id: 'd1',
+    description: "Renew your seaman's book",
+    due_date: dayFromNow(-2),
+    is_done: false,
+    done_at: null,
+    created_at: hoursAgo(72),
+  },
+  {
+    id: 'd2',
+    description: 'Submit your medical certificate',
+    due_date: dayFromNow(1),
+    is_done: false,
+    done_at: null,
+    created_at: hoursAgo(48),
+  },
+  {
+    id: 'd3',
+    description: 'Complete the safety induction course',
+    due_date: dayFromNow(9),
+    is_done: false,
+    done_at: null,
+    created_at: hoursAgo(24),
+  },
+  {
+    id: 'd4',
+    description: 'Confirm your emergency contact',
+    due_date: null,
+    is_done: true,
+    done_at: hoursAgo(5),
+    created_at: hoursAgo(96),
+  },
+];

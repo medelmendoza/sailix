@@ -364,6 +364,94 @@ export interface paths {
         patch: operations["updateAnnouncement"];
         trace?: never;
     };
+    "/todos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller's own to-dos (open first, soonest due first)
+         * @description Only tasks assigned to the caller's membership. `open_count` and `overdue_count` cover every task of the caller, not only this page.
+         */
+        get: operations["listMyTodos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/todos/{todoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Tick or untick one of the caller's own to-dos (idempotent)
+         * @description Nothing else about the task can be changed by its assignee. Someone else's task is `404`.
+         */
+        patch: operations["setMyTodoDone"];
+        trace?: never;
+    };
+    "/tenant/todos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Every to-do of the caller's organization
+         * @description Requires `todos.manage`. Optionally filtered by status or by one assignee.
+         */
+        get: operations["listTenantTodos"];
+        put?: never;
+        /**
+         * Assign a to-do to one or more members (one task is created per member)
+         * @description Requires `todos.manage`. Every chosen member must be an ACTIVE member of the caller's organization, otherwise nothing is created (`422 invalid_assignee`). The organization and author come from the session.
+         */
+        post: operations["createTodos"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/todos/{todoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a to-do
+         * @description Requires `todos.manage`.
+         */
+        delete: operations["deleteTodo"];
+        options?: never;
+        head?: never;
+        /**
+         * Change a to-do's text or due date
+         * @description Requires `todos.manage`. The assignee cannot be changed; delete the task and assign a new one.
+         */
+        patch: operations["updateTodo"];
+        trace?: never;
+    };
     "/tenant": {
         parameters: {
             query?: never;
@@ -1020,6 +1108,37 @@ export interface components {
         DeletionRequestPage: components["schemas"]["PageEnvelope"] & {
             data?: components["schemas"]["DeletionRequest"][];
         };
+        Todo: {
+            id: string;
+            /** @description Plain text; show it as text, never as HTML. */
+            description: string;
+            /**
+             * Format: date
+             * @description A calendar day (YYYY-MM-DD), not an instant.
+             */
+            due_date: string | null;
+            is_done: boolean;
+            /** Format: date-time */
+            done_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** @description Present on the administrator's views only. */
+            assignee?: {
+                id?: string;
+                user?: {
+                    id?: string;
+                    username?: string;
+                    email?: string;
+                };
+            };
+        };
+        TodoPage: components["schemas"]["PageEnvelope"] & {
+            data?: components["schemas"]["Todo"][];
+        };
+        MemberTodoPage: components["schemas"]["TodoPage"] & {
+            open_count: number;
+            overdue_count: number;
+        };
         Announcement: {
             id: string;
             title: string;
@@ -1337,6 +1456,7 @@ export interface components {
         };
     };
     parameters: {
+        TodoId: string;
         AnnouncementId: string;
     };
     requestBodies: never;
@@ -1997,6 +2117,186 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["Announcement"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listMyTodos: {
+        parameters: {
+            query?: {
+                status?: "open" | "done";
+                page?: number;
+                per_page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page of to-dos. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberTodoPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    setMyTodoDone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                todoId: components["parameters"]["TodoId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    is_done: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description The updated to-do. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Todo"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listTenantTodos: {
+        parameters: {
+            query?: {
+                status?: "open" | "done";
+                membership_id?: string;
+                page?: number;
+                per_page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page of to-dos with their assignee. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TodoPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    createTodos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    description: string;
+                    /** Format: date */
+                    due_date?: string | null;
+                    membership_ids: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description The created to-dos, one per member. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Todo"][];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteTodo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                todoId: components["parameters"]["TodoId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updateTodo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                todoId: components["parameters"]["TodoId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    description?: string;
+                    /** Format: date */
+                    due_date?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Updated. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Todo"];
                     };
                 };
             };
