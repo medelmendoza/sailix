@@ -18,6 +18,12 @@ const contrast = (a: string, b: string) => {
 describe('colour contrast (WCAG 2.1 AA)', () => {
   // [description, foreground, background, minimum ratio]
   const text: [string, string, string][] = [
+    ['body text on the sand ground', colors.text, colors.background],
+    ['muted text on the sand ground', colors.textMuted, colors.background],
+    ['brand teal as text on the sand ground', colors.primary, colors.background],
+    ['danger text on the sand ground', colors.danger, colors.background],
+    ['warning text on the sand ground', colors.warning, colors.background],
+    ['success text on the sand ground', colors.success, colors.background],
     ['body text on the surface', colors.text, colors.surface],
     ['muted text on the surface', colors.textMuted, colors.surface],
     ['muted text on a sunken well', colors.textMuted, colors.surfaceSunken],
@@ -26,7 +32,7 @@ describe('colour contrast (WCAG 2.1 AA)', () => {
     ['link blue as text on the surface', colors.accent, colors.surface],
     ['white on the primary button (start)', colors.onPrimary, colors.primary],
     ['white on the primary button (end of gradient)', colors.onPrimary, colors.primaryEnd],
-    ['lavender text on the surface', colors.lavenderText, colors.surface],
+    ['coral text on the surface', colors.coralText, colors.surface],
     ['danger text on the surface', colors.danger, colors.surface],
     ['danger text on its tint', colors.danger, colors.dangerBg],
     ['warning text on the surface', colors.warning, colors.surface],
@@ -39,13 +45,17 @@ describe('colour contrast (WCAG 2.1 AA)', () => {
     expect(contrast(fg, bg)).toBeGreaterThanOrEqual(4.5);
   });
 
+  it('the outline of inputs and option rows is also at least 3:1 against the sand ground', () => {
+    expect(contrast(colors.border, colors.background)).toBeGreaterThanOrEqual(3);
+  });
+
   it('the outline of inputs and option rows is at least 3:1 against the surface (identifiable without colour cues)', () => {
     expect(contrast(colors.border, colors.surface)).toBeGreaterThanOrEqual(3);
   });
 
   it('the soft fills used for decoration stay decoration: none is relied on for text', () => {
-    // lavender / mint / peach are < 3:1 on the surface, so text must use lavenderText / success / warning instead
-    for (const decorative of [colors.lavender, colors.mint, colors.peach]) {
+    // seafoam / coral are < 3:1 on the surface, so text must use coralText / success / warning instead
+    for (const decorative of [colors.seafoam, colors.coral]) {
       expect(contrast(decorative, colors.surface)).toBeLessThan(3);
     }
   });
@@ -60,12 +70,12 @@ describe('tokens', () => {
     for (const t of Object.values(typography)) expect(t.lineHeight).toBeGreaterThan(t.fontSize);
   });
 
-  it('raised and inset shadows are light/dark pairs', () => {
-    for (const s of [shadows.raised, shadows.raisedSm, shadows.inset, shadows.insetSm]) {
-      expect(s).toHaveLength(2);
-      expect(s[0]!.offsetX).toBe(-(s[1]!.offsetX as number));
+  it('raised shadows fall outward and inset shadows sit inside', () => {
+    for (const s of [shadows.raised, shadows.raisedSm]) {
+      for (const layer of s) expect('inset' in layer && layer.inset).toBeFalsy();
     }
-    expect(shadows.inset[0]!.inset).toBe(true);
-    expect(shadows.raised[0]!.inset).toBe(false);
+    for (const s of [shadows.inset, shadows.insetSm]) {
+      for (const layer of s) expect('inset' in layer && layer.inset).toBe(true);
+    }
   });
 });

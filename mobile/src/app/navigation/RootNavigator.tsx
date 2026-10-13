@@ -6,6 +6,7 @@ import { AppText, Button, OfflineBanner, TabIcon } from '@/components';
 import { colors, fonts, spacing } from '@/constants/theme';
 import { AccountScreen } from '@/features/account/AccountScreen';
 import { ChangePasswordScreen } from '@/features/account/ChangePasswordScreen';
+import { SendFeedbackScreen } from '@/features/account/SendFeedbackScreen';
 import { ForgotPasswordScreen } from '@/features/auth/ForgotPasswordScreen';
 import { LoginScreen } from '@/features/auth/LoginScreen';
 import { RegisterDoneScreen } from '@/features/auth/RegisterDoneScreen';
@@ -41,11 +42,8 @@ const tabOptions = {
   tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 12 },
   tabBarStyle: {
     backgroundColor: colors.surface,
-    borderTopWidth: 0,
-    boxShadow: [
-      { offsetX: 0, offsetY: -6, blurRadius: 16, color: colors.shadowDark },
-      { offsetX: 0, offsetY: 2, blurRadius: 8, color: colors.shadowLight },
-    ],
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.borderSoft,
   },
 };
 
@@ -159,6 +157,11 @@ export function RootNavigator() {
           name="ChangePassword"
           component={ChangePasswordScreen}
           options={{ title: 'Change password' }}
+        />
+        <AppStack.Screen
+          name="SendFeedback"
+          component={SendFeedbackScreen}
+          options={{ title: 'Send feedback' }}
         />
       </AppStack.Navigator>
     </View>

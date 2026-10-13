@@ -1,67 +1,61 @@
 import type { BoxShadowValue } from 'react-native';
 
 /**
- * Design tokens: a calm "soft UI" language (one soft grey-blue surface, raised and pressed-in shapes made of paired
- * light/dark shadows, rounded corners, dusty-blue primary with lavender, mint and peach accents). The look follows the
- * mental-health reference the product owner chose (uupm.cc/demo/mental-health); the COLOURS were darkened where the
- * reference fails WCAG AA (its white-on-#7C9EB2 button is 2.8:1, muted text 3.6:1), see tokens test.
+ * Design tokens, "Harbor": warm sand ground, white cards lifted by a soft shadow and a hairline, deep-teal brand,
+ * navy ink and a little coral for warmth. Every text/background pair is checked against WCAG AA in the tokens test.
  */
 export const colors = {
-  // surfaces: everything sits on one soft surface; depth comes from shadows, not from different fills
-  background: '#F0F4F8',
-  surface: '#F0F4F8',
-  surfaceSunken: '#E4EAF1',
+  background: '#F4F1EA', // sand
+  surface: '#FFFFFF', // cards and bars
+  surfaceSunken: '#EAE5DA', // wells, progress tracks, image placeholders
   // text
-  text: '#2D3748',
-  textMuted: '#556579',
+  text: '#13293D', // navy ink
+  textMuted: '#4F5F6E',
   onPrimary: '#FFFFFF',
   // brand
-  primary: '#3E6F8A',
-  primaryEnd: '#4A7C98',
-  accent: '#41738E',
-  // soft accents (decorative fills) and their text-safe counterparts
-  lavender: '#B8A9C9',
-  lavenderText: '#6B5B8C',
-  mint: '#A8D5BA',
-  peach: '#F0B7A4',
-  gold: '#C98A1B',
-  // boundaries of controls that must be identifiable without colour (inputs, option rows): >= 3:1 on the surface
-  border: '#74879D',
-  borderSoft: '#D3DCE6',
-  // status (text colours >= 4.5:1 on the surface and on their own tint)
+  primary: '#0A5C6E', // deep teal
+  primaryEnd: '#0F7186',
+  accent: '#0A5C6E', // links
+  // decorative fills (never the only carrier of text) and their text-safe counterparts
+  seafoam: '#8CC5C9',
+  coral: '#F0A27F',
+  coralText: '#A8391A',
+  gold: '#B7791F',
+  // boundaries of controls that must be identifiable without colour (inputs, option rows): >= 3:1 on sand and white
+  border: '#7B8794',
+  borderSoft: '#E3DDD0',
+  // status (text colours >= 4.5:1 on sand, white and on their own tint)
   danger: '#B3362F',
-  dangerBg: '#F8E3E1',
-  warning: '#9A5B00',
-  warningBg: '#FCEBDD',
-  success: '#287250',
-  successBg: '#E1F2E8',
-  info: '#376682',
-  infoBg: '#E3ECF3',
-  skeleton: '#E1E8F0',
-  shadowDark: 'rgba(163, 177, 198, 0.55)',
-  shadowLight: 'rgba(255, 255, 255, 0.85)',
+  dangerBg: '#FBE9E7',
+  warning: '#8F5200',
+  warningBg: '#FDF0DC',
+  success: '#1F6B4A',
+  successBg: '#E3F3EA',
+  info: '#0A5C6E',
+  infoBg: '#E1F0F2',
+  skeleton: '#E6E1D5',
+  shadow: 'rgba(19, 41, 61, 0.10)',
 } as const;
 
 export const gradients = {
-  primary: 'linear-gradient(135deg, #3E6F8A 0%, #4A7C98 100%)',
-  /** Decorative placeholder fill (lavender to mint); never a background for text that matters. */
-  soft: 'linear-gradient(135deg, #B8A9C9 0%, #A8D5BA 100%)',
+  primary: 'linear-gradient(135deg, #0A5C6E 0%, #0F7186 100%)',
+  /** Decorative placeholder fill (teal to seafoam); never a background for text that matters. */
+  soft: 'linear-gradient(135deg, #0A5C6E 0%, #5FB0B5 100%)',
 } as const;
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
-export const radius = { sm: 10, md: 16, lg: 24, pill: 999 } as const;
+export const radius = { sm: 8, md: 12, lg: 18, pill: 999 } as const;
 
-/** Raised (standing out of the surface) and inset (pressed into it). Two shadows each: one light, one dark. */
-const layer = (d: number, blur: number, inset = false): BoxShadowValue[] => [
-  { offsetX: d, offsetY: d, blurRadius: blur, color: colors.shadowDark, inset },
-  { offsetX: -d, offsetY: -d, blurRadius: blur, color: colors.shadowLight, inset },
-];
+/** Elevation: a card lifts off the sand with a soft shadow; an inset well is a quiet inner shadow. */
 export const shadows = {
-  raised: layer(8, 20),
-  raisedSm: layer(4, 10),
-  inset: layer(4, 10, true),
-  insetSm: layer(2, 6, true),
-} as const;
+  raised: [
+    { offsetX: 0, offsetY: 4, blurRadius: 16, color: colors.shadow },
+    { offsetX: 0, offsetY: 1, blurRadius: 2, color: colors.shadow },
+  ],
+  raisedSm: [{ offsetX: 0, offsetY: 1, blurRadius: 4, color: colors.shadow }],
+  inset: [{ offsetX: 0, offsetY: 1, blurRadius: 4, color: colors.shadow, inset: true as const }],
+  insetSm: [{ offsetX: 0, offsetY: 1, blurRadius: 3, color: colors.shadow, inset: true as const }],
+} satisfies Record<string, BoxShadowValue[]>;
 
 export const fonts = {
   body: 'Nunito_400Regular',

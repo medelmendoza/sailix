@@ -32,6 +32,7 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
     Route::get('me', [MeController::class, 'show']);
     Route::put('me/password', [Me\PasswordController::class, 'update'])->middleware('throttle:password-change');
     Route::post('me/deletion-request', [Me\DeletionRequestController::class, 'store'])->middleware('throttle:deletion');
+    Route::post('me/feedback', [Me\FeedbackController::class, 'store'])->middleware('throttle:feedback');
 
     Route::delete('auth/token', [TokenController::class, 'destroy']);
     Route::post('auth/token/refresh', [TokenController::class, 'refresh']);
@@ -45,6 +46,7 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::patch('users/{membership}', [Tenant\UserController::class, 'update']);
         Route::get('audit-logs', [Tenant\AuditLogController::class, 'index']);
         Route::get('deletion-requests', [Tenant\DeletionRequestController::class, 'index']);
+        Route::get('feedback', [Tenant\FeedbackController::class, 'index']);
         Route::get('modules', [Tenant\ModuleController::class, 'index']);
         Route::put('modules/{module}', [Tenant\ModuleController::class, 'update']);
     });

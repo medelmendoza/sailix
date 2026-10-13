@@ -290,3 +290,43 @@ describe('switching organization', () => {
     expect(useSessionStore.getState().me?.tenant.code).toBe('SFAI');
   });
 });
+
+describe('send feedback', () => {
+  async function openFeedback() {
+    await openAccount();
+    await fireEvent.press(await screen.findByRole('button', { name: 'Send feedback' }));
+  }
+
+  it('sends the chosen category and the message, then confirms', async () => {
+    const api = mockApi({ 'POST /me/feedback': { status: 201, data: { data: { id: 'f1' } } } });
+    await openFeedback();
+    await fireEvent.press(await screen.findByRole('radio', { name: 'Something is wrong' }));
+    await fireEvent.changeText(screen.getByLabelText('Your feedback'), 'The quiz did not load');
+    await fireEvent.press(screen.getByRole('button', { name: 'Send feedback' }));
+
+    expect(await screen.findByText(/Thank you/)).toBeTruthy();
+    expect(api.callsTo('POST /me/feedback')[0]?.body).toEqual({
+      category: 'bug',
+      message: 'The quiz did not load',
+    });
+  });
+
+  it('does not send an empty message', async () => {
+    const api = mockApi({});
+    await openFeedback();
+    await fireEvent.press(screen.getByRole('button', { name: 'Send feedback' }));
+
+    expect(await screen.findByText('Write a few words.')).toBeTruthy();
+    expect(api.calls).toHaveLength(0);
+  });
+
+  it('shows the server error when it is refused (for example the daily limit)', async () => {
+    mockApi({ 'POST /me/feedback': problem(429, 'Too many requests', 'Try again later.') });
+    await openFeedback();
+    await fireEvent.changeText(screen.getByLabelText('Your feedback'), 'Another idea for you');
+    await fireEvent.press(screen.getByRole('button', { name: 'Send feedback' }));
+
+    await waitFor(() => expect(screen.queryByText(/Thank you/)).toBeNull());
+    expect(await screen.findByText('Too many attempts. Try again shortly.')).toBeTruthy();
+  });
+});

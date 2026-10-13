@@ -242,6 +242,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send feedback about the Sailix app to the caller's organization
+         * @description Stored for the organization's administrators. The organization and member come from the authenticated context. It is not sent to any service (such as Tala). Limited to 10 per day.
+         */
+        post: operations["sendFeedback"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenant": {
         parameters: {
             query?: never;
@@ -338,6 +358,26 @@ export interface paths {
          * @description Requires `users.manage`.
          */
         get: operations["listDeletionRequests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List feedback sent by members of the caller's organization
+         * @description Requires `users.manage`. Newest first.
+         */
+        get: operations["listFeedback"];
         put?: never;
         post?: never;
         delete?: never;
@@ -857,6 +897,25 @@ export interface components {
         };
         DeletionRequestPage: components["schemas"]["PageEnvelope"] & {
             data?: components["schemas"]["DeletionRequest"][];
+        };
+        Feedback: {
+            id: string;
+            /** @enum {string} */
+            category: "bug" | "idea" | "other";
+            message: string;
+            /** Format: date-time */
+            created_at: string;
+            membership?: {
+                id?: string;
+                user?: {
+                    id?: string;
+                    username?: string;
+                    email?: string;
+                };
+            };
+        };
+        FeedbackPage: components["schemas"]["PageEnvelope"] & {
+            data?: components["schemas"]["Feedback"][];
         };
         /**
          * @description Module registry. Only `tala` exists in the MVP; new modules are added here.
@@ -1569,6 +1628,40 @@ export interface operations {
             429: components["responses"]["Problem"];
         };
     };
+    sendFeedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    category: "bug" | "idea" | "other";
+                    message: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Feedback recorded. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Feedback"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+        };
+    };
     getTenant: {
         parameters: {
             query?: never;
@@ -1737,6 +1830,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeletionRequestPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    listFeedback: {
+        parameters: {
+            query?: {
+                page?: number;
+                per_page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page of feedback. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackPage"];
                 };
             };
             401: components["responses"]["Problem"];

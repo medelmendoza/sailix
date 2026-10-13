@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   placeholder: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.lavender,
+    backgroundColor: colors.seafoam,
     experimental_backgroundImage: gradients.soft,
   },
   tile: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },

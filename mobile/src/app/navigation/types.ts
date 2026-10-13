@@ -30,4 +30,5 @@ export type AppStackParamList = {
     canComplete: boolean;
   };
   ChangePassword: undefined;
+  SendFeedback: undefined;
 };

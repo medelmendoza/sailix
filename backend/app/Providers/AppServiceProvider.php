@@ -56,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('reset', fn (Request $r) => Limit::perHour(10)->by('reset-ip:'.$r->ip()));
         RateLimiter::for('password-change', fn (Request $r) => Limit::perMinute(5)->by('pwchange:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
         RateLimiter::for('deletion', fn (Request $r) => Limit::perDay(3)->by('deletion:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
+        RateLimiter::for('feedback', fn (Request $r) => Limit::perDay(10)->by('feedback:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
         // Linking verifies a password with a third party: keep guessing expensive.
         RateLimiter::for('module-link', fn (Request $r) => Limit::perMinute(5)->by('mlink:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
         // Every gateway read becomes upstream traffic to a third party we do not operate.

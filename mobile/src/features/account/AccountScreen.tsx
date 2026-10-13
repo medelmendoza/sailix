@@ -137,6 +137,11 @@ export function AccountScreen({ navigation }: Props) {
         variant="secondary"
         onPress={() => navigation.navigate('ChangePassword')}
       />
+      <Button
+        title="Send feedback"
+        variant="secondary"
+        onPress={() => navigation.navigate('SendFeedback')}
+      />
       <Button title="Privacy policy" variant="secondary" onPress={() => void openPrivacy()} />
       <Button
         title="Request account deletion"

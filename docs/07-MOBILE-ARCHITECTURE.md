@@ -66,3 +66,11 @@ Only the *placement* is copied; colours, type and shadows stay the Sailix soft-U
 - **Course list**: one card per course. A large course picture with the title over it, then a footer row with the creator and the time left, then the progress bar and "N of M items completed".
 - **Course detail**: hero picture; info card (name, "Creator", "Due", progress); Description card; Materials card. Each material row has a thumbnail (or a type icon), the name, "Type : …" and "Status : …" lines, and a trailing download / remove icon for video and PDF. Tapping a row opens the video, PDF, quiz or flashcards.
 - A missing or failed picture shows a soft placeholder (first letter), never a broken image. The gateway returns `creator` (string or null).
+
+### 7.2 "Harbor" redesign (replaces the soft-UI look in §7; the screen layout in §7.1 is unchanged)
+
+Warm sand ground, white cards lifted by a soft shadow and a hairline, deep-teal brand (`#0A5C6E`), navy ink, coral/seafoam as decoration only. Same token names, so every screen picked it up; text/background pairs (including on the sand ground) are contrast-tested in `theme.test.ts`. Not done: web admin portal, dark mode, Dynamic Type.
+
+### 7.3 Send feedback
+
+Account > Send feedback posts `{category, message}` to `POST /me/feedback`. The server stamps the organization and member from the session (never the body), limits to 10 a day, and administrators read it at `GET /tenant/feedback` (API only; no web screen yet). It is NOT sent to Tala.
