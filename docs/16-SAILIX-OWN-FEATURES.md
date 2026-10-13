@@ -10,7 +10,7 @@ On 2026-10-13 the product owner said "go with Sailix functionality, leave Tala f
 | To-dos (D4) | **Built** (below). Written but NOT yet run through the checks |
 | Documents / Files (D3) | **Built on mock data** (below). Real file storage is still a decision |
 | Finance (D5) | **Built on mock data** (below). Where real payslip/loan data comes from (G-02) is still open: nothing in the product can enter it yet |
-| Dashboard | Partly: shows the latest announcements and the Tala learning summary |
+| Dashboard | **Built**: the four old shortcuts (Upload a document, Finance, To-do list, My documents), a "Documents need attention" card (expired and expiring-soon documents, which the old app counted but never showed), the to-do card, the latest announcements and the Tala learning summary |
 | Tabs: Dashboard, Files, Announcements, Finance, Services | **In place** (docs/07 §7.6). Services lists Tala and shows SRT, Call-it, Astra as coming soon |
 
 ## D2 Announcements
@@ -88,3 +88,10 @@ The old Call-it was a mock: hard-coded name ("Jaycob"), "88 reports", a hard-cod
 - **Security:** the reporter, organization and status come from the session; drafts are private to the reporter (admins get `404`); another member's or organization's report is `404`; crew cannot read the admin list or review; files use the same private, content-checked storage as documents; audit records submitted / reviewed without the text; text is shown as text, never HTML.
 - **Not built:** notifications to administrators when a report arrives (no email provider, no push), a vessel list, editing a report after it was sent, "official report" follow-up workflow, offline drafts (a draft needs a connection to save).
 - **State:** checks run (see PROJECT-STATUS). Not verified: the file picker and upload on a device, Android.
+
+## Dashboard shortcuts and document alerts
+
+- **Shortcuts (DASH-02):** four round buttons under the greeting: **Upload a document** (opens the add-document form; the old app only switched tab), **Finance**, **To-do list**, **My documents**. The old "Request appointment" shortcut was a no-op with no spec and is not built.
+- **Documents need attention (DASH-05):** appears only when an approved document is expired or expiring within 90 days; shows the counts, up to three documents (expired first) and a button to Files. It uses the same server-computed expiry state as the Files tab, and renders nothing while loading, on an error, or when everything is fine.
+- **Not built:** the old iOS tracking prompt (removed on purpose: the app has no ad or analytics SDK) and the disabled onboarding coach marks.
+- **State:** typechecked only; tests written, none run (no checks until asked).

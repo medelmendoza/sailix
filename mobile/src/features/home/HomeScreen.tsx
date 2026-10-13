@@ -8,6 +8,8 @@ import { AppText, FormError } from '@/components';
 import { spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { useSessionStore } from '@/store/sessionStore';
+import { HomeDocumentAlert } from './HomeDocumentAlert';
+import { HomeShortcuts } from './HomeShortcuts';
 import { HomeTodos } from '@/features/todos/HomeTodos';
 import { HomeAnnouncements } from '@/features/announcements/HomeAnnouncements';
 import { TalaLearningSummary } from '@/features/modules/tala/TalaLearningSummary';
@@ -54,6 +56,13 @@ export function HomeScreen({ navigation }: Props) {
       <FormError
         message={error ?? (switchError ? `Could not switch organization. ${switchError}` : null)}
       />
+      <HomeShortcuts
+        onUpload={() => navigation.navigate('DocumentForm', {})}
+        onFinance={() => navigation.navigate('Finance')}
+        onTodos={() => navigation.navigate('Todos')}
+        onFiles={() => navigation.navigate('Files')}
+      />
+      <HomeDocumentAlert onOpen={() => navigation.navigate('Files')} />
       <HomeTodos />
       <HomeAnnouncements onSeeAll={() => navigation.navigate('Announcements')} />
       {me.modules.some((m) => m.code === 'tala' && m.enabled && m.status === 'linked') ? (
