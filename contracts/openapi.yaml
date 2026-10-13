@@ -716,6 +716,19 @@ paths:
                   minItems: 1
                   maxItems: 50
                   items: { type: string, maxLength: 64, pattern: '^[A-Za-z0-9_-]+$' }
+                feedback:
+                  type: [object, 'null']
+                  description: >
+                    Optional video feedback keyed by the id of a VIDEO in `completed` (star rating 1 to 5 in half steps, comment
+                    up to 1000 characters; an empty comment is stored as "N/A", as the Tala app does). `422 invalid_feedback`
+                    for anything else.
+                  additionalProperties:
+                    type: object
+                    required: [rating]
+                    additionalProperties: false
+                    properties:
+                      rating: { type: number, minimum: 1, maximum: 5, multipleOf: 0.5 }
+                      comment: { type: [string, 'null'], maxLength: 1000 }
       responses:
         '200':
           description: Submitted.
@@ -807,6 +820,83 @@ paths:
                 required: [data]
                 properties:
                   data: { $ref: '#/components/schemas/TalaQuizResult' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /modules/tala/courses/{assignId}/flashcards/{cardId}:
+    get:
+      tags: [modules]
+      operationId: getTalaFlashcards
+      summary: The cards of one flashcard set of the caller's course, with ratings Tala already holds
+      description: >
+        Requires `progress_submission` (`403 feature_disabled` otherwise). Only https media addresses are returned.
+        `422 unsupported_deck` for a set the server cannot represent. Ratings of an earlier session are returned per
+        card when the set is unchanged.
+      parameters:
+        - { name: assignId, in: path, required: true, schema: { type: string, maxLength: 64, pattern: '^[A-Za-z0-9_-]+$' } }
+        - { name: cardId, in: path, required: true, schema: { type: string, maxLength: 64, pattern: '^[A-Za-z0-9_-]+$' } }
+      responses:
+        '200':
+          description: Deck.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TalaDeck' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /modules/tala/courses/{assignId}/flashcards/{cardId}/ratings:
+    post:
+      tags: [modules]
+      operationId: submitTalaFlashcardRatings
+      summary: Record a COMPLETE set of ratings (every card rated) for a flashcard set (write)
+      description: >
+        Like the Tala app, a set is recorded only when every card has been rated. The row Tala stores is built on the
+        server from Tala's own deck (no card text from the client). `422 incomplete_ratings` / `invalid_ratings`,
+        `409 deck_changed` when the set changed since it was loaded. A later submission replaces the stored result.
+      parameters:
+        - { name: assignId, in: path, required: true, schema: { type: string, maxLength: 64, pattern: '^[A-Za-z0-9_-]+$' } }
+        - { name: cardId, in: path, required: true, schema: { type: string, maxLength: 64, pattern: '^[A-Za-z0-9_-]+$' } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ratings]
+              properties:
+                version: { type: [string, 'null'], maxLength: 32 }
+                ratings:
+                  type: array
+                  minItems: 1
+                  maxItems: 500
+                  items:
+                    type: object
+                    required: [index, rating]
+                    additionalProperties: false
+                    properties:
+                      index: { type: integer, minimum: 0, maximum: 499 }
+                      rating: { type: string, enum: [easy, medium, hard] }
+      responses:
+        '200':
+          description: Recorded.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TalaFlashcardResult' }
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
@@ -1458,12 +1548,49 @@ components:
         total: { type: integer }
         average: { type: number }
         passed: { type: boolean }
+    TalaDeck:
+      type: object
+      required: [id, name, description, version, cards]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        version: { type: string }
+        cards:
+          type: array
+          items:
+            type: object
+            required: [index, question, question_media, answer, answer_media, rating]
+            properties:
+              index: { type: integer }
+              question: { type: [string, 'null'] }
+              question_media: { $ref: '#/components/schemas/TalaMedia' }
+              answer: { type: [string, 'null'] }
+              answer_media: { $ref: '#/components/schemas/TalaMedia' }
+              rating: { type: [string, 'null'], enum: [easy, medium, hard, null] }
+    TalaMedia:
+      oneOf:
+        - { type: 'null' }
+        - type: object
+          required: [type, url]
+          properties:
+            type: { type: string, enum: [image, video, audio] }
+            url: { type: string, description: 'https address provided by Tala' }
+    TalaFlashcardResult:
+      type: object
+      required: [progress, status, easy, medium, hard]
+      properties:
+        progress: { type: string }
+        status: { type: string }
+        easy: { type: integer }
+        medium: { type: integer }
+        hard: { type: integer }
     TalaMaterialSummary:
       type: object
       required: [id, type, name, description, thumbnail_url, viewable, progress, status]
       properties:
         id: { type: string }
-        type: { type: string, enum: [video, pdf, quiz] }
+        type: { type: string, enum: [video, pdf, quiz, flashcards] }
         name: { type: string }
         description: { type: [string, 'null'] }
         thumbnail_url: { type: [string, 'null'] }

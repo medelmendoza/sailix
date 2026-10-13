@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Cache;
 final class TalaGateway
 {
     /** Material kinds shown in the MVP. EPUB and legacy quizzes are excluded (D-T6); quizzes are listed, never delivered (D-T8). */
-    private const TYPES = ['video' => 'video', 'pdf' => 'pdf', 'up_quiz' => 'quiz'];
+    private const TYPES = ['video' => 'video', 'pdf' => 'pdf', 'up_quiz' => 'quiz', 'up_card' => 'flashcards'];
 
     public function __construct(
         private TalaClient $client,
@@ -132,34 +132,48 @@ final class TalaGateway
      * The payload sent to Tala is built SERVER-SIDE from Tala's own stored snapshot of this user: the client only names
      * material ids. No score, comment, name or any other client value is forwarded; completion never goes backwards.
      *
+     * Video feedback (star rating + comment, as in the Tala app) may accompany the video ids it belongs to.
+     *
      * @param  list<string>  $materialIds
+     * @param  array<string, mixed>  $feedback  by video id: ['rating' => 1..5 in half steps, 'comment' => text|null]
      * @return array<string, mixed>
      */
-    public function submitProgress(Membership $membership, string $assignId, array $materialIds): array
+    public function submitProgress(Membership $membership, string $assignId, array $materialIds, array $feedback = []): array
     {
         $materialIds = array_values(array_unique($materialIds));
 
-        $result = $this->writeSnapshot($membership, $assignId, function (array $visible) use ($materialIds) {
+        $result = $this->writeSnapshot($membership, $assignId, function (array $visible) use ($materialIds, $feedback) {
             foreach ($materialIds as $id) {
                 $summary = $visible[$id] ?? throw ApiProblem::notFound('Material not found.');
-                if ($summary['type'] === 'quiz') {
-                    throw ApiProblem::invalid('unsupported_material', 'Quizzes are taken through the quiz endpoints.');
+                if (! in_array($summary['type'], ['video', 'pdf'], true)) {
+                    throw ApiProblem::invalid('unsupported_material', 'Quizzes and flashcards have their own screens.');
+                }
+            }
+            foreach ($feedback as $id => $f) {
+                $rating = is_array($f) ? ($f['rating'] ?? null) : null; // untrusted shape: checked below
+                if (! in_array($id, $materialIds, true) || ($visible[$id]['type'] ?? null) !== 'video' || ! is_numeric($rating) || (float) $rating < 1 || (float) $rating > 5 || fmod((float) $rating * 2, 1.0) !== 0.0) {
+                    throw ApiProblem::invalid('invalid_feedback', 'Feedback belongs to a video you are completing and needs a rating from 1 to 5.');
                 }
             }
 
-            return function (array &$item, ModuleLink $link, string $token) use ($materialIds, $visible) {
+            return function (array &$item, ModuleLink $link, string $token) use ($materialIds, $visible, $feedback) {
                 foreach ($materialIds as $id) {
                     $kind = $visible[$id]['type'] === 'video' ? 'videos' : 'pdfs';
                     $idKey = $kind === 'videos' ? 'videoId' : 'pdfId';
-                    $found = false;
+                    $index = null;
                     foreach ($item['materials'][$kind] as $i => $row) {
                         if (($row[$idKey] ?? null) === $id) {
                             $item['materials'][$kind][$i]['status'] = 'COMPLETED';
-                            $found = true;
+                            $index = $i;
                         }
                     }
-                    if (! $found) {
+                    if ($index === null) {
                         $item['materials'][$kind][] = $this->newMaterialRow($token, $link, $kind, $id);
+                        $index = array_key_last($item['materials'][$kind]);
+                    }
+                    if (isset($feedback[$id])) {
+                        $item['materials'][$kind][$index]['feedback'] = (float) $feedback[$id]['rating'];
+                        $item['materials'][$kind][$index]['comment'] = $this->cleanComment($feedback[$id]['comment'] ?? null);
                     }
                 }
             };
@@ -285,6 +299,95 @@ final class TalaGateway
         ];
     }
 
+    /**
+     * The cards of one flashcard set of the caller's own course, with any ratings Tala already holds for them.
+     *
+     * @return array<string, mixed>
+     */
+    public function flashcards(Membership $membership, string $assignId, string $cardId): array
+    {
+        if (! $this->progressWritesEnabled()) {
+            throw ApiProblem::forbidden('feature_disabled', 'Flashcards are not enabled.');
+        }
+
+        return $this->authorized($membership, function (ModuleLink $link, string $token, string $tala) use ($assignId, $cardId) {
+            $assignment = $this->findAssignment($this->assignments($token, $tala, $link), $assignId);
+            $this->assertMaterial($assignment, $cardId, 'flashcards');
+            $deck = TalaDeck::parse($this->client->deck($token, $link->external_team_id, $cardId));
+
+            $stored = null;
+            try {
+                $snapshot = $this->client->progress($token, $tala, $link->external_team_id, (string) ($assignment['courseId'] ?? ''), $assignId);
+                foreach (is_array($snapshot['materials']['cards'] ?? null) ? $snapshot['materials']['cards'] : [] as $row) {
+                    if (is_array($row) && ($row['cardId'] ?? null) === $cardId) {
+                        $stored = $row;
+                    }
+                }
+            } catch (TalaUnavailable) {
+                // resuming earlier ratings is a nicety: study works without it
+            }
+
+            return $deck->publicView($stored);
+        });
+    }
+
+    /**
+     * Records a COMPLETE set of ratings (every card rated) for a flashcard set, as the Tala app does: only when the
+     * set is finished. The row Tala stores is built here from Tala's own deck, never from client text.
+     *
+     * @param  list<mixed>  $ratings
+     * @return array<string, mixed>
+     */
+    public function submitFlashcards(Membership $membership, string $assignId, string $cardId, ?string $version, array $ratings): array
+    {
+        $summary = null;
+        $progress = $this->writeSnapshot($membership, $assignId, function (array $visible) use ($cardId, $version, $ratings, &$summary) {
+            if (($visible[$cardId]['type'] ?? null) !== 'flashcards') {
+                throw ApiProblem::notFound('Flashcard set not found.');
+            }
+
+            return function (array &$item, ModuleLink $link, string $token) use ($cardId, $version, $ratings, &$summary) {
+                $deck = TalaDeck::parse($this->client->deck($token, $link->external_team_id, $cardId));
+                if ($version !== null && $version !== $deck->version()) {
+                    throw ApiProblem::conflict('deck_changed', 'This flashcard set was updated. Reload it and rate again.');
+                }
+                $valid = $deck->validateRatings($ratings);
+                $row = $deck->syncRow($valid);
+                $summary = array_count_values($valid);
+
+                $replaced = false;
+                foreach ($item['materials']['cards'] as $i => $existing) {
+                    if (($existing['cardId'] ?? null) === $cardId) {
+                        $item['materials']['cards'][$i] = $row;
+                        $replaced = true;
+                    }
+                }
+                if (! $replaced) {
+                    $item['materials']['cards'][] = $row;
+                }
+            };
+        });
+
+        return $progress + ['easy' => $summary['easy'] ?? 0, 'medium' => $summary['medium'] ?? 0, 'hard' => $summary['hard'] ?? 0];
+    }
+
+    /** @param array<string, mixed> $assignment */
+    private function assertMaterial(array $assignment, string $id, string $type): void
+    {
+        $summary = collect($this->materials($assignment)[0])->firstWhere('id', $id);
+        if ($summary === null || $summary['type'] !== $type) {
+            throw ApiProblem::notFound('Material not found.');
+        }
+    }
+
+    /** Free text typed by the user, stored in Tala: plain text only, bounded, "N/A" when empty (as the Tala app does). */
+    private function cleanComment(mixed $comment): string
+    {
+        $text = is_string($comment) ? trim((string) preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $comment)) : '';
+
+        return $text === '' ? 'N/A' : mb_substr($text, 0, 1000);
+    }
+
     /** @param array<string, mixed> $assignment */
     private function assertQuiz(array $assignment, string $quizId): void
     {
@@ -301,8 +404,8 @@ final class TalaGateway
             $assignment = $this->findAssignment($this->assignments($token, $tala, $link), $assignId);
             $summary = collect($this->materials($assignment)[0])->firstWhere('id', $materialId)
                 ?? throw ApiProblem::notFound('Material not found.');
-            if ($summary['type'] === 'quiz') {
-                throw ApiProblem::invalid('unsupported_material', 'Quizzes are not available in this version.');
+            if (in_array($summary['type'], ['quiz', 'flashcards'], true)) {
+                throw ApiProblem::invalid('unsupported_material', 'This item has no file to open.');
             }
             $kind = $summary['type'] === 'video' ? 'videos' : 'pdf';
             $raw = $this->client->material($token, $link->external_team_id, $kind, $materialId);
@@ -336,6 +439,18 @@ final class TalaGateway
         $keep = ['assignId', 'courseId', 'courseName', 'courseDescription', 'userId', 'teamId', 'lastName', 'firstName', 'middleName',
             'dateFrom', 'dateTo', 'dateAssigned', 'assignedBy', 'email', 'status', 'progress', 'syncDate', 'courseTags', 'userTags'];
         $item = array_intersect_key($snapshot !== [] ? $snapshot : $assignment, array_flip($keep));
+        if ($snapshot === []) {
+            // Never synced: Tala holds no snapshot yet, so the course-level record is built from the assignment itself
+            // (the same fields the Tala app posts), with zero progress.
+            $course = is_array($assignment['course'] ?? null) ? $assignment['course'] : [];
+            $item['courseName'] = $this->str($course['courseName'] ?? null) ?? '';
+            $item['courseDescription'] = $this->str($course['courseDescription'] ?? null) ?? '';
+            $item['courseTags'] = $this->str($course['tags'] ?? null) ?? '';
+            $item['userTags'] = $this->str($assignment['userTags'] ?? null) ?? '';
+            $item['syncDate'] = '';
+            $item['status'] = 'NOT YET COMPLETED';
+            $item['progress'] = '0/'.((int) ($course['totalMaterial'] ?? 0));
+        }
         $materials = is_array($snapshot['materials'] ?? null) ? $snapshot['materials'] : [];
         foreach (['videos', 'cards', 'quizzes', 'epubs', 'pdfs'] as $group) {
             $item['materials'][$group] = array_values(array_filter(is_array($materials[$group] ?? null) ? $materials[$group] : [], 'is_array'));
@@ -489,7 +604,8 @@ final class TalaGateway
                 'name' => $this->str($d['materialName'] ?? null) ?? '',
                 'description' => $this->str($d['materialDescription'] ?? null),
                 'thumbnail_url' => $this->https($d['materialThumbnailUrl'] ?? null),
-                'viewable' => $type !== 'quiz' || $this->progressWritesEnabled(), // quizzes are scored server-side, which needs writes
+                // quizzes (scored server-side) and flashcards (results are written back) need the write path
+                'viewable' => ! in_array($type, ['quiz', 'flashcards'], true) || $this->progressWritesEnabled(),
             ];
         }
 

@@ -18,6 +18,7 @@ export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   Module: { code: string };
   TalaCourse: { assignId: string; name: string };
+  TalaFlashcards: { assignId: string; cardId: string; name: string };
   TalaQuiz: { assignId: string; quizId: string; name: string };
   TalaPdf: { name: string; uri: string };
   TalaVideo: {

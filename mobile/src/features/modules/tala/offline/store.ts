@@ -15,8 +15,15 @@ export type DownloadRecord = {
   downloadedAt: string;
 };
 export type OutboxItem = {
+  kind: 'completed' | 'flashcards';
   assignId: string;
+  /** a video/PDF id, or the flashcard set id */
   materialId: string;
+  /** completed videos: star rating (1 to 5, half steps) and comment, required by the Tala app */
+  feedback?: { rating: number; comment: string };
+  /** flashcards: the deck version the ratings were made against, and a rating for EVERY card */
+  version?: string | null;
+  ratings?: { index: number; rating: 'easy' | 'medium' | 'hard' }[];
   queuedAt: string;
   attempts: number;
   lastError: string | null;
@@ -57,6 +64,26 @@ export async function removeDownloadRecord(scope: string, materialId: string): P
 }
 
 export async function getOutbox(scope: string): Promise<OutboxItem[]> {
-  return (await read<OutboxItem[]>(key(scope, 'outbox'))) ?? [];
+  const items = (await read<OutboxItem[]>(key(scope, 'outbox'))) ?? [];
+  return items.map((i) => ({ ...i, kind: i.kind ?? 'completed' })); // items queued by an older build were completions
 }
 export const setOutbox = (scope: string, items: OutboxItem[]) => write(key(scope, 'outbox'), items);
+
+/** Study progress of one flashcard set, kept on the device until the set is complete and sent. */
+export type LocalRatings = { version: string; ratings: Record<string, 'easy' | 'medium' | 'hard'> };
+export const getLocalRatings = (scope: string, assignId: string, cardId: string) =>
+  read<LocalRatings>(key(scope, `ratings:${assignId}:${cardId}`));
+export const setLocalRatings = (scope: string, assignId: string, cardId: string, v: LocalRatings) =>
+  write(key(scope, `ratings:${assignId}:${cardId}`), v);
+
+/** The last deck seen, for offline study (cards are study material, not secrets). */
+export const getCachedDeck = (scope: string, assignId: string, cardId: string) =>
+  read<{ fetchedAt: string; deck: import('@/services/api/types').TalaDeck }>(
+    key(scope, `deck:${assignId}:${cardId}`),
+  );
+export const setCachedDeck = (
+  scope: string,
+  assignId: string,
+  cardId: string,
+  v: { fetchedAt: string; deck: import('@/services/api/types').TalaDeck },
+) => write(key(scope, `deck:${assignId}:${cardId}`), v);

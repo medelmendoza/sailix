@@ -14,6 +14,8 @@ export type TalaMaterialSummary = Schemas['TalaMaterialSummary'];
 export type TalaMaterial = Schemas['TalaMaterial'];
 export type TalaQuiz = Schemas['TalaQuiz'];
 export type TalaQuizResult = Schemas['TalaQuizResult'];
+export type TalaDeck = Schemas['TalaDeck'];
+export type TalaFlashcardResult = Schemas['TalaFlashcardResult'];
 
 export interface Envelope<T> {
   data: T;

@@ -2,6 +2,7 @@ import { useEventListener } from 'expo';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useQueryClient } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import type { AppStackParamList } from '@/app/navigation/types';
@@ -9,6 +10,7 @@ import { Notice } from '@/components';
 import { spacing } from '@/constants/theme';
 import { scopedKey } from '@/store/scopedKey';
 import { queueCompletion, syncOutbox } from './offline/outbox';
+import { TalaFeedbackModal } from './TalaFeedbackModal';
 
 /** Plays and shows ONLY files that this app downloaded into its own directory (offline copies). */
 export function TalaPdfScreen({ route }: NativeStackScreenProps<AppStackParamList, 'TalaPdf'>) {
@@ -31,13 +33,11 @@ export function TalaVideoScreen({ route }: NativeStackScreenProps<AppStackParamL
   const queryClient = useQueryClient();
   const player = useVideoPlayer(uri, (p) => p.play());
 
-  // Watching to the end counts as completing the item; it is queued and delivered like any other completion.
+  const [askFeedback, setAskFeedback] = useState(false);
+
+  // Watching to the end asks for feedback; the video counts as completed once it is given (as in the Tala app).
   useEventListener(player, 'playToEnd', () => {
-    if (!canComplete) return;
-    void queueCompletion(assignId, materialId)
-      .then(() => queryClient.invalidateQueries({ queryKey: scopedKey('tala', 'outbox') }))
-      .then(() => syncOutbox())
-      .catch(() => undefined);
+    if (canComplete) setAskFeedback(true);
   });
 
   return (
@@ -45,9 +45,21 @@ export function TalaVideoScreen({ route }: NativeStackScreenProps<AppStackParamL
       <VideoView player={player} style={styles.video} nativeControls />
       {canComplete ? (
         <View style={{ padding: spacing.lg }}>
-          <Notice message="This item is marked completed when the video finishes." />
+          <Notice message="When the video finishes you can rate it; it is then marked completed." />
         </View>
       ) : null}
+      <TalaFeedbackModal
+        visible={askFeedback}
+        title={route.params.name}
+        onCancel={() => setAskFeedback(false)}
+        onSubmit={(feedback) => {
+          setAskFeedback(false);
+          void queueCompletion(assignId, materialId, feedback)
+            .then(() => queryClient.invalidateQueries({ queryKey: scopedKey('tala', 'outbox') }))
+            .then(() => syncOutbox())
+            .catch(() => undefined);
+        }}
+      />
     </View>
   );
 }

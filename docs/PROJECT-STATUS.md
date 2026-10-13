@@ -82,4 +82,5 @@ Read-only. Branch `medel_dev_march2025`, HEAD `2094806`, 66 pre-existing uncommi
 | 2026-10-13 | User asked for offline mode + progress submission. Offline mode built; progress submission built but **OFF**: the production write probe was blocked by the platform permission check and not worked around (docs/13 §20) | Awaiting your decision on the write test |
 | 2026-10-13 | User authorized the write probe and a permission rule; added a narrow project-local rule; ran the probes on the test account (restored each time): Tala **replaces** snapshots, validates nothing, accepts the gateway shape (docs/13 §21) | Done |
 | 2026-10-13 | Quizzes built with server-side scoring (flag still OFF by default); live-verified through the gateway on the test account | Awaiting review |
+| 2026-10-13 | User chose flashcards + video feedback first. Built (flag still OFF by default); live-verified flashcards through the gateway on the test account; found and fixed a defect (404 for never-synced courses) | Awaiting review (docs/13 §22) |
 

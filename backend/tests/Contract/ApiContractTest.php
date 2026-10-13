@@ -70,6 +70,7 @@ class ApiContractTest extends TestCase
                     ['materialId' => 'v1', 'materialType' => 'video', 'materialName' => 'Intro'],
                     ['materialId' => 'q1', 'materialType' => 'up_quiz', 'materialName' => 'Quiz'],
                     ['materialId' => 'e1', 'materialType' => 'epub', 'materialName' => 'Book'],
+                    ['materialId' => 'c1', 'materialType' => 'up_card', 'materialName' => 'Cards'],
                 ]],
             ]]),
             "$base/api/v1/auth/users/tu1/teams/TEAM-1/courses/C1/sync/A1/data" => Http::response(['materials' => ['videos' => [['videoId' => 'v1', 'progress' => '50', 'status' => 'ongoing']]]]),
@@ -87,12 +88,20 @@ class ApiContractTest extends TestCase
         $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses/A1/materials/q1', $h), '/modules/tala/courses/{assignId}/materials/{materialId}', 'get', 422);
         $this->ok($this->fresh()->postJson('/api/v1/modules/tala/courses/A1/progress', ['completed' => ['v1']], $h), '/modules/tala/courses/{assignId}/progress', 'post', 403);
         $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses/A1/quizzes/q1', $h), '/modules/tala/courses/{assignId}/quizzes/{quizId}', 'get', 403);
+        $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses/A1/flashcards/c1', $h), '/modules/tala/courses/{assignId}/flashcards/{cardId}', 'get', 403);
         config(['sailix.modules.tala.progress_writes' => true]);
         Http::fake(["$base/api/v1/auth/users/tu1/teams/TEAM-1/courses/sync" => Http::response([])]);
         $this->ok($this->fresh()->postJson('/api/v1/modules/tala/courses/A1/progress', ['completed' => ['v1']], $h), '/modules/tala/courses/{assignId}/progress', 'post', 200);
         Http::fake(["$base/api/v1/auth/users/teams/TEAM-1/up_quizzes/q1" => Http::response([
             'quizId' => 'q1', 'quizName' => 'Quiz', 'quizPercentage' => '70', 'arraySection' => [['sectionId' => 's1', 'data' => [['questionType' => 'multipleChoice', 'numQuestion' => '1', 'question' => 'Q?', 'answer' => '1', 'choices' => 'a:b', 'required' => 'true']]]],
         ])]);
+        Http::fake(["$base/api/v1/auth/users/teams/TEAM-1/upgraded_cards/c1" => Http::response([
+            'cardId' => 'c1', 'cardName' => 'Cards', 'data' => [['question' => 'Q', 'answer' => 'A', 'questionMediaType' => 'image', 'questionMediaUploaded' => 'https://cdn.example.com/q.png'], ['question' => 'Q2', 'answer' => 'A2']],
+        ])]);
+        $deck = $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses/A1/flashcards/c1', $h), '/modules/tala/courses/{assignId}/flashcards/{cardId}', 'get', 200);
+        $this->ok($this->fresh()->postJson('/api/v1/modules/tala/courses/A1/flashcards/c1/ratings', ['version' => $deck->json('data.version'), 'ratings' => [['index' => 0, 'rating' => 'easy'], ['index' => 1, 'rating' => 'hard']]], $h), '/modules/tala/courses/{assignId}/flashcards/{cardId}/ratings', 'post', 200);
+        $this->ok($this->fresh()->postJson('/api/v1/modules/tala/courses/A1/flashcards/c1/ratings', ['ratings' => [['index' => 0, 'rating' => 'easy']]], $h), '/modules/tala/courses/{assignId}/flashcards/{cardId}/ratings', 'post', 422);
+        $this->ok($this->fresh()->postJson('/api/v1/modules/tala/courses/A1/progress', ['completed' => ['v1'], 'feedback' => ['v1' => ['rating' => 4.5, 'comment' => 'ok']]], $h), '/modules/tala/courses/{assignId}/progress', 'post', 200);
         $quiz = $this->ok($this->fresh()->getJson('/api/v1/modules/tala/courses/A1/quizzes/q1', $h), '/modules/tala/courses/{assignId}/quizzes/{quizId}', 'get', 200);
         $this->ok($this->fresh()->postJson('/api/v1/modules/tala/courses/A1/quizzes/q1/attempts', ['version' => $quiz->json('data.version'), 'answers' => [['ref' => '0.0', 'value' => '1']]], $h), '/modules/tala/courses/{assignId}/quizzes/{quizId}/attempts', 'post', 200);
         $this->ok($this->fresh()->postJson('/api/v1/modules/tala/courses/A1/quizzes/q1/attempts', ['answers' => []], $h), '/modules/tala/courses/{assignId}/quizzes/{quizId}/attempts', 'post', 422);

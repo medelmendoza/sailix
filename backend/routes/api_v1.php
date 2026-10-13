@@ -57,7 +57,11 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::post('courses/{assignId}/progress', [Modules\TalaController::class, 'progress'])->where('assignId', '[A-Za-z0-9_-]{1,64}')->middleware('throttle:module-write');
         Route::post('courses/{assignId}/quizzes/{quizId}/attempts', [Modules\TalaController::class, 'attempt'])
             ->where(['assignId' => '[A-Za-z0-9_-]{1,64}', 'quizId' => '[A-Za-z0-9_-]{1,64}'])->middleware(['throttle:module-write', 'throttle:quiz-attempt']);
+        Route::post('courses/{assignId}/flashcards/{cardId}/ratings', [Modules\TalaController::class, 'ratings'])
+            ->where(['assignId' => '[A-Za-z0-9_-]{1,64}', 'cardId' => '[A-Za-z0-9_-]{1,64}'])->middleware('throttle:module-write');
         Route::middleware('throttle:module-read')->group(function () {
+            Route::get('courses/{assignId}/flashcards/{cardId}', [Modules\TalaController::class, 'flashcards'])
+                ->where(['assignId' => '[A-Za-z0-9_-]{1,64}', 'cardId' => '[A-Za-z0-9_-]{1,64}']);
             Route::get('courses/{assignId}/quizzes/{quizId}', [Modules\TalaController::class, 'quiz'])
                 ->where(['assignId' => '[A-Za-z0-9_-]{1,64}', 'quizId' => '[A-Za-z0-9_-]{1,64}']);
             Route::get('courses', [Modules\TalaController::class, 'courses']);

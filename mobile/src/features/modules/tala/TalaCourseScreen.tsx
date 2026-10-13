@@ -16,10 +16,17 @@ import { fetchTalaMaterial, useTalaCourse } from './api';
 import { deleteDownload, downloadMaterial, listDownloads } from './offline/downloads';
 import { pendingCompletions, queueCompletion, syncOutbox } from './offline/outbox';
 import { savedCopyText } from './TalaCourseList';
+import { TalaFeedbackModal } from './TalaFeedbackModal';
+import type { Feedback } from './offline/outbox';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'TalaCourse'>;
 
-const TYPE_LABEL: Record<string, string> = { video: 'Video', pdf: 'PDF', quiz: 'Quiz' };
+const TYPE_LABEL: Record<string, string> = {
+  video: 'Video',
+  pdf: 'PDF',
+  quiz: 'Quiz',
+  flashcards: 'Flashcards',
+};
 const isDone = (m: TalaMaterialSummary) => m.status?.toUpperCase() === 'COMPLETED';
 
 export function TalaCourseScreen({ route }: Props) {
@@ -31,6 +38,7 @@ export function TalaCourseScreen({ route }: Props) {
   const outbox = useQuery({ queryKey: scopedKey('tala', 'outbox'), queryFn: pendingCompletions });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [feedbackFor, setFeedbackFor] = useState<TalaMaterialSummary | null>(null);
 
   const refreshLocal = () =>
     Promise.all([
@@ -69,13 +77,19 @@ export function TalaCourseScreen({ route }: Props) {
       await refreshLocal();
     });
 
-  const markCompleted = (m: TalaMaterialSummary) =>
+  const completeWith = (m: TalaMaterialSummary, feedback?: Feedback) =>
     guarded(m.id, async () => {
-      await queueCompletion(assignId, m.id);
+      await queueCompletion(assignId, m.id, feedback);
       await refreshLocal();
       await syncOutbox(); // delivers now when online, otherwise stays queued
       await refreshLocal();
     });
+
+  // A video needs feedback (rating + comment) to count as completed, as in the Tala app; a PDF does not.
+  const markCompleted = (m: TalaMaterialSummary) => {
+    if (m.type === 'video') setFeedbackFor(m);
+    else void completeWith(m);
+  };
 
   const syncNow = () =>
     guarded('sync', async () => {
@@ -160,7 +174,14 @@ export function TalaCourseScreen({ route }: Props) {
                   : ''}
               </AppText>
             </View>
-            {m.viewable && m.type === 'quiz' ? (
+            {m.viewable && m.type === 'flashcards' ? (
+              <Button
+                title={isDone(m) ? 'Practice flashcards' : 'Study flashcards'}
+                onPress={() =>
+                  navigation.navigate('TalaFlashcards', { assignId, cardId: m.id, name: m.name })
+                }
+              />
+            ) : m.viewable && m.type === 'quiz' ? (
               <Button
                 title={isDone(m) ? 'Retake quiz' : 'Take quiz'}
                 onPress={() =>
@@ -203,11 +224,25 @@ export function TalaCourseScreen({ route }: Props) {
                 ) : null}
               </View>
             ) : (
-              <AppText muted>Quizzes are not available in this version.</AppText>
+              <AppText muted>
+                {m.type === 'flashcards'
+                  ? 'Flashcards are not available in this version.'
+                  : 'Quizzes are not available in this version.'}
+              </AppText>
             )}
           </Card>
         );
       })}
+      <TalaFeedbackModal
+        visible={feedbackFor !== null}
+        title={feedbackFor?.name ?? ''}
+        onCancel={() => setFeedbackFor(null)}
+        onSubmit={(feedback) => {
+          const m = feedbackFor;
+          setFeedbackFor(null);
+          if (m) void completeWith(m, feedback);
+        }}
+      />
       {c.hidden_materials > 0 ? (
         <AppText variant="caption" muted>
           {c.hidden_materials} item(s) in this course are not supported in this version of the app.

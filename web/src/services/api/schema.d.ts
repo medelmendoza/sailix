@@ -508,6 +508,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/modules/tala/courses/{assignId}/flashcards/{cardId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The cards of one flashcard set of the caller's course, with ratings Tala already holds
+         * @description Requires `progress_submission` (`403 feature_disabled` otherwise). Only https media addresses are returned. `422 unsupported_deck` for a set the server cannot represent. Ratings of an earlier session are returned per card when the set is unchanged.
+         */
+        get: operations["getTalaFlashcards"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/modules/tala/courses/{assignId}/flashcards/{cardId}/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a COMPLETE set of ratings (every card rated) for a flashcard set (write)
+         * @description Like the Tala app, a set is recorded only when every card has been rated. The row Tala stores is built on the server from Tala's own deck (no card text from the client). `422 incomplete_ratings` / `invalid_ratings`, `409 deck_changed` when the set changed since it was loaded. A later submission replaces the stored result.
+         */
+        post: operations["submitTalaFlashcardRatings"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/modules/tala/courses/{assignId}/materials/{materialId}": {
         parameters: {
             query?: never;
@@ -887,10 +927,38 @@ export interface components {
             average: number;
             passed: boolean;
         };
+        TalaDeck: {
+            id: string;
+            name: string;
+            description: string | null;
+            version: string;
+            cards: {
+                index: number;
+                question: string | null;
+                question_media: components["schemas"]["TalaMedia"];
+                answer: string | null;
+                answer_media: components["schemas"]["TalaMedia"];
+                /** @enum {string|null} */
+                rating: "easy" | "medium" | "hard" | null;
+            }[];
+        };
+        TalaMedia: null | {
+            /** @enum {string} */
+            type: "image" | "video" | "audio";
+            /** @description https address provided by Tala */
+            url: string;
+        };
+        TalaFlashcardResult: {
+            progress: string;
+            status: string;
+            easy: number;
+            medium: number;
+            hard: number;
+        };
         TalaMaterialSummary: {
             id: string;
             /** @enum {string} */
-            type: "video" | "pdf" | "quiz";
+            type: "video" | "pdf" | "quiz" | "flashcards";
             name: string;
             description: string | null;
             thumbnail_url: string | null;
@@ -1853,6 +1921,13 @@ export interface operations {
             content: {
                 "application/json": {
                     completed: string[];
+                    /** @description Optional video feedback keyed by the id of a VIDEO in `completed` (star rating 1 to 5 in half steps, comment up to 1000 characters; an empty comment is stored as "N/A", as the Tala app does). `422 invalid_feedback` for anything else. */
+                    feedback?: {
+                        [key: string]: {
+                            rating: number;
+                            comment?: string | null;
+                        };
+                    } | null;
                 };
             };
         };
@@ -1940,6 +2015,80 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["TalaQuizResult"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    getTalaFlashcards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignId: string;
+                cardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deck. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TalaDeck"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    submitTalaFlashcardRatings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignId: string;
+                cardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    version?: string | null;
+                    ratings: {
+                        index: number;
+                        /** @enum {string} */
+                        rating: "easy" | "medium" | "hard";
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Recorded. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TalaFlashcardResult"];
                     };
                 };
             };

@@ -316,6 +316,13 @@ describe('saved copy when offline', () => {
   });
 });
 
+async function giveFeedback(stars = 4, half = false, comment = '') {
+  await fireEvent.press(await screen.findByRole('radio', { name: `${stars} stars` }));
+  if (half) await fireEvent.press(screen.getByRole('switch', { name: 'Half star' }));
+  if (comment) await fireEvent.changeText(screen.getByLabelText('Comment'), comment);
+  await fireEvent.press(screen.getByRole('button', { name: 'Submit feedback' }));
+}
+
 describe('marking completed', () => {
   async function openCourse(submission: boolean, extra: Record<string, unknown> = {}) {
     const api = mockApi({
@@ -346,12 +353,14 @@ describe('marking completed', () => {
     expect(screen.getAllByRole('button', { name: 'Mark as completed' })).toHaveLength(1); // the PDF is already completed
 
     await fireEvent.press(screen.getByRole('button', { name: 'Mark as completed' }));
+    await giveFeedback(4, true, 'Clear and useful');
 
     await waitFor(() =>
       expect(api.callsTo('POST /modules/tala/courses/A1/progress')).toHaveLength(1),
     );
     expect(api.callsTo('POST /modules/tala/courses/A1/progress')[0]?.body).toEqual({
       completed: ['v1'],
+      feedback: { v1: { rating: 3.5, comment: 'Clear and useful' } },
     });
     await waitFor(() => expect(screen.queryByText(/waiting to be sent/)).toBeNull());
   });
@@ -363,6 +372,7 @@ describe('marking completed', () => {
     offline(true);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Mark as completed' }));
+    await giveFeedback(5);
     expect(await screen.findByText(/1 completion waiting to be sent/)).toBeTruthy();
     expect(screen.getByText(/Completed, waiting to send/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Mark as completed' })).toBeNull();
@@ -399,5 +409,96 @@ describe('marking completed', () => {
     await AsyncStorage.setItem(`tala:v1:${scope}:outbox`, raw!); // what survives an app restart
     expect(await pendingCompletions()).toHaveLength(1);
     await setOutbox(scope, []);
+  });
+});
+
+describe('video feedback', () => {
+  async function openVideo() {
+    const api = mockApi({
+      'GET /modules/tala/courses': { data: { data: [course] } },
+      'GET /modules/tala/courses/A1': { data: { data: detail(true) } },
+      'POST /modules/tala/courses/A1/progress': { data: { data: {} } },
+    });
+    signedInAs(makeMe({ modules: [TALA('linked')] }));
+    await renderApp();
+    await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+    await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Mark as completed' }));
+    return api;
+  }
+
+  it('needs a rating before it can be submitted; one star cannot be a half star', async () => {
+    await openVideo();
+    const submit = () =>
+      screen.getByRole('button', { name: 'Submit feedback' }).props.accessibilityState?.disabled;
+    expect(await screen.findByText('Choose a rating from 1 to 5')).toBeTruthy();
+    expect(submit()).toBe(true);
+
+    await fireEvent.press(screen.getByRole('radio', { name: '1 star' }));
+    expect(
+      screen.getByRole('switch', { name: 'Half star' }).props.accessibilityState?.disabled,
+    ).toBe(true); // 0.5 is not allowed
+    expect(await screen.findByText('Your rating: 1 of 5')).toBeTruthy();
+    expect(submit()).toBe(false);
+
+    await fireEvent.press(screen.getByRole('radio', { name: '3 stars' }));
+    await fireEvent.press(screen.getByRole('switch', { name: 'Half star' }));
+    expect(await screen.findByText('Your rating: 2.5 of 5')).toBeTruthy();
+  });
+
+  it('the comment is optional and is trimmed', async () => {
+    const api = await openVideo();
+    await giveFeedback(5);
+    await waitFor(() =>
+      expect(api.callsTo('POST /modules/tala/courses/A1/progress')).toHaveLength(1),
+    );
+    expect(api.callsTo('POST /modules/tala/courses/A1/progress')[0]?.body).toEqual({
+      completed: ['v1'],
+      feedback: { v1: { rating: 5, comment: '' } },
+    });
+  });
+
+  it('"Maybe later" leaves the video incomplete and sends nothing', async () => {
+    const api = await openVideo();
+    await fireEvent.press(screen.getByRole('button', { name: 'Maybe later' }));
+
+    expect(screen.queryByText('How was this video?')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Mark as completed' })).toBeTruthy();
+    expect(api.callsTo('POST /modules/tala/courses/A1/progress')).toHaveLength(0);
+    expect(await pendingCompletions()).toEqual([]);
+  });
+
+  it('feedback survives being offline: it waits in the queue with the completion', async () => {
+    await openVideo();
+    offline(true);
+    await giveFeedback(4, false, 'Nice');
+    const [item] = await pendingCompletions();
+    expect(item).toMatchObject({
+      kind: 'completed',
+      materialId: 'v1',
+      feedback: { rating: 4, comment: 'Nice' },
+    });
+  });
+
+  it('a PDF is completed without any feedback form', async () => {
+    const api = mockApi({
+      'GET /modules/tala/courses': { data: { data: [course] } },
+      'GET /modules/tala/courses/A1': {
+        data: { data: { ...detail(true), materials: [{ ...mat('p9', 'pdf') }] } },
+      },
+      'POST /modules/tala/courses/A1/progress': { data: { data: {} } },
+    });
+    signedInAs(makeMe({ modules: [TALA('linked')] }));
+    await renderApp();
+    await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+    await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Mark as completed' }));
+
+    expect(screen.queryByText('How was this video?')).toBeNull();
+    await waitFor(() =>
+      expect(api.callsTo('POST /modules/tala/courses/A1/progress')[0]?.body).toEqual({
+        completed: ['p9'],
+      }),
+    );
   });
 });

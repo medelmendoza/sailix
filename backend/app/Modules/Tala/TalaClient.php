@@ -57,8 +57,20 @@ final class TalaClient
     /** @return array<string, mixed> */
     public function progress(string $token, string $userId, string $teamId, string $courseId, string $assignId): array
     {
-        return $this->getObject($token, '/api/v1/auth/users/'.$this->seg($userId).'/teams/'.$this->seg($teamId)
+        $response = $this->authed($token, '/api/v1/auth/users/'.$this->seg($userId).'/teams/'.$this->seg($teamId)
             .'/courses/'.$this->seg($courseId).'/sync/'.$this->seg($assignId).'/data');
+        if ($response->status() === 404) {
+            return []; // Tala answers 404 for a course the user has never synced (observed 2026-10-13): nothing stored yet, not an outage
+        }
+        $data = $this->json($response);
+
+        return array_is_list($data) && $data !== [] ? throw new TalaUnavailable('object payload') : $data;
+    }
+
+    /** @return array<string, mixed> Tala's flashcard set document */
+    public function deck(string $token, string $teamId, string $cardId): array
+    {
+        return $this->getObject($token, '/api/v1/auth/users/teams/'.$this->seg($teamId).'/upgraded_cards/'.$this->seg($cardId));
     }
 
     /** @return array<string, mixed> Tala's quiz document, answer key included (it must never be forwarded to a client). */

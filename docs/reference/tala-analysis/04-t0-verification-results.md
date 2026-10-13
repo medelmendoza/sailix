@@ -38,3 +38,14 @@ Scripts: `backend/scripts/tala-t0-write-probe.py` (T0b), `tala-t0-quiz-shape.py`
 | W5 | Quiz encoding | All 30 observed questions are `multipleChoice`, 4 choices separated by `:`, `answer` is a single **0-based index**, `required=true`. Tala's stored quiz row keeps `correct`/`wrong`/`average` as numbers (floats) and `remarks` `PASSED`/`FAILED`. |
 | W6 | Concurrency | Not tested against Tala itself. Because POST replaces the snapshot, a write from another client (e.g. the Tala app syncing) between the gateway's read and write would be overwritten (lost update). The gateway's per-link lock only serializes Sailix. |
 
+### Addendum 2 (2026-10-13): flashcards, video feedback and a found defect
+Scripts: `tala-t0-cards-shape.py` (read-only), `tala-t0-cards-write-probe.py` (through the real gateway). Same authorization and permission-rule arrangement as above (a third narrow rule was added for the third script).
+| # | Finding |
+|---|---|
+| F1 | The test account's **mapped team has no flashcards**; another team of the same account has one set (`up_card`, 20 cards, picture questions, text answers). Material types seen across the 3 teams: `video`, `pdf`, `up_quiz`, `up_card`. No `card`, `epub` or legacy `quiz`. |
+| F2 | Flashcard set document: keys `cardId, cardName, cardDescription, cardThumbnailUrl, cardFileUrl…, tags, data[]`; each card `{tags, question, questionMediaType, questionMediaUploaded, answer, answerMediaType, answerMediaUploaded}` — **no card id** (cards are identified by position). |
+| F3 | **`GET …/sync/{assignId}/data` returns 404 for a course the user has never synced.** The gateway treated that as an outage, so the first-ever submission for such a course would have failed with 503. **Defect found and fixed** (404 now means "nothing stored yet"; the course-level record is then built from the assignment). Regression test added. |
+| F4 | Tala accepted a complete 20-card set row (counts as numbers, per-card results `EASY`/`MEDIUM`/`HARD`) written through the gateway and stored it as sent. |
+| F5 | **Not live-verified:** a video completion with feedback (rating + comment) — the course that had a card set had no video lacking a row. The same fields (`feedback` number, `comment` text) already exist on rows Tala returns, and new-row writes were verified earlier; covered by tests only. |
+| F6 | **Residual change on the test account:** that course had no stored record at all, and Tala has no delete, so the probe could only "restore" it to an empty zero-progress record (the course now returns 200 instead of 404). Nothing else on the account differs from before. |
+

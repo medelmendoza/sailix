@@ -5,6 +5,8 @@ import type {
   Envelope,
   TalaCourse,
   TalaCourseDetail,
+  TalaDeck,
+  TalaFlashcardResult,
   TalaMaterial,
   TalaQuiz,
   TalaQuizResult,
@@ -148,6 +150,31 @@ export async function submitTalaQuiz(
     await api.post<Envelope<TalaQuizResult>>(
       `${base}/courses/${encodeURIComponent(assignId)}/quizzes/${encodeURIComponent(quizId)}/attempts`,
       { version, answers },
+    )
+  ).data.data;
+}
+
+/** Flashcard sets: content is study material (no answer key), cached for offline study; results are sent as one complete set. */
+export async function fetchTalaDeck(assignId: string, cardId: string): Promise<TalaDeck> {
+  return (
+    await api.get<Envelope<TalaDeck>>(
+      `${base}/courses/${encodeURIComponent(assignId)}/flashcards/${encodeURIComponent(cardId)}`,
+    )
+  ).data.data;
+}
+
+export type CardRating = { index: number; rating: 'easy' | 'medium' | 'hard' };
+
+export async function submitTalaRatings(
+  assignId: string,
+  cardId: string,
+  version: string | null,
+  ratings: CardRating[],
+): Promise<TalaFlashcardResult> {
+  return (
+    await api.post<Envelope<TalaFlashcardResult>>(
+      `${base}/courses/${encodeURIComponent(assignId)}/flashcards/${encodeURIComponent(cardId)}/ratings`,
+      { version, ratings },
     )
   ).data.data;
 }

@@ -18,6 +18,11 @@ class SubmitProgressRequest extends FormRequest
         return [
             'completed' => ['required', 'array', 'min:1', 'max:50'],
             'completed.*' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]{1,64}$/'],
+            // Video feedback keyed by video id (the gateway checks the id is a video being completed).
+            'feedback' => ['nullable', 'array', 'max:50'],
+            'feedback.*' => ['array:rating,comment'],
+            'feedback.*.rating' => ['required', 'numeric', 'between:1,5'],
+            'feedback.*.comment' => ['nullable', 'string', 'max:1000'],
         ];
     }
 }
