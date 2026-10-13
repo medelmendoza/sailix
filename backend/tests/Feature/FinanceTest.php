@@ -140,6 +140,7 @@ class FinanceTest extends TestCase
         $this->assertSame([$mine->id], array_column($this->getJson('/api/v1/payslips', $h)->json('data'), 'id'));
 
         $this->getJson("/api/v1/payslips/{$mine->id}", $this->unlock('crewA2'))->assertNotFound(); // a colleague in the same organization
+        $this->app['auth']->forgetGuards();
         $this->getJson('/api/v1/payslips')->assertUnauthorized();
     }
 
@@ -199,6 +200,7 @@ class FinanceTest extends TestCase
         $r = $this->getJson('/api/v1/loans', $this->as('crewA'))->assertOk();
         $this->assertEqualsCanonicalizing(['PHP1', 'PHP2', 'USD1', 'STOP', 'PAID'], array_column($r->json('data'), 'code')); // inactive and others' hidden
         $this->assertSame(['php' => '350.50', 'usd' => '40.00'], $r->json('totals'));
+        $this->app['auth']->forgetGuards();
         $this->getJson('/api/v1/loans')->assertUnauthorized();
     }
 }

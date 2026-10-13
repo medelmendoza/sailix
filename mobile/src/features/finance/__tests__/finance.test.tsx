@@ -183,7 +183,7 @@ describe('cash advance', () => {
     });
     await fireEvent.press(await screen.findByRole('button', { name: 'Cash advance' }));
     expect(await screen.findByText('Medical advance')).toBeTruthy();
-    expect(screen.getByText('₱1,000.00')).toBeTruthy();
+    expect(screen.getAllByText('₱1,000.00').length).toBeGreaterThan(0); // the running total and the loan's own deduction
     expect(screen.getByText('₱6,000.00')).toBeTruthy();
     expect(screen.getByRole('progressbar', { name: 'Medical advance paid' })).toBeTruthy();
     expect(api.callsTo('POST /finance/unlock')).toHaveLength(0);

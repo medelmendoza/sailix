@@ -23,6 +23,7 @@ export function useDocuments(view: DocumentView) {
 export function useDocument(id: string) {
   return useQuery({
     queryKey: scopedKey('documents', 'one', id),
+    enabled: id !== '', // the add form has no document yet
     queryFn: async () => (await api.get<Envelope<CrewDocument>>(`/documents/${id}`)).data.data,
   });
 }

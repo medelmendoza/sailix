@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property string $code
  * @property string $description
  * @property Carbon|null $loan_date
+ * @property Carbon|null $start_of_deduction
  * @property string $loan_amount
  * @property string $deduct_amount
  * @property string $paid_amount

@@ -16,28 +16,35 @@ type Props = NativeStackScreenProps<AppStackParamList, 'DocumentViewer'>;
  */
 export function DocumentViewerScreen({ route }: Props) {
   const { id } = route.params;
-  const [file, setFile] = useState<{ uri: string; image: boolean } | null>(null);
-  const [error, setError] = useState<unknown>(null);
   const [attempt, setAttempt] = useState(0);
+  const key = `${id}:${attempt}`;
+  // The result of the download that belongs to THIS id and attempt; anything older is ignored (no resets inside the effect).
+  const [result, setResult] = useState<{
+    key: string;
+    file?: { uri: string; image: boolean };
+    error?: unknown;
+  } | null>(null);
+  const current = result?.key === key ? result : null;
 
   useEffect(() => {
     let alive = true;
-    setFile(null);
-    setError(null);
     downloadToCache(id)
       .then((f) => {
-        if (alive) setFile({ uri: f.uri, image: /\.(jpe?g|png)$/i.test(f.uri) });
+        if (alive) setResult({ key, file: { uri: f.uri, image: /\.(jpe?g|png)$/i.test(f.uri) } });
       })
-      .catch((e) => alive && setError(e));
+      .catch((e) => alive && setResult({ key, error: e }));
     return () => {
       alive = false;
       removeFromCache(id);
     };
-  }, [id, attempt]);
+  }, [id, key]);
 
-  if (error) {
-    return <ErrorState message={describeError(error)} onRetry={() => setAttempt((n) => n + 1)} />;
+  if (current?.error) {
+    return (
+      <ErrorState message={describeError(current.error)} onRetry={() => setAttempt((n) => n + 1)} />
+    );
   }
+  const file = current?.file;
   if (!file) {
     return (
       <View style={styles.center}>

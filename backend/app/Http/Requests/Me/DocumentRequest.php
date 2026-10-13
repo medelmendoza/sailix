@@ -4,6 +4,7 @@ namespace App\Http\Requests\Me;
 
 use App\Support\DocumentFiles;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class DocumentRequest extends FormRequest
 {
@@ -12,7 +13,11 @@ class DocumentRequest extends FormRequest
         return true;
     }
 
-    /** An expiry before the issue date is a typing mistake; refuse it with a message on the field. */
+    /**
+     * An expiry before the issue date is a typing mistake; refuse it with a message on the field.
+     *
+     * @return array<int, \Closure(Validator): void>
+     */
     public function after(): array
     {
         return [function ($validator) {

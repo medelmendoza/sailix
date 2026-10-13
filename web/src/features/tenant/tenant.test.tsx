@@ -520,7 +520,7 @@ describe('settings and account', () => {
       renderApp('/app/documents');
       expect(await screen.findByText('Passport')).toBeInTheDocument();
       expect(screen.getByText('crew1@example.test')).toBeInTheDocument();
-      expect(screen.getByText('Waiting for review')).toBeInTheDocument();
+      expect(within(screen.getByRole('table')).getByText('Waiting for review')).toBeInTheDocument();
       expect(urls[0]!.searchParams.get('status')).toBe('pending');
     });
 
@@ -683,9 +683,10 @@ describe('settings and account', () => {
 
       expect(await screen.findByText('Renew passport <b>now</b>')).toBeInTheDocument();
       expect(screen.getAllByText('crew1@example.test').length).toBeGreaterThan(0);
-      expect(screen.getByText('Open')).toBeInTheDocument();
-      expect(screen.getByText('Overdue')).toBeInTheDocument();
-      expect(screen.getByText('Done')).toBeInTheDocument();
+      const table = within(screen.getByRole('table')); // "Open" and "Done" are also options of the filter
+      expect(table.getByText('Open')).toBeInTheDocument();
+      expect(table.getByText('Overdue')).toBeInTheDocument();
+      expect(table.getByText('Done')).toBeInTheDocument();
     });
 
     it('filters by status', async () => {

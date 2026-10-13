@@ -20,6 +20,29 @@ use Illuminate\Support\Carbon;
  * @property string $vessel_name
  * @property bool $is_dollar
  * @property string $net_amount
+ * @property Carbon|null $depart_date
+ * @property Carbon|null $payroll_date
+ * @property string|null $full_vessel_name
+ * @property string|null $position
+ * @property string|null $address
+ * @property string|null $payee_name
+ * @property string|null $bank_code
+ * @property string|null $account_number
+ * @property string|null $exchange_rate
+ * @property string|null $pay_usd
+ * @property string|null $pay_peso
+ * @property string|null $adjustment
+ * @property string|null $adjustment_detail
+ * @property string|null $signon_adjustment
+ * @property string|null $union_dues
+ * @property string|null $bank_charges
+ * @property string|null $withholding_tax
+ * @property string|null $mpfee
+ * @property string|null $sss_total
+ * @property string|null $employee_sss
+ * @property string|null $employee_philhealth
+ * @property string|null $employee_pagibig
+ * @property string|null $deductions_total
  * @property bool $is_hold
  */
 class Payslip extends Model

@@ -116,6 +116,7 @@ class TodoTest extends TestCase
         $this->getJson('/api/v1/tenant/todos', $this->as('crewA'))->assertForbidden();
         $this->patchJson("/api/v1/tenant/todos/$id", ['description' => 'x'], $this->as('crewA'))->assertForbidden();
         $this->deleteJson("/api/v1/tenant/todos/$id", [], $this->as('crewA'))->assertForbidden();
+        $this->app['auth']->forgetGuards();
         $this->getJson('/api/v1/todos')->assertUnauthorized();
         $this->patchJson("/api/v1/todos/$id", ['is_done' => true])->assertUnauthorized();
     }
@@ -183,7 +184,8 @@ class TodoTest extends TestCase
         $post(['description' => 'x', 'membership_ids' => [$crew[0], $crew[0]]])->assertStatus(422); // duplicates
         $post(['description' => 'x', 'membership_ids' => $crew, 'due_date' => '15/01/2030'])->assertStatus(422);
         $post(['description' => 'x', 'membership_ids' => $crew, 'due_date' => '2030-02-30'])->assertStatus(422);
-        $this->patchJson('/api/v1/todos/'.str_repeat('a', 36), ['is_done' => 'maybe'], $this->as('crewA'))->assertStatus(404);
+        $this->patchJson('/api/v1/todos/'.str_repeat('a', 36), ['is_done' => true], $this->as('crewA'))->assertStatus(404); // a well-formed id that is not theirs
+        $this->patchJson('/api/v1/todos/'.str_repeat('a', 36), ['is_done' => 'maybe'], $this->as('crewA'))->assertStatus(422);
         $this->assertSame(0, Todo::withoutTenantScope()->count());
     }
 

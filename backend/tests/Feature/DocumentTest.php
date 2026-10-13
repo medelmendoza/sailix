@@ -53,6 +53,15 @@ class DocumentTest extends TestCase
         return UploadedFile::fake()->createWithContent($name, CrewPortalDemoSeeder::pdf('Test document'));
     }
 
+    /** A genuine temporary file whose real content decides its type, as in production. */
+    private function realUpload(string $name, string $content): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'up');
+        file_put_contents($path, $content);
+
+        return new UploadedFile($path, $name, null, null, true);
+    }
+
     private function submit(string $as, array $extra = [], ?UploadedFile $file = null)
     {
         return $this->post('/api/v1/documents', $extra + [
@@ -92,8 +101,10 @@ class DocumentTest extends TestCase
     {
         $this->setUpOrganizations();
 
-        $this->submit('crewA', [], UploadedFile::fake()->createWithContent('evil.pdf', '<?php echo 1;'))->assertStatus(422);
-        $this->submit('crewA', [], UploadedFile::fake()->createWithContent('page.html', '<html><script>1</script></html>'))->assertStatus(422);
+        // REAL uploads (Laravel's fake files take their type from the file NAME, which would hide the content check)
+        $this->submit('crewA', [], $this->realUpload('evil.pdf', '<?php echo 1;'))->assertStatus(422);
+        $this->submit('crewA', [], $this->realUpload('page.pdf', '<html><script>1</script></html>'))->assertStatus(422);
+        $this->submit('crewA', [], $this->realUpload('photo.png', '#!/bin/sh'."\n".'rm -rf /'))->assertStatus(422);
         $this->submit('crewA', [], UploadedFile::fake()->create('big.pdf', 11 * 1024, 'application/pdf'))->assertStatus(422); // default limit is 10 MB
         $this->assertSame(0, CrewDocument::withoutTenantScope()->count());
 
@@ -152,6 +163,7 @@ class DocumentTest extends TestCase
         }
         $this->assertSame([], $this->getJson('/api/v1/documents?status=review', $this->as('crewA2'))->json('data'));
         $this->getJson('/api/v1/documents/not-an-id', $this->as('crewA'))->assertNotFound();
+        $this->app['auth']->forgetGuards();
         $this->getJson("/api/v1/documents/$id")->assertUnauthorized();
     }
 

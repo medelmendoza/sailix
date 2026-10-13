@@ -66,4 +66,4 @@ The old Sailix backend cannot be run, so these were rebuilt as a NEW backend fro
 
 ### State
 
-Written and typechecked only. Per the owner's instruction (no checks until asked), the backend/web/mobile test suites, lint, builds and screenshots were NOT run for these modules; tests exist for all three parts. The local database was migrated and seeded (18 documents, 30 payslips, 12 loans across the demo crew). Expect small fixes when the checks run. Also new: the `expo-document-picker` dependency (needs a native rebuild) and an unverified multipart upload from React Native.
+Checks were run afterwards (see the PROJECT-STATUS row): backend 465, web 110, mobile 345 tests, Pint, PHPStan, OpenAPI lint, ESLint, audit gate, expo-doctor 21/21, Playwright 26, a native iOS build with the new picker module, and demo-build screenshots of Files, Finance, Allotment, payslip, cash advance. NOT verified: the document picker and the multipart upload on a device, the PDF/image viewer with a real downloaded file, Android.
