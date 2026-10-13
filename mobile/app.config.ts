@@ -1,0 +1,46 @@
+import type { ConfigContext, ExpoConfig } from 'expo/config';
+
+/**
+ * Environment-specific values come from the EAS build profile / local shell
+ * (see .env.example). Nothing secret belongs here: everything in the app
+ * bundle is public.
+ */
+export default ({ config }: ConfigContext): ExpoConfig => ({
+  ...config,
+  name: 'Sailix',
+  slug: 'sailix',
+  version: '1.0.31',
+  orientation: 'portrait',
+  icon: './assets/icon.png',
+  userInterfaceStyle: 'light',
+  scheme: 'sailix',
+  ios: {
+    supportsTablet: true,
+    bundleIdentifier: 'com.btsolve.sailix2',
+    infoPlist: { ITSAppUsesNonExemptEncryption: false },
+  },
+  android: {
+    package: 'com.btsolve.sailix2',
+    allowBackup: false,
+    blockedPermissions: [
+      'android.permission.READ_EXTERNAL_STORAGE',
+      'android.permission.WRITE_EXTERNAL_STORAGE',
+    ],
+    adaptiveIcon: {
+      backgroundColor: '#002352',
+      foregroundImage: './assets/android-icon-foreground.png',
+      backgroundImage: './assets/android-icon-background.png',
+      monochromeImage: './assets/android-icon-monochrome.png',
+    },
+    predictiveBackGestureEnabled: false,
+  },
+  plugins: ['expo-secure-store', 'expo-font'],
+  extra: {
+    appEnv: process.env.APP_ENV ?? 'development',
+    apiBaseUrl: process.env.API_BASE_URL ?? 'http://localhost:8000',
+    apiPrefix: process.env.API_PREFIX ?? '/api/v1',
+    privacyUrl:
+      process.env.PRIVACY_URL ?? 'https://www.btsolve.com/privacy/data-privacy-sailix.html',
+    servicesEnabled: process.env.SERVICES_ENABLED === 'true',
+  },
+});

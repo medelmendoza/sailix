@@ -1,0 +1,20 @@
+openapi: 3.1.0
+info:
+  title: Sailix Platform API
+  version: 0.0.0
+  description: Skeleton only. Operations are added in Phase B (auth/me/platform/tenant core) and Phase D (modules).
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development
+paths: {}
+components:
+  securitySchemes:
+    bearerToken:
+      type: http
+      scheme: bearer
+      description: Mobile token bound to a membership (docs/04).
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: sailix_session
+      description: Sanctum SPA cookie session (web). Mutations require X-XSRF-TOKEN.

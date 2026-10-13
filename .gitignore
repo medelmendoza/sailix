@@ -1,0 +1,16 @@
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
+# env: only *.example files are tracked
+.env
+.env.*
+!.env.example
+# keys / signing material
+*.pem
+*.key
+*.jks
+*.p8
+*.p12
+*.mobileprovision
