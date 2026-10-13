@@ -14,7 +14,8 @@
     "format:check": "prettier --check .",
     "validate": "npm run typecheck && npm run lint && npm test -- --ci",
     "gen:api": "npx --yes openapi-typescript@7.13.0 ../contracts/openapi.yaml -o src/services/api/schema.d.ts",
-    "gen:api:check": "npx --yes openapi-typescript@7.13.0 ../contracts/openapi.yaml -o node_modules/.cache/schema-check.d.ts && diff -q node_modules/.cache/schema-check.d.ts src/services/api/schema.d.ts"
+    "gen:api:check": "npx --yes openapi-typescript@7.13.0 ../contracts/openapi.yaml -o node_modules/.cache/schema-check.d.ts && diff -q node_modules/.cache/schema-check.d.ts src/services/api/schema.d.ts",
+    "audit:gate": "node scripts/audit-gate.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/poppins": "^0.4.1",

@@ -1,0 +1,21 @@
+{
+  "_comment": "Reviewed high/critical advisories that are accepted for now. Each entry must be re-justified or removed by 'reviewBy'. See docs/13 section 14.",
+  "exceptions": [
+    {
+      "advisory": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "installed": "3.0.3",
+      "path": "expo -> @expo/cli/@expo/metro -> metro -> metro-file-map -> micromatch -> braces; react-native -> @react-native/community-cli-plugin -> metro; jest -> @jest/core -> micromatch -> braces",
+      "why": "Stack exhaustion on deeply nested glob patterns. Used by Metro/Jest on the developer's or CI machine to match project files; not part of the app bundle and not fed untrusted patterns. No patched braces release exists.",
+      "reviewBy": "2026-12-15"
+    },
+    {
+      "advisory": "GHSA-86w9-cpqp-85rv",
+      "package": "node-forge",
+      "installed": "1.4.0",
+      "path": "expo -> @expo/cli -> @expo/code-signing-certificates -> node-forge",
+      "why": "RSA signature verification flaw in Expo CLI code-signing tooling that runs on the build machine; not in the app bundle. Offered fix is a nonsensical downgrade to expo@44.",
+      "reviewBy": "2026-12-15"
+    }
+  ]
+}

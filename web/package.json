@@ -13,7 +13,9 @@
     "format:check": "prettier --check .",
     "validate": "npm run typecheck && npm run lint && npm run format:check && npm test",
     "gen:api": "npx --yes openapi-typescript@7.13.0 ../contracts/openapi.yaml -o src/services/api/schema.d.ts",
-    "gen:api:check": "npx --yes openapi-typescript@7.13.0 ../contracts/openapi.yaml -o node_modules/.cache/schema-check.d.ts && diff -q node_modules/.cache/schema-check.d.ts src/services/api/schema.d.ts"
+    "gen:api:check": "npx --yes openapi-typescript@7.13.0 ../contracts/openapi.yaml -o node_modules/.cache/schema-check.d.ts && diff -q node_modules/.cache/schema-check.d.ts src/services/api/schema.d.ts",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -31,6 +33,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",

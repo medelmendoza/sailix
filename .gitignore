@@ -14,3 +14,6 @@
 *.p8
 *.p12
 *.mobileprovision
+playwright-report/
+test-results/
+web/e2e/.auth/

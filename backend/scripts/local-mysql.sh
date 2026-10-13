@@ -21,10 +21,11 @@ case "${1:-}" in
     "$0" start
     root_sql -e "CREATE DATABASE IF NOT EXISTS sailix CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
                  CREATE DATABASE IF NOT EXISTS sailix_test CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+                 CREATE DATABASE IF NOT EXISTS sailix_e2e CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
                  CREATE USER IF NOT EXISTS 'sailix'@'127.0.0.1' IDENTIFIED BY '$DEV_PASSWORD';
                  CREATE USER IF NOT EXISTS 'sailix'@'localhost' IDENTIFIED BY '$DEV_PASSWORD';
-                 GRANT ALL ON sailix.* TO 'sailix'@'127.0.0.1'; GRANT ALL ON sailix_test.* TO 'sailix'@'127.0.0.1';
-                 GRANT ALL ON sailix.* TO 'sailix'@'localhost'; GRANT ALL ON sailix_test.* TO 'sailix'@'localhost';"
+                 GRANT ALL ON sailix.* TO 'sailix'@'127.0.0.1'; GRANT ALL ON sailix_test.* TO 'sailix'@'127.0.0.1'; GRANT ALL ON sailix_e2e.* TO 'sailix'@'127.0.0.1';
+                 GRANT ALL ON sailix.* TO 'sailix'@'localhost'; GRANT ALL ON sailix_test.* TO 'sailix'@'localhost'; GRANT ALL ON sailix_e2e.* TO 'sailix'@'localhost';"
     echo "initialised on 127.0.0.1:$PORT"
     ;;
   start)

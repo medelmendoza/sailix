@@ -21,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        // API only: an unauthenticated request is a 401 problem document, never a redirect to a web login route
+        // (there is none; without this a request lacking `Accept: application/json` became a 500).
+        $middleware->redirectGuestsTo(fn () => null);
         $middleware->api(prepend: [RequestId::class]);
         $middleware->alias([
             'tenant.context' => ResolveTenantContext::class,

@@ -51,12 +51,57 @@ jobs:
       - run: npm ci
       - run: npm run validate
       - run: npx expo-doctor
-      # Reported, not blocking: every high advisory today is in Expo/Metro/Jest build
-      # tooling (braces, node-forge, uuid, ...), not code shipped in the app bundle, and
-      # the only offered fix is a breaking downgrade/major. Reviewed in docs/13 §14.
-      # Re-evaluate on each Expo SDK upgrade; make blocking again once the chain is clean.
+      # BLOCKING: any high/critical advisory in production dependencies that is not a
+      # reviewed, unexpired entry in mobile/audit-exceptions.json; also fails if the audit
+      # service is unavailable. (Plain `npm audit --omit=dev` cannot reach zero because
+      # Expo/Metro/React Native build tooling is classed as a production dependency.)
+      - run: node scripts/audit-gate.mjs
+      # REPORT-ONLY (kept visible): the full audit including dev tooling (jest, etc.).
+      # Known advisories and the removal conditions are in docs/13 section 14.
       - run: npm audit --audit-level=high
         continue-on-error: true
+
+  e2e:
+    # Browser end-to-end tests: real Laravel + MySQL + Vite, throwaway database, random per-run credentials.
+    needs: changes
+    if: needs.changes.outputs.web == 'true' || needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:9.1
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-password
+          MYSQL_DATABASE: sailix_e2e
+          MYSQL_USER: sailix
+          MYSQL_PASSWORD: ci-only-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci-root-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USERNAME: sailix
+      DB_PASSWORD: ci-only-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.4', extensions: 'pdo_mysql, mbstring, intl, bcmath, sodium', coverage: none }
+      - run: composer install --no-interaction --prefer-dist
+        working-directory: backend
+      - run: cp .env.example .env && php artisan key:generate
+        working-directory: backend
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - run: npm ci
+        working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - run: npm run e2e
+        working-directory: web
+      # Deliberately NO artifact upload: failure screenshots and error-context files can contain the
+      # run's (random, throwaway) test credentials. Read failures from the job log instead.
 
   backend:
     needs: changes

@@ -39,3 +39,12 @@ Demo accounts (local seeder only): organization admin `admin.sfai` / `admin.acme
 - Emailed one-time links (password reset, invitation) are read once and the address bar is cleaned immediately; `<meta name="referrer" content="no-referrer">` keeps them out of `Referer`.
 - Logout and any `401` clear every cached record (TanStack Query cache) so one person's data never outlives their session.
 - A strict **Content-Security-Policy and security headers belong to the hosting layer** (milestone M6): the Vite dev server needs inline scripts, so a meta CSP here would break development.
+
+## End-to-end tests (Playwright)
+
+```bash
+npm run e2e:install   # one-time: downloads Chromium
+npm run e2e           # needs the local MySQL (backend/scripts/local-mysql.sh start; database sailix_e2e)
+```
+
+Runs against the real Laravel API (port 8010) and Vite (5174) with a dedicated, re-seeded `sailix_e2e` database. Credentials are random per run and exist only in the process environment; traces/videos are off. Failure `error-context.md` files may contain the throwaway password — do not upload `test-results/` or `playwright-report/` as CI artifacts. Sign-in is rate limited by design, so specs reuse saved sessions (`e2e/setup.ts`) except where sign-in itself is under test.
