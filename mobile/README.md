@@ -4,13 +4,7 @@ Independent React Native + TypeScript rebuild of the Sailix crew portal. The Flu
 
 ## Status
 
-| Phase                           | Status                                                                                                                                                                                               |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Analysis & specification        | SPECIFIED — see [`docs/MASTER-REBUILD-SPECIFICATION.md`](../docs/reference/sailix-spec/MASTER-REBUILD-SPECIFICATION.md), [`docs/OPEN-QUESTIONS.md`](../docs/reference/sailix-spec/OPEN-QUESTIONS.md) |
-| **M0 Foundation**               | **IMPLEMENTED + TESTED** (typecheck, lint, 32 unit/component tests, expo-doctor 21/21, `expo prebuild` ok). Not yet run on a simulator/device.                                                       |
-| M1 Auth + navigation shell … M7 | PLANNED (`../docs/reference/sailix-spec/14-REACT-NATIVE-ARCHITECTURE.md`)                                                                                                                            |
-
-Open questions are running on their documented **defaults** (e.g. Services behind `SERVICES_ENABLED=false`, app ids kept as `com.btsolve.sailix2`).
+M0 foundation and **M5 app shell** are implemented and tested at JS level (114 tests, typecheck, lint, generated-API drift check, `expo export` for iOS and Android). **Not yet run on a simulator or device.** Tala course/content screens are blocked on the M3 gateway. Details: [`../docs/13-TALA-MVP-SCOPE-AND-ROADMAP.md`](../docs/13-TALA-MVP-SCOPE-AND-ROADMAP.md) §14.
 
 ## Stack
 
@@ -36,13 +30,14 @@ npm start          # Metro for an installed dev client
 ## Quality gates
 
 ```bash
-npm run typecheck && npm run lint && npm test     # or: npm run validate
+npm run validate            # typecheck + lint + tests
+npm run gen:api:check       # generated types match ../contracts/openapi.yaml
 npx expo-doctor
 ```
 
 ## Environment
 
-Configured through `app.config.ts` → `extra` (values from the shell / EAS profile, see `.env.example` and `eas.json`): `APP_ENV`, `API_BASE_URL`, `API_PREFIX`, `PRIVACY_URL`, `SERVICES_ENABLED`. Everything in the app bundle is public — **never put secrets here**.
+Configured through `app.config.ts` → `extra` (values from the shell / EAS profile, see `.env.example` and `eas.json`): `APP_ENV`, `API_BASE_URL`, `API_PREFIX`, `PRIVACY_URL`. Staging/production builds require an `https://` API address. Everything in the app bundle is public — **never put secrets here**.
 
 ## Layout
 

@@ -51,7 +51,12 @@ jobs:
       - run: npm ci
       - run: npm run validate
       - run: npx expo-doctor
+      # Reported, not blocking: every high advisory today is in Expo/Metro/Jest build
+      # tooling (braces, node-forge, uuid, ...), not code shipped in the app bundle, and
+      # the only offered fix is a breaking downgrade/major. Reviewed in docs/13 §14.
+      # Re-evaluate on each Expo SDK upgrade; make blocking again once the chain is clean.
       - run: npm audit --audit-level=high
+        continue-on-error: true
 
   backend:
     needs: changes

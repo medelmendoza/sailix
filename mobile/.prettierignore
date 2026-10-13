@@ -2,3 +2,5 @@ docs
 assets
 node_modules
 coverage
+
+src/services/api/schema.d.ts

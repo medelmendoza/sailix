@@ -6,7 +6,7 @@ Laravel API + React web portal + React Native mobile app, rebuilt from the Flutt
 |---|---|---|
 | [`backend/`](backend) | Laravel 13 REST API (`/api/v1`), tenancy, auth, MySQL | Phase B done (108 tests green) |
 | [`web/`](web) | React + TypeScript portal (superadmin + tenant admin) | M4 done (88 tests green) |
-| [`mobile/`](mobile) | Expo / React Native crew app (seeded from `sailix-rn` M0) | Phase A, gates green |
+| [`mobile/`](mobile) | Expo / React Native crew app (seeded from `sailix-rn` M0) | M5 done at JS level (114 tests green; no device run yet) |
 | [`contracts/`](contracts) | OpenAPI contract — source of truth for both clients | Phase B core (auth, me, tenant, platform) |
 | [`docs/`](docs) | Architecture, ADRs, plan, status, reference specs | Approved 2026-10-13 |
 

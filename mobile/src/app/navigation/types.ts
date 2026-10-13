@@ -1,16 +1,21 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
-
-export type MainTabParamList = {
-  Dashboard: undefined;
-  Files: undefined;
-  Announcements: undefined;
-  Finance: undefined;
-};
+import type { MembershipSummary } from '@/services/api/types';
 
 export type AuthStackParamList = {
   Login: undefined;
+  SelectOrganization: { ticket: string; memberships: MembershipSummary[] };
+  Register: undefined;
+  RegisterDone: undefined;
+  ForgotPassword: undefined;
+};
+
+export type MainTabParamList = {
+  Home: undefined;
+  Account: undefined;
 };
 
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>;
+  Module: { code: string };
+  ChangePassword: undefined;
 };

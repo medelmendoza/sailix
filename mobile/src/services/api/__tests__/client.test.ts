@@ -11,11 +11,17 @@ function adapterReturning(status: number, data: unknown): AxiosAdapter {
   };
 }
 
-function setup(status: number, data: unknown, token: string | null = 'tok') {
+function setup(
+  status: number,
+  data: unknown,
+  token: string | null = 'tok',
+  hint: string | null = 'SFAI',
+) {
   const onUnauthorized = jest.fn();
   const client = createApiClient({
     baseURL: 'https://example.test',
     getToken: () => token,
+    getTenantHint: () => hint,
     onUnauthorized,
   });
   const seen: InternalAxiosRequestConfig[] = [];
@@ -28,54 +34,65 @@ function setup(status: number, data: unknown, token: string | null = 'tok') {
 }
 
 describe('api client', () => {
-  it('sends the Bearer token when a session exists', async () => {
+  it('sends the Bearer token and the organization hint when a session exists', async () => {
     const { client, seen } = setup(200, {});
     await client.get('/x');
     expect(seen[0]?.headers.get('Authorization')).toBe('Bearer tok');
+    expect(seen[0]?.headers.get('X-Tenant-Hint')).toBe('SFAI');
+    expect(seen[0]?.headers.get('Accept')).toBe('application/json');
   });
 
-  it('omits Authorization without a token', async () => {
+  it('sends neither without a session (public calls)', async () => {
     const { client, seen } = setup(200, {}, null);
     await client.get('/x');
     expect(seen[0]?.headers.get('Authorization')).toBeUndefined();
+    expect(seen[0]?.headers.get('X-Tenant-Hint')).toBeUndefined();
   });
 
-  it('turns 401 into an unauthorized ApiError and signals session expiry', async () => {
-    const { client, onUnauthorized } = setup(401, { error: 'Unauthorised' });
+  it('reads the credential at SEND time, never a captured value', async () => {
+    let token: string | null = 'first';
+    const client = createApiClient({
+      baseURL: 'https://example.test',
+      getToken: () => token,
+      onUnauthorized: jest.fn(),
+    });
+    const seen: string[] = [];
+    client.defaults.adapter = (config) => {
+      seen.push(String(config.headers.get('Authorization')));
+      return adapterReturning(200, {})(config);
+    };
+    await client.get('/x');
+    token = 'second';
+    await client.get('/x');
+    token = null;
+    await client.get('/x');
+    expect(seen).toEqual(['Bearer first', 'Bearer second', 'undefined']);
+  });
+
+  it('normalises errors and signals a dead session on 401', async () => {
+    const { client, onUnauthorized } = setup(401, { code: 'unauthenticated', detail: 'No.' });
     await expect(client.get('/x')).rejects.toMatchObject({
       kind: 'unauthorized',
-      status: 401,
-      message: 'Unauthorised',
+      code: 'unauthenticated',
     });
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
   });
 
-  it('does not signal expiry for login-style calls (bad credentials)', async () => {
-    const { client, onUnauthorized } = setup(401, { error: 'Invalid credentials' });
+  it('does not treat a 401 as a dead session on public calls (wrong credentials)', async () => {
+    const { client, onUnauthorized } = setup(401, { code: 'invalid_credentials' });
     await expect(
-      client.post('/login', {}, { skipUnauthorizedHandler: true }),
+      client.post('/auth/token', {}, { skipUnauthorizedHandler: true }),
     ).rejects.toBeInstanceOf(ApiError);
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
 
-  it('prefers body.message for 400 and falls back to a generic message', async () => {
-    const a = setup(400, { message: 'Username taken' });
-    await expect(a.client.get('/x')).rejects.toMatchObject({
-      kind: 'http',
-      message: 'Username taken',
-    });
-    const b = setup(500, '<html>');
-    await expect(b.client.get('/x')).rejects.toMatchObject({ kind: 'http', status: 500 });
-  });
-
-  it('reports network failures', async () => {
+  it('reports a network failure with its own kind', async () => {
     const client = createApiClient({
       baseURL: 'https://example.test',
       getToken: () => null,
       onUnauthorized: jest.fn(),
     });
-    client.defaults.adapter = (config) =>
-      Promise.reject(new AxiosError('Network Error', 'ERR_NETWORK', config));
+    client.defaults.adapter = () => Promise.reject(new AxiosError('offline', 'ERR_NETWORK'));
     await expect(client.get('/x')).rejects.toMatchObject({ kind: 'network' });
   });
 });

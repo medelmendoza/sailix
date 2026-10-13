@@ -41,3 +41,11 @@ Navigation tree (spec 03), 4-state screens, accessibility criteria (spec 12), of
 
 ## 5. Tests (see 10)
 Unit (mappers, money/date), component (forms, gate), navigation (auth swap), auth/session store (tenant switch, 401 wipe), API error mapping with MSW, secure-storage mocks, tenant-context tests (stale response discarded, cache cleared), device-only checks (scanner, PDF, audio) recorded manually per release.
+
+## 6. M5 implementation notes (2026-10-13)
+- Session states: `bootstrapping | authenticated | unauthenticated | unreachable`. A network failure at start-up keeps the stored credential and shows a retry screen; only a 401 wipes it.
+- Token refresh when fewer than 7 days remain (single in-flight); late `/me` responses are ignored; 401 on an authenticated session signs out with a notice.
+- All query keys go through `scopedKey()` → `[tenantId, membershipId, ...]`; sign-out cancels and clears the query cache.
+- Tests mock at the Axios adapter (`mockApi`): an unmocked call fails the test, so nothing can reach a network.
+- Module screen shows availability only until the M3 gateway exists (`MODULE_CONTENT_AVAILABLE`).
+- Not run on a native build/simulator yet; see docs/13 §14.

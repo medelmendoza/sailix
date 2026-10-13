@@ -17,7 +17,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.btsolve.sailix2',
-    infoPlist: { ITSAppUsesNonExemptEncryption: false },
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+      // Plain HTTP to a local backend is allowed ONLY in development builds.
+      ...(process.env.APP_ENV && process.env.APP_ENV !== 'development'
+        ? {}
+        : { NSAppTransportSecurity: { NSAllowsLocalNetworking: true } }),
+    },
   },
   android: {
     package: 'com.btsolve.sailix2',
@@ -41,6 +47,5 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     apiPrefix: process.env.API_PREFIX ?? '/api/v1',
     privacyUrl:
       process.env.PRIVACY_URL ?? 'https://www.btsolve.com/privacy/data-privacy-sailix.html',
-    servicesEnabled: process.env.SERVICES_ENABLED === 'true',
   },
 });

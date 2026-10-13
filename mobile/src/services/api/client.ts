@@ -1,10 +1,10 @@
-import { create, isAxiosError, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+import { create, isAxiosError, type AxiosInstance } from 'axios';
 import { env } from '@/app/config/env';
 import { toApiError } from './errors';
 
 declare module 'axios' {
   interface AxiosRequestConfig {
-    /** Set on calls where 401 means "bad credentials", not "session expired" (login). */
+    /** Set on calls where 401 means "bad credentials", not "session expired" (login, register, reset). */
     skipUnauthorizedHandler?: boolean;
   }
 }
@@ -13,20 +13,30 @@ export type ApiClientOptions = {
   baseURL: string;
   timeoutMs?: number;
   getToken: () => string | null;
+  /** Organization code of the current session, sent as a hint the server compares with the token (never trusted). */
+  getTenantHint?: () => string | null;
   onUnauthorized: () => void;
 };
 
 /**
- * Builds the single HTTP client. Per docs/06: Bearer on every request (the
- * Flutter app only sent it on change-password; backend enforcement is Q-1),
- * 15 s timeout, 401 => session expiry, errors normalised to ApiError.
+ * Builds the single HTTP client (docs/07): Bearer on every request, 15 s timeout, the credential is read
+ * at SEND time (no captured closures, so a late request can never carry a previous session's token),
+ * 401 on an authenticated call ⇒ session ended, errors normalised to ApiError.
  */
 export function createApiClient(options: ApiClientOptions): AxiosInstance {
-  const instance = create({ baseURL: options.baseURL, timeout: options.timeoutMs ?? 15_000 });
+  const instance = create({
+    baseURL: options.baseURL,
+    timeout: options.timeoutMs ?? 15_000,
+    headers: { Accept: 'application/json' },
+  });
 
   instance.interceptors.request.use((config) => {
     const token = options.getToken();
-    if (token) config.headers.set('Authorization', `Bearer ${token}`);
+    if (token) {
+      config.headers.set('Authorization', `Bearer ${token}`);
+      const hint = options.getTenantHint?.();
+      if (hint) config.headers.set('X-Tenant-Hint', hint);
+    }
     return config;
   });
 
@@ -45,7 +55,7 @@ export function createApiClient(options: ApiClientOptions): AxiosInstance {
   return instance;
 }
 
-type Handlers = Pick<ApiClientOptions, 'getToken' | 'onUnauthorized'>;
+type Handlers = Pick<ApiClientOptions, 'getToken' | 'getTenantHint' | 'onUnauthorized'>;
 
 let handlers: Handlers = { getToken: () => null, onUnauthorized: () => undefined };
 
@@ -55,12 +65,11 @@ export function configureApi(next: Handlers): void {
 }
 
 export const api = createApiClient({
-  baseURL: env.apiBaseUrl,
+  baseURL: `${env.apiBaseUrl}${env.apiPrefix}`,
   getToken: () => handlers.getToken(),
+  getTenantHint: () => handlers.getTenantHint?.() ?? null,
   onUnauthorized: () => handlers.onUnauthorized(),
 });
 
-/** Prefix helpers — URL literals live in config only (Q-2: two prefixes). */
-export const apiPath = (path: string) => `${env.apiPrefix}${path}`;
-
-export type { AxiosRequestConfig };
+/** Config for public calls (login, register, forgot): a 401 here is a wrong answer, not a dead session. */
+export const PUBLIC_CALL = { skipUnauthorizedHandler: true } as const;

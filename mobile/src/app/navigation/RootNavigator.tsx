@@ -1,8 +1,18 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ActivityIndicator, View } from 'react-native';
-import { PlaceholderScreen } from '@/components/PlaceholderScreen';
-import { colors } from '@/constants/theme';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppText, Button, OfflineBanner } from '@/components';
+import { colors, spacing } from '@/constants/theme';
+import { AccountScreen } from '@/features/account/AccountScreen';
+import { ChangePasswordScreen } from '@/features/account/ChangePasswordScreen';
+import { ForgotPasswordScreen } from '@/features/auth/ForgotPasswordScreen';
+import { LoginScreen } from '@/features/auth/LoginScreen';
+import { RegisterDoneScreen } from '@/features/auth/RegisterDoneScreen';
+import { RegisterScreen } from '@/features/auth/RegisterScreen';
+import { SelectOrganizationScreen } from '@/features/auth/SelectOrganizationScreen';
+import { HomeScreen } from '@/features/home/HomeScreen';
+import { ModuleScreen } from '@/features/modules/ModuleScreen';
 import { useSessionStore } from '@/store/sessionStore';
 import type { AppStackParamList, AuthStackParamList, MainTabParamList } from './types';
 
@@ -10,57 +20,98 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const AppStack = createNativeStackNavigator<AppStackParamList>();
 const Tabs = createBottomTabNavigator<MainTabParamList>();
 
-const placeholder = (title: string, milestone: string) =>
-  function Placeholder() {
-    return <PlaceholderScreen title={title} milestone={milestone} />;
-  };
-
-const LoginScreen = placeholder('Login', 'M1');
-const DashboardScreen = placeholder('Dashboard', 'M2');
-const FilesScreen = placeholder('Files', 'M3');
-const AnnouncementsScreen = placeholder('Announcements', 'M2');
-const FinanceScreen = placeholder('Finance', 'M4');
+const headerOptions = {
+  headerStyle: { backgroundColor: colors.primary },
+  headerTintColor: colors.onPrimary,
+};
 
 function MainTabs() {
   return (
-    <Tabs.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.primary },
-        headerTintColor: colors.onPrimary,
-        tabBarActiveTintColor: colors.primary,
-      }}
-    >
-      <Tabs.Screen name="Dashboard" component={DashboardScreen} />
-      <Tabs.Screen name="Files" component={FilesScreen} />
-      <Tabs.Screen name="Announcements" component={AnnouncementsScreen} />
-      <Tabs.Screen name="Finance" component={FinanceScreen} />
+    <Tabs.Navigator screenOptions={{ ...headerOptions, tabBarActiveTintColor: colors.primary }}>
+      <Tabs.Screen name="Home" component={HomeScreen} />
+      <Tabs.Screen name="Account" component={AccountScreen} />
     </Tabs.Navigator>
   );
 }
 
-/** Auth gate by state, never by manual navigate('Login') (docs/03 rule 1). */
+/** The server could not be reached while verifying a stored session: offer a retry, never a silent sign-out. */
+function ConnectionProblem() {
+  const bootstrap = useSessionStore((s) => s.bootstrap);
+  const signOut = useSessionStore((s) => s.signOut);
+  return (
+    <SafeAreaView style={styles.center}>
+      <AppText variant="title" accessibilityRole="header">
+        Cannot reach Sailix
+      </AppText>
+      <AppText muted style={styles.text}>
+        Check your connection. You are still signed in.
+      </AppText>
+      <Button title="Try again" onPress={() => void bootstrap()} />
+      <Button
+        title="Sign out"
+        variant="secondary"
+        onPress={() => void signOut({ revoke: false })}
+      />
+    </SafeAreaView>
+  );
+}
+
+/** Auth gate by STATE, never by manual navigate('Login') (docs/03 rule 1). */
 export function RootNavigator() {
   const status = useSessionStore((s) => s.status);
 
   if (status === 'bootstrapping') {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={styles.center}>
         <ActivityIndicator color={colors.primary} accessibilityLabel="Loading" />
       </View>
     );
   }
+  if (status === 'unreachable') return <ConnectionProblem />;
 
   if (status === 'unauthenticated') {
     return (
       <AuthStack.Navigator screenOptions={{ headerShown: false }}>
         <AuthStack.Screen name="Login" component={LoginScreen} />
+        <AuthStack.Screen name="SelectOrganization" component={SelectOrganizationScreen} />
+        <AuthStack.Screen name="Register" component={RegisterScreen} />
+        <AuthStack.Screen name="RegisterDone" component={RegisterDoneScreen} />
+        <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       </AuthStack.Navigator>
     );
   }
 
   return (
-    <AppStack.Navigator screenOptions={{ headerShown: false }}>
-      <AppStack.Screen name="MainTabs" component={MainTabs} />
-    </AppStack.Navigator>
+    <View style={styles.flex}>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background }}>
+        <OfflineBanner />
+      </SafeAreaView>
+      <AppStack.Navigator screenOptions={headerOptions}>
+        <AppStack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
+        <AppStack.Screen
+          name="Module"
+          component={ModuleScreen}
+          options={({ route }) => ({ title: route.params.code === 'tala' ? 'Tala' : 'Service' })}
+        />
+        <AppStack.Screen
+          name="ChangePassword"
+          component={ChangePasswordScreen}
+          options={{ title: 'Change password' }}
+        />
+      </AppStack.Navigator>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.lg,
+    padding: spacing.xl,
+    backgroundColor: colors.background,
+  },
+  text: { textAlign: 'center' },
+});

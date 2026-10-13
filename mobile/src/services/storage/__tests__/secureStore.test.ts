@@ -1,45 +1,56 @@
 import * as SecureStore from 'expo-secure-store';
-import type { Session } from '@/models/user';
-import { clearSession, loadSession, saveSession } from '../secureStore';
+import type { Credential } from '@/models/session';
+import { clearCredential, loadCredential, saveCredential } from '../secureStore';
 
-const session: Session = {
-  token: 'tok',
-  user: {
-    userId: 'usr1',
-    crewId: 'crew1',
-    username: 'jdoe',
-    firstName: 'Jane',
-    lastName: 'Doe',
-    fullName: 'Doe, Jane',
-    email: 'j@example.test',
-    mobile: '0917',
-    birthDate: '1990-01-02',
-    clientCode: 'SFAI',
-  },
+const credential: Credential = {
+  token: '1|secret-token',
+  expiresAt: '2026-12-01T00:00:00+00:00',
+  membershipId: 'm1',
+  tenantId: 't1',
+  tenantCode: 'SFAI',
 };
+const store = () => (SecureStore as unknown as { __store: Map<string, string> }).__store;
 
-describe('secureStore', () => {
-  beforeEach(clearSession);
-
-  it('round-trips a session', async () => {
-    await saveSession(session);
-    expect(await loadSession()).toEqual(session);
+describe('secure credential storage', () => {
+  it('round-trips a credential', async () => {
+    await saveCredential(credential);
+    expect(await loadCredential()).toEqual(credential);
   });
 
-  it('treats a partial session (token only) as no session', async () => {
-    await SecureStore.setItemAsync('sailix.token', 'tok');
-    expect(await loadSession()).toBeNull();
+  it('keeps the token apart from the metadata and stores no personal data', async () => {
+    await saveCredential(credential);
+    const entries = [...store().entries()];
+    expect(entries).toHaveLength(2);
+    const meta = entries.find(([k]) => k.endsWith('credential'))![1];
+    expect(meta).not.toContain('secret-token');
+    expect(Object.keys(JSON.parse(meta)).sort()).toEqual([
+      'expiresAt',
+      'membershipId',
+      'tenantCode',
+      'tenantId',
+    ]);
   });
 
-  it('treats corrupt profile JSON as no session', async () => {
-    await SecureStore.setItemAsync('sailix.token', 'tok');
-    await SecureStore.setItemAsync('sailix.profile', '{not json');
-    expect(await loadSession()).toBeNull();
+  it('writes with the this-device-only, when-unlocked keychain class', async () => {
+    await saveCredential(credential);
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
+      keychainAccessible: 'WHEN_UNLOCKED_THIS_DEVICE_ONLY',
+    });
+  });
+
+  it('treats a partial or corrupt credential as none', async () => {
+    store().set('sailix.token', 'only-a-token');
+    expect(await loadCredential()).toBeNull();
+    store().set('sailix.credential', '{not json');
+    expect(await loadCredential()).toBeNull();
+    store().set('sailix.credential', JSON.stringify({ membershipId: 1 }));
+    expect(await loadCredential()).toBeNull();
   });
 
   it('clears everything', async () => {
-    await saveSession(session);
-    await clearSession();
-    expect(await loadSession()).toBeNull();
+    await saveCredential(credential);
+    await clearCredential();
+    expect(store().size).toBe(0);
+    expect(await loadCredential()).toBeNull();
   });
 });
