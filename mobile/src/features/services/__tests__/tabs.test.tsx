@@ -11,7 +11,7 @@ describe('the five tabs (as in the original Sailix, plus Services)', () => {
     signedInAs();
     await renderApp();
     await screen.findByText('Maria');
-    for (const tab of [/^Dashboard/, /^Files/, /^Announcements/, /^Finance/, /^Services/]) {
+    for (const tab of [/^Dashboard/, /^Files/, /^Announcements/, /^Finance/, /^Services, tab/]) {
       expect(screen.getByLabelText(tab)).toBeTruthy();
     }
     expect(screen.getByRole('button', { name: 'Account' })).toBeTruthy();
@@ -40,7 +40,7 @@ describe('services tab', () => {
   it('lists each service with its real status from the API', async () => {
     signedInAs(makeMe({ modules: [TALA('not_linked')] }));
     await renderApp();
-    await goTo(/^Services/);
+    await goTo(/^Services, tab/);
     expect(await screen.findByRole('button', { name: 'Tala, Not linked' })).toBeTruthy();
   });
 
@@ -48,7 +48,7 @@ describe('services tab', () => {
     signedInAs(makeMe({ modules: [TALA('linked')] }));
     mockApi({ 'GET /modules/tala/courses': { data: { data: [] } } });
     await renderApp();
-    await goTo(/^Services/);
+    await goTo(/^Services, tab/);
     for (const name of ['SRT', 'Call-it', 'Astra']) {
       const card = await screen.findByLabelText(`${name}, coming soon`);
       expect(card.props.accessibilityState.disabled).toBe(true);
@@ -59,7 +59,7 @@ describe('services tab', () => {
   it('says so plainly when the organization has turned on no service, but still shows what is planned', async () => {
     signedInAs(makeMe({ modules: [] }));
     await renderApp();
-    await goTo(/^Services/);
+    await goTo(/^Services, tab/);
     expect(await screen.findByText(/has not turned on any service yet/)).toBeTruthy();
     expect(screen.getByLabelText('SRT, coming soon')).toBeTruthy();
   });
@@ -71,7 +71,7 @@ describe('services tab', () => {
       'GET /modules/tala/courses': { data: { data: [] } },
     });
     await renderApp();
-    await goTo(/^Services/);
+    await goTo(/^Services, tab/);
     await screen.findByText(/has not turned on any service yet/);
 
     const control = screen.getByTestId('services-scroll').props.refreshControl as {

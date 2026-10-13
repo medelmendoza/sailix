@@ -11,7 +11,7 @@ async function openJoin(routes: Record<string, unknown> = {}) {
   } as never);
   signedInAs(makeMe({ modules: [TALA('linked')] }));
   await renderApp();
-  await fireEvent.press(await screen.findByLabelText(/^Services/));
+  await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
   await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
   await fireEvent.press(await screen.findByRole('button', { name: 'Join a course' }));
   return api;

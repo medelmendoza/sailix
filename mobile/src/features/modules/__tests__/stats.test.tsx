@@ -66,7 +66,7 @@ describe('dashboard', () => {
 describe('my stats screen', () => {
   async function openStats(courses: unknown) {
     await home(courses);
-    await fireEvent.press(await screen.findByLabelText(/^Services/));
+    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
     await fireEvent.press(await screen.findByRole('button', { name: 'Tala, Linked' }));
     await fireEvent.press(await screen.findByRole('button', { name: 'My stats' }));
   }
@@ -89,7 +89,7 @@ describe('my stats screen', () => {
   it('shows an empty state for no courses', async () => {
     await home({ data: { data: [] } }, {});
     // nothing to show on Home; open the stats from the module screen instead
-    await fireEvent.press(await screen.findByLabelText(/^Services/));
+    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
     await fireEvent.press(await screen.findByRole('button', { name: 'Tala, Linked' }));
     await fireEvent.press(await screen.findByRole('button', { name: 'My stats' }));
     expect(await screen.findByText('No courses yet')).toBeTruthy();
@@ -164,7 +164,7 @@ describe('course detail: progress and achievements', () => {
       { data: { data: LIST } },
       { 'GET /modules/tala/courses/A2': { data: { data: detail } } },
     );
-    await fireEvent.press(await screen.findByLabelText(/^Services/));
+    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
     await fireEvent.press(await screen.findByRole('button', { name: 'Tala, Linked' }));
     await fireEvent.press(
       await screen.findByRole('button', { name: /^First aid, 3 of 4 items completed/ }),

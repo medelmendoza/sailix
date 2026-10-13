@@ -64,7 +64,7 @@ async function open(list: unknown[], d: unknown = detail()) {
   } as never);
   signedInAs(makeMe({ modules: [TALA('linked')] }));
   await renderApp();
-  await fireEvent.press(await screen.findByLabelText(/^Services/));
+  await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
   await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
 }
 

@@ -41,7 +41,7 @@ async function openCallIt(routes: Record<string, unknown>) {
   } as never);
   signedInAs(makeMe({ modules: [CALLIT()] }));
   await renderApp();
-  await fireEvent.press(await screen.findByLabelText(/^Services/));
+  await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
   await fireEvent.press(await screen.findByRole('button', { name: 'Call-it, Available' }));
   return api;
 }
@@ -51,7 +51,7 @@ describe('call-it in services', () => {
     mockApi({});
     signedInAs(makeMe({ modules: [] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services/));
+    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
     expect(await screen.findByLabelText('Call-it, coming soon')).toBeTruthy();
   });
 });

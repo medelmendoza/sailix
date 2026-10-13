@@ -99,4 +99,4 @@ The first version put Tala content on the Dashboard (a learning summary and a co
 - **Announcements card:** the title with a "new" count, a bell that opens the Announcements tab, a green rule, then the latest three announcements, or "No announcements yet." (the old "No data found...").
 - **Removed from the Dashboard:** the Tala "My learning" card (progress and due dates) and the separate to-do list and document alert cards. Tala's progress and due dates are on its own My stats screen (Services > Tala > My stats).
 - **Left out on purpose:** the iOS tracking prompt (the app has no ad or analytics SDK) and the disabled onboarding tips.
-- **State:** typechecked only; tests rewritten for the new layout (shortcuts, tiles, header, announcements card, no Tala content), none run (no checks until asked).
+- **State:** checks run (see PROJECT-STATUS); the demo build was compared on the simulator and matches the old layout.

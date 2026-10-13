@@ -13,7 +13,7 @@ async function openAstra() {
   mockApi({ 'GET /modules/tala/courses': { data: { data: [] } } });
   signedInAs(makeMe({ modules: [TALA('linked'), ASTRA()] }));
   await renderApp();
-  await fireEvent.press(await screen.findByLabelText(/^Services/));
+  await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
   await fireEvent.press(await screen.findByRole('button', { name: 'Astra, Available' }));
 }
 const tile = (name: string) => fireEvent.press(screen.getByRole('button', { name }));
@@ -23,7 +23,7 @@ describe('astra in services', () => {
     mockApi({});
     signedInAs(makeMe({ modules: [ASTRA()] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services/));
+    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
     expect(await screen.findByRole('button', { name: 'Astra, Available' })).toBeTruthy();
     expect(screen.queryByLabelText('Astra, coming soon')).toBeNull();
     expect(screen.getByLabelText('SRT, coming soon')).toBeTruthy();
@@ -33,7 +33,7 @@ describe('astra in services', () => {
     mockApi({});
     signedInAs(makeMe({ modules: [] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services/));
+    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
     expect(await screen.findByLabelText('Astra, coming soon')).toBeTruthy();
   });
 

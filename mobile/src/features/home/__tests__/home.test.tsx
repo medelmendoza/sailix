@@ -64,7 +64,7 @@ describe('module screen', () => {
     mockApi({ 'GET /modules/tala/courses': { data: { data: [] } } });
     signedInAs(makeMe({ modules: [TALA(status, enabled)] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services/));
+    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
     await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
   }
 
