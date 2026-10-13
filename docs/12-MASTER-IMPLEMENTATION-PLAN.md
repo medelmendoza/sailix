@@ -1,5 +1,7 @@
 # 12 — Master Implementation Plan
 
+> **Scope change (2026-10-13):** the MVP is now **Tala only**. Phases A and B below are complete and stand. The ordering of Phase C onward and the Phase D module list are **superseded by [`13-TALA-MVP-SCOPE-AND-ROADMAP.md`](13-TALA-MVP-SCOPE-AND-ROADMAP.md)** (pending approval). The original text is kept for traceability.
+
 Status: PLANNED (awaiting approval). Nothing below is started. "Complete" means acceptance criteria met **and** checks executed with results recorded in `PROJECT-STATUS.md`.
 
 Ordering rule: backend contracts + tenant security first; Phase C gates everything else; web/mobile follow module by module; mobile may start Phase G scaffolding in parallel after the contract for auth/me is stable (Phase B), because the existing M0 foundation is reusable.

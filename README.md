@@ -10,7 +10,7 @@ Laravel API + React web portal + React Native mobile app, rebuilt from the Flutt
 | [`contracts/`](contracts) | OpenAPI contract — source of truth for both clients | Phase B core (auth, me, tenant, platform) |
 | [`docs/`](docs) | Architecture, ADRs, plan, status, reference specs | Approved 2026-10-13 |
 
-Start with [`docs/12-MASTER-IMPLEMENTATION-PLAN.md`](docs/12-MASTER-IMPLEMENTATION-PLAN.md) and [`docs/PROJECT-STATUS.md`](docs/PROJECT-STATUS.md). Standards: [`CONTRIBUTING.md`](CONTRIBUTING.md).
+**Current scope:** Tala-only MVP — see [`docs/13-TALA-MVP-SCOPE-AND-ROADMAP.md`](docs/13-TALA-MVP-SCOPE-AND-ROADMAP.md) (proposed). Original plan: [`docs/12-MASTER-IMPLEMENTATION-PLAN.md`](docs/12-MASTER-IMPLEMENTATION-PLAN.md) and [`docs/PROJECT-STATUS.md`](docs/PROJECT-STATUS.md). Standards: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 Each project is independent (own dependencies, tooling, CI job). They share only `contracts/`.
 

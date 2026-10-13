@@ -1,0 +1,9 @@
+# ADR-0017 — External account linking and credential custody
+Status: **PROPOSED**
+**Context:** A Sailix user must use their existing Tala account without opening the Tala app. Tala has username/password login only, no SSO, no external-id field (docs/reference/tala-analysis/01 §10). A person may belong to several organizations, each mapped to its own Tala team.
+**Options:** (a) store the user's Tala password (encrypted) and log in on demand; (b) store Tala tokens only, relink on expiry; (c) Tala-side SSO/token exchange (needs a Tala backend change); (d) put Tala credentials on the device.
+**Recommended:** (b) now, (c) as the target state if the Tala owner agrees. Data model: `external_identities` (identity-level, unique `(module, external_user_id)` ⇒ one Tala account per Sailix user) and `module_links` (tenant-owned, per membership, pinned `external_team_id`, encrypted tokens, status `linked|needs_relink|revoked`). The user enters Tala credentials once; the gateway verifies them against Tala, requires the organization's mapped team among the user's teams, stores tokens (never the password), and relinks on 401.
+**Trade-offs:** Relink friction when tokens expire (refresh endpoint unknown, D-T5); avoids long-term password custody.
+**Security implications:** Tokens encrypted with the app key (rotation procedure required); never logged, never returned to clients; password only in memory during link; rate-limited link endpoint; audit without secrets; unique external identity prevents account sharing/hijack across users and tenants; unlink on membership suspension, tenant deactivation, user deletion.
+**Consequences:** `external_identities` is the one tenant-independent table beyond users/tenants and is exempt from `BelongsToTenant` (explicitly justified in the static check).
+**Open questions:** D-T4, D-T5, D-T7.

@@ -20,7 +20,8 @@ Status vocabulary: DISCOVERED · ANALYZED · SPECIFIED · APPROVED · PLANNED ·
 | Crew-facing feature specs (inherited) | SPECIFIED | claude/sailix-rn/docs | – | Q-1…Q-35 | – |
 | Phase A — Foundation | **TESTED** (see below) | README, CONTRIBUTING, .editorconfig, .gitignore, .github/workflows/ci.yml, backend/, web/, mobile/, contracts/, docs/reference/ | web: `npm run validate` + `build` pass (tsc, eslint, prettier, 2 vitest tests); mobile: `npm run validate` pass (tsc, eslint, 32 jest tests) | CI workflow never executed (no remote); `expo-doctor`, `expo prebuild` not re-run; backend not initialised (Phase B by plan) | Phase B |
 | **Phase B — Backend foundation** | **TESTED** (not VERIFIED: CI never run, only PHP 8.5.8 / MySQL 9.7.1 exercised) | `backend/` (Laravel 13.17), `contracts/openapi.yaml`, `docs/04` §3, `docs/03` §3.6 | **108 tests pass** (Unit 34, Feature 50, Isolation 16, Contract 8; 458 assertions) on real MySQL 9.7.1; Pint clean; PHPStan level 6 = 0 errors; `composer audit` clean; OpenAPI valid under `@redocly/cli lint`; manual HTTP smoke via `artisan serve` (login → /me → tenant users scoped, anonymous 401 problem+json) | See "Phase B notes" below | Phase C |
-| Phases C–I | PLANNED | – | – | – | Phase C next (isolation gate) |
+| **Scope change: Tala-only MVP** | SPECIFIED (proposed, **awaiting approval**) | docs/13, ADR-0015…0018, docs/reference/tala-analysis/01–03 | Read-only analysis of Tala Flutter working tree (3 reports, secret-scanned); Tala repo status unchanged (45 pre-existing changes) | D-T1…D-T8, Q-S1, D-11 | User approves docs/13 → start M1 |
+| Phases C–I (original plan) | SUPERSEDED by docs/13 roadmap (M1, T0, M2–M6) | – | – | – | – |
 
 ## Original Flutter repo
 Read-only. Branch `medel_dev_march2025`, HEAD `2094806`, 66 pre-existing uncommitted changes. Unchanged by this work (only read-only commands run).
@@ -51,3 +52,5 @@ Read-only. Branch `medel_dev_march2025`, HEAD `2094806`, 66 pre-existing uncommi
 **Not run / not verified:** GitHub Actions workflow (no remote); PHP 8.3/8.4 and MySQL 8.4 compatibility; load/performance; web/mobile against the new backend (Phases E–G); Redis (queue/cache use database/array drivers so far).
 
 **Known residual risk:** no RLS on MySQL — raw `DB::select()/statement()` on tenant tables would bypass the scope and is not caught by static checks (docs/03 §3.6).
+| 2026-10-13 | **Scope change by user: MVP integrates Tala only** (SRT, Call-it, Astra deferred); Tala used via its existing backend/DB through a Sailix gateway; Sailix identity architecture retained | Proposed in docs/13; no code changed |
+| 2026-10-13 | Proposed: Sailix crew-portal modules (announcements, documents, to-dos, payslips) deferred; `services_enabled` flag to be replaced by module entitlements | Pending Q-S1 |
