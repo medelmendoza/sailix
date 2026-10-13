@@ -101,7 +101,7 @@ describe('to-do list', () => {
     expect(api.callsTo('PATCH /todos/t1')[0]?.body).toEqual({ is_done: true });
   });
 
-  it('puts the tick back and says why when the server refuses', async () => {
+  it('puts the tick back when the server refuses', async () => {
     await openList({
       'GET /todos': page([todo('t1', 'Sign form')]),
       'PATCH /todos/t1': problem(404, 'not_found'),
@@ -114,9 +114,6 @@ describe('to-do list', () => {
           .checked,
       ).toBe(false),
     );
-    expect(
-      await screen.findByText(/./, { selector: undefined } as never).catch(() => null),
-    ).toBeDefined();
   });
 
   it('shows a task description as plain text', async () => {
