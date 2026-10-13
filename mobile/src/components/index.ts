@@ -5,6 +5,7 @@ export { Card } from './Card';
 export { CourseImage } from './CourseImage';
 export { GlyphIcon, type GlyphName } from './GlyphIcon';
 export { EmptyState } from './EmptyState';
+export { ErrorBoundary } from './ErrorBoundary';
 export { ErrorState } from './ErrorState';
 export { FormError } from './FormError';
 export { FormScreen } from './FormScreen';

@@ -17,6 +17,32 @@ describe('env', () => {
     expect(() => parseEnv({ appEnv: 'prod', apiBaseUrl: 'nope' })).toThrow();
   });
 
+  describe('shipped builds cannot point at a developer machine', () => {
+    const base = { apiPrefix: '/p', privacyUrl: 'https://a.test/x' };
+    it.each([
+      'https://localhost',
+      'https://127.0.0.1:8000',
+      'https://10.0.2.2',
+      'https://192.168.1.20',
+      'https://172.20.0.5',
+      'https://sailix-dev.local',
+    ])('refuses %s for staging and production', (apiBaseUrl) => {
+      for (const appEnv of ['staging', 'production']) {
+        expect(() => parseEnv({ ...base, appEnv, apiBaseUrl })).toThrow();
+      }
+    });
+
+    it('still allows them while developing, and allows a public https address', () => {
+      expect(
+        parseEnv({ ...base, appEnv: 'development', apiBaseUrl: 'http://localhost:8000' }).appEnv,
+      ).toBe('development');
+      expect(
+        parseEnv({ ...base, appEnv: 'production', apiBaseUrl: 'https://api.sailix.btsolve.com' })
+          .appEnv,
+      ).toBe('production');
+    });
+  });
+
   describe('demo mode (sample data, build-time only)', () => {
     const base = { apiBaseUrl: 'https://a.test', apiPrefix: '/p', privacyUrl: 'https://a.test/x' };
 

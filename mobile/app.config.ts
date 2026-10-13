@@ -33,14 +33,22 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'android.permission.WRITE_EXTERNAL_STORAGE',
     ],
     adaptiveIcon: {
-      backgroundColor: '#002352',
+      backgroundColor: '#FFFFFF',
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',
     },
     predictiveBackGestureEnabled: false,
   },
-  plugins: [['expo-secure-store', { faceIDPermission: false }], 'expo-font', 'expo-video'],
+  plugins: [
+    ['expo-secure-store', { faceIDPermission: false }],
+    'expo-font',
+    'expo-video',
+    [
+      'expo-splash-screen',
+      { backgroundColor: '#F4F1EA', image: './assets/splash-icon.png', imageWidth: 120 },
+    ],
+  ],
   extra: {
     appEnv: process.env.APP_ENV ?? 'development',
     apiBaseUrl: process.env.API_BASE_URL ?? 'http://localhost:8000',
