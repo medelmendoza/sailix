@@ -14,8 +14,12 @@ const course = (over = {}) => ({
   date_from: '2026-01-01',
   date_to: '2026-12-31',
   status: 'ongoing',
-  progress: '50',
+  progress: '1/4',
   total_materials: 3,
+  completed: 1,
+  total: 4,
+  percent: 25,
+  state: 'in_progress',
   ...over,
 });
 const detail = {
@@ -133,8 +137,9 @@ describe('courses', () => {
     mockApi({ 'GET /modules/tala/courses': { data: { data: [course()] } } });
     await openTala();
     expect(await screen.findByText('Safety at sea')).toBeTruthy();
-    expect(screen.getByText('Due 2026-12-31')).toBeTruthy();
-    expect(screen.getByText('3 items · 50% complete')).toBeTruthy();
+    expect(screen.getByText(/due 2026-12-31/)).toBeTruthy();
+    expect(screen.getByText('1 of 4 items completed · In progress')).toBeTruthy();
+    expect(screen.getByRole('progressbar', { name: 'Safety at sea progress' })).toBeTruthy();
   });
 
   it('shows a failure with a retry that recovers', async () => {

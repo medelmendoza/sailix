@@ -10,6 +10,7 @@ import { describeError } from '@/services/api/errors';
 import type { MyModule } from '@/services/api/types';
 import { useSessionStore } from '@/store/sessionStore';
 import { STATUS_LABEL } from '@/features/modules/availability';
+import { TalaLearningSummary } from '@/features/modules/tala/TalaLearningSummary';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Home'>,
@@ -83,6 +84,9 @@ export function HomeScreen({ navigation }: Props) {
       <FormError
         message={error ?? (switchError ? `Could not switch organization. ${switchError}` : null)}
       />
+      {me.modules.some((m) => m.code === 'tala' && m.enabled && m.status === 'linked') ? (
+        <TalaLearningSummary />
+      ) : null}
       <AppText variant="heading">Services</AppText>
       {me.modules.length === 0 ? (
         <EmptyState

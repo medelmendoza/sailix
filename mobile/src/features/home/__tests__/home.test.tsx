@@ -45,7 +45,10 @@ describe('home', () => {
 
   it('pull-to-refresh reloads /me and shows module changes', async () => {
     signedInAs(makeMe({ modules: [] }));
-    const api = mockApi({ 'GET /me': { data: { data: makeMe({ modules: [TALA('linked')] }) } } });
+    const api = mockApi({
+      'GET /me': { data: { data: makeMe({ modules: [TALA('linked')] }) } },
+      'GET /modules/tala/courses': { data: { data: [] } },
+    });
     await renderApp();
     await screen.findByText('No services yet');
 
@@ -57,7 +60,10 @@ describe('home', () => {
 
   it('shows a refresh failure without losing what is on screen', async () => {
     signedInAs(makeMe({ modules: [TALA('linked')] }));
-    mockApi({ 'GET /me': { networkError: true } });
+    mockApi({
+      'GET /me': { networkError: true },
+      'GET /modules/tala/courses': { data: { data: [] } },
+    });
     await renderApp();
     await screen.findByText('Hello, Maria');
 

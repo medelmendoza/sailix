@@ -49,3 +49,6 @@ Scripts: `tala-t0-cards-shape.py` (read-only), `tala-t0-cards-write-probe.py` (t
 | F5 | **Not live-verified:** a video completion with feedback (rating + comment) — the course that had a card set had no video lacking a row. The same fields (`feedback` number, `comment` text) already exist on rows Tala returns, and new-row writes were verified earlier; covered by tests only. |
 | F6 | **Residual change on the test account:** that course had no stored record at all, and Tala has no delete, so the probe could only "restore" it to an empty zero-progress record (the course now returns 200 instead of 404). Nothing else on the account differs from before. |
 
+### Addendum 3 (2026-10-13): formats behind My Stats and due dates (read-only, `tala-t0-stats-shape.py`, 5 requests)
+Across the test account's 3 teams (19 courses): `dateFrom` and `dateTo` are always `YYYY-MM-DD` (and `dateTo >= dateFrom`); `dateAssigned` is free text in another format; **`progress` is `"done/total"` or `null`** (null for the 7 courses never started); `status` takes the values `INACTIVE` (the never-started ones), `NOT YET COMPLETED` and `COMPLETED`; `course.totalMaterial` is numeric. **This corrected an earlier mistake:** the app labelled `progress` as a percentage ("50% complete"); it is a done/total counter.
+

@@ -877,11 +877,25 @@ export interface components {
             name: string;
             description: string | null;
             thumbnail_url: string | null;
+            /** Format: date */
             date_from: string | null;
+            /**
+             * Format: date
+             * @description Due date, YYYY-MM-DD
+             */
             date_to: string | null;
+            /** @description As reported by Tala (e.g. INACTIVE, NOT YET COMPLETED, COMPLETED) */
             status: string | null;
-            /** @description As reported by Tala; client-computed scores are self-reported (D-T8) */
+            /** @description Tala's own counter, 'done/total' (null for a course never started) */
             progress: string | null;
+            /** @description Materials completed, from Tala's counter (0 when never started) */
+            completed: number;
+            /** @description Materials in the course, from Tala's counter; includes kinds this app does not show */
+            total: number;
+            percent: number;
+            /** @enum {string} */
+            state: "not_started" | "in_progress" | "completed";
+            /** @description Materials this app shows */
             total_materials: number;
         };
         TalaCourseDetail: components["schemas"]["TalaCourse"] & {
@@ -962,10 +976,23 @@ export interface components {
             name: string;
             description: string | null;
             thumbnail_url: string | null;
-            /** @description false for quizzes: not delivered in this version */
+            /** @description false for quizzes and flashcards unless the write path is enabled */
             viewable: boolean;
             progress: string | null;
             status: string | null;
+            /** @description What the learner achieved, from Tala's stored row (read-only). Shape depends on `type`: video {rating}, quiz {correct, wrong, average, remarks}, flashcards {easy, medium, hard, notseen}; null when nothing is stored. */
+            stats: null | {
+                rating?: number | null;
+                correct?: number;
+                wrong?: number;
+                average?: number | null;
+                /** @enum {string|null} */
+                remarks?: "PASSED" | "FAILED" | null;
+                easy?: number;
+                medium?: number;
+                hard?: number;
+                notseen?: number;
+            };
         };
         TalaMaterial: {
             id: string;

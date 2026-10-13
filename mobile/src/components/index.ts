@@ -8,6 +8,7 @@ export { FormScreen } from './FormScreen';
 export { LinkButton } from './LinkButton';
 export { Notice } from './Notice';
 export { OfflineBanner } from './OfflineBanner';
+export { ProgressBar } from './ProgressBar';
 export { Screen } from './Screen';
 export { SkeletonList } from './Skeleton';
 export { TextField } from './TextField';

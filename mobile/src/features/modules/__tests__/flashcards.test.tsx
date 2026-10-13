@@ -23,8 +23,12 @@ const course = {
   date_from: null,
   date_to: null,
   status: 'ongoing',
-  progress: '0',
+  progress: '0/4',
   total_materials: 1,
+  completed: 1,
+  total: 4,
+  percent: 25,
+  state: 'in_progress',
 };
 const material = (viewable: boolean, status: string | null = null) => ({
   id: 'c1',

@@ -7,6 +7,7 @@ import { AppText, Card, EmptyState, ErrorState, Notice, SkeletonList } from '@/c
 import { minTouchTarget, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { useTalaCourses } from './api';
+import { TalaCourseProgress } from './TalaCourseProgress';
 
 export function savedCopyText(fetchedAt: string | null): string {
   const when = fetchedAt ? new Date(fetchedAt).toLocaleString() : 'earlier';
@@ -50,21 +51,14 @@ export function TalaCourseList({ header }: { header: React.ReactNode }) {
               <Pressable
                 key={c.id}
                 accessibilityRole="button"
-                accessibilityLabel={`${c.name}, ${c.total_materials} items`}
+                accessibilityLabel={`${c.name}, ${c.completed} of ${c.total} items completed`}
                 onPress={() => navigation.navigate('TalaCourse', { assignId: c.id, name: c.name })}
                 style={({ pressed }) => (pressed ? styles.pressed : undefined)}
               >
                 <Card style={styles.row}>
-                  <View style={{ flex: 1, gap: 2 }}>
+                  <View style={{ flex: 1, gap: spacing.xs }}>
                     <AppText variant="heading">{c.name}</AppText>
-                    {c.date_to ? (
-                      <AppText variant="caption" muted>
-                        Due {c.date_to}
-                      </AppText>
-                    ) : null}
-                    <AppText variant="caption" muted>
-                      {c.total_materials} items{c.progress ? ` · ${c.progress}% complete` : ''}
-                    </AppText>
+                    <TalaCourseProgress course={c} />
                   </View>
                   <AppText muted>›</AppText>
                 </Card>

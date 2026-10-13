@@ -16,6 +16,7 @@ import { fetchTalaMaterial, useTalaCourse } from './api';
 import { deleteDownload, downloadMaterial, listDownloads } from './offline/downloads';
 import { pendingCompletions, queueCompletion, syncOutbox } from './offline/outbox';
 import { savedCopyText } from './TalaCourseList';
+import { TalaCourseProgress } from './TalaCourseProgress';
 import { TalaFeedbackModal } from './TalaFeedbackModal';
 import type { Feedback } from './offline/outbox';
 
@@ -28,6 +29,22 @@ const TYPE_LABEL: Record<string, string> = {
   flashcards: 'Flashcards',
 };
 const isDone = (m: TalaMaterialSummary) => m.status?.toUpperCase() === 'COMPLETED';
+
+/** What the learner achieved on one item, from Tala's stored record. */
+export function materialStatsLine(m: TalaMaterialSummary): string | null {
+  const s = m.stats;
+  if (!s) return null;
+  if (m.type === 'video' && typeof s.rating === 'number') return `Your rating: ${s.rating} of 5`;
+  if (m.type === 'quiz' && typeof s.average === 'number') {
+    const verdict =
+      s.remarks === 'PASSED' ? 'Passed' : s.remarks === 'FAILED' ? 'Not passed' : null;
+    return `Score ${s.average}%${verdict ? ` · ${verdict}` : ''} (${s.correct ?? 0} correct, ${s.wrong ?? 0} wrong)`;
+  }
+  if (m.type === 'flashcards' && (s.easy ?? 0) + (s.medium ?? 0) + (s.hard ?? 0) > 0) {
+    return `Easy ${s.easy ?? 0} · Medium ${s.medium ?? 0} · Hard ${s.hard ?? 0}`;
+  }
+  return null;
+}
 
 export function TalaCourseScreen({ route }: Props) {
   const { assignId } = route.params;
@@ -135,6 +152,7 @@ export function TalaCourseScreen({ route }: Props) {
         {c.name}
       </AppText>
       {c.description ? <AppText muted>{c.description}</AppText> : null}
+      <TalaCourseProgress course={c} />
       {course.data.fromCache ? <Notice message={savedCopyText(course.data.fetchedAt)} /> : null}
       <Notice
         message={
@@ -169,6 +187,7 @@ export function TalaCourseScreen({ route }: Props) {
                 {TYPE_LABEL[m.type] ?? m.type}
                 {m.progress ? ` · ${m.progress}%` : ''}
                 {waiting ? ' · Completed, waiting to send' : m.status ? ` · ${m.status}` : ''}
+                {materialStatsLine(m) ? ` · ${materialStatsLine(m)}` : ''}
                 {rec
                   ? ` · Saved on this device (${Math.max(1, Math.round(rec.bytes / 1024))} KB)`
                   : ''}

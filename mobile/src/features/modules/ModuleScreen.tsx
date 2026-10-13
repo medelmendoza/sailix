@@ -14,7 +14,7 @@ import { TalaLinkForm } from './tala/TalaLinkForm';
 type Props = NativeStackScreenProps<AppStackParamList, 'Module'>;
 
 /** Module entry: what the API says about the caller's access (`/me.modules`), plus the Tala gateway screens. */
-export function ModuleScreen({ route }: Props) {
+export function ModuleScreen({ route, navigation }: Props) {
   const me = useSessionStore((s) => s.me);
   const module = me?.modules.find((m) => m.code === route.params.code);
   const unlink = useUnlinkTala();
@@ -67,6 +67,7 @@ export function ModuleScreen({ route }: Props) {
             <View style={styles.wrap}>
               {statusCard}
               <FormError message={error} />
+              <Button title="My stats" onPress={() => navigation.navigate('TalaStats')} />
               <Button
                 title="Disconnect Tala"
                 variant="secondary"

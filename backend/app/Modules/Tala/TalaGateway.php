@@ -120,6 +120,7 @@ final class TalaGateway
                 'materials' => array_map(fn (array $m) => $m + [
                     'progress' => $progress[$m['id']]['progress'] ?? null,
                     'status' => $progress[$m['id']]['status'] ?? null,
+                    'stats' => $progress[$m['id']]['stats'] ?? null,
                 ], $visible),
                 'hidden_materials' => $hidden,
                 'progress_submission' => $this->progressWritesEnabled(),
@@ -567,18 +568,44 @@ final class TalaGateway
     private function course(array $a): array
     {
         $course = is_array($a['course'] ?? null) ? $a['course'] : [];
+        [$completed, $total] = $this->parseProgress($a['progress'] ?? null, (int) ($course['totalMaterial'] ?? 0));
 
         return [
             'id' => (string) ($a['assignId'] ?? ''),
             'name' => $this->str($course['courseName'] ?? null) ?? '',
             'description' => $this->str($course['courseDescription'] ?? null),
             'thumbnail_url' => $this->https($course['courseThumbnailUrl'] ?? null),
-            'date_from' => $this->str($a['dateFrom'] ?? null),
-            'date_to' => $this->str($a['dateTo'] ?? null),
+            'date_from' => $this->isoDate($a['dateFrom'] ?? null),
+            'date_to' => $this->isoDate($a['dateTo'] ?? null),
             'status' => $this->str($a['status'] ?? null),
             'progress' => $this->str($a['progress'] ?? null),
+            'completed' => $completed,
+            'total' => $total,
+            'percent' => $total > 0 ? (int) round(min($completed, $total) / $total * 100) : 0,
+            'state' => strtoupper((string) ($a['status'] ?? '')) === 'COMPLETED' ? 'completed' : ($completed > 0 ? 'in_progress' : 'not_started'),
             'total_materials' => count($this->materials($a)[0]),
         ];
+    }
+
+    /**
+     * Tala's own counter is "done/total" (null for a course never started). Counts every kind of material, including
+     * those this app does not show, which is why it is exposed separately from `total_materials`.
+     *
+     * @return array{0: int, 1: int}
+     */
+    private function parseProgress(mixed $progress, int $fallbackTotal): array
+    {
+        if (is_string($progress) && preg_match('/^\s*(\d{1,5})\s*\/\s*(\d{1,5})\s*$/', $progress, $m) === 1) {
+            return [(int) $m[1], (int) $m[2]];
+        }
+
+        return [0, max(0, $fallbackTotal)];
+    }
+
+    /** Dates in Tala's course list are `YYYY-MM-DD`; anything else is not guessed at. */
+    private function isoDate(mixed $v): ?string
+    {
+        return is_string($v) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $v) === 1 && checkdate((int) substr($v, 5, 2), (int) substr($v, 8, 2), (int) substr($v, 0, 4)) ? $v : null;
     }
 
     /**
@@ -614,21 +641,48 @@ final class TalaGateway
 
     /**
      * @param  array<string, mixed>  $stored
-     * @return array<string, array{progress: string|null, status: string|null}>
+     * @return array<string, array{progress: string|null, status: string|null, stats: array<string, mixed>|null}>
      */
     private function progressById(array $stored): array
     {
         $out = [];
         $materials = is_array($stored['materials'] ?? null) ? $stored['materials'] : [];
-        foreach (['videos' => 'videoId', 'pdfs' => 'pdfId', 'quizzes' => 'quizId'] as $group => $idKey) {
+        foreach (['videos' => 'videoId', 'pdfs' => 'pdfId', 'quizzes' => 'quizId', 'cards' => 'cardId'] as $group => $idKey) {
             foreach (is_array($materials[$group] ?? null) ? $materials[$group] : [] as $row) {
                 if (is_array($row) && is_string($row[$idKey] ?? null)) {
-                    $out[$row[$idKey]] = ['progress' => $this->str($row['progress'] ?? null), 'status' => $this->str($row['status'] ?? null)];
+                    $out[$row[$idKey]] = [
+                        'progress' => $this->str($row['progress'] ?? null),
+                        'status' => $this->str($row['status'] ?? null),
+                        'stats' => $this->materialStats($group, $row),
+                    ];
                 }
             }
         }
 
         return $out;
+    }
+
+    /**
+     * What the learner achieved on one material, from Tala's stored row (read-only; shown on My Stats).
+     *
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>|null
+     */
+    private function materialStats(string $group, array $row): ?array
+    {
+        $int = fn (mixed $v): int => is_numeric($v) ? max(0, (int) $v) : 0;
+
+        return match ($group) {
+            'videos' => ['rating' => is_numeric($row['feedback'] ?? null) && (float) $row['feedback'] >= 1 ? (float) $row['feedback'] : null],
+            'quizzes' => [
+                'correct' => $int($row['correct'] ?? null),
+                'wrong' => $int($row['wrong'] ?? null),
+                'average' => is_numeric($row['average'] ?? null) ? round((float) $row['average'], 2) : null,
+                'remarks' => in_array($row['remarks'] ?? null, ['PASSED', 'FAILED'], true) ? $row['remarks'] : null,
+            ],
+            'cards' => ['easy' => $int($row['easy'] ?? null), 'medium' => $int($row['medium'] ?? null), 'hard' => $int($row['hard'] ?? null), 'notseen' => $int($row['notseen'] ?? null)],
+            default => null,
+        };
     }
 
     private function str(mixed $v): ?string

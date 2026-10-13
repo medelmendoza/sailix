@@ -129,7 +129,8 @@ class TalaGatewayTest extends TestCase
 
         $this->assertSame([[
             'id' => 'A1', 'name' => 'Safety at sea', 'description' => 'Basics', 'thumbnail_url' => 'https://cdn.example.com/c.png',
-            'date_from' => '2026-01-01', 'date_to' => '2026-12-31', 'status' => 'ongoing', 'progress' => '50', 'total_materials' => 3,
+            'date_from' => '2026-01-01', 'date_to' => '2026-12-31', 'status' => 'NOT YET COMPLETED', 'progress' => '2/5',
+            'completed' => 2, 'total' => 5, 'percent' => 40, 'state' => 'in_progress', 'total_materials' => 3,
         ]], $r->json('data'));
         $this->assertStringNotContainsString(self::TALA_USER, $r->getContent());
         $this->assertStringNotContainsString('refresh', $r->getContent());

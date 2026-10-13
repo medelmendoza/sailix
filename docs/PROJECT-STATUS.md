@@ -83,4 +83,5 @@ Read-only. Branch `medel_dev_march2025`, HEAD `2094806`, 66 pre-existing uncommi
 | 2026-10-13 | User authorized the write probe and a permission rule; added a narrow project-local rule; ran the probes on the test account (restored each time): Tala **replaces** snapshots, validates nothing, accepts the gateway shape (docs/13 §21) | Done |
 | 2026-10-13 | Quizzes built with server-side scoring (flag still OFF by default); live-verified through the gateway on the test account | Awaiting review |
 | 2026-10-13 | User chose flashcards + video feedback first. Built (flag still OFF by default); live-verified flashcards through the gateway on the test account; found and fixed a defect (404 for never-synced courses) | Awaiting review (docs/13 §22) |
+| 2026-10-13 | User chose My Stats and due dates. Built read-only (works with the write flag off); corrected an earlier error (progress shown as a percentage); pinned test env in phpunit.xml | Awaiting review (docs/13 §23) |
 

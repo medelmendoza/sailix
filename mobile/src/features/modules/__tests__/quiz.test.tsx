@@ -14,8 +14,12 @@ const course = {
   date_from: null,
   date_to: null,
   status: 'ongoing',
-  progress: '50',
+  progress: '1/4',
   total_materials: 1,
+  completed: 1,
+  total: 4,
+  percent: 25,
+  state: 'in_progress',
 };
 const quizMaterial = (viewable: boolean, status: string | null = null) => ({
   id: 'q1',

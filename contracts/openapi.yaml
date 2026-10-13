@@ -1474,17 +1474,21 @@ components:
         last_verified_at: { type: [string, 'null'], format: date-time }
     TalaCourse:
       type: object
-      required: [id, name, description, thumbnail_url, date_from, date_to, status, progress, total_materials]
+      required: [id, name, description, thumbnail_url, date_from, date_to, status, progress, completed, total, percent, state, total_materials]
       properties:
         id: { type: string, description: 'Assignment id (the only id the client ever uses)' }
         name: { type: string }
         description: { type: [string, 'null'] }
         thumbnail_url: { type: [string, 'null'] }
-        date_from: { type: [string, 'null'] }
-        date_to: { type: [string, 'null'] }
-        status: { type: [string, 'null'] }
-        progress: { type: [string, 'null'], description: 'As reported by Tala; client-computed scores are self-reported (D-T8)' }
-        total_materials: { type: integer }
+        date_from: { type: [string, 'null'], format: date }
+        date_to: { type: [string, 'null'], format: date, description: 'Due date, YYYY-MM-DD' }
+        status: { type: [string, 'null'], description: 'As reported by Tala (e.g. INACTIVE, NOT YET COMPLETED, COMPLETED)' }
+        progress: { type: [string, 'null'], description: "Tala's own counter, 'done/total' (null for a course never started)" }
+        completed: { type: integer, minimum: 0, description: "Materials completed, from Tala's counter (0 when never started)" }
+        total: { type: integer, minimum: 0, description: "Materials in the course, from Tala's counter; includes kinds this app does not show" }
+        percent: { type: integer, minimum: 0, maximum: 100 }
+        state: { type: string, enum: [not_started, in_progress, completed] }
+        total_materials: { type: integer, description: 'Materials this app shows' }
     TalaCourseDetail:
       allOf:
         - { $ref: '#/components/schemas/TalaCourse' }
@@ -1587,16 +1591,31 @@ components:
         hard: { type: integer }
     TalaMaterialSummary:
       type: object
-      required: [id, type, name, description, thumbnail_url, viewable, progress, status]
+      required: [id, type, name, description, thumbnail_url, viewable, progress, status, stats]
       properties:
         id: { type: string }
         type: { type: string, enum: [video, pdf, quiz, flashcards] }
         name: { type: string }
         description: { type: [string, 'null'] }
         thumbnail_url: { type: [string, 'null'] }
-        viewable: { type: boolean, description: 'false for quizzes: not delivered in this version' }
+        viewable: { type: boolean, description: 'false for quizzes and flashcards unless the write path is enabled' }
         progress: { type: [string, 'null'] }
         status: { type: [string, 'null'] }
+        stats:
+          description: "What the learner achieved, from Tala's stored row (read-only). Shape depends on `type`: video {rating}, quiz {correct, wrong, average, remarks}, flashcards {easy, medium, hard, notseen}; null when nothing is stored."
+          oneOf:
+            - { type: 'null' }
+            - type: object
+              properties:
+                rating: { type: [number, 'null'] }
+                correct: { type: integer }
+                wrong: { type: integer }
+                average: { type: [number, 'null'] }
+                remarks: { type: [string, 'null'], enum: [PASSED, FAILED, null] }
+                easy: { type: integer }
+                medium: { type: integer }
+                hard: { type: integer }
+                notseen: { type: integer }
     TalaMaterial:
       type: object
       required: [id, type, name, description, thumbnail_url, file_url]
