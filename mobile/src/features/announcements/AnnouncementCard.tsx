@@ -1,0 +1,48 @@
+import { Pressable, StyleSheet, View } from 'react-native';
+import { AppText, Card } from '@/components';
+import { colors, minTouchTarget, spacing } from '@/constants/theme';
+import type { Announcement } from '@/services/api/types';
+import { ageLabel } from './age';
+
+/** One announcement in a list: bold title with a dot while unread, a two-line preview and how long ago it was written. */
+export function AnnouncementCard({
+  announcement,
+  onPress,
+}: {
+  announcement: Announcement;
+  onPress: () => void;
+}) {
+  const unread = announcement.is_read === false;
+  const age = ageLabel(announcement.created_at);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${unread ? 'Unread: ' : ''}${announcement.title}, ${age}`}
+      onPress={onPress}
+      style={({ pressed }) => [styles.press, pressed && { opacity: 0.75 }]}
+    >
+      <Card style={styles.card}>
+        <View style={styles.head}>
+          {unread ? <View style={styles.dot} /> : null}
+          <AppText variant="heading" style={styles.title} numberOfLines={2}>
+            {announcement.title}
+          </AppText>
+        </View>
+        <AppText muted numberOfLines={2}>
+          {announcement.body}
+        </AppText>
+        <AppText variant="caption" muted>
+          {age}
+        </AppText>
+      </Card>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  press: { minHeight: minTouchTarget },
+  card: { gap: spacing.sm },
+  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
+  title: { flex: 1 },
+});

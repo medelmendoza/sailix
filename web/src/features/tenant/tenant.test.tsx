@@ -488,6 +488,121 @@ describe('settings and account', () => {
     expect(screen.getByText(/Nothing is deleted automatically/)).toBeInTheDocument();
   });
 
+  describe('announcements', () => {
+    const live = {
+      id: 'a1',
+      title: 'Drill on Friday <b>x</b>',
+      body: 'Muster at 10:00.',
+      is_active: true,
+      expires_at: null,
+      created_at: '2026-10-02T10:00:00+00:00',
+      updated_at: '2026-10-02T10:00:00+00:00',
+    };
+    const off = { ...live, id: 'a2', title: 'Old news', is_active: false };
+    const expired = { ...live, id: 'a3', title: 'Past', expires_at: '2020-01-01T00:00:00+00:00' };
+
+    it('lists them with their state, and shows the text as plain text', async () => {
+      asTenantAdmin();
+      server.use(
+        http.get(`${V1}/tenant/announcements`, () =>
+          HttpResponse.json(pageOf([live, off, expired])),
+        ),
+      );
+      renderApp('/app/announcements');
+
+      expect(await screen.findByText('Drill on Friday <b>x</b>')).toBeInTheDocument(); // not interpreted as HTML
+      expect(screen.getByText('Live')).toBeInTheDocument();
+      expect(screen.getByText('Switched off')).toBeInTheDocument();
+      expect(screen.getByText('Expired')).toBeInTheDocument();
+    });
+
+    it('says so when there are none', async () => {
+      asTenantAdmin();
+      server.use(http.get(`${V1}/tenant/announcements`, () => HttpResponse.json(pageOf([]))));
+      renderApp('/app/announcements');
+      expect(await screen.findByText('No announcements yet')).toBeInTheDocument();
+    });
+
+    it('publishes a new announcement with only the fields the form owns', async () => {
+      asTenantAdmin();
+      const created = capture<Record<string, unknown>>();
+      server.use(
+        http.get(`${V1}/tenant/announcements`, () => HttpResponse.json(pageOf([]))),
+        http.post(`${V1}/tenant/announcements`, async ({ request }) => {
+          await created.record(request);
+          return HttpResponse.json({ data: live }, { status: 201 });
+        }),
+      );
+      const { user } = renderApp('/app/announcements');
+      await user.click(await screen.findByRole('button', { name: 'New announcement' }));
+      const dialog = await screen.findByRole('dialog');
+      await user.type(within(dialog).getByLabelText('Title'), 'Hello crew');
+      await user.type(within(dialog).getByLabelText('Message'), 'Welcome aboard.');
+      await user.click(within(dialog).getByRole('button', { name: 'Publish' }));
+
+      await waitFor(() => expect(created.calls).toHaveLength(1));
+      expect(created.calls[0]!.body).toEqual({
+        title: 'Hello crew',
+        body: 'Welcome aboard.',
+        expires_at: null,
+      });
+    });
+
+    it('does not send an empty announcement', async () => {
+      asTenantAdmin();
+      const created = capture();
+      server.use(
+        http.get(`${V1}/tenant/announcements`, () => HttpResponse.json(pageOf([]))),
+        http.post(`${V1}/tenant/announcements`, async ({ request }) => {
+          await created.record(request);
+          return HttpResponse.json({ data: live }, { status: 201 });
+        }),
+      );
+      const { user } = renderApp('/app/announcements');
+      await user.click(await screen.findByRole('button', { name: 'New announcement' }));
+      await user.click(
+        within(await screen.findByRole('dialog')).getByRole('button', { name: 'Publish' }),
+      );
+
+      expect(await screen.findByText('Enter a title.')).toBeInTheDocument();
+      expect(screen.getByText('Write the announcement.')).toBeInTheDocument();
+      expect(created.calls).toHaveLength(0);
+    });
+
+    it('switches one off with a single field, and asks before deleting', async () => {
+      asTenantAdmin();
+      const patch = capture<Record<string, unknown>>();
+      const del = capture();
+      server.use(
+        http.get(`${V1}/tenant/announcements`, () => HttpResponse.json(pageOf([live]))),
+        http.patch(`${V1}/tenant/announcements/a1`, async ({ request }) => {
+          await patch.record(request);
+          return HttpResponse.json({ data: { ...live, is_active: false } });
+        }),
+        http.delete(`${V1}/tenant/announcements/a1`, async ({ request }) => {
+          await del.record(request);
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+      const { user } = renderApp('/app/announcements');
+      await user.click(await screen.findByRole('button', { name: /^Switch off Drill/ }));
+      await waitFor(() => expect(patch.calls).toHaveLength(1));
+      expect(patch.calls[0]!.body).toEqual({ is_active: false });
+
+      await user.click(screen.getByRole('button', { name: /^Delete Drill/ }));
+      const confirm = await screen.findByRole('alertdialog');
+      expect(del.calls).toHaveLength(0); // nothing yet
+      await user.click(within(confirm).getByRole('button', { name: 'Delete' }));
+      await waitFor(() => expect(del.calls).toHaveLength(1));
+    });
+
+    it('is blocked for someone without the ability', async () => {
+      asTenantAdmin(makeMe({ abilities: ['tenant.view', 'users.view'] }));
+      renderApp('/app/announcements');
+      expect(await screen.findByText('You do not have access to this page')).toBeInTheDocument();
+    });
+  });
+
   it('lists feedback from members, newest first, as plain text', async () => {
     asTenantAdmin();
     server.use(

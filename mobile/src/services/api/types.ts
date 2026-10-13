@@ -8,6 +8,11 @@ export type MembershipSummary = Schemas['MembershipSummary'];
 export type TokenGrant = Schemas['TokenGrant'];
 export type SelectionRequired = Schemas['SelectionRequired'];
 export type Profile = Schemas['Profile'];
+export type Announcement = Schemas['Announcement'];
+/** The generated page type keeps `data` as unknown[] (allOf with the generic envelope), so it is narrowed here. */
+export type MemberAnnouncementPage = Omit<Schemas['MemberAnnouncementPage'], 'data'> & {
+  data: Announcement[];
+};
 export type TalaCourse = Schemas['TalaCourse'];
 export type TalaCourseDetail = Schemas['TalaCourseDetail'];
 export type TalaMaterialSummary = Schemas['TalaMaterialSummary'];

@@ -9,6 +9,7 @@ import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import type { MyModule } from '@/services/api/types';
 import { useSessionStore } from '@/store/sessionStore';
+import { HomeAnnouncements } from '@/features/announcements/HomeAnnouncements';
 import { STATUS_LABEL } from '@/features/modules/availability';
 import { TalaLearningSummary } from '@/features/modules/tala/TalaLearningSummary';
 
@@ -84,6 +85,7 @@ export function HomeScreen({ navigation }: Props) {
       <FormError
         message={error ?? (switchError ? `Could not switch organization. ${switchError}` : null)}
       />
+      <HomeAnnouncements onSeeAll={() => navigation.navigate('Announcements')} />
       {me.modules.some((m) => m.code === 'tala' && m.enabled && m.status === 'linked') ? (
         <TalaLearningSummary />
       ) : null}

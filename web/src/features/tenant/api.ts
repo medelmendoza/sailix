@@ -3,6 +3,8 @@ import { useToast } from '../../components/ui';
 import { api } from '../../services/api/client';
 import { describeError } from '../../services/api/errors';
 import type {
+  Announcement,
+  AnnouncementInput,
   AuditEntry,
   DeletionRequest,
   Envelope,
@@ -70,6 +72,45 @@ export function useFeedback(params: ListParams) {
     queryKey: ['feedback', params],
     queryFn: async () => (await api.get<Page<Feedback>>('/tenant/feedback', { params })).data,
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useAnnouncements(params: ListParams) {
+  return useQuery({
+    queryKey: ['announcements', params],
+    queryFn: async () =>
+      (await api.get<Page<Announcement>>('/tenant/announcements', { params })).data,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useSaveAnnouncement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, input }: { id?: string; input: AnnouncementInput }) =>
+      id
+        ? (await api.patch<Envelope<Announcement>>(`/tenant/announcements/${id}`, input)).data.data
+        : (await api.post<Envelope<Announcement>>('/tenant/announcements', input)).data.data,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['announcements'] });
+      void qc.invalidateQueries({ queryKey: ['audit'] });
+    },
+  });
+}
+
+export function useDeleteAnnouncement() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/tenant/announcements/${id}`);
+    },
+    onSuccess: () => {
+      toast.success('Announcement deleted.');
+      void qc.invalidateQueries({ queryKey: ['announcements'] });
+      void qc.invalidateQueries({ queryKey: ['audit'] });
+    },
+    onError: (e) => toast.error(describeError(e)),
   });
 }
 

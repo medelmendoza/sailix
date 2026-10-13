@@ -12,6 +12,7 @@ servers:
 tags:
   - { name: auth, description: 'Login, logout, token rotation and invitations' }
   - { name: me, description: 'The authenticated principal' }
+  - { name: announcements, description: "The caller's organization announcements" }
   - { name: tenant, description: "Tenant administration (caller's own tenant only)" }
   - { name: modules, description: 'Module gateways (Tala, read-only in the MVP)' }
   - { name: platform, description: 'Superadmin platform administration' }
@@ -423,6 +424,146 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
         '429': { $ref: '#/components/responses/Problem' }
+  /announcements:
+    get:
+      tags: [announcements]
+      operationId: listAnnouncements
+      summary: Announcements of the caller's organization, newest first
+      description: >
+        Shows only announcements that are switched on and not past their end date. `is_read` is the caller's own read
+        state. `unread_count` counts every unread visible announcement, not only this page.
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200':
+          description: Page of announcements.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MemberAnnouncementPage' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /announcements/{announcementId}:
+    get:
+      tags: [announcements]
+      operationId: getAnnouncement
+      summary: One announcement (404 when it is not visible to the caller)
+      parameters:
+        - { $ref: '#/components/parameters/AnnouncementId' }
+      responses:
+        '200':
+          description: The announcement.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Announcement' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /announcements/{announcementId}/read:
+    put:
+      tags: [announcements]
+      operationId: markAnnouncementRead
+      summary: Mark an announcement as read by the caller (idempotent)
+      parameters:
+        - { $ref: '#/components/parameters/AnnouncementId' }
+      responses:
+        '200':
+          description: The announcement with `is_read` true.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Announcement' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /tenant/announcements:
+    get:
+      tags: [tenant]
+      operationId: listTenantAnnouncements
+      summary: Every announcement of the caller's organization, including switched-off and expired ones
+      description: Requires `announcements.manage`.
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200':
+          description: Page of announcements.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnnouncementPage' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [tenant]
+      operationId: createAnnouncement
+      summary: Write an announcement for the caller's organization
+      description: >
+        Requires `announcements.manage`. Every active member of the organization can read it. The organization and author
+        come from the session. Attachments are not supported yet.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnnouncementInput' }
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Announcement' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /tenant/announcements/{announcementId}:
+    patch:
+      tags: [tenant]
+      operationId: updateAnnouncement
+      summary: Edit, switch off or re-date an announcement
+      description: Requires `announcements.manage`.
+      parameters:
+        - { $ref: '#/components/parameters/AnnouncementId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnnouncementInput' }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Announcement' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [tenant]
+      operationId: deleteAnnouncement
+      summary: Delete an announcement (and its read records)
+      description: Requires `announcements.manage`.
+      parameters:
+        - { $ref: '#/components/parameters/AnnouncementId' }
+      responses:
+        '204': { description: Deleted. }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /tenant:
     get:
       tags: [tenant]
@@ -1386,6 +1527,12 @@ components:
       in: cookie
       name: laravel_session
       description: Sanctum SPA cookie session (web). Mutations require X-XSRF-TOKEN. Cookie name is configurable (SESSION_COOKIE).
+  parameters:
+    AnnouncementId:
+      name: announcementId
+      in: path
+      required: true
+      schema: { type: string, minLength: 36, maxLength: 36, pattern: '^[0-9a-fA-F-]+$' }
   responses:
     Problem:
       description: RFC 9457 problem. `code` is a stable machine-readable identifier.
@@ -1550,6 +1697,41 @@ components:
             data:
               type: array
               items: { $ref: '#/components/schemas/DeletionRequest' }
+    Announcement:
+      type: object
+      required: [id, title, body, is_active, expires_at, created_at, updated_at]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        body: { type: string, description: 'Plain text; show it as text, never as HTML.' }
+        is_active: { type: boolean }
+        expires_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        is_read: { type: boolean, description: "Present on the member's own views only." }
+    AnnouncementInput:
+      type: object
+      description: All fields are required when creating; send only what changes when editing.
+      properties:
+        title: { type: string, minLength: 1, maxLength: 150 }
+        body: { type: string, minLength: 1, maxLength: 5000 }
+        is_active: { type: boolean }
+        expires_at: { type: [string, 'null'], format: date-time, description: 'Must be in the future.' }
+    AnnouncementPage:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/Announcement' }
+    MemberAnnouncementPage:
+      allOf:
+        - $ref: '#/components/schemas/AnnouncementPage'
+        - type: object
+          required: [unread_count]
+          properties:
+            unread_count: { type: integer, minimum: 0 }
     Feedback:
       type: object
       required: [id, category, message, created_at]

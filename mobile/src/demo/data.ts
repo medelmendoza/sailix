@@ -194,3 +194,37 @@ export const demoDeck = {
     },
   ],
 };
+
+const hoursAgo = (h: number) => new Date(Date.now() - h * 3_600_000).toISOString();
+export const demoAnnouncements = [
+  {
+    id: 'n1',
+    title: 'Safety drill on Friday',
+    body: 'All crew must join the muster at 10:00 on deck 2. Bring your lifejacket and your training card. Attendance will be recorded.',
+    is_active: true,
+    expires_at: null,
+    created_at: hoursAgo(3),
+    updated_at: hoursAgo(3),
+    is_read: false,
+  },
+  {
+    id: 'n2',
+    title: 'New training portal is open',
+    body: 'Your assigned courses now appear in the Tala service on the Home tab. Contact the office if a course is missing.',
+    is_active: true,
+    expires_at: null,
+    created_at: hoursAgo(30),
+    updated_at: hoursAgo(30),
+    is_read: false,
+  },
+  {
+    id: 'n3',
+    title: 'Office closed on Monday',
+    body: 'The office is closed for the holiday and reopens on Tuesday.',
+    is_active: true,
+    expires_at: null,
+    created_at: hoursAgo(24 * 5),
+    updated_at: hoursAgo(24 * 5),
+    is_read: true,
+  },
+];

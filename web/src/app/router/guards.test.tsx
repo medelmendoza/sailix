@@ -66,6 +66,7 @@ describe('route guards', () => {
     const nav = await screen.findByRole('navigation', { name: 'Main' });
     for (const label of [
       'Dashboard',
+      'Announcements',
       'Members',
       'Deletion requests',
       'Feedback',
@@ -92,6 +93,7 @@ describe('route guards', () => {
     expect(within(nav).queryByRole('link', { name: 'Audit log' })).not.toBeInTheDocument();
     expect(within(nav).queryByRole('link', { name: 'Deletion requests' })).not.toBeInTheDocument();
     expect(within(nav).queryByRole('link', { name: 'Feedback' })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole('link', { name: 'Announcements' })).not.toBeInTheDocument();
   });
 
   it.each([

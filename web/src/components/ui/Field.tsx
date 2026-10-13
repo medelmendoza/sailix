@@ -1,5 +1,11 @@
 import { useId } from 'react';
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, Ref } from 'react';
+import type {
+  InputHTMLAttributes,
+  ReactNode,
+  Ref,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from 'react';
 import { cn } from './cn';
 
 interface FieldFrameProps {
@@ -81,6 +87,29 @@ export function SelectField({ label, error, options, className, ref, ...rest }: 
           </option>
         ))}
       </select>
+    </FieldFrame>
+  );
+}
+
+interface TextAreaFieldProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label: string;
+  error?: string;
+  hint?: string;
+  ref?: Ref<HTMLTextAreaElement>;
+}
+
+export function TextAreaField({ label, error, hint, className, ref, ...rest }: TextAreaFieldProps) {
+  const id = useId();
+  return (
+    <FieldFrame label={label} error={error} hint={hint} id={id}>
+      <textarea
+        id={id}
+        ref={ref}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+        className={cn(CONTROL, 'min-h-28 py-2', error ? 'border-bad-fg' : 'border-line', className)}
+        {...rest}
+      />
     </FieldFrame>
   );
 }

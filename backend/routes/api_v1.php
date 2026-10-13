@@ -32,6 +32,9 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
     Route::get('me', [MeController::class, 'show']);
     Route::put('me/password', [Me\PasswordController::class, 'update'])->middleware('throttle:password-change');
     Route::post('me/deletion-request', [Me\DeletionRequestController::class, 'store'])->middleware('throttle:deletion');
+    Route::get('announcements', [Me\AnnouncementController::class, 'index']);
+    Route::get('announcements/{announcement}', [Me\AnnouncementController::class, 'show']);
+    Route::put('announcements/{announcement}/read', [Me\AnnouncementController::class, 'read']);
     Route::post('me/feedback', [Me\FeedbackController::class, 'store'])->middleware('throttle:feedback');
 
     Route::delete('auth/token', [TokenController::class, 'destroy']);
@@ -47,6 +50,10 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::get('audit-logs', [Tenant\AuditLogController::class, 'index']);
         Route::get('deletion-requests', [Tenant\DeletionRequestController::class, 'index']);
         Route::get('feedback', [Tenant\FeedbackController::class, 'index']);
+        Route::get('announcements', [Tenant\AnnouncementController::class, 'index']);
+        Route::post('announcements', [Tenant\AnnouncementController::class, 'store']);
+        Route::patch('announcements/{announcement}', [Tenant\AnnouncementController::class, 'update']);
+        Route::delete('announcements/{announcement}', [Tenant\AnnouncementController::class, 'destroy']);
         Route::get('modules', [Tenant\ModuleController::class, 'index']);
         Route::put('modules/{module}', [Tenant\ModuleController::class, 'update']);
     });

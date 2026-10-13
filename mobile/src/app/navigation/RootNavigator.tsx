@@ -4,6 +4,9 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText, Button, OfflineBanner, TabIcon } from '@/components';
 import { colors, fonts, spacing } from '@/constants/theme';
+import { AnnouncementScreen } from '@/features/announcements/AnnouncementScreen';
+import { AnnouncementsScreen } from '@/features/announcements/AnnouncementsScreen';
+import { useUnreadCount } from '@/features/announcements/api';
 import { AccountScreen } from '@/features/account/AccountScreen';
 import { ChangePasswordScreen } from '@/features/account/ChangePasswordScreen';
 import { SendFeedbackScreen } from '@/features/account/SendFeedbackScreen';
@@ -49,12 +52,21 @@ const tabOptions = {
 };
 
 function MainTabs() {
+  const unread = useUnreadCount(true);
   return (
     <Tabs.Navigator screenOptions={{ ...headerOptions, ...tabOptions }}>
       <Tabs.Screen
         name="Home"
         component={HomeScreen}
         options={{ tabBarIcon: ({ color }) => <TabIcon name="home" color={color} /> }}
+      />
+      <Tabs.Screen
+        name="Announcements"
+        component={AnnouncementsScreen}
+        options={{
+          tabBarIcon: ({ color }) => <TabIcon name="bell" color={color} />,
+          tabBarBadge: unread.data && unread.data > 0 ? unread.data : undefined,
+        }}
       />
       <Tabs.Screen
         name="Account"
@@ -163,6 +175,11 @@ export function RootNavigator() {
           name="ChangePassword"
           component={ChangePasswordScreen}
           options={{ title: 'Change password' }}
+        />
+        <AppStack.Screen
+          name="Announcement"
+          component={AnnouncementScreen}
+          options={{ title: 'Announcement' }}
         />
         <AppStack.Screen
           name="SendFeedback"

@@ -5,6 +5,8 @@ export type Call = {
   method: string;
   path: string;
   body: unknown;
+  /** Query-string parameters (`params:` of the request). */
+  params?: Record<string, unknown>;
   headers: Record<string, unknown>;
 };
 export type Reply = {
@@ -17,6 +19,17 @@ export type Reply = {
 export type Route = Reply | ((call: Call) => Reply | Promise<Reply>);
 
 let unhandled: string[] = [];
+
+const BACKGROUND: Record<string, Route> = {
+  'GET /announcements': {
+    data: {
+      data: [],
+      links: {},
+      meta: { current_page: 1, per_page: 20, total: 0, last_page: 1 },
+      unread_count: 0,
+    },
+  },
+};
 
 function parseBody(data: unknown): unknown {
   if (typeof data !== 'string') return data ?? null;
@@ -33,7 +46,10 @@ function parseBody(data: unknown): unknown {
  */
 export function mockApi(routes: Record<string, Route>) {
   const calls: Call[] = [];
-  const table = { ...routes };
+  // Every signed-in screen quietly loads the announcement badge. Unless a test sets its own reply, that request gets
+  // an empty page and is NOT recorded in `calls`, so tests about other things keep asserting on their own requests.
+  const background = Object.keys(BACKGROUND).filter((k) => !(k in routes));
+  const table: Record<string, Route> = { ...BACKGROUND, ...routes };
 
   api.defaults.adapter = async (config) => {
     const method = (config.method ?? 'get').toUpperCase();
@@ -43,9 +59,10 @@ export function mockApi(routes: Record<string, Route>) {
       method,
       path,
       body: parseBody(config.data),
+      params: config.params as Record<string, unknown> | undefined,
       headers: config.headers.toJSON(),
     };
-    calls.push(call);
+    if (!background.includes(key)) calls.push(call);
 
     const route = table[key];
     if (!route) {
@@ -83,6 +100,16 @@ export function mockApi(routes: Record<string, Route>) {
 export function strictAdapterWithoutMock(): void {
   api.defaults.adapter = async (config) => {
     const key = `${(config.method ?? 'get').toUpperCase()} ${config.url ?? ''}`;
+    const quiet = BACKGROUND[key];
+    if (quiet && typeof quiet !== 'function') {
+      return {
+        data: quiet.data,
+        status: 200,
+        statusText: '',
+        headers: {},
+        config,
+      } as AxiosResponse;
+    }
     unhandled.push(key);
     throw new Error(`API called without mockApi(): ${key}`);
   };

@@ -11,6 +11,7 @@ export type AuthStackParamList = {
 
 export type MainTabParamList = {
   Home: undefined;
+  Announcements: undefined;
   Account: undefined;
 };
 
@@ -35,6 +36,7 @@ export type AppStackParamList = {
     materialId: string;
     canComplete: boolean;
   };
+  Announcement: { id: string };
   ChangePassword: undefined;
   SendFeedback: undefined;
   TalaJoinCourse: undefined;

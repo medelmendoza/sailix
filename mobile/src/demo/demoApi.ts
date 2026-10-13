@@ -1,11 +1,21 @@
 import { api } from '@/services/api/client';
 import { useSessionStore } from '@/store/sessionStore';
-import { demoCourses, demoDeck, demoDetail, demoMe, demoQuiz } from './data';
+import { demoAnnouncements, demoCourses, demoDeck, demoDetail, demoMe, demoQuiz } from './data';
 
 /** Answers every request the app makes with sample data, in place of the network. Demo mode only. */
 function respond(method: string, path: string): unknown {
   if (method === 'GET' && path === '/me') return { data: demoMe };
   if (method === 'GET' && path === '/modules/tala/courses') return { data: demoCourses };
+  if (method === 'GET' && path === '/announcements')
+    return {
+      data: demoAnnouncements,
+      links: {},
+      meta: { current_page: 1, per_page: 20, total: 3, last_page: 1 },
+      unread_count: demoAnnouncements.filter((a) => !a.is_read).length,
+    };
+  const note = /^\/announcements\/(\w+)(\/read)?$/.exec(path);
+  if (note)
+    return { data: demoAnnouncements.find((a) => a.id === note[1]) ?? demoAnnouncements[0] };
   const detail = /^\/modules\/tala\/courses\/([A-Za-z0-9_-]+)$/.exec(path);
   if (method === 'GET' && detail) return { data: demoDetail(detail[1]!) };
   if (method === 'GET' && /\/quizzes\//.test(path)) return { data: demoQuiz };
