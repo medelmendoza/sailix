@@ -84,4 +84,5 @@ Read-only. Branch `medel_dev_march2025`, HEAD `2094806`, 66 pre-existing uncommi
 | 2026-10-13 | Quizzes built with server-side scoring (flag still OFF by default); live-verified through the gateway on the test account | Awaiting review |
 | 2026-10-13 | User chose flashcards + video feedback first. Built (flag still OFF by default); live-verified flashcards through the gateway on the test account; found and fixed a defect (404 for never-synced courses) | Awaiting review (docs/13 §22) |
 | 2026-10-13 | User chose My Stats and due dates. Built read-only (works with the write flag off); corrected an earlier error (progress shown as a percentage); pinned test env in phpunit.xml | Awaiting review (docs/13 §23) |
+| 2026-10-13 | User asked to apply the design of uupm.cc/demo/mental-health. Applied a soft-UI design system to the mobile app (tokens, components, navigation, screens), contrast-tested; added a demo mode used to review real screens; web portal NOT restyled | Awaiting review (docs/07 §7) |
 

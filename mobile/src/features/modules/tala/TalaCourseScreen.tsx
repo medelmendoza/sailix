@@ -30,6 +30,16 @@ const TYPE_LABEL: Record<string, string> = {
 };
 const isDone = (m: TalaMaterialSummary) => m.status?.toUpperCase() === 'COMPLETED';
 
+/** Tala's status words are shouted and some mean nothing to a learner; say only what helps. */
+export function statusWord(status: string | null): string | null {
+  if (!status) return null;
+  const s = status.toUpperCase();
+  if (s === 'COMPLETED') return 'Completed';
+  if (s === 'DEFAULT' || s === 'NOT STARTED' || s === 'NOT YET COMPLETED' || s === 'INACTIVE')
+    return null;
+  return status;
+}
+
 /** What the learner achieved on one item, from Tala's stored record. */
 export function materialStatsLine(m: TalaMaterialSummary): string | null {
   const s = m.stats;
@@ -157,7 +167,7 @@ export function TalaCourseScreen({ route }: Props) {
       <Notice
         message={
           c.progress_submission
-            ? 'Quizzes are not available in this version. You can mark videos and documents as completed; this is recorded by you and not checked.'
+            ? 'Videos and documents are marked completed by you and are not checked. Quiz scores and flashcard results are recorded in Tala.'
             : 'You can view your courses here. Taking quizzes and recording progress is not available in this version of the app.'
         }
       />
@@ -186,7 +196,11 @@ export function TalaCourseScreen({ route }: Props) {
               <AppText variant="caption" muted>
                 {TYPE_LABEL[m.type] ?? m.type}
                 {m.progress ? ` · ${m.progress}%` : ''}
-                {waiting ? ' · Completed, waiting to send' : m.status ? ` · ${m.status}` : ''}
+                {waiting
+                  ? ' · Completed, waiting to send'
+                  : statusWord(m.status)
+                    ? ` · ${statusWord(m.status)}`
+                    : ''}
                 {materialStatsLine(m) ? ` · ${materialStatsLine(m)}` : ''}
                 {rec
                   ? ` · Saved on this device (${Math.max(1, Math.round(rec.bytes / 1024))} KB)`
@@ -210,33 +224,42 @@ export function TalaCourseScreen({ route }: Props) {
             ) : m.viewable ? (
               <View style={{ gap: spacing.sm }}>
                 {rec ? (
-                  <>
+                  <View style={styles.actions}>
                     <Button
-                      title={m.type === 'video' ? 'Watch offline copy' : 'Open offline copy'}
+                      title={m.type === 'video' ? 'Watch' : 'Open'}
+                      accessibilityLabel={
+                        m.type === 'video' ? 'Watch offline copy' : 'Open offline copy'
+                      }
                       variant="secondary"
                       onPress={() => openOffline(m)}
+                      style={styles.half}
                     />
                     <Button
-                      title="Remove download"
+                      title="Remove"
+                      accessibilityLabel="Remove download"
                       variant="secondary"
                       loading={busy === m.id}
                       onPress={() => void remove(m)}
+                      style={styles.half}
                     />
-                  </>
+                  </View>
                 ) : (
-                  <>
+                  <View style={styles.actions}>
                     <Button
-                      title="Download for offline"
+                      title="Download"
+                      accessibilityLabel="Download for offline"
                       variant="secondary"
                       loading={busy === m.id}
                       onPress={() => void download(m)}
+                      style={styles.half}
                     />
                     <Button
                       title={m.type === 'video' ? 'Watch' : 'Open'}
                       variant="secondary"
                       onPress={() => void openOnline(m)}
+                      style={styles.half}
                     />
-                  </>
+                  </View>
                 )}
                 {c.progress_submission && !done ? (
                   <Button title="Mark as completed" onPress={() => void markCompleted(m)} />
@@ -271,4 +294,8 @@ export function TalaCourseScreen({ route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({ content: { padding: spacing.lg, gap: spacing.lg } });
+const styles = StyleSheet.create({
+  content: { padding: spacing.lg, gap: spacing.lg },
+  actions: { flexDirection: 'row', gap: spacing.md },
+  half: { flex: 1, paddingHorizontal: spacing.sm },
+});

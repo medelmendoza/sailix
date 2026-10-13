@@ -14,5 +14,5 @@ export function FormError({ message }: { message?: string | null }) {
 }
 
 const styles = StyleSheet.create({
-  box: { backgroundColor: colors.dangerBg, borderRadius: radius.sm, padding: spacing.md },
+  box: { backgroundColor: colors.dangerBg, borderRadius: radius.md, padding: spacing.lg },
 });

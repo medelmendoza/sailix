@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useController, type Control, type FieldValues, type Path } from 'react-hook-form';
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
-import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
+import { colors, fonts, minTouchTarget, radius, shadows, spacing } from '@/constants/theme';
 import { AppText } from './AppText';
 
 type Props<T extends FieldValues> = Omit<
@@ -80,18 +80,25 @@ export function TextField<T extends FieldValues>({
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.xs },
-  label: { fontWeight: '600' },
+  label: {},
   box: {
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: minTouchTarget,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
+    boxShadow: shadows.inset, // a field is a well pressed into the surface
   },
   boxError: { borderColor: colors.danger },
-  input: { flex: 1, paddingHorizontal: spacing.md, fontSize: 15, color: colors.text },
+  input: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+    fontFamily: fonts.body,
+    fontSize: 16,
+    color: colors.text,
+  },
   toggle: {
     minHeight: minTouchTarget,
     minWidth: 56,

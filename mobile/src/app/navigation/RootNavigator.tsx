@@ -2,8 +2,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText, Button, OfflineBanner } from '@/components';
-import { colors, spacing } from '@/constants/theme';
+import { AppText, Button, OfflineBanner, TabIcon } from '@/components';
+import { colors, fonts, spacing } from '@/constants/theme';
 import { AccountScreen } from '@/features/account/AccountScreen';
 import { ChangePasswordScreen } from '@/features/account/ChangePasswordScreen';
 import { ForgotPasswordScreen } from '@/features/auth/ForgotPasswordScreen';
@@ -25,16 +25,43 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const AppStack = createNativeStackNavigator<AppStackParamList>();
 const Tabs = createBottomTabNavigator<MainTabParamList>();
 
+/** Calm headers: the surface colour, no divider line, soft heading type. */
 const headerOptions = {
-  headerStyle: { backgroundColor: colors.primary },
-  headerTintColor: colors.onPrimary,
+  headerStyle: { backgroundColor: colors.background },
+  headerShadowVisible: false,
+  headerTintColor: colors.primary,
+  headerTitleStyle: { fontFamily: fonts.heading, fontSize: 19, color: colors.text },
+  contentStyle: { backgroundColor: colors.background },
+};
+
+/** Tab bar: a raised strip of the surface (shadow cast upwards), active tab in the brand blue. */
+const tabOptions = {
+  tabBarActiveTintColor: colors.primary,
+  tabBarInactiveTintColor: colors.textMuted,
+  tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 12 },
+  tabBarStyle: {
+    backgroundColor: colors.surface,
+    borderTopWidth: 0,
+    boxShadow: [
+      { offsetX: 0, offsetY: -6, blurRadius: 16, color: colors.shadowDark },
+      { offsetX: 0, offsetY: 2, blurRadius: 8, color: colors.shadowLight },
+    ],
+  },
 };
 
 function MainTabs() {
   return (
-    <Tabs.Navigator screenOptions={{ ...headerOptions, tabBarActiveTintColor: colors.primary }}>
-      <Tabs.Screen name="Home" component={HomeScreen} />
-      <Tabs.Screen name="Account" component={AccountScreen} />
+    <Tabs.Navigator screenOptions={{ ...headerOptions, ...tabOptions }}>
+      <Tabs.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ tabBarIcon: ({ color }) => <TabIcon name="home" color={color} /> }}
+      />
+      <Tabs.Screen
+        name="Account"
+        component={AccountScreen}
+        options={{ tabBarIcon: ({ color }) => <TabIcon name="person" color={color} /> }}
+      />
     </Tabs.Navigator>
   );
 }
@@ -88,10 +115,10 @@ export function RootNavigator() {
 
   return (
     <View style={styles.flex}>
-      <SafeAreaView edges={['top']} style={{ backgroundColor: colors.background }}>
-        <OfflineBanner />
-      </SafeAreaView>
-      <AppStack.Navigator screenOptions={headerOptions}>
+      <OfflineBanner />
+      <AppStack.Navigator
+        screenOptions={{ ...headerOptions, headerBackButtonDisplayMode: 'minimal' }}
+      >
         <AppStack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
         <AppStack.Screen
           name="Module"

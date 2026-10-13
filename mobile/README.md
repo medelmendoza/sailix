@@ -48,3 +48,11 @@ Configured through `app.config.ts` → `extra` (values from the shell / EAS prof
 `../docs/reference/sailix-spec/01…14`, `REACT-NATIVE-PLATFORM-DECISION`, `OPEN-QUESTIONS`, `MASTER-REBUILD-SPECIFICATION`; raw evidence in `../docs/reference/sailix-spec/_analysis/`.
 
 > **v2 note:** this folder was seeded from the standalone `sailix-rn` M0 (copied, original untouched). The API client now targets the new Laravel `/api/v1` (see `../docs/07-MOBILE-ARCHITECTURE.md`, `../docs/08-API-CONTRACTS.md`); the legacy single-tenant API assumptions in the reference spec are superseded. Tenant-aware session work is Phase G.
+
+## Design and demo mode
+Visual language, tokens and the accessibility rules are in `../docs/07-MOBILE-ARCHITECTURE.md` §7 (`src/constants/theme.ts`; a test enforces WCAG AA contrast). To review the screens with sample data and an automatic tour (no backend, no sign-in):
+```bash
+DEMO_MODE=1 npx expo run:ios --configuration Release      # or: DEMO_MODE=1 xcodebuild … (see docs)
+```
+Demo mode is a build-time switch that is ignored for production builds.
+

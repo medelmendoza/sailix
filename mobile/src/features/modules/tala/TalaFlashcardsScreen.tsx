@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Image, Linking, ScrollView, StyleSheet } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText, Button, Card, ErrorState, Notice, SkeletonList } from '@/components';
-import { colors, spacing } from '@/constants/theme';
+import { colors, radius, spacing } from '@/constants/theme';
 import { describeError, toApiError } from '@/services/api/errors';
 import type { TalaDeck } from '@/services/api/types';
 import { scopedKey } from '@/store/scopedKey';
@@ -263,5 +263,10 @@ function Study({
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
-  image: { width: '100%', height: 220, backgroundColor: colors.border },
+  image: {
+    width: '100%',
+    height: 220,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceSunken,
+  },
 });

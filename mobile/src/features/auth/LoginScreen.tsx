@@ -7,6 +7,7 @@ import { z } from 'zod';
 import type { AuthStackParamList } from '@/app/navigation/types';
 import {
   AppText,
+  BrandMark,
   Button,
   FormError,
   FormScreen,
@@ -14,6 +15,7 @@ import {
   Notice,
   TextField,
 } from '@/components';
+import { spacing } from '@/constants/theme';
 import { api, PUBLIC_CALL } from '@/services/api/client';
 import type { Envelope, SelectionRequired, TokenGrant } from '@/services/api/types';
 import { useSessionStore } from '@/store/sessionStore';
@@ -69,11 +71,14 @@ export function LoginScreen({ navigation }: Props) {
 
   return (
     <FormScreen>
-      <View style={{ gap: 4 }}>
-        <AppText variant="caption" muted>
-          SAILIX
-        </AppText>
-        <AppText variant="title">Sign in</AppText>
+      <View style={{ gap: spacing.md }}>
+        <BrandMark />
+        <View style={{ gap: spacing.xs }}>
+          <AppText variant="caption" muted>
+            SAILIX
+          </AppText>
+          <AppText variant="title">Sign in</AppText>
+        </View>
       </View>
       {notice ? <Notice tone="warning" message={notice} /> : null}
       <FormError message={formError} />

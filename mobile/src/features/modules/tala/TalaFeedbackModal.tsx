@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { AppText, Button } from '@/components';
-import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
+import { colors, fonts, minTouchTarget, radius, shadows, spacing } from '@/constants/theme';
 import type { Feedback } from './offline/outbox';
 
 /**
@@ -56,7 +56,7 @@ export function TalaFeedbackModal({
                 <AppText
                   style={{
                     fontSize: 28,
-                    color: n <= rating || n - 0.5 <= rating ? colors.warning : colors.border,
+                    color: n <= rating || n - 0.5 <= rating ? colors.gold : colors.borderSoft,
                   }}
                 >
                   {n <= rating ? '★' : n - 0.5 === rating ? '⯨' : '☆'}
@@ -115,8 +115,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     padding: spacing.lg,
     gap: spacing.md,
-    borderTopLeftRadius: radius.md,
-    borderTopRightRadius: radius.md,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    paddingBottom: spacing.xxl,
   },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: spacing.xs },
   star: {
@@ -128,10 +129,15 @@ const styles = StyleSheet.create({
   half: { minHeight: minTouchTarget, justifyContent: 'center' },
   input: {
     minHeight: 80,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
-    borderRadius: radius.sm,
-    padding: spacing.md,
+    borderRadius: radius.md,
+    padding: spacing.lg,
     textAlignVertical: 'top',
+    fontFamily: fonts.body,
+    fontSize: 16,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    boxShadow: shadows.inset,
   },
 });

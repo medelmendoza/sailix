@@ -30,5 +30,5 @@ export function SkeletonList({ count = 6, height = 80 }: { count?: number; heigh
 }
 
 const styles = StyleSheet.create({
-  row: { backgroundColor: colors.skeleton, borderRadius: radius.md, marginBottom: spacing.md },
+  row: { backgroundColor: colors.skeleton, borderRadius: radius.lg, marginBottom: spacing.md },
 });

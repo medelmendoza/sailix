@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { colors, radius } from '@/constants/theme';
+import { colors, gradients, radius, shadows } from '@/constants/theme';
 
 /** Accessible progress bar: announced as a value, not just painted. */
 export function ProgressBar({ percent, label }: { percent: number; label: string }) {
@@ -18,6 +18,17 @@ export function ProgressBar({ percent, label }: { percent: number; label: string
 }
 
 const styles = StyleSheet.create({
-  track: { height: 8, borderRadius: radius.sm, backgroundColor: colors.border, overflow: 'hidden' },
-  fill: { height: 8, backgroundColor: colors.primary },
+  track: {
+    height: 12,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceSunken,
+    boxShadow: shadows.insetSm,
+    overflow: 'hidden',
+  },
+  fill: {
+    height: 12,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primary,
+    experimental_backgroundImage: gradients.primary,
+  },
 });

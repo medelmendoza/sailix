@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText, Button, Card, ErrorState, FormError, Notice, SkeletonList } from '@/components';
-import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
+import { colors, fonts, minTouchTarget, radius, shadows, spacing } from '@/constants/theme';
 import { describeError, toApiError } from '@/services/api/errors';
 import type { TalaQuiz, TalaQuizResult } from '@/services/api/types';
 import { scopedKey } from '@/store/scopedKey';
@@ -188,17 +188,25 @@ const styles = StyleSheet.create({
   option: {
     minHeight: minTouchTarget,
     justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    backgroundColor: colors.surface,
+    boxShadow: shadows.raisedSm,
   },
-  optionPicked: { borderColor: colors.primary, backgroundColor: '#E7EFF9' },
+  // a chosen option sinks into the surface and takes the brand outline
+  optionPicked: { borderColor: colors.primary, boxShadow: shadows.insetSm },
   input: {
     minHeight: minTouchTarget,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    fontFamily: fonts.body,
+    fontSize: 16,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    boxShadow: shadows.inset,
   },
 });

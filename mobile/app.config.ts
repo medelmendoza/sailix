@@ -45,6 +45,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     appEnv: process.env.APP_ENV ?? 'development',
     apiBaseUrl: process.env.API_BASE_URL ?? 'http://localhost:8000',
     apiPrefix: process.env.API_PREFIX ?? '/api/v1',
+    demo: process.env.DEMO_MODE === '1',
     privacyUrl:
       process.env.PRIVACY_URL ?? 'https://www.btsolve.com/privacy/data-privacy-sailix.html',
   },

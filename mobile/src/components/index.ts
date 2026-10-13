@@ -1,4 +1,5 @@
 export { AppText } from './AppText';
+export { BrandMark } from './BrandMark';
 export { Button } from './Button';
 export { Card } from './Card';
 export { EmptyState } from './EmptyState';
@@ -11,4 +12,5 @@ export { OfflineBanner } from './OfflineBanner';
 export { ProgressBar } from './ProgressBar';
 export { Screen } from './Screen';
 export { SkeletonList } from './Skeleton';
+export { TabIcon } from './TabIcon';
 export { TextField } from './TextField';
