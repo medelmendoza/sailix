@@ -160,7 +160,14 @@ export function TalaCourseScreen({ route }: Props) {
                   : ''}
               </AppText>
             </View>
-            {m.viewable ? (
+            {m.viewable && m.type === 'quiz' ? (
+              <Button
+                title={isDone(m) ? 'Retake quiz' : 'Take quiz'}
+                onPress={() =>
+                  navigation.navigate('TalaQuiz', { assignId, quizId: m.id, name: m.name })
+                }
+              />
+            ) : m.viewable ? (
               <View style={{ gap: spacing.sm }}>
                 {rec ? (
                   <>

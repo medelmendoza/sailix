@@ -129,38 +129,25 @@ final class TalaGateway
 
     /**
      * Marks the caller's own video/PDF materials as completed in Tala (write; flag-gated, docs/13 §20).
-     * The payload is built SERVER-SIDE from Tala's own stored snapshot of this user: the client only names material ids.
-     * No score, comment, name or any other client value is forwarded; completion never goes backwards.
+     * The payload sent to Tala is built SERVER-SIDE from Tala's own stored snapshot of this user: the client only names
+     * material ids. No score, comment, name or any other client value is forwarded; completion never goes backwards.
      *
      * @param  list<string>  $materialIds
      * @return array<string, mixed>
      */
     public function submitProgress(Membership $membership, string $assignId, array $materialIds): array
     {
-        if (! $this->progressWritesEnabled()) {
-            throw ApiProblem::forbidden('feature_disabled', 'Submitting progress is not enabled.');
-        }
         $materialIds = array_values(array_unique($materialIds));
 
-        return $this->authorized($membership, function (ModuleLink $link, string $token, string $tala) use ($assignId, $materialIds, $membership) {
-            $assignment = $this->findAssignment($this->assignments($token, $tala, $link), $assignId);
-            $visible = collect($this->materials($assignment)[0])->keyBy('id');
+        $result = $this->writeSnapshot($membership, $assignId, function (array $visible) use ($materialIds) {
             foreach ($materialIds as $id) {
-                $summary = $visible->get($id) ?? throw ApiProblem::notFound('Material not found.');
+                $summary = $visible[$id] ?? throw ApiProblem::notFound('Material not found.');
                 if ($summary['type'] === 'quiz') {
-                    throw ApiProblem::invalid('unsupported_material', 'Quizzes are not available in this version.');
+                    throw ApiProblem::invalid('unsupported_material', 'Quizzes are taken through the quiz endpoints.');
                 }
             }
 
-            $lock = Cache::lock('tala-progress:'.$link->getKey(), 30);
-            if (! $lock->get()) {
-                throw ApiProblem::conflict('progress_busy', 'Another update is in progress. Try again.');
-            }
-            try {
-                $courseId = (string) ($assignment['courseId'] ?? '');
-                $snapshot = $this->client->progress($token, $tala, $link->external_team_id, $courseId, $assignId);
-                $item = $this->syncItem($snapshot, $assignment);
-
+            return function (array &$item, ModuleLink $link, string $token) use ($materialIds, $visible) {
                 foreach ($materialIds as $id) {
                     $kind = $visible[$id]['type'] === 'video' ? 'videos' : 'pdfs';
                     $idKey = $kind === 'videos' ? 'videoId' : 'pdfId';
@@ -175,6 +162,41 @@ final class TalaGateway
                         $item['materials'][$kind][] = $this->newMaterialRow($token, $link, $kind, $id);
                     }
                 }
+            };
+        });
+
+        return $result + ['completed' => $materialIds];
+    }
+
+    /**
+     * Shared read-modify-write of Tala's per-user course snapshot. Tala REPLACES the whole set of rows with what it is
+     * sent and stores progress exactly as sent (verified 2026-10-13, docs/13 §20), so every existing row is carried over
+     * and the course counters are recomputed here. Locked per link; never retried.
+     *
+     * @param  Closure  $prepare  receives the visible materials keyed by id, validates the request, and returns the mutation of the sync item
+     * @return array{progress: string, status: string}
+     */
+    private function writeSnapshot(Membership $membership, string $assignId, Closure $prepare): array
+    {
+        if (! $this->progressWritesEnabled()) {
+            throw ApiProblem::forbidden('feature_disabled', 'Submitting progress is not enabled.');
+        }
+
+        return $this->authorized($membership, function (ModuleLink $link, string $token, string $tala) use ($assignId, $prepare, $membership) {
+            $assignment = $this->findAssignment($this->assignments($token, $tala, $link), $assignId);
+            $visible = collect($this->materials($assignment)[0])->keyBy('id')->all();
+            $mutate = $prepare($visible);
+
+            $lock = Cache::lock('tala-progress:'.$link->getKey(), 30);
+            if (! $lock->get()) {
+                throw ApiProblem::conflict('progress_busy', 'Another update is in progress. Try again.');
+            }
+            try {
+                $courseId = (string) ($assignment['courseId'] ?? '');
+                $snapshot = $this->client->progress($token, $tala, $link->external_team_id, $courseId, $assignId);
+                $item = $this->syncItem($snapshot, $assignment);
+
+                $mutate($item, $link, $token);
 
                 $total = (int) ($assignment['course']['totalMaterial'] ?? 0) ?: count($visible);
                 $done = 0;
@@ -189,13 +211,87 @@ final class TalaGateway
                 $item['status'] = $done >= $total ? 'COMPLETED' : 'NOT YET COMPLETED';
 
                 $this->client->submitSync($token, $tala, $link->external_team_id, $item);
-                Audit::record('module.tala.progress_submitted', $membership->tenant_id, $link, ['materials' => count($materialIds)]);
+                Audit::record('module.tala.progress_submitted', $membership->tenant_id, $link, ['materials' => 1]);
 
-                return ['progress' => $item['progress'], 'status' => $item['status'], 'completed' => $materialIds];
+                return ['progress' => $item['progress'], 'status' => $item['status']];
             } finally {
                 $lock->release();
             }
         });
+    }
+
+    /**
+     * The questions of one quiz of the caller's own course. Never contains an answer or the answer key.
+     *
+     * @return array<string, mixed>
+     */
+    public function quiz(Membership $membership, string $assignId, string $quizId): array
+    {
+        if (! $this->progressWritesEnabled()) {
+            throw ApiProblem::forbidden('feature_disabled', 'Quizzes are not enabled.');
+        }
+
+        return $this->authorized($membership, function (ModuleLink $link, string $token, string $tala) use ($assignId, $quizId) {
+            $assignment = $this->findAssignment($this->assignments($token, $tala, $link), $assignId);
+            $this->assertQuiz($assignment, $quizId);
+
+            return TalaQuiz::parse($this->client->quiz($token, $link->external_team_id, $quizId))->publicView();
+        });
+    }
+
+    /**
+     * Scores the answers HERE with the answer key Tala holds, then records the result in Tala (write, flag-gated).
+     * The client never supplies a score, a result or a status; it receives totals only (no per-question answers).
+     *
+     * @param  list<mixed>  $answers
+     * @return array<string, mixed>
+     */
+    public function submitQuiz(Membership $membership, string $assignId, string $quizId, ?string $version, array $answers): array
+    {
+        $scored = null;
+        $progress = $this->writeSnapshot($membership, $assignId, function (array $visible) use ($quizId, $version, $answers, &$scored) {
+            if (($visible[$quizId]['type'] ?? null) !== 'quiz') {
+                throw ApiProblem::notFound('Quiz not found.');
+            }
+
+            return function (array &$item, ModuleLink $link, string $token) use ($quizId, $version, $answers, &$scored) {
+                $quiz = TalaQuiz::parse($this->client->quiz($token, $link->external_team_id, $quizId));
+                if ($version !== null && $version !== $quiz->version()) {
+                    throw ApiProblem::conflict('quiz_changed', 'This quiz was updated. Reload it and try again.');
+                }
+                $scored = $quiz->score($answers);
+                $row = $quiz->syncRow($scored);
+
+                $replaced = false;
+                foreach ($item['materials']['quizzes'] as $i => $existing) {
+                    if (($existing['quizId'] ?? null) === $quizId) {
+                        $item['materials']['quizzes'][$i] = $row; // a retake replaces the stored attempt, as in the Tala app
+                        $replaced = true;
+                    }
+                }
+                if (! $replaced) {
+                    $item['materials']['quizzes'][] = $row;
+                }
+            };
+        });
+        Audit::record('module.tala.quiz_submitted', $membership->tenant_id, null, ['passed' => $scored['passed'] ?? null]);
+
+        return $progress + [
+            'correct' => $scored['correct'] ?? 0,
+            'wrong' => $scored['wrong'] ?? 0,
+            'total' => $scored['total'] ?? 0,
+            'average' => $scored['average'] ?? 0.0,
+            'passed' => $scored['passed'] ?? false,
+        ];
+    }
+
+    /** @param array<string, mixed> $assignment */
+    private function assertQuiz(array $assignment, string $quizId): void
+    {
+        $summary = collect($this->materials($assignment)[0])->firstWhere('id', $quizId);
+        if ($summary === null || $summary['type'] !== 'quiz') {
+            throw ApiProblem::notFound('Quiz not found.');
+        }
     }
 
     /** @return array<string, mixed> */
@@ -393,7 +489,7 @@ final class TalaGateway
                 'name' => $this->str($d['materialName'] ?? null) ?? '',
                 'description' => $this->str($d['materialDescription'] ?? null),
                 'thumbnail_url' => $this->https($d['materialThumbnailUrl'] ?? null),
-                'viewable' => $type !== 'quiz',
+                'viewable' => $type !== 'quiz' || $this->progressWritesEnabled(), // quizzes are scored server-side, which needs writes
             ];
         }
 

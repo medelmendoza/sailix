@@ -25,3 +25,16 @@ Refresh-token endpoint and rotation; whether tokens are revoked on password chan
 
 ## Security notes about the production service (for the Tala owner, not acted on)
 Plain HTTP is accepted without redirect; year-long non-revocable-looking JWTs; garbage bearer token → HTTP 500; ids in paths with 200/empty or 404 instead of 403; join code returned in profile; quiz answer keys sent to clients.
+
+## Addendum (2026-10-13): write verification — owner-authorized, test account only, restored afterwards
+Scripts: `backend/scripts/tala-t0-write-probe.py` (T0b), `tala-t0-quiz-shape.py` (T0c, read-only), `tala-t0-quiz-write-probe.py` (T0d, through the real Sailix gateway). The owner explicitly authorized running the write probes on the dedicated test account and a narrow permission rule for exactly those two commands. Output was shape-only; **after every write the account was restored and verified equal to its original state.** 29 requests in total across the runs.
+
+| # | Question | Result |
+|---|---|---|
+| W1 | Does Tala accept its own stored snapshot posted back unchanged? | **Yes** (HTTP 200 `{message, httpStatus}`); nothing changed afterwards. Extra server metadata fields in the snapshot are tolerated. |
+| W2 | Replace or merge? | **Replace.** Adding one row and then posting the original snapshot removed the row again: each POST replaces the whole set of material rows. A client that omits a row deletes it. → the gateway read-modify-writes the full snapshot and keeps every existing row. |
+| W3 | Does Tala validate or recompute progress/status? | **No.** What was sent is stored exactly as sent (`progress` string, statuses), and a **decrease is accepted** (the restore did exactly that). The `n/total` counter and every score are whatever the sender says → D-T8 confirmed for the server; the only integrity control is the one the gateway adds (completion never goes backwards, scores computed server-side). |
+| W4 | Does Tala accept the exact payload the gateway builds (course-level keep-list, no server metadata)? | **Yes** (video/PDF row, and a quiz row with sections and per-question results). |
+| W5 | Quiz encoding | All 30 observed questions are `multipleChoice`, 4 choices separated by `:`, `answer` is a single **0-based index**, `required=true`. Tala's stored quiz row keeps `correct`/`wrong`/`average` as numbers (floats) and `remarks` `PASSED`/`FAILED`. |
+| W6 | Concurrency | Not tested against Tala itself. Because POST replaces the snapshot, a write from another client (e.g. the Tala app syncing) between the gateway's read and write would be overwritten (lost update). The gateway's per-link lock only serializes Sailix. |
+

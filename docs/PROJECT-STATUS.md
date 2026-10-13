@@ -80,4 +80,6 @@ Read-only. Branch `medel_dev_march2025`, HEAD `2094806`, 66 pre-existing uncommi
 | 2026-10-13 | User asked for M6 hardening (and to check the app on mobile). Delivered docs/13 §19 + docs/14. **CI replay from a fresh clone (NOT a real runner; the repo has no remote): web, mobile (blocking audit gate), backend, OpenAPI lint and Playwright all PASS; the report-only full mobile audit fails as documented.** | Awaiting review |
 | 2026-10-13 | Found and fixed: Tala password appeared in logged stack traces (`zend.exception_ignore_args=Off`); regression test added | Fixed |
 | 2026-10-13 | User asked for offline mode + progress submission. Offline mode built; progress submission built but **OFF**: the production write probe was blocked by the platform permission check and not worked around (docs/13 §20) | Awaiting your decision on the write test |
+| 2026-10-13 | User authorized the write probe and a permission rule; added a narrow project-local rule; ran the probes on the test account (restored each time): Tala **replaces** snapshots, validates nothing, accepts the gateway shape (docs/13 §21) | Done |
+| 2026-10-13 | Quizzes built with server-side scoring (flag still OFF by default); live-verified through the gateway on the test account | Awaiting review |
 

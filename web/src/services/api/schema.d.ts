@@ -468,6 +468,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/modules/tala/courses/{assignId}/quizzes/{quizId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The questions of one quiz of the caller's course (never the answers)
+         * @description Requires `progress_submission` (`403 feature_disabled` otherwise): quizzes are scored on the server, which needs the write path. The answer key Tala ships with the quiz is kept on the server and never returned. `422 unsupported_quiz` when the quiz uses a format the server cannot score with certainty.
+         */
+        get: operations["getTalaQuiz"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/modules/tala/courses/{assignId}/quizzes/{quizId}/attempts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit answers; the SERVER scores them and records the result in Tala
+         * @description The client sends answers only (never a score, result or status). The server fetches Tala's quiz, scores with Tala's rules, replaces the stored attempt (retakes allowed, 10 per hour per quiz) and returns totals only. `409 quiz_changed` if the quiz was updated since it was loaded; `422 incomplete_answers` / `invalid_answers`.
+         */
+        post: operations["submitTalaQuizAttempt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/modules/tala/courses/{assignId}/materials/{materialId}": {
         parameters: {
             query?: never;
@@ -816,6 +856,36 @@ export interface components {
             progress: string;
             status: string;
             completed: string[];
+        };
+        TalaQuiz: {
+            id: string;
+            name: string;
+            description: string | null;
+            version: string;
+            sections: {
+                id: string;
+                title: string | null;
+                description: string | null;
+                questions: {
+                    ref: string;
+                    /** @enum {string} */
+                    type: "single" | "multiple" | "text";
+                    text: string;
+                    choices: string[];
+                    required: boolean;
+                    media_type: string | null;
+                    media_url: string | null;
+                }[];
+            }[];
+        };
+        TalaQuizResult: {
+            progress: string;
+            status: string;
+            correct: number;
+            wrong: number;
+            total: number;
+            average: number;
+            passed: boolean;
         };
         TalaMaterialSummary: {
             id: string;
@@ -1795,6 +1865,81 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["TalaProgressResult"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    getTalaQuiz: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignId: string;
+                quizId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Quiz. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TalaQuiz"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    submitTalaQuizAttempt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignId: string;
+                quizId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description The `version` of the quiz as loaded */
+                    version?: string | null;
+                    answers: {
+                        ref: string;
+                        /** @description single: the option index as a string; multiple: an array of option indexes; text: the typed answer */
+                        value: string | string[];
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Scored and recorded. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["TalaQuizResult"];
                     };
                 };
             };

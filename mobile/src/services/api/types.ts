@@ -12,6 +12,8 @@ export type TalaCourse = Schemas['TalaCourse'];
 export type TalaCourseDetail = Schemas['TalaCourseDetail'];
 export type TalaMaterialSummary = Schemas['TalaMaterialSummary'];
 export type TalaMaterial = Schemas['TalaMaterial'];
+export type TalaQuiz = Schemas['TalaQuiz'];
+export type TalaQuizResult = Schemas['TalaQuizResult'];
 
 export interface Envelope<T> {
   data: T;

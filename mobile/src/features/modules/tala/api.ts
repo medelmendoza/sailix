@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/services/api/client';
 import { toApiError } from '@/services/api/errors';
-import type { Envelope, TalaCourse, TalaCourseDetail, TalaMaterial } from '@/services/api/types';
+import type {
+  Envelope,
+  TalaCourse,
+  TalaCourseDetail,
+  TalaMaterial,
+  TalaQuiz,
+  TalaQuizResult,
+} from '@/services/api/types';
 import { scopedKey } from '@/store/scopedKey';
 import { currentScope } from './offline/paths';
 import {
@@ -118,4 +125,29 @@ export function useUnlinkTala() {
       await refreshMe();
     },
   });
+}
+
+/** Quizzes are scored on the server: nothing about a quiz is stored on the device and an attempt needs a connection. */
+export async function fetchTalaQuiz(assignId: string, quizId: string): Promise<TalaQuiz> {
+  return (
+    await api.get<Envelope<TalaQuiz>>(
+      `${base}/courses/${encodeURIComponent(assignId)}/quizzes/${encodeURIComponent(quizId)}`,
+    )
+  ).data.data;
+}
+
+export type QuizAnswer = { ref: string; value: string | string[] };
+
+export async function submitTalaQuiz(
+  assignId: string,
+  quizId: string,
+  version: string,
+  answers: QuizAnswer[],
+): Promise<TalaQuizResult> {
+  return (
+    await api.post<Envelope<TalaQuizResult>>(
+      `${base}/courses/${encodeURIComponent(assignId)}/quizzes/${encodeURIComponent(quizId)}/attempts`,
+      { version, answers },
+    )
+  ).data.data;
 }

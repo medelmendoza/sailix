@@ -61,6 +61,12 @@ final class TalaClient
             .'/courses/'.$this->seg($courseId).'/sync/'.$this->seg($assignId).'/data');
     }
 
+    /** @return array<string, mixed> Tala's quiz document, answer key included (it must never be forwarded to a client). */
+    public function quiz(string $token, string $teamId, string $quizId): array
+    {
+        return $this->getObject($token, '/api/v1/auth/users/teams/'.$this->seg($teamId).'/up_quizzes/'.$this->seg($quizId));
+    }
+
     /**
      * WRITE. Posts a full course snapshot (Tala's sync is snapshot based; server semantics unverified, see docs/13 §20).
      * Never retried: a second POST could double-apply if the server is not idempotent.

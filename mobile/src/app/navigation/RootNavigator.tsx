@@ -13,6 +13,7 @@ import { RegisterScreen } from '@/features/auth/RegisterScreen';
 import { SelectOrganizationScreen } from '@/features/auth/SelectOrganizationScreen';
 import { HomeScreen } from '@/features/home/HomeScreen';
 import { TalaCourseScreen } from '@/features/modules/tala/TalaCourseScreen';
+import { TalaQuizScreen } from '@/features/modules/tala/TalaQuizScreen';
 import { TalaPdfScreen, TalaVideoScreen } from '@/features/modules/tala/TalaViewers';
 import { ModuleScreen } from '@/features/modules/ModuleScreen';
 import { useSessionStore } from '@/store/sessionStore';
@@ -98,6 +99,11 @@ export function RootNavigator() {
         <AppStack.Screen
           name="TalaCourse"
           component={TalaCourseScreen}
+          options={({ route }) => ({ title: route.params.name })}
+        />
+        <AppStack.Screen
+          name="TalaQuiz"
+          component={TalaQuizScreen}
           options={({ route }) => ({ title: route.params.name })}
         />
         <AppStack.Screen

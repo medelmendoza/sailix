@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Modules;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\LinkTalaRequest;
 use App\Http\Requests\Modules\SubmitProgressRequest;
+use App\Http\Requests\Modules\SubmitQuizRequest;
 use App\Models\Membership;
 use App\Models\User;
 use App\Modules\Tala\TalaGateway;
@@ -65,6 +66,20 @@ class TalaController extends Controller
         $ids = $request->validated('completed');
 
         return response()->json(['data' => $this->gateway->submitProgress($this->membership($request), $assignId, $ids)]);
+    }
+
+    public function quiz(Request $request, string $assignId, string $quizId): JsonResponse
+    {
+        return response()->json(['data' => $this->gateway->quiz($this->membership($request), $assignId, $quizId)]);
+    }
+
+    public function attempt(SubmitQuizRequest $request, string $assignId, string $quizId): JsonResponse
+    {
+        /** @var list<mixed> $answers */
+        $answers = $request->validated('answers');
+        $version = $request->validated('version');
+
+        return response()->json(['data' => $this->gateway->submitQuiz($this->membership($request), $assignId, $quizId, is_string($version) ? $version : null, $answers)]);
     }
 
     private function membership(Request $request): Membership

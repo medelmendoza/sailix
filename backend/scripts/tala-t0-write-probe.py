@@ -131,13 +131,35 @@ def main():
         sys.exit(f"no courses: {st}")
     # prefer an assignment that has at least one video not yet completed
     chosen = None
+    first = None
     for c in courses:
         st, snap = call(base, "GET", f"/api/v1/auth/users/{uid}/teams/{team}/courses/{c['courseId']}/sync/{c['assignId']}/data", token)
-        if st == 200 and any(str(v.get("status")) != "COMPLETED" for v in snap.get("materials", {}).get("videos", [])):
+        if st != 200:
+            continue
+        first = first or (c, snap)
+        m = snap.get("materials", {})
+        if any(str(x.get("status")) != "COMPLETED" for g in ("videos", "pdfs") for x in m.get(g, [])):
             chosen = (c, snap)
             break
+    can_change = chosen is not None
+    new_row = None  # an assigned video/PDF that has NO stored row yet: completing it adds a row (the gateway's "new material" path)
+    if not can_change and first:
+        c0, snap0 = first
+        have = {str(x.get(k)) for g, k in (("videos", "videoId"), ("pdfs", "pdfId")) for x in snap0.get("materials", {}).get(g, [])}
+        for d in (c0.get("course") or {}).get("materialDetails") or []:
+            t = str(d.get("materialType")).lower()
+            if t in ("video", "pdf") and str(d.get("materialId")) not in have:
+                new_row = (t, str(d["materialId"]))
+                break
+        if new_row:
+            print(f"no existing row is un-completed; will add ONE new completed {new_row[0]} row for an assigned material that has none")
+            can_change = True
+            chosen = first
+    if not can_change:
+        print("nothing safe to change on this account: running ONLY the unchanged round trip (step 2); no data will be changed")
+        chosen = first
     if not chosen:
-        sys.exit("no assignment with a not-yet-completed video: nothing to test safely")
+        sys.exit("no readable assignment")
     c, s0 = chosen
     path_get = f"/api/v1/auth/users/{uid}/teams/{team}/courses/{c['courseId']}/sync/{c['assignId']}/data"
     path_post = f"/api/v1/auth/users/{uid}/teams/{team}/courses/sync"
@@ -159,9 +181,26 @@ def main():
     st, s1 = call(base, "GET", path_get, token)
     print("    fields that differ after the unchanged round trip (names only):", diff(strip(s0), strip(s1)) or "none")
 
+    if not can_change:
+        print("\nSteps 3-4 skipped (nothing to complete). done:", sent, "requests")
+        return
+
     # --- step 3: one video completed -----------------------------------------------------------------------------------
     s2 = copy.deepcopy(s0)
-    v = next(x for x in s2["materials"]["videos"] if str(x.get("status")) != "COMPLETED")
+    if new_row:
+        t, mid = new_row
+        group, p = ("videos", "video") if t == "video" else ("pdfs", "pdf")
+        st, raw = call(base, "GET", f"/api/v1/auth/users/teams/{team}/{'videos' if t == 'video' else 'pdf'}/{mid}", token)
+        if st != 200:
+            sys.exit("could not read the material metadata; nothing changed")
+        row = {f"{p}Id": mid, f"{p}Name": raw.get(f"{p}Name", ""), f"{p}Description": raw.get(f"{p}Description", ""), f"{p}FileUrl": raw.get(f"{p}FileUrl", ""),
+               f"{p}FileName": raw.get(f"{p}FileName", ""), f"{p}ThumbnailUrl": raw.get(f"{p}ThumbnailUrl", ""), "status": "DEFAULT", "progress": "", "tags": raw.get("tags", "") or ""}
+        if t == "video":
+            row.update({"feedback": 0, "comment": ""})
+        s2.setdefault("materials", {}).setdefault(group, []).append(row)
+        v = row
+    else:
+        v = next(x for g in ("videos", "pdfs") for x in s2["materials"].get(g, []) if str(x.get("status")) != "COMPLETED")
     before = v.get("status")
     v["status"] = "COMPLETED"
     total_done = sum(1 for g in s2["materials"].values() for x in g if str(x.get("status")) == "COMPLETED")
@@ -170,7 +209,10 @@ def main():
         s2["progress"] = f"{total_done}/{parts[1].strip()}"
         if total_done >= int(parts[1]):
             s2["status"] = "COMPLETED"
-    print(f"\n[3] change: ONE video status {before!r} -> 'COMPLETED'; course progress recomputed client-style")
+    # send exactly what the Sailix gateway sends: Tala's own course-level fields from its keep-list (no server metadata)
+    keep = ["assignId", "courseId", "courseName", "courseDescription", "userId", "teamId", "lastName", "firstName", "middleName", "dateFrom", "dateTo", "dateAssigned", "assignedBy", "email", "status", "progress", "syncDate", "courseTags", "userTags", "materials"]
+    s2 = {k: s2[k] for k in keep if k in s2}
+    print(f"\n[3] change: ONE material status {before!r} -> 'COMPLETED'; course progress recomputed client-style")
     st, r = call(base, "POST", path_post, token, {"courseList": [s2]})
     print(f"    POST -> HTTP {st}", "| body shape:", json.dumps(shape(r)) if r is not None else "(no body)")
     if st != 200:
@@ -185,8 +227,8 @@ def main():
 
         # --- step 4: restore --------------------------------------------------------------------------------------
         print("\n[4] restore original snapshot")
-        st, r = call(base, "POST", path_post, token, {"courseList": [s0]})
-        print(f"    POST S0 -> HTTP {st}")
+        st, r = call(base, "POST", path_post, token, {"courseList": [{k: s0[k] for k in keep if k in s0}]})
+        print(f"    POST S0 (gateway shape) -> HTTP {st}")
         st, s4 = call(base, "GET", path_get, token)
         left = diff(strip(s0), strip(s4))
         print("    differences from the ORIGINAL after the restore (names only):", left or "none -> account is back to its original state")
