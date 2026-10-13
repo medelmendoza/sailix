@@ -101,6 +101,7 @@ async function openQuiz(routes: Record<string, unknown> = {}, viewable = true) {
   } as never);
   signedInAs(makeMe({ modules: [TALA('linked')] }));
   await renderApp();
+  await fireEvent.press(await screen.findByLabelText(/^Services/));
   await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
   await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
   return api;
@@ -239,6 +240,7 @@ describe('taking a quiz', () => {
     });
     signedInAs(makeMe({ modules: [TALA('linked')] }));
     await renderApp();
+    await fireEvent.press(await screen.findByLabelText(/^Services/));
     await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
     await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
     expect(await screen.findByRole('button', { name: /^Retake quiz/ })).toBeTruthy();

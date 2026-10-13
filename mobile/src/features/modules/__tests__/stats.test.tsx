@@ -82,9 +82,8 @@ describe('home: my learning', () => {
       status: 503,
       data: { code: 'module_unavailable', type: 'x', title: 'x', status: 503 },
     });
-    expect(await screen.findByText('Services')).toBeTruthy();
+    expect(await screen.findByText('Hello, Maria')).toBeTruthy(); // Home still works
     expect(screen.queryByText('My learning')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Tala, Linked' })).toBeTruthy();
   });
 
   it('opens the course from a due date and the stats from the button', async () => {
@@ -127,6 +126,7 @@ describe('my stats screen', () => {
   it('shows an empty state for no courses', async () => {
     await home({ data: { data: [] } }, {});
     // nothing to show on Home; open the stats from the module screen instead
+    await fireEvent.press(await screen.findByLabelText(/^Services/));
     await fireEvent.press(await screen.findByRole('button', { name: 'Tala, Linked' }));
     await fireEvent.press(await screen.findByRole('button', { name: 'My stats' }));
     expect(await screen.findByText('No courses yet')).toBeTruthy();

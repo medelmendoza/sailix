@@ -1,21 +1,16 @@
-import type { CompositeScreenProps } from '@react-navigation/native';
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Constants from 'expo-constants';
 import { useState } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { env } from '@/app/config/env';
-import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
+import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText, Button, Card, FormError, Notice } from '@/components';
 import { spacing } from '@/constants/theme';
 import { api } from '@/services/api/client';
 import { describeError } from '@/services/api/errors';
 import { useSessionStore } from '@/store/sessionStore';
 
-type Props = CompositeScreenProps<
-  BottomTabScreenProps<MainTabParamList, 'Account'>,
-  NativeStackScreenProps<AppStackParamList>
->;
+type Props = NativeStackScreenProps<AppStackParamList, 'Account'>;
 
 function Row({ label, value }: { label: string; value: string }) {
   return (

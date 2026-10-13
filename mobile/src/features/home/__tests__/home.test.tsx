@@ -31,33 +31,6 @@ describe('home', () => {
     expect(await screen.findByText('Hello, Alex Admin')).toBeTruthy();
   });
 
-  it('says so plainly when the organization offers no services', async () => {
-    signedInAs(makeMe({ modules: [] }));
-    await renderApp();
-    expect(await screen.findByText('No services yet')).toBeTruthy();
-  });
-
-  it('lists each service with its real status from the API', async () => {
-    signedInAs(makeMe({ modules: [TALA('not_linked')] }));
-    await renderApp();
-    expect(await screen.findByRole('button', { name: 'Tala, Not linked' })).toBeTruthy();
-  });
-
-  it('pull-to-refresh reloads /me and shows module changes', async () => {
-    signedInAs(makeMe({ modules: [] }));
-    const api = mockApi({
-      'GET /me': { data: { data: makeMe({ modules: [TALA('linked')] }) } },
-      'GET /modules/tala/courses': { data: { data: [] } },
-    });
-    await renderApp();
-    await screen.findByText('No services yet');
-
-    await pullToRefresh();
-
-    expect(await screen.findByRole('button', { name: 'Tala, Linked' })).toBeTruthy();
-    expect(api.callsTo('GET /me')).toHaveLength(1);
-  });
-
   it('shows a refresh failure without losing what is on screen', async () => {
     signedInAs(makeMe({ modules: [TALA('linked')] }));
     mockApi({
@@ -91,6 +64,7 @@ describe('module screen', () => {
     mockApi({ 'GET /modules/tala/courses': { data: { data: [] } } });
     signedInAs(makeMe({ modules: [TALA(status, enabled)] }));
     await renderApp();
+    await fireEvent.press(await screen.findByLabelText(/^Services/));
     await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
   }
 

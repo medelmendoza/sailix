@@ -87,6 +87,7 @@ async function openDeck(
   signedInAs(makeMe({ modules: [TALA('linked')] }));
   await before?.();
   await renderApp();
+  await fireEvent.press(await screen.findByLabelText(/^Services/));
   await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
   await fireEvent.press(await screen.findByRole('button', { name: /Seamanship/ }));
   return api;

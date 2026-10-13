@@ -4,6 +4,7 @@ export { Button } from './Button';
 export { Card } from './Card';
 export { CourseImage } from './CourseImage';
 export { GlyphIcon, type GlyphName } from './GlyphIcon';
+export { ComingSoon } from './ComingSoon';
 export { EmptyState } from './EmptyState';
 export { ErrorBoundary } from './ErrorBoundary';
 export { ErrorState } from './ErrorState';

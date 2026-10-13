@@ -22,7 +22,7 @@ async function pressAlert(buttons: AlertButton[], text: string) {
 async function openAccount() {
   signedInAs();
   await renderApp();
-  await fireEvent.press(await screen.findByLabelText(/Account/));
+  await fireEvent.press(await screen.findByRole('button', { name: 'Account' }));
 }
 
 beforeEach(() => {
@@ -252,7 +252,7 @@ describe('switching organization', () => {
     });
     signedInAs(me1);
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/Account/));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Account' }));
 
     expect(await screen.findByText('Switch organization')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Southfield Agencies/ })).toBeNull(); // not the current one
@@ -280,7 +280,7 @@ describe('switching organization', () => {
     });
     signedInAs(me1);
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/Account/));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Account' }));
     await fireEvent.press(
       await screen.findByRole('button', { name: 'Acme Crewing (Administrator)' }),
     );

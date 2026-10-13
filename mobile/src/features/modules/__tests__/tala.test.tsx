@@ -66,6 +66,7 @@ const unlinkedMe = (status = 'not_linked') => makeMe({ modules: [TALA(status)] }
 async function openTala(me = linkedMe()) {
   signedInAs(me);
   await renderApp();
+  await fireEvent.press(await screen.findByLabelText(/^Services/));
   await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
 }
 

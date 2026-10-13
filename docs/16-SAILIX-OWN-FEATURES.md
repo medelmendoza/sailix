@@ -10,7 +10,8 @@ On 2026-10-13 the product owner said "go with Sailix functionality, leave Tala f
 | To-dos | Not started |
 | Documents (types, upload, review, expiry) | Not started. Needs a file-storage decision and Q-13/14/16 |
 | Finance (payslips, loans) | Not started. Needs G-02 (where the money data comes from) and Q-10 (step-up) |
-| Dashboard | Partly: Home shows the latest announcements and the Tala learning summary |
+| Dashboard | Partly: shows the latest announcements and the Tala learning summary |
+| Tabs: Dashboard, Files, Announcements, Finance, Services | **In place** (docs/07 §7.6). Files and Finance are "Coming soon" placeholders; Services lists Tala and shows SRT, Call-it, Astra as coming soon |
 
 ## D2 Announcements
 

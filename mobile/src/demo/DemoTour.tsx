@@ -5,8 +5,11 @@ import { navigationRef } from '@/app/navigation/navigationRef';
 /** One stop of the scripted tour per interval; lets a build be filmed or screenshotted without anyone touching it. */
 const STOPS: (() => void)[] = [
   () => navigationRef.navigate('MainTabs', { screen: 'Home' }),
+  () => navigationRef.navigate('MainTabs', { screen: 'Files' }),
   () => navigationRef.navigate('MainTabs', { screen: 'Announcements' }),
   () => navigationRef.navigate('Announcement', { id: 'n1' }),
+  () => navigationRef.navigate('MainTabs', { screen: 'Finance' }),
+  () => navigationRef.navigate('MainTabs', { screen: 'Services' }),
   () => navigationRef.navigate('Module', { code: 'tala' }),
   () => navigationRef.navigate('TalaStats'),
   () => navigationRef.navigate('TalaCourse', { assignId: 'A1', name: 'Fire Safety at Sea' }),
@@ -18,7 +21,7 @@ const STOPS: (() => void)[] = [
       cardId: 'c1',
       name: 'Safety symbols',
     }),
-  () => navigationRef.navigate('MainTabs', { screen: 'Account' }),
+  () => navigationRef.navigate('Account'),
   () =>
     navigationRef.dispatch(
       StackActions.push('TalaFlashcards', {

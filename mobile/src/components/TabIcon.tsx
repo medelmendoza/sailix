@@ -5,14 +5,42 @@ import { colors } from '@/constants/theme';
  * Two simple tab icons drawn from plain shapes: no icon font, no emoji (which renders unreliably across devices and
  * runtimes), and they take the tab's tint colour. Hidden from screen readers; the tab label speaks.
  */
-export function TabIcon({ name, color }: { name: 'home' | 'person' | 'bell'; color: string }) {
+export function TabIcon({
+  name,
+  color,
+}: {
+  name: 'home' | 'person' | 'bell' | 'folder' | 'coins' | 'grid';
+  color: string;
+}) {
   return (
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       style={styles.box}
     >
-      {name === 'bell' ? (
+      {name === 'folder' ? (
+        <>
+          <View style={[styles.folderTab, { backgroundColor: color }]} />
+          <View style={[styles.folderBody, { backgroundColor: color }]} />
+        </>
+      ) : name === 'coins' ? (
+        <>
+          <View style={[styles.coinBack, { borderColor: color }]} />
+          <View style={[styles.coinFront, { backgroundColor: color }]} />
+        </>
+      ) : name === 'grid' ? (
+        <>
+          {[0, 1, 2, 3].map((i) => (
+            <View
+              key={i}
+              style={[
+                styles.cell,
+                { backgroundColor: color, left: 2 + (i % 2) * 12, top: 2 + Math.floor(i / 2) * 12 },
+              ]}
+            />
+          ))}
+        </>
+      ) : name === 'bell' ? (
         <>
           <View style={[styles.bellDome, { backgroundColor: color }]} />
           <View style={[styles.bellRim, { backgroundColor: color }]} />
@@ -62,6 +90,27 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 2,
     backgroundColor: colors.surface,
   },
+  folderTab: {
+    position: 'absolute',
+    top: 3,
+    left: 2,
+    width: 10,
+    height: 6,
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
+  },
+  folderBody: { position: 'absolute', top: 8, left: 2, width: 22, height: 15, borderRadius: 3 },
+  coinBack: {
+    position: 'absolute',
+    top: 3,
+    right: 2,
+    width: 15,
+    height: 15,
+    borderRadius: 8,
+    borderWidth: 2.5,
+  },
+  coinFront: { position: 'absolute', bottom: 3, left: 2, width: 15, height: 15, borderRadius: 8 },
+  cell: { position: 'absolute', width: 10, height: 10, borderRadius: 3 },
   bellDome: {
     position: 'absolute',
     top: 3,

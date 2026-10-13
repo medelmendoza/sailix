@@ -1,12 +1,19 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import {
+  createNativeStackNavigator,
+  type NativeStackNavigationProp,
+} from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText, Button, OfflineBanner, TabIcon } from '@/components';
+import { AppText, Button, GlyphIcon, OfflineBanner, TabIcon } from '@/components';
 import { colors, fonts, spacing } from '@/constants/theme';
 import { AnnouncementScreen } from '@/features/announcements/AnnouncementScreen';
 import { AnnouncementsScreen } from '@/features/announcements/AnnouncementsScreen';
 import { useUnreadCount } from '@/features/announcements/api';
+import { FilesScreen } from '@/features/files/FilesScreen';
+import { FinanceScreen } from '@/features/finance/FinanceScreen';
+import { ServicesScreen } from '@/features/services/ServicesScreen';
 import { AccountScreen } from '@/features/account/AccountScreen';
 import { ChangePasswordScreen } from '@/features/account/ChangePasswordScreen';
 import { SendFeedbackScreen } from '@/features/account/SendFeedbackScreen';
@@ -43,7 +50,7 @@ const headerOptions = {
 const tabOptions = {
   tabBarActiveTintColor: colors.primary,
   tabBarInactiveTintColor: colors.textMuted,
-  tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 12 },
+  tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 11 },
   tabBarStyle: {
     backgroundColor: colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -51,27 +58,61 @@ const tabOptions = {
   },
 };
 
+/** The old Sailix "settings menu": reachable from every tab's header. */
+function AccountButton() {
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Account"
+      onPress={() => navigation.navigate('Account')}
+      hitSlop={8}
+      style={styles.accountButton}
+    >
+      <GlyphIcon name="person" color={colors.primary} size={26} />
+    </Pressable>
+  );
+}
+
 function MainTabs() {
   const unread = useUnreadCount(true);
   return (
-    <Tabs.Navigator screenOptions={{ ...headerOptions, ...tabOptions }}>
+    <Tabs.Navigator
+      screenOptions={{ ...headerOptions, ...tabOptions, headerRight: () => <AccountButton /> }}
+    >
       <Tabs.Screen
         name="Home"
         component={HomeScreen}
-        options={{ tabBarIcon: ({ color }) => <TabIcon name="home" color={color} /> }}
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color }) => <TabIcon name="home" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="Files"
+        component={FilesScreen}
+        options={{ tabBarIcon: ({ color }) => <TabIcon name="folder" color={color} /> }}
       />
       <Tabs.Screen
         name="Announcements"
         component={AnnouncementsScreen}
         options={{
+          // "Announcements" does not fit under a fifth of the screen: the tab says "Notices", the screen and VoiceOver say Announcements
+          tabBarLabel: 'Notices',
+          tabBarAccessibilityLabel: 'Announcements',
           tabBarIcon: ({ color }) => <TabIcon name="bell" color={color} />,
           tabBarBadge: unread.data && unread.data > 0 ? unread.data : undefined,
         }}
       />
       <Tabs.Screen
-        name="Account"
-        component={AccountScreen}
-        options={{ tabBarIcon: ({ color }) => <TabIcon name="person" color={color} /> }}
+        name="Finance"
+        component={FinanceScreen}
+        options={{ tabBarIcon: ({ color }) => <TabIcon name="coins" color={color} /> }}
+      />
+      <Tabs.Screen
+        name="Services"
+        component={ServicesScreen}
+        options={{ tabBarIcon: ({ color }) => <TabIcon name="grid" color={color} /> }}
       />
     </Tabs.Navigator>
   );
@@ -176,6 +217,7 @@ export function RootNavigator() {
           component={ChangePasswordScreen}
           options={{ title: 'Change password' }}
         />
+        <AppStack.Screen name="Account" component={AccountScreen} options={{ title: 'Account' }} />
         <AppStack.Screen
           name="Announcement"
           component={AnnouncementScreen}
@@ -193,6 +235,13 @@ export function RootNavigator() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  accountButton: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
   center: {
     flex: 1,
     alignItems: 'center',
