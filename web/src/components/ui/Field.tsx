@@ -1,0 +1,86 @@
+import { useId } from 'react';
+import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, Ref } from 'react';
+import { cn } from './cn';
+
+interface FieldFrameProps {
+  label: string;
+  error?: string;
+  hint?: string;
+  id: string;
+  children: ReactNode;
+}
+
+function FieldFrame({ label, error, hint, id, children }: FieldFrameProps) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="text-sm font-medium">
+        {label}
+      </label>
+      {children}
+      {hint && !error && (
+        <p id={`${id}-hint`} className="text-xs text-muted">
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={`${id}-error`} role="alert" className="text-xs text-bad-fg">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+const CONTROL =
+  'min-h-10 w-full rounded-md border bg-surface px-3 text-sm placeholder:text-muted disabled:bg-page';
+
+interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  error?: string;
+  hint?: string;
+  ref?: Ref<HTMLInputElement>;
+}
+
+export function TextField({ label, error, hint, className, ref, ...rest }: TextFieldProps) {
+  const id = useId();
+  return (
+    <FieldFrame label={label} error={error} hint={hint} id={id}>
+      <input
+        id={id}
+        ref={ref}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+        className={cn(CONTROL, error ? 'border-bad-fg' : 'border-line', className)}
+        {...rest}
+      />
+    </FieldFrame>
+  );
+}
+
+interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  label: string;
+  error?: string;
+  options: Array<{ value: string; label: string }>;
+  ref?: Ref<HTMLSelectElement>;
+}
+
+export function SelectField({ label, error, options, className, ref, ...rest }: SelectFieldProps) {
+  const id = useId();
+  return (
+    <FieldFrame label={label} error={error} id={id}>
+      <select
+        id={id}
+        ref={ref}
+        aria-invalid={error ? true : undefined}
+        className={cn(CONTROL, error ? 'border-bad-fg' : 'border-line', className)}
+        {...rest}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </FieldFrame>
+  );
+}

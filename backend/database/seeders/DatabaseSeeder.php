@@ -7,6 +7,7 @@ use App\Enums\Role;
 use App\Enums\TenantStatus;
 use App\Enums\UserStatus;
 use App\Models\Membership;
+use App\Models\PlatformAdmin;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -17,6 +18,9 @@ use Illuminate\Database\Seeder;
  */
 class DatabaseSeeder extends Seeder
 {
+    /** Published dev placeholder (base32). */
+    public const DEMO_TOTP_SECRET = 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';
+
     public function run(): void
     {
         if (! app()->environment(['local', 'testing'])) {
@@ -42,6 +46,15 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        $this->command?->info('Demo tenants SFAI and ACME seeded (admin.<code> / crew.<code>). Create a superadmin with: php artisan platform:create-admin');
+        // Demo superadmin for local development and browser tests ONLY (this seeder refuses other environments).
+        // The TOTP secret is a published placeholder, not a secret: add it to any authenticator app, or compute codes
+        // in tests. Override with SEED_DEMO_TOTP_SECRET. Real superadmins are created with `platform:create-admin`.
+        $admin = PlatformAdmin::firstOrNew(['email' => 'root@example.test']);
+        $admin->forceFill([
+            'name' => 'Demo Root', 'password' => $password, 'status' => UserStatus::Active,
+            'totp_secret' => env('SEED_DEMO_TOTP_SECRET', self::DEMO_TOTP_SECRET), 'totp_confirmed_at' => now(), 'totp_last_step' => null,
+        ])->save();
+
+        $this->command?->info('Demo tenants SFAI and ACME seeded (admin.<code> / crew.<code>) and superadmin root@example.test (see README for the demo TOTP secret).');
     }
 }

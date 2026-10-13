@@ -1,6 +1,6 @@
 # 13 — Tala-only MVP: scope, impact on Phase B, revised roadmap
 
-Status: **APPROVED 2026-10-13 with conditions (§10). M1 done (§11); M2 implemented and awaiting your review (§12).** Supersedes the Phase C–I ordering and the Phase D module list in `12-MASTER-IMPLEMENTATION-PLAN.md` (Phases A and B stand as completed).
+Status: **APPROVED 2026-10-13 with conditions (§10). M1 done (§11); M2 done (§12); M4 implemented and awaiting your review (§13).** Supersedes the Phase C–I ordering and the Phase D module list in `12-MASTER-IMPLEMENTATION-PLAN.md` (Phases A and B stand as completed).
 Evidence: read-only analysis of the Tala Flutter working tree in `docs/reference/tala-analysis/` (`01` identity, `02` courses/content, `03` stats/offline/platform). Citations below are to those files. **[V]** verified in Tala source · **[I]** inferred · **[P]** proposed · **[U]** unknown, needs the Tala backend owner.
 
 ## 1. What changes
@@ -239,3 +239,19 @@ Scope delivered (docs/13 §6 "M2 Identity completion for MVP"): registration wit
 8. Tenant admins are **not emailed** about new registrations (they see the pending queue; the web portal in M4 should badge it).
 
 **Bug found by the real-HTTP smoke test (not by unit tests) and fixed:** text email templates used HTML-escaping, so the reset link was emailed with `&amp;` and would have lost its `email` parameter. Templates now render raw values; `MailTemplatesTest` renders real bodies and fails if the escaping returns (verified by reverting the fix once).
+
+## 13. M4 outcome (implemented; awaiting review) — evidence in `PROJECT-STATUS.md`
+
+Delivered: the trimmed web portal described in `docs/06` §7 (tenant administration + superadmin), built against the existing API with types generated from the OpenAPI contract.
+
+**Verified live against the real backend** (built-in browser, local MySQL, `php artisan serve` + Vite): tenant sign-in (CORS preflight, CSRF cookie, cookie session), page reload keeps the session, approving a pending registration (real PATCH with XSRF header; server shows `active` and the activation mail was logged), platform sign-in with a real TOTP code, provisioning the Tala module with a team mapping, platform sign-out followed by a direct visit to a platform URL landing on the platform sign-in.
+
+**Found and fixed while doing it:**
+- The MSW option I first used (`onUnhandledRequest`) does not exist in MSW 3; unhandled requests would have *passed through to the real network*. Corrected to `onUnhandledFrame: 'error'`, with a test that fails if passthrough returns.
+- A button overflowed its card at very narrow widths (card header now wraps).
+
+**Needs your decision / not done:**
+1. **Playwright E2E** (acceptance item in §6) — needs permission to download a browser (hundreds of MB). Until then the E2E evidence is the manual live walk-through above.
+2. Whether tenant admins should also get an in-session **organization switcher** (API supports switching at sign-in only).
+3. **Security headers/CSP** are deliberately left to the hosting layer (M6).
+4. **Accessibility** was covered by semantic markup, labelled controls and role-based tests; there was no automated axe audit and no screen-reader pass.

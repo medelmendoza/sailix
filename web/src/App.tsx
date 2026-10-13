@@ -1,8 +1,13 @@
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { AppProviders } from './app/providers/AppProviders';
+import { routes } from './app/router/routes';
+
+const router = createBrowserRouter(routes);
+
 export function App() {
   return (
-    <main>
-      <h1>Sailix Portal</h1>
-      <p>Foundation only. Authentication and modules arrive in Phases E and F.</p>
-    </main>
+    <AppProviders>
+      <RouterProvider router={router} />
+    </AppProviders>
   );
 }

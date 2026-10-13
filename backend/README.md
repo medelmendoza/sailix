@@ -9,11 +9,13 @@ composer install
 cp .env.example .env && php artisan key:generate
 scripts/local-mysql.sh init          # project-local MySQL on 127.0.0.1:3308 (data in .local/, git-ignored)
 php artisan migrate --seed           # demo tenants SFAI + ACME (local only): admin.sfai / crew.sfai, password in DatabaseSeeder
-php artisan platform:create-admin you@example.com "Your Name"   # superadmin; TOTP secret is printed ONCE
+php artisan platform:create-admin you@example.com "Your Name"   # real superadmin; TOTP secret is printed ONCE
 php artisan serve                    # http://localhost:8000
 ```
 
 `scripts/local-mysql.sh {start|stop|status|shell|reset}` manages the local database. Use your own MySQL instead by editing `DB_*` in `.env` (and creating `sailix_test` for tests). The credentials in `.env.example`/`phpunit.xml` are local-only placeholders.
+
+The local seeder also creates a **demo superadmin** `root@example.test` (same demo password as the demo members) with the published placeholder TOTP secret `JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP` (base32; add it to an authenticator app, or compute codes with `pragmarx/google2fa`). It exists only in `local`/`testing` seeding and is documented so browser tests are reproducible; never use these values anywhere else.
 
 ## Quality gates
 

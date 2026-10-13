@@ -1,0 +1,40 @@
+@import 'tailwindcss';
+
+/* Brand tokens from the existing Sailix palette (navy #002352, accent #2364AA). Light theme only for now. */
+@theme {
+  --color-brand-900: #00183a;
+  --color-brand-800: #002352;
+  --color-brand-700: #123a6e;
+  --color-accent-600: #2364aa;
+  --color-accent-500: #3b7bc0;
+  --color-accent-100: #dbe8f6;
+  --color-surface: #ffffff;
+  --color-page: #f4f6fa;
+  --color-ink: #14202e;
+  --color-muted: #5a6877;
+  --color-line: #d5dce6;
+  --color-ok-bg: #e3f4ea;
+  --color-ok-fg: #14632f;
+  --color-warn-bg: #fdf0d5;
+  --color-warn-fg: #7a4b00;
+  --color-bad-bg: #fbe4e2;
+  --color-bad-fg: #9b1c14;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-600);
+  outline-offset: 2px;
+}

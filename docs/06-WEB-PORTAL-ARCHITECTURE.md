@@ -41,3 +41,21 @@ Loading skeletons, empty states, error states with retry, confirm dialogs for de
 
 ## 6. Tests (see 10)
 Component + form validation, route-guard matrix (anonymous / crew / tenant admin / superadmin), tenant switch clears cache, API error mapping, Playwright flows for lifecycle and cross-role denial.
+
+## 7. M4 implementation notes (2026-10-13)
+
+**Delivered (trimmed to the Tala MVP, docs/13 §6 M4).**
+- Public: tenant sign-in (with organization picker for multi-membership people), platform sign-in (password + TOTP), forgot password, reset password, accept administrator invitation.
+- Tenant admin (`/app`): dashboard (pending registrations, deletion requests, Tala state, recent activity), **members** (filter/search/paginate; approve, reject, suspend, reactivate, role change with confirmations), deletion requests, **modules** (Tala: read-only team mapping, enable/disable), settings (display name, privacy address, password minimum), audit log, my account (profile, change password).
+- Superadmin (`/platform`): dashboard by lifecycle state, organization directory (+ create), organization detail (**lifecycle actions with required reasons**, administrator invitations, **module provisioning/team mapping**), platform settings (incl. the Tala API address with server-side validation errors surfaced), audit log. Pages are code-split.
+- No course authoring and no crew-portal screens (deferred).
+
+**Decisions and deviations from the earlier design:**
+1. **Session probing is per area**, not global: `/app` asks `GET /me`, `/platform` asks `GET /platform/me`. A tenant session at `/platform` (or the reverse) lands on that area's sign-in, never on a half-working page.
+2. **Playwright is not set up.** It downloads a browser binary (hundreds of MB), which needs your approval. Instead: 88 component/integration tests (Vitest + Testing Library + MSW) plus a live walk-through against the real backend in the built-in browser. The live walk-through is **manual and not repeatable in CI**.
+3. **Test network isolation:** MSW runs with `onUnhandledFrame: 'error'` (the MSW 3 option name; the 2.x name is silently ignored) and `tests/network-guard.test.ts` proves an unhandled request never reaches a real listener.
+4. **Development-only convenience:** when the backend returns an invitation token (`SAILIX_EXPOSE_INVITATION_TOKEN`, local/testing only), the organization page shows it; production backends return none and nothing is shown.
+5. Tailwind 4 + Radix dialogs + a small in-repo component layer (as designed); light theme only; English only.
+6. Org switching *after* sign-in is not in the UI (API supports selection at sign-in only); switching means signing in again.
+7. Dashboard counters use the list endpoints with `per_page=1` (no dedicated statistics endpoint exists).
+8. Main bundle is ~604 kB (189 kB gzipped): tenant pages are not split yet.
