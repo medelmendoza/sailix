@@ -77,4 +77,6 @@ Read-only. Branch `medel_dev_march2025`, HEAD `2094806`, 66 pre-existing uncommi
 | 2026-10-13 | **D-T1 approved**: production host `tala-v3-server.btsolve.com` (confirmed production by the owner), dedicated test account, read-only, HTTPS only (owner said HTTP; HTTPS used because credentials must not go over HTTP) | T0 run: 24 requests, shape-only output |
 | 2026-10-13 | T0 complete (docs/13 §17, tala-analysis/04): HTTPS available; 365-day JWTs; roles + join code exposed; weak/unclear path-id authorization; quiz answer keys sent to clients | Awaiting review; M3 not started |
 | 2026-10-13 | User approved **M3 read-only**. Implemented gateway (link/unlink/courses/detail/material) + mobile screens; live read-only check against the Tala test account passed | Implemented; stopped for review (docs/13 §18) |
+| 2026-10-13 | User asked for M6 hardening (and to check the app on mobile). Delivered docs/13 §19 + docs/14. **CI replay from a fresh clone (NOT a real runner; the repo has no remote): web, mobile (blocking audit gate), backend, OpenAPI lint and Playwright all PASS; the report-only full mobile audit fails as documented.** | Awaiting review |
+| 2026-10-13 | Found and fixed: Tala password appeared in logged stack traces (`zend.exception_ignore_args=Off`); regression test added | Fixed |
 

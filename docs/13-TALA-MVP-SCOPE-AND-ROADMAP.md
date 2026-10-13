@@ -351,3 +351,18 @@ Built read-only as you instructed ("Go with M3, read-only"). No Tala write was m
 7. Gateway reads are throttled only by the general API limit (120/min/user); Tala's capacity limits are unknown.
 8. Playwright does not cover this (web admin portal has no Tala-link screens; the module toggle is already covered).
 
+## 19. M6 hardening outcome (implemented; awaiting review)
+
+Operations detail is in `docs/14-OPERATIONS-RUNBOOK.md`. **A real CI run is still impossible** (the repository has no git remote and `gh` is not logged in); instead every CI job's commands were replayed from a fresh clone (results in PROJECT-STATUS). No production system was touched.
+**Delivered**
+1. **Token key rotation** (`APP_PREVIOUS_KEYS` + `sailix:tokens:reencrypt`) and **incident wipe** (`sailix:tokens:wipe --tenant|--all`). Tested: tokens survive rotation, move to the new key, the old key can then be dropped; unreadable tokens are reported, never silently kept; commands never print token values. (Closes the "key rotation not designed" production blocker of M3.)
+2. **Security headers on every response** (`nosniff`, `no-referrer`, `X-Frame-Options: DENY`, `default-src 'none'` CSP, `Cache-Control: no-store`, HSTS on HTTPS) and **configurable trusted proxies** (`SAILIX_TRUSTED_PROXIES`) — without it HTTPS/HSTS/client-IP detection fails behind a load balancer (`TRUSTED_PROXIES` is not read by this Laravel version; my first runbook draft was wrong and was corrected). Web-portal CSP is specified in the runbook but **not verified in a browser**.
+3. **Mail is queued, retried (4×, back-off) and encrypted inside the queue** (reset/invitation links never sit in clear in `jobs`). Requires a running `queue:work` in production; local dev uses `sync`. The tenant-admin invitation mail now also goes through the safe sender instead of failing the request.
+4. **Credential-log hygiene — a real leak found and fixed:** a new test showed the Tala password appearing as a function argument in a logged exception stack trace (PHP's default `zend.exception_ignore_args=Off`). Fixed twice over: argument capture is forced off at boot, and expected API problems (wrong password, validation, conflicts) are no longer reported as errors at all. Test covers every gateway failure path.
+5. **Gateway read throttle** (60/min/user) in addition to the 5/min link throttle.
+6. **HTTPS-to-Tala gate:** `sailix:tala:check [--live]` (offline: approved/https/allow-listed/public addresses; live: one unauthenticated request proving a verified certificate and reporting HSTS). Ran it against the real host: passes. Also **verified that connection pinning really works** with the production HTTP client (an address pinned to an unroutable IP fails; the real one succeeds) — until now only faked tests covered it.
+7. **Backup/restore drill** (`backend/scripts/db-backup-drill.sh`): passed on the local dev database (identical row counts and checksums); proves the procedure only, not production scale, PITR or cross-version restore.
+8. Unused **Face ID permission string removed** from the iOS configuration (takes effect on the next native build; the simulator build you have still contains it).
+**Tests:** backend 364 (+17), mobile 140, web 88, Playwright 26. Pint, PHPStan 0, `composer audit` clean.
+**Not done (honest list):** store identity/signing (Q-22: needs Apple/Google credentials), automated accessibility audit, on-device verification, E2E against a Tala *dev* environment (none exists; only the read-only production test-account check), Tala-owner sign-off, production observability, penetration test, CSP verification, a real CI run.
+
