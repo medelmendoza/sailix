@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { AppText } from '../AppText';
 import { Button } from '../Button';
 import { EmptyState } from '../EmptyState';
 import { ErrorState } from '../ErrorState';
@@ -34,5 +35,29 @@ describe('ErrorState / EmptyState', () => {
     await render(<EmptyState />);
     expect(screen.getByText('No data found.')).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
+  });
+});
+
+describe('AppText text-size scaling', () => {
+  it('lets body text follow the largest accessibility size but stops big headings earlier', async () => {
+    await render(
+      <>
+        <AppText variant="title">Big</AppText>
+        <AppText variant="heading">Mid</AppText>
+        <AppText>Plain body</AppText>
+      </>,
+    );
+    expect(screen.getByText('Big').props.maxFontSizeMultiplier).toBeLessThan(2);
+    expect(screen.getByText('Mid').props.maxFontSizeMultiplier).toBeLessThan(2);
+    expect(screen.getByText('Plain body').props.maxFontSizeMultiplier).toBeGreaterThanOrEqual(3);
+  });
+
+  it('a caller can still override the cap (e.g. text inside a fixed-size round button)', async () => {
+    await render(
+      <AppText variant="button" maxFontSizeMultiplier={1.2}>
+        Go
+      </AppText>,
+    );
+    expect(screen.getByText('Go').props.maxFontSizeMultiplier).toBe(1.2);
   });
 });

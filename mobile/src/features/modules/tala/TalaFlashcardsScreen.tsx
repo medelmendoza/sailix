@@ -412,7 +412,7 @@ function RoundButton({
         pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] },
       ]}
     >
-      <AppText variant="button" style={{ color: fg }}>
+      <AppText variant="button" maxFontSizeMultiplier={1.5} style={{ color: fg }}>
         {(text ?? label).toUpperCase()}
       </AppText>
     </Pressable>
@@ -422,10 +422,18 @@ function RoundButton({
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
   center: { textAlign: 'center' },
-  ratings: { flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' },
+  ratings: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
   round: {
-    width: 96,
-    height: 96,
+    minWidth: 96,
+    minHeight: 96,
+    aspectRatio: 1,
+    padding: spacing.sm,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
