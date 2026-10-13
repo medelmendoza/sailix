@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Modules;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Modules\JoinCourseRequest;
 use App\Http\Requests\Modules\LinkTalaRequest;
 use App\Http\Requests\Modules\SubmitFlashcardsRequest;
 use App\Http\Requests\Modules\SubmitProgressRequest;
@@ -69,6 +70,11 @@ class TalaController extends Controller
         $feedback = $request->validated('feedback') ?? [];
 
         return response()->json(['data' => $this->gateway->submitProgress($this->membership($request), $assignId, $ids, $feedback)]);
+    }
+
+    public function join(JoinCourseRequest $request): JsonResponse
+    {
+        return response()->json(['data' => $this->gateway->joinCourse($this->membership($request), (string) $request->validated('code'))], 202);
     }
 
     public function quiz(Request $request, string $assignId, string $quizId): JsonResponse

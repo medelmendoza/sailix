@@ -421,3 +421,11 @@ Requested: "Go with My Stats and due dates". Everything here is **read-only** an
 **Tests:** backend 407 (+5 stats), mobile 219 (+26: 17 for the date/overall/ordering helpers, 9 for Home/My Stats/course screens), web 88; Pint, PHPStan 0, audit gate, OpenAPI valid.
 **Limits:** "overall" counts Tala's own totals, which include item kinds this app cannot open (EPUB, legacy quiz); the percentage can therefore not reach 100% for a course containing them. The overdue/soon thresholds (7 days) are my choice. The summary needs one gateway call per Home view (cached, 30 s); no reminders or notifications (out of the MVP). Not run on a device.
 
+
+## 24. Join a course by code (built, flag off by default, NOT live-tested)
+
+- **What:** Tala > "Join a course" takes a course code and calls `POST /modules/tala/courses/join`. The server sends `POST /api/v1/auth/users/{talaUser}/teams/{team}/courses/apply` `{courseCode}` (the endpoint the Flutter app uses, from the code analysis) for the linked account and team only. The client sends the code and nothing else; client-supplied user/team ids are ignored (D-T7).
+- **Safety:** gated by the same flag as the other Tala writes (`SAILIX_TALA_PROGRESS_WRITES`, off by default → `403 feature_disabled`). Never retried. 10 per hour per user (a code is a shared secret). Tala's reply to a bad code is reduced to one message (`422 course_code_rejected`); the code is never logged, audited or echoed. The audit entry records only that a request was made.
+- **UI wording:** success says "Request sent" (Tala usually needs an administrator to approve), never "joined". The course list refreshes afterwards.
+- **Unverified (needs a real course code from the Tala owner):** what Tala answers for a valid code, a wrong code, an already-joined course and an expired code; whether it is approval-based or immediate. Only fake-Tala tests exist. 401 → relink; any other 4xx → "code not accepted"; 5xx → "unavailable". This is a guess until a code is tested.
+- **Tests:** backend 419 (+7), mobile 271 (+7 join, +3 feedback earlier), web 88; Pint, PHPStan 0, OpenAPI valid, audit gate.

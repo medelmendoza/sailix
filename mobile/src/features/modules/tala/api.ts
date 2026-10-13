@@ -178,3 +178,8 @@ export async function submitTalaRatings(
     )
   ).data.data;
 }
+
+/** Applies to join a course by its code. Tala usually needs an administrator to approve, so this means "requested". */
+export async function joinTalaCourse(code: string): Promise<void> {
+  await api.post(`${base}/courses/join`, { code });
+}

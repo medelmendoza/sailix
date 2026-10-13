@@ -102,6 +102,26 @@ final class TalaClient
     }
 
     /**
+     * Applies to join a course by its code (a write: Tala creates an application, usually approved by an administrator).
+     * Never retried. 401 means the token is no longer accepted; other client errors mean the code was not accepted.
+     */
+    public function applyToCourse(string $token, string $userId, string $teamId, string $code): void
+    {
+        $response = $this->send(
+            $this->request()->withToken($token),
+            'POST',
+            '/api/v1/auth/users/'.$this->seg($userId).'/teams/'.$this->seg($teamId).'/courses/apply',
+            ['courseCode' => $code],
+        );
+        if ($response->status() === 401) {
+            throw new TalaUnauthorized;
+        }
+        if ($response->status() >= 400) {
+            throw new TalaCourseCodeRejected;
+        }
+    }
+
+    /**
      * @param  'videos'|'pdf'  $kind
      * @return array<string, mixed>
      */

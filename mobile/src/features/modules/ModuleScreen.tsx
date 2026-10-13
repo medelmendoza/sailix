@@ -69,6 +69,11 @@ export function ModuleScreen({ route, navigation }: Props) {
               <FormError message={error} />
               <Button title="My stats" onPress={() => navigation.navigate('TalaStats')} />
               <Button
+                title="Join a course"
+                variant="secondary"
+                onPress={() => navigation.navigate('TalaJoinCourse')}
+              />
+              <Button
                 title="Disconnect Tala"
                 variant="secondary"
                 loading={unlink.isPending}

@@ -31,4 +31,5 @@ export type AppStackParamList = {
   };
   ChangePassword: undefined;
   SendFeedback: undefined;
+  TalaJoinCourse: undefined;
 };

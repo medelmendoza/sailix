@@ -56,6 +56,7 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::get('link', [Modules\TalaController::class, 'link']);
         Route::post('link', [Modules\TalaController::class, 'store'])->middleware('throttle:module-link');
         Route::delete('link', [Modules\TalaController::class, 'destroy']);
+        Route::post('courses/join', [Modules\TalaController::class, 'join'])->middleware(['throttle:module-write', 'throttle:course-join']);
         Route::post('courses/{assignId}/progress', [Modules\TalaController::class, 'progress'])->where('assignId', '[A-Za-z0-9_-]{1,64}')->middleware('throttle:module-write');
         Route::post('courses/{assignId}/quizzes/{quizId}/attempts', [Modules\TalaController::class, 'attempt'])
             ->where(['assignId' => '[A-Za-z0-9_-]{1,64}', 'quizId' => '[A-Za-z0-9_-]{1,64}'])->middleware(['throttle:module-write', 'throttle:quiz-attempt']);

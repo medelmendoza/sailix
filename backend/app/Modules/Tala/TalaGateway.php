@@ -100,6 +100,35 @@ final class TalaGateway
         });
     }
 
+    /**
+     * Applies to join a course by code. A write to Tala (flag-gated like the other writes). The code is never logged or
+     * audited, and Tala's answer to a wrong code is reduced to one message so codes cannot be probed for detail.
+     *
+     * @return array{status: string}
+     */
+    public function joinCourse(Membership $membership, string $code): array
+    {
+        if (! $this->progressWritesEnabled()) {
+            throw ApiProblem::forbidden('feature_disabled', 'Joining a course is not enabled.');
+        }
+
+        $result = $this->authorized($membership, function (ModuleLink $link, string $token, string $tala) use ($code) {
+            try {
+                $this->client->applyToCourse($token, $tala, $link->external_team_id, $code);
+            } catch (TalaCourseCodeRejected) {
+                return false;
+            }
+
+            return true;
+        });
+        if (! $result) {
+            throw ApiProblem::invalid('course_code_rejected', 'That course code was not accepted.');
+        }
+        Audit::record('module.tala.course_join_requested', $membership->tenant_id, null);
+
+        return ['status' => 'requested'];
+    }
+
     /** @return array<string, mixed> */
     public function courseDetail(Membership $membership, string $assignId): array
     {

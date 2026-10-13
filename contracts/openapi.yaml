@@ -717,6 +717,46 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '503': { $ref: '#/components/responses/Problem' }
+  /modules/tala/courses/join:
+    post:
+      tags: [modules]
+      operationId: joinTalaCourse
+      summary: Apply to join a Tala course by its code (write)
+      description: >
+        Disabled by default together with the other Tala writes (`403 feature_disabled`). The Tala user and team come
+        from the stored link; the client sends only the code. Tala usually creates an application that an administrator
+        approves, so success means "requested", not "enrolled". A code Tala does not accept is `422 course_code_rejected`
+        (one message, no detail). The code is never logged or audited. Limited to 10 per hour. Tala's real answers to this
+        call are UNVERIFIED (needs a course code from the owner).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string, minLength: 3, maxLength: 64, pattern: '^[A-Za-z0-9_-]+$' }
+      responses:
+        '202':
+          description: Application sent to Tala.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [status]
+                    properties:
+                      status: { type: string, enum: [requested] }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
   /modules/tala/courses/{assignId}:
     get:
       tags: [modules]

@@ -471,6 +471,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/modules/tala/courses/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply to join a Tala course by its code (write)
+         * @description Disabled by default together with the other Tala writes (`403 feature_disabled`). The Tala user and team come from the stored link; the client sends only the code. Tala usually creates an application that an administrator approves, so success means "requested", not "enrolled". A code Tala does not accept is `422 course_code_rejected` (one message, no detail). The code is never logged or audited. Limited to 10 per hour. Tala's real answers to this call are UNVERIFIED (needs a course code from the owner).
+         */
+        post: operations["joinTalaCourse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/modules/tala/courses/{assignId}": {
         parameters: {
             query?: never;
@@ -2024,6 +2044,43 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    joinTalaCourse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    code: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Application sent to Tala. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            /** @enum {string} */
+                            status: "requested";
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
         };
     };

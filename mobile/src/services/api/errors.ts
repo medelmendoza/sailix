@@ -97,6 +97,7 @@ const MESSAGES: Record<string, string> = {
   different_account_linked: 'You already linked a different Tala account. Disconnect it first.',
   not_linked: 'Link your Tala account first.',
   relink_required: 'Your Tala link expired. Please link your account again.',
+  course_code_rejected: 'That course code was not accepted. Check it and try again.',
   feature_disabled: 'This feature is not turned on yet.',
   quiz_changed: 'This quiz was updated. It has been reloaded: please answer again.',
   incomplete_answers: 'Please answer every question.',
