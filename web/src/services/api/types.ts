@@ -12,6 +12,7 @@ export type TenantModule = Schemas['TenantModule'];
 export type PlatformTenantModule = Schemas['PlatformTenantModule'];
 export type AuditEntry = Schemas['AuditEntry'];
 export type DeletionRequest = Schemas['DeletionRequest'];
+export type Feedback = Schemas['Feedback'];
 export type PlatformAdmin = Schemas['PlatformAdminWithAbilities'];
 export type MyModule = Schemas['MyModule'];
 

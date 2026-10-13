@@ -16,6 +16,7 @@ import { server } from '../../../tests/server';
 function dashboardData() {
   server.use(
     http.get(`${V1}/tenant/users`, () => HttpResponse.json(pageOf([], { total: 3 }))),
+    http.get(`${V1}/tenant/feedback`, () => HttpResponse.json(pageOf([]))),
     http.get(`${V1}/tenant/deletion-requests`, () => HttpResponse.json(pageOf([], { total: 1 }))),
     http.get(`${V1}/tenant/modules`, () =>
       HttpResponse.json({
@@ -67,6 +68,7 @@ describe('route guards', () => {
       'Dashboard',
       'Members',
       'Deletion requests',
+      'Feedback',
       'Modules',
       'Settings',
       'Audit log',
@@ -89,6 +91,7 @@ describe('route guards', () => {
     expect(within(nav).queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument();
     expect(within(nav).queryByRole('link', { name: 'Audit log' })).not.toBeInTheDocument();
     expect(within(nav).queryByRole('link', { name: 'Deletion requests' })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole('link', { name: 'Feedback' })).not.toBeInTheDocument();
   });
 
   it.each([

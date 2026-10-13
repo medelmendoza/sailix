@@ -6,6 +6,7 @@ import type {
   AuditEntry,
   DeletionRequest,
   Envelope,
+  Feedback,
   ListParams,
   Membership,
   Page,
@@ -60,6 +61,14 @@ export function useDeletionRequests(params: ListParams) {
     queryKey: ['deletion-requests', params],
     queryFn: async () =>
       (await api.get<Page<DeletionRequest>>('/tenant/deletion-requests', { params })).data,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useFeedback(params: ListParams) {
+  return useQuery({
+    queryKey: ['feedback', params],
+    queryFn: async () => (await api.get<Page<Feedback>>('/tenant/feedback', { params })).data,
     placeholderData: keepPreviousData,
   });
 }

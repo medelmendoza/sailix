@@ -12,6 +12,7 @@ import { AppShell } from '../../features/tenant/AppShell';
 import { AuditPage } from '../../features/tenant/AuditPage';
 import { DashboardPage } from '../../features/tenant/DashboardPage';
 import { DeletionRequestsPage } from '../../features/tenant/DeletionRequestsPage';
+import { FeedbackPage } from '../../features/tenant/FeedbackPage';
 import { MembersPage } from '../../features/tenant/MembersPage';
 import { ModulesPage } from '../../features/tenant/ModulesPage';
 import { SettingsPage } from '../../features/tenant/SettingsPage';
@@ -53,6 +54,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <DashboardPage /> },
       { path: 'members', element: guard('users.view', <MembersPage />) },
       { path: 'deletion-requests', element: guard('users.manage', <DeletionRequestsPage />) },
+      { path: 'feedback', element: guard('users.manage', <FeedbackPage />) },
       { path: 'modules', element: guard('tenant.view', <ModulesPage />) },
       { path: 'settings', element: guard('tenant.manage', <SettingsPage />) },
       { path: 'audit', element: guard('audit.view', <AuditPage />) },

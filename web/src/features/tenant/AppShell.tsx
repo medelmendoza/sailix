@@ -14,6 +14,7 @@ const NAV: NavItem[] = [
   { to: '/app', label: 'Dashboard', end: true },
   { to: '/app/members', label: 'Members', ability: 'users.view' },
   { to: '/app/deletion-requests', label: 'Deletion requests', ability: 'users.manage' },
+  { to: '/app/feedback', label: 'Feedback', ability: 'users.manage' },
   { to: '/app/modules', label: 'Modules', ability: 'tenant.view' },
   { to: '/app/settings', label: 'Settings', ability: 'tenant.manage' },
   { to: '/app/audit', label: 'Audit log', ability: 'audit.view' },

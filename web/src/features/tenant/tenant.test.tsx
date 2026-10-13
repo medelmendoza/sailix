@@ -488,6 +488,41 @@ describe('settings and account', () => {
     expect(screen.getByText(/Nothing is deleted automatically/)).toBeInTheDocument();
   });
 
+  it('lists feedback from members, newest first, as plain text', async () => {
+    asTenantAdmin();
+    server.use(
+      http.get(`${V1}/tenant/feedback`, () =>
+        HttpResponse.json(
+          pageOf([
+            {
+              id: 'f1',
+              category: 'bug',
+              message: 'The quiz did not load <b>twice</b>',
+              created_at: '2026-10-02T10:00:00+00:00',
+              membership: {
+                id: 'm1',
+                user: { id: 'u1', username: 'crew1', email: 'crew1@example.test' },
+              },
+            },
+          ]),
+        ),
+      ),
+    );
+    renderApp('/app/feedback');
+
+    expect(await screen.findByText('The quiz did not load <b>twice</b>')).toBeInTheDocument(); // not interpreted as HTML
+    expect(screen.getByText('crew1@example.test')).toBeInTheDocument();
+    expect(screen.getByText('Something is wrong')).toBeInTheDocument();
+    expect(screen.getByText(/Feedback about the Sailix app/)).toBeInTheDocument();
+  });
+
+  it('says so when no feedback has been sent', async () => {
+    asTenantAdmin();
+    server.use(http.get(`${V1}/tenant/feedback`, () => HttpResponse.json(pageOf([]))));
+    renderApp('/app/feedback');
+    expect(await screen.findByText('No feedback yet')).toBeInTheDocument();
+  });
+
   it('shows the audit log with a readable actor and filters by action', async () => {
     asTenantAdmin();
     const urls: URL[] = [];

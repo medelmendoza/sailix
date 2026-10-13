@@ -1,24 +1,24 @@
 @import 'tailwindcss';
 
-/* Brand tokens from the existing Sailix palette (navy #002352, accent #2364AA). Light theme only for now. */
+/* "Harbor" tokens, shared with the mobile app: sand ground, white cards, deep teal brand, navy ink. Light theme only for now. */
 @theme {
-  --color-brand-900: #00183a;
-  --color-brand-800: #002352;
-  --color-brand-700: #123a6e;
-  --color-accent-600: #2364aa;
-  --color-accent-500: #3b7bc0;
-  --color-accent-100: #dbe8f6;
+  --color-brand-900: #07303a;
+  --color-brand-800: #0a4b5a;
+  --color-brand-700: #0a5c6e;
+  --color-accent-600: #0a5c6e;
+  --color-accent-500: #0f7186;
+  --color-accent-100: #e1f0f2;
   --color-surface: #ffffff;
-  --color-page: #f4f6fa;
-  --color-ink: #14202e;
-  --color-muted: #5a6877;
-  --color-line: #d5dce6;
-  --color-ok-bg: #e3f4ea;
-  --color-ok-fg: #14632f;
-  --color-warn-bg: #fdf0d5;
-  --color-warn-fg: #7a4b00;
-  --color-bad-bg: #fbe4e2;
-  --color-bad-fg: #9b1c14;
+  --color-page: #f4f1ea;
+  --color-ink: #13293d;
+  --color-muted: #4f5f6e;
+  --color-line: #ddd6c8;
+  --color-ok-bg: #e3f3ea;
+  --color-ok-fg: #1f6b4a;
+  --color-warn-bg: #fdf0dc;
+  --color-warn-fg: #8f5200;
+  --color-bad-bg: #fbe9e7;
+  --color-bad-fg: #b3362f;
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
