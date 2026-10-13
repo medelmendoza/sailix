@@ -120,7 +120,9 @@ export function ServicesScreen({ navigation }: Props) {
             onPress={() =>
               m.code === 'astra'
                 ? navigation.navigate('AstraMenu')
-                : navigation.navigate('Module', { code: m.code })
+                : m.code === 'callit'
+                  ? navigation.navigate('CallIt')
+                  : navigation.navigate('Module', { code: m.code })
             }
           />
         ))

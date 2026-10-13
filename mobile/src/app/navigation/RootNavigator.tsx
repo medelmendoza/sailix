@@ -266,6 +266,22 @@ export function RootNavigator() {
         />
         <AppStack.Screen name="Payslip" component={PayslipScreen} options={{ title: 'Payslip' }} />
         <AppStack.Screen name="Loans" component={LoansScreen} options={{ title: 'Cash advance' }} />
+        <AppStack.Screen name="CallIt" component={CallItScreen} options={{ title: 'Call-it' }} />
+        <AppStack.Screen
+          name="CallItForm"
+          component={ReportFormScreen}
+          options={({ route }) => ({ title: route.params?.id ? 'Your draft' : 'New report' })}
+        />
+        <AppStack.Screen
+          name="CallItReports"
+          component={ReportsScreen}
+          options={{ title: 'My reports' }}
+        />
+        <AppStack.Screen
+          name="CallItReport"
+          component={ReportScreen}
+          options={{ title: 'Report' }}
+        />
         <AppStack.Screen
           name="AstraMenu"
           component={AstraMenuScreen}

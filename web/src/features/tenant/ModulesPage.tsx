@@ -50,14 +50,22 @@ export function ModulesPage() {
                   </p>
                 ) : (
                   <>
-                    <dl className="mb-4 text-sm">
-                      <dt className="text-muted">Linked external team</dt>
-                      <dd className="font-mono">{m.external_team_id ?? '—'}</dd>
-                    </dl>
-                    <p className="mb-4 text-xs text-muted">
-                      The team mapping is managed by the platform administrator and cannot be
-                      changed here.
-                    </p>
+                    {m.built_in ? (
+                      <p className="mb-4 text-sm text-muted">
+                        Built into the app. Members find it under Services when it is enabled.
+                      </p>
+                    ) : (
+                      <>
+                        <dl className="mb-4 text-sm">
+                          <dt className="text-muted">Linked external team</dt>
+                          <dd className="font-mono">{m.external_team_id ?? '—'}</dd>
+                        </dl>
+                        <p className="mb-4 text-xs text-muted">
+                          The team mapping is managed by the platform administrator and cannot be
+                          changed here.
+                        </p>
+                      </>
+                    )}
                     {manage &&
                       (m.enabled ? (
                         <Button

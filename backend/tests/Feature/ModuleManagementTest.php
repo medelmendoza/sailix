@@ -72,7 +72,7 @@ class ModuleManagementTest extends TestCase
             $this->platform()->putJson($url, ['external_team_id' => $bad])->assertStatus(422);
         }
         $this->platform()->putJson("/api/v1/platform/tenants/{$tenant->id}/modules/srt", ['external_team_id' => 'T'])->assertStatus(404);
-        $this->platform()->putJson("/api/v1/platform/tenants/{$tenant->id}/modules/astra", ['external_team_id' => 'T'])->assertStatus(404);
+        $this->platform()->putJson("/api/v1/platform/tenants/{$tenant->id}/modules/no-such-module", ['external_team_id' => 'T'])->assertStatus(404);
         $this->platform()->putJson('/api/v1/platform/tenants/'.Str::uuid().'/modules/tala', ['external_team_id' => 'T'])->assertStatus(404);
         $this->assertSame(0, TenantModule::withoutTenantScope()->count());
     }

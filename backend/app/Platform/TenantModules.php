@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 final class TenantModules
 {
     /**
-     * @return list<array{code: string, label: string, entitled: bool, enabled: bool, external_team_id: string|null, links_count: int}>
+     * @return list<array{code: string, label: string, entitled: bool, enabled: bool, external_team_id: string|null, links_count: int, built_in: bool}>
      */
     public function list(Tenant $tenant): array
     {
@@ -25,7 +25,7 @@ final class TenantModules
         return array_map(fn (Module $module) => $this->present($tenant, $module, $entitlements->get($module->value)), Module::cases());
     }
 
-    /** @return array{code: string, label: string, entitled: bool, enabled: bool, external_team_id: string|null, links_count: int} */
+    /** @return array{code: string, label: string, entitled: bool, enabled: bool, external_team_id: string|null, links_count: int, built_in: bool} */
     public function provision(Tenant $tenant, Module $module, ?string $externalTeamId, bool $enabled): array
     {
         try {
@@ -69,7 +69,7 @@ final class TenantModules
         return $this->present($tenant, $module, TenantModule::withoutTenantScope()->where('tenant_id', $tenant->getKey())->where('module', $module->value)->first());
     }
 
-    /** @return array{code: string, label: string, entitled: bool, enabled: bool, external_team_id: string|null, links_count: int} */
+    /** @return array{code: string, label: string, entitled: bool, enabled: bool, external_team_id: string|null, links_count: int, built_in: bool} */
     private function present(Tenant $tenant, Module $module, ?TenantModule $row): array
     {
         return [
@@ -78,6 +78,7 @@ final class TenantModules
             'entitled' => $row !== null,
             'enabled' => $row?->isEnabled() ?? false,
             'external_team_id' => $row?->external_team_id,
+            'built_in' => ! $module->requiresEndpoint(),
             'links_count' => ModuleLink::withoutTenantScope()->where('tenant_id', $tenant->getKey())->where('module', $module->value)->count(),
         ];
     }

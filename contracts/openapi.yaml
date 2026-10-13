@@ -3060,10 +3060,11 @@ components:
           description: '`available` is for built-in services (Astra) that have nothing to link.'
     TenantModule:
       type: object
-      required: [code, label, entitled, enabled, external_team_id]
+      required: [code, label, entitled, enabled, external_team_id, built_in]
       properties:
         code: { $ref: '#/components/schemas/ModuleCode' }
         label: { type: string }
+        built_in: { type: boolean, description: 'Built into the app (Astra, Call-it): no external team to map, nothing to link.' }
         entitled: { type: boolean, description: Platform has provisioned this module for the tenant. }
         enabled: { type: boolean }
         external_team_id: { type: [string, 'null'] }

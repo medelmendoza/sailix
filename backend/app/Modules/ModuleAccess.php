@@ -57,7 +57,7 @@ final class ModuleAccess
     /**
      * Every registry module with the tenant's entitlement state (tenant-admin view).
      *
-     * @return list<array{code: string, label: string, entitled: bool, enabled: bool, external_team_id: string|null}>
+     * @return list<array{code: string, label: string, entitled: bool, enabled: bool, external_team_id: string|null, built_in: bool}>
      */
     public function forTenant(): array
     {
@@ -72,6 +72,8 @@ final class ModuleAccess
                 'entitled' => $e !== null,
                 'enabled' => $e?->isEnabled() ?? false,
                 'external_team_id' => $e?->external_team_id,
+                // built into the app: no external team to map, nothing to link
+                'built_in' => ! $module->requiresEndpoint(),
             ];
         }, Module::cases());
     }

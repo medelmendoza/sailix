@@ -37,7 +37,7 @@ export function DocumentViewerScreen({ route }: Props) {
       alive = false;
       removeFromCache(id);
     };
-  }, [id, key]);
+  }, [id, key, source]);
 
   if (current?.error) {
     return (

@@ -264,8 +264,6 @@ function InviteDialog({
   );
 }
 
-/** Modules built into the app: nothing to map to an external team, an organization simply has them or not. */
-const BUILT_IN_MODULES = ['astra', 'callit'];
 const TEAM_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 const moduleSchema = z.object({
@@ -291,7 +289,7 @@ function ModuleCard({ tenantId, module }: { tenantId: string; module: PlatformTe
     },
   });
 
-  const builtIn = BUILT_IN_MODULES.includes(module.code);
+  const builtIn = module.built_in; // built into the app: nothing to map to an external team
 
   function submit(v: ModuleValues) {
     setError(null);

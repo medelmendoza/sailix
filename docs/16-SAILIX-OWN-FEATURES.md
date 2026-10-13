@@ -75,7 +75,7 @@ Checks were run afterwards (see the PROJECT-STATUS row): backend 465, web 110, m
 - **Taken from the old app:** the texts (typos corrected; the Pomodoro help now says 15 minutes, as the timer does), the four sounds, six pictures and three PDFs (copied from the old project's `assets`, 23 MB added to the app).
 - **New dependencies:** `expo-audio`, `expo-keep-awake` (native; a rebuild is needed) and `expo-asset`.
 - **Not built:** **SRT** (no spec at all).
-- **State:** written and typechecked only (no checks run on request). Registry change touches the platform provisioning code, `/me` module list and `MyModule.status` (new value `available`); existing tests that assume exactly one module may need updating when the checks run.
+- **State:** checks run (see PROJECT-STATUS). Not verified: sound playback and the screen-awake behaviour on a device (the simulator build and screenshots were checked, the audio itself was not heard), Android. The module data now carries `built_in` so the web pages hide the team field for built-in services.
 
 ### Call-it (incident / safety reports), built from the old app's mock screen
 
@@ -87,4 +87,4 @@ The old Call-it was a mock: hard-coded name ("Jaycob"), "88 reports", a hard-cod
 - **Medals:** 1, 10, 50 and 100 reports sent (counted per member). The old "#1 in Reports Made" ranking was NOT built: a league table of safety reports could discourage reporting; say if you want it.
 - **Security:** the reporter, organization and status come from the session; drafts are private to the reporter (admins get `404`); another member's or organization's report is `404`; crew cannot read the admin list or review; files use the same private, content-checked storage as documents; audit records submitted / reviewed without the text; text is shown as text, never HTML.
 - **Not built:** notifications to administrators when a report arrives (no email provider, no push), a vessel list, editing a report after it was sent, "official report" follow-up workflow, offline drafts (a draft needs a connection to save).
-- **State:** written and typechecked only (no checks run on request); the local database was migrated and seeded (9 demo reports); tests exist for backend, web and mobile.
+- **State:** checks run (see PROJECT-STATUS). Not verified: the file picker and upload on a device, Android.

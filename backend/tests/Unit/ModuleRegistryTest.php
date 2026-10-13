@@ -23,9 +23,16 @@ class ModuleRegistryTest extends TestCase
         }
     }
 
-    public function test_the_mvp_registry_contains_only_tala(): void
+    public function test_the_registry_lists_tala_and_the_built_in_services(): void
     {
-        $this->assertSame(['tala'], array_map(fn (Module $m) => $m->value, Module::cases()));
+        $this->assertSame(['tala', 'astra', 'callit'], array_map(fn (Module $m) => $m->value, Module::cases()));
+    }
+
+    public function test_only_tala_talks_to_an_upstream_system(): void
+    {
+        foreach (Module::cases() as $module) {
+            $this->assertSame($module === Module::Tala, $module->requiresEndpoint(), $module->value);
+        }
     }
 
     public function test_abilities_are_unique_and_no_role_gets_platform_abilities(): void

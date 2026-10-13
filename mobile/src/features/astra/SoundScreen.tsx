@@ -11,6 +11,11 @@ import { DURATIONS_MIN, findSound, playTime } from './sounds';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'AstraSound'>;
 
+/** Kept outside the component: the player is a native object, not React state. */
+function enableLoop(player: { loop: boolean }) {
+  player.loop = true;
+}
+
 /** Plays one background sound for the chosen time. It stops when you leave the screen (no background audio). */
 export function SoundScreen({ route }: Props) {
   const sound = findSound(route.params.id);
@@ -26,7 +31,7 @@ function Player({ sound }: { sound: NonNullable<ReturnType<typeof findSound>> })
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    player.loop = true; // the clip repeats until the chosen time is up
+    enableLoop(player); // the clip repeats until the chosen time is up
     void setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: false }).catch(
       () => undefined,
     );

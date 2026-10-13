@@ -2056,6 +2056,8 @@ export interface components {
         TenantModule: {
             code: components["schemas"]["ModuleCode"];
             label: string;
+            /** @description Built into the app (Astra, Call-it): no external team to map, nothing to link. */
+            built_in: boolean;
             /** @description Platform has provisioned this module for the tenant. */
             entitled: boolean;
             enabled: boolean;

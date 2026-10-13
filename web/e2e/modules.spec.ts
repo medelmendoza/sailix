@@ -1,8 +1,12 @@
-import { expect, test, type Browser } from '@playwright/test';
+import { expect, test, type Browser, type Page } from '@playwright/test';
 import { signInPlatform } from './support/session';
 import { stateFile } from './support/state';
 
 const TEAM = 'e2e-team-001';
+
+/** Tala's own card: the page now also lists the built-in services (Astra, Call-it), which have their own Status and buttons. */
+const talaCard = (page: Page) =>
+  page.getByRole('heading', { name: 'Tala', exact: true }).locator('xpath=ancestor::section[1]');
 
 /** Serial: each step builds on the previous one (provision -> use -> restrict). */
 test.describe.serial('module visibility, provisioning and authorization', () => {
@@ -31,21 +35,23 @@ test.describe.serial('module visibility, provisioning and authorization', () => 
     await page.getByRole('link', { name: 'Southfield Agencies (demo)' }).click();
     await expect(page.getByRole('heading', { name: 'Southfield Agencies (demo)' })).toBeVisible();
 
-    await page.getByLabel('External team ID').fill(TEAM);
-    await page.getByLabel('Status').selectOption('true');
-    await page.getByRole('button', { name: 'Provision' }).click();
-    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
-    await expect(page.getByLabel('External team ID')).toHaveValue(TEAM);
+    const tala = talaCard(page);
+    await tala.getByLabel('External team ID').fill(TEAM);
+    await tala.getByLabel('Status').selectOption('true');
+    await tala.getByRole('button', { name: 'Provision' }).click();
+    await expect(tala.getByRole('button', { name: 'Save' })).toBeVisible();
+    await expect(tala.getByLabel('External team ID')).toHaveValue(TEAM);
   });
 
   test('one external team cannot be bound to two organizations', async ({ page }) => {
     await signInPlatform(page);
     await page.getByRole('link', { name: 'Organizations' }).click();
     await page.getByRole('link', { name: 'Acme Crewing (demo)' }).click();
-    await page.getByLabel('External team ID').fill(TEAM);
-    await page.getByRole('button', { name: 'Provision' }).click();
+    const tala = talaCard(page);
+    await tala.getByLabel('External team ID').fill(TEAM);
+    await tala.getByRole('button', { name: 'Provision' }).click();
     await expect(page.getByText(/already|one organization|belongs/i).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Provision' })).toBeVisible(); // still not provisioned
+    await expect(tala.getByRole('button', { name: 'Provision' })).toBeVisible(); // still not provisioned
   });
 
   test('the provisioned organization sees Tala with its team, and can disable and re-enable it', async ({
@@ -53,7 +59,8 @@ test.describe.serial('module visibility, provisioning and authorization', () => 
   }) => {
     const page = await tenantPage(browser, 'admin.sfai');
     await expect(page.getByText(TEAM)).toBeVisible();
-    await expect(page.getByText('enabled', { exact: true })).toBeVisible();
+    const tala = talaCard(page);
+    await expect(tala.getByText('enabled', { exact: true })).toBeVisible();
     await expect(page.getByText(/cannot be changed here/)).toBeVisible(); // mapping is platform-only: no edit control
     await expect(page.getByLabel('External team ID')).toHaveCount(0);
 
@@ -62,9 +69,9 @@ test.describe.serial('module visibility, provisioning and authorization', () => 
       .getByRole('alertdialog')
       .getByRole('button', { name: /Disable/ })
       .click();
-    await expect(page.getByText('disabled', { exact: true })).toBeVisible();
+    await expect(tala.getByText('disabled', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Enable Tala' }).click();
-    await expect(page.getByText('enabled', { exact: true })).toBeVisible();
+    await expect(tala.getByText('enabled', { exact: true })).toBeVisible();
     await page.context().close();
   });
 
