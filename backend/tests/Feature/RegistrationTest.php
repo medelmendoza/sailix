@@ -78,7 +78,7 @@ class RegistrationTest extends TestCase
 
         $this->app['auth']->forgetGuards();
         $this->patchJson("/api/v1/tenant/users/$id", ['status' => 'active'], $h)->assertOk()->assertJsonPath('data.status', 'active')->assertJsonPath('data.profile.last_name', 'Dela Cruz');
-        Mail::assertSent(MembershipActivated::class, fn ($m) => $m->hasTo('juan@example.test') && $m->organization === 'SFAI Agency');
+        Mail::assertQueued(MembershipActivated::class, fn ($m) => $m->hasTo('juan@example.test') && $m->organization === 'SFAI Agency');
 
         $this->app['auth']->forgetGuards();
         $token = $this->postJson('/api/v1/auth/token', $login)->assertOk()->json('data.token');
@@ -96,7 +96,7 @@ class RegistrationTest extends TestCase
         $this->app['auth']->forgetGuards();
 
         $this->patchJson("/api/v1/tenant/users/{$crew->id}", ['role' => 'crew'], $this->bearer($this->tokenFor('admin1')))->assertOk();
-        Mail::assertNotSent(MembershipActivated::class);
+        Mail::assertNotQueued(MembershipActivated::class);
     }
 
     public function test_a_rejected_registration_stays_blocked(): void
@@ -110,7 +110,7 @@ class RegistrationTest extends TestCase
         $this->patchJson("/api/v1/tenant/users/$id", ['status' => 'suspended'], $this->bearer($this->tokenFor('admin1')))->assertOk();
 
         $this->postJson('/api/v1/auth/token', ['username' => 'juan.delacruz', 'password' => 'a-long-enough-pass', 'device_name' => 'p'])->assertStatus(403);
-        Mail::assertNotSent(MembershipActivated::class);
+        Mail::assertNotQueued(MembershipActivated::class);
     }
 
     public function test_the_client_cannot_choose_role_status_or_tenant(): void
@@ -166,8 +166,8 @@ class RegistrationTest extends TestCase
             'only the genuinely new email created an account',
         );
         $this->assertNull(User::where('username', 'another.name')->first());
-        Mail::assertSent(RegistrationNotice::class, fn ($m) => $m->hasTo('JUAN@Example.test') || $m->hasTo('juan@example.test'));
-        Mail::assertSent(RegistrationNotice::class, 1);
+        Mail::assertQueued(RegistrationNotice::class, fn ($m) => $m->hasTo('JUAN@Example.test') || $m->hasTo('juan@example.test'));
+        Mail::assertQueued(RegistrationNotice::class, 1);
     }
 
     public function test_a_taken_username_is_a_validation_error_and_creates_nothing(): void

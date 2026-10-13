@@ -2,11 +2,10 @@
 
 namespace App\Mail;
 
-use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
-class DeletionRequested extends Mailable
+class DeletionRequested extends TransactionalMail
 {
     public function __construct(public string $organization) {}
 

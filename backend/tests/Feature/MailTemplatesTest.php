@@ -52,7 +52,7 @@ class MailTemplatesTest extends TestCase
 
         $this->postJson('/api/v1/auth/forgot-password', ['email' => 'crew1@example.test'])->assertStatus(202);
 
-        $sent = Mail::sent(PasswordResetLink::class)->first();
+        $sent = Mail::queued(PasswordResetLink::class)->first();
         $body = $this->text($sent);
         $this->assertStringContainsString($sent->url, $body);
         parse_str((string) parse_url($sent->url, PHP_URL_QUERY), $q);

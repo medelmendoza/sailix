@@ -2,12 +2,11 @@
 
 namespace App\Mail;
 
-use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
 /** Sent instead of creating a second account when someone registers with an email that already has one. */
-class RegistrationNotice extends Mailable
+class RegistrationNotice extends TransactionalMail
 {
     public function __construct(public string $resetUrl) {}
 

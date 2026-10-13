@@ -390,6 +390,19 @@ class TalaGatewayTest extends TestCase
         $this->link($h)->assertStatus(429);
     }
 
+    public function test_gateway_reads_are_throttled_per_user(): void
+    {
+        $this->fakeTala();
+        $h = $this->as('crew1');
+        $this->link($h);
+
+        for ($i = 0; $i < 60; $i++) {
+            $this->getJson('/api/v1/modules/tala/courses', $h)->assertOk();
+        }
+        $this->getJson('/api/v1/modules/tala/courses', $h)->assertStatus(429);
+        $this->getJson('/api/v1/modules/tala/link', $h)->assertOk(); // the link state is local, not upstream traffic
+    }
+
     public function test_gateway_responses_never_contain_tokens(): void
     {
         $this->fakeTala();

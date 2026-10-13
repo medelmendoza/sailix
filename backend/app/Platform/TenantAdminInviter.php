@@ -13,8 +13,8 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Support\ApiProblem;
 use App\Support\Audit;
+use App\Support\SafeMailer;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 /** Creates (or reuses) a user, an invited tenant_admin membership, and a one-time invitation. */
@@ -67,7 +67,7 @@ final class TenantAdminInviter
         });
 
         $origin = rtrim((string) (config('sailix.web_origins')[0] ?? config('app.url')), '/');
-        Mail::to($email)->send(new TenantAdminInvitation($tenant->name, "$origin/accept-invitation?token=".urlencode($token)));
+        SafeMailer::send($email, new TenantAdminInvitation($tenant->name, "$origin/accept-invitation?token=".urlencode($token)));
 
         return ['membership' => $membership, 'token' => $token];
     }

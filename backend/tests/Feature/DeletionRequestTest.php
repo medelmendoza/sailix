@@ -59,10 +59,10 @@ class DeletionRequestTest extends TestCase
         $this->postJson('/api/v1/me/deletion-request', [], $this->as('crewA'))->assertStatus(202);
         $this->postJson('/api/v1/me/deletion-request', [], $this->as('crewA'))->assertStatus(202);
 
-        Mail::assertSent(DeletionRequested::class, 2);
-        Mail::assertSent(DeletionRequested::class, fn ($m) => $m->hasTo('adminA@example.test') && $m->organization === 'AAA Agency');
-        Mail::assertSent(DeletionRequested::class, fn ($m) => $m->hasTo('adminA2@example.test'));
-        Mail::assertNotSent(DeletionRequested::class, fn ($m) => $m->hasTo('adminB@example.test') || $m->hasTo('adminSuspended@example.test'));
+        Mail::assertQueued(DeletionRequested::class, 2);
+        Mail::assertQueued(DeletionRequested::class, fn ($m) => $m->hasTo('adminA@example.test') && $m->organization === 'AAA Agency');
+        Mail::assertQueued(DeletionRequested::class, fn ($m) => $m->hasTo('adminA2@example.test'));
+        Mail::assertNotQueued(DeletionRequested::class, fn ($m) => $m->hasTo('adminB@example.test') || $m->hasTo('adminSuspended@example.test'));
     }
 
     public function test_admins_list_pending_requests_with_the_members_profile_but_crew_cannot(): void

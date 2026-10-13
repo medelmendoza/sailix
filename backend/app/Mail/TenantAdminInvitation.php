@@ -2,11 +2,10 @@
 
 namespace App\Mail;
 
-use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
-class TenantAdminInvitation extends Mailable
+class TenantAdminInvitation extends TransactionalMail
 {
     public function __construct(public string $tenantName, public string $acceptUrl) {}
 

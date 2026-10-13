@@ -2,11 +2,10 @@
 
 namespace App\Mail;
 
-use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
-class MembershipActivated extends Mailable
+class MembershipActivated extends TransactionalMail
 {
     public function __construct(public string $organization) {}
 

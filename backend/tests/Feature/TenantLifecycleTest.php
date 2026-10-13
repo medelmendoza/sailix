@@ -48,7 +48,7 @@ class TenantLifecycleTest extends TestCase
             ->assertCreated()->assertJsonPath('data.status', 'invited');
         $token = $invite->json('meta.invitation_token');
         $this->assertNotEmpty($token);
-        Mail::assertSent(TenantAdminInvitation::class, fn ($m) => $m->hasTo('boss@example.test'));
+        Mail::assertQueued(TenantAdminInvitation::class, fn ($m) => $m->hasTo('boss@example.test'));
 
         // invited admin cannot sign in yet
         $this->postJson('/api/v1/auth/session', ['username' => 'boss', 'password' => 'whatever-whatever'])->assertStatus(401);

@@ -292,7 +292,7 @@ class ApiContractTest extends TestCase
         $this->app['cache']->store()->flush();
         $this->ok($this->fresh()->postJson('/api/v1/auth/forgot-password', ['email' => 'crew1@example.test']), '/auth/forgot-password', 'post', 202);
         $this->ok($this->fresh()->postJson('/api/v1/auth/forgot-password', ['email' => 'nope']), '/auth/forgot-password', 'post', 422);
-        $mail = Mail::sent(PasswordResetLink::class)->first();
+        $mail = Mail::queued(PasswordResetLink::class)->first();
         parse_str((string) parse_url($mail->url, PHP_URL_QUERY), $q);
         $this->ok($this->fresh()->postJson('/api/v1/auth/reset-password', ['email' => 'crew1@example.test', 'token' => 'bad', 'password' => 'a-long-enough-pass', 'password_confirmation' => 'a-long-enough-pass']), '/auth/reset-password', 'post', 422);
         $this->ok($this->fresh()->postJson('/api/v1/auth/reset-password', ['email' => $q['email'], 'token' => $q['token'], 'password' => 'a-long-enough-pass', 'password_confirmation' => 'a-long-enough-pass']), '/auth/reset-password', 'post', 204);

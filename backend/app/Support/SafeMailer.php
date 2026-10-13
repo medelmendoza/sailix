@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 /**
- * Sends transactional mail through the configured driver (MAIL_MAILER; provider undecided, D-11).
- * A delivery failure must never fail the API call or leak whether an account exists; it is logged
+ * Queues transactional mail (delivered by `queue:work` through the configured driver MAIL_MAILER; provider undecided, D-11).
+ * A queueing failure must never fail the API call or leak whether an account exists; it is logged
  * without the recipient address or message content.
  */
 final class SafeMailer
@@ -17,7 +17,7 @@ final class SafeMailer
     public static function send(string $to, Mailable $mailable): bool
     {
         try {
-            Mail::to($to)->send($mailable);
+            Mail::to($to)->queue($mailable);
 
             return true;
         } catch (Throwable $e) {

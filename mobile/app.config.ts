@@ -40,7 +40,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     predictiveBackGestureEnabled: false,
   },
-  plugins: ['expo-secure-store', 'expo-font'],
+  plugins: [['expo-secure-store', { faceIDPermission: false }], 'expo-font'],
   extra: {
     appEnv: process.env.APP_ENV ?? 'development',
     apiBaseUrl: process.env.API_BASE_URL ?? 'http://localhost:8000',

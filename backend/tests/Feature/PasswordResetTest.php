@@ -31,7 +31,7 @@ class PasswordResetTest extends TestCase
     /** @return array{token: string, email: string, url: string} */
     private function emailedLink(string $to): array
     {
-        $mail = Mail::sent(PasswordResetLink::class, fn ($m) => $m->hasTo($to))->last();
+        $mail = Mail::queued(PasswordResetLink::class, fn ($m) => $m->hasTo($to))->last();
         $this->assertNotNull($mail, "no reset mail was sent to $to");
         parse_str((string) parse_url($mail->url, PHP_URL_QUERY), $q);
 
@@ -54,8 +54,8 @@ class PasswordResetTest extends TestCase
 
         $this->assertSame($known->getContent(), $unknown->getContent());
         $this->assertSame(['data' => ['status' => 'received']], $known->json());
-        Mail::assertSent(PasswordResetLink::class, 1);
-        Mail::assertSent(PasswordResetLink::class, fn ($m) => $m->hasTo('crew1@example.test'));
+        Mail::assertQueued(PasswordResetLink::class, 1);
+        Mail::assertQueued(PasswordResetLink::class, fn ($m) => $m->hasTo('crew1@example.test'));
     }
 
     public function test_the_link_points_at_the_configured_web_page_and_never_contains_a_password(): void
@@ -79,7 +79,7 @@ class PasswordResetTest extends TestCase
         $this->forgot('suspended@example.test')->assertStatus(202);
         $this->forgot('invited@example.test')->assertStatus(202);
 
-        Mail::assertNothingSent();
+        Mail::assertNothingQueued();
         $this->assertDatabaseCount('password_reset_tokens', 0);
     }
 
