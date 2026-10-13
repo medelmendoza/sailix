@@ -26,6 +26,10 @@ import {
   ScarilScreen,
   WhysScreen,
 } from '@/features/astra/StaticScreens';
+import { CallItScreen } from '@/features/callit/CallItScreen';
+import { ReportFormScreen } from '@/features/callit/ReportFormScreen';
+import { ReportScreen } from '@/features/callit/ReportScreen';
+import { ReportsScreen } from '@/features/callit/ReportsScreen';
 import { DocumentFormScreen } from '@/features/files/DocumentFormScreen';
 import { DocumentScreen } from '@/features/files/DocumentScreen';
 import { DocumentViewerScreen } from '@/features/files/DocumentViewerScreen';

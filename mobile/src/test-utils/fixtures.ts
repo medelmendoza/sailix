@@ -54,3 +54,11 @@ export const ASTRA = (enabled = true) => ({
   linked: enabled,
   status: (enabled ? 'available' : 'disabled') as 'available' | 'disabled',
 });
+
+export const CALLIT = (enabled = true) => ({
+  code: 'callit' as const,
+  label: 'Call-it',
+  enabled,
+  linked: enabled,
+  status: (enabled ? 'available' : 'disabled') as 'available' | 'disabled',
+});

@@ -23,6 +23,7 @@ export const demoMe = {
   modules: [
     { code: 'tala', label: 'Tala', enabled: true, linked: true, status: 'linked' },
     { code: 'astra', label: 'Astra', enabled: true, linked: true, status: 'available' },
+    { code: 'callit', label: 'Call-it', enabled: true, linked: true, status: 'available' },
   ],
   memberships: [
     {
@@ -431,4 +432,68 @@ export const demoLoans = {
     },
   ],
   totals: { php: '1750.00', usd: '50.00' },
+};
+
+export const demoCallIt = {
+  stats: {
+    reports_made: 12,
+    badges: [
+      { reports: 1, label: 'First report' },
+      { reports: 10, label: '10 reports made' },
+    ],
+    next_badge: 50,
+  },
+  reports: [
+    {
+      id: 'c1',
+      status: 'draft',
+      classification: 'unsafe_conditions',
+      sub_classification: 'equipment',
+      location: 'main_deck',
+      location_other: null,
+      vessel: 'MV Pacific Dawn',
+      details: 'Oil leak under the starboard winch.',
+      intervened: false,
+      intervention_details: null,
+      official_report: false,
+      file: null,
+      submitted_at: null,
+      reviewed_at: null,
+      created_at: hoursAgo(2),
+    },
+    {
+      id: 'c2',
+      status: 'submitted',
+      classification: 'unsafe_acts',
+      sub_classification: 'people',
+      location: 'machinery_space',
+      location_other: null,
+      vessel: 'MV Pacific Dawn',
+      details: 'Crew member near the rotating shaft without a guard.',
+      intervened: true,
+      intervention_details: 'Stopped the work and called the duty engineer.',
+      official_report: true,
+      file: null,
+      submitted_at: hoursAgo(70),
+      reviewed_at: null,
+      created_at: hoursAgo(72),
+    },
+    {
+      id: 'c3',
+      status: 'reviewed',
+      classification: 'unsafe_behaviour',
+      sub_classification: 'processes',
+      location: 'others',
+      location_other: 'Gangway',
+      vessel: 'MV Pacific Dawn',
+      details: 'Gangway net not rigged during cargo operations.',
+      intervened: false,
+      intervention_details: null,
+      official_report: false,
+      file: null,
+      submitted_at: hoursAgo(200),
+      reviewed_at: hoursAgo(150),
+      created_at: hoursAgo(210),
+    },
+  ],
 };

@@ -54,7 +54,11 @@ export type AppStackParamList = {
   AstraDoc: { doc: 'bluf' | 'pmepe' | 'scaril' };
   Document: { id: string };
   DocumentForm: { id?: string };
-  DocumentViewer: { id: string; name: string };
+  DocumentViewer: { id: string; name: string; source?: 'document' | 'callit' };
+  CallIt: undefined;
+  CallItForm: { id?: string };
+  CallItReports: undefined;
+  CallItReport: { id: string };
   PayslipList: { kind: 'allotment' | 'final' };
   Payslip: { id: string };
   Loans: undefined;

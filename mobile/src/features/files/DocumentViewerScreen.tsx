@@ -15,7 +15,7 @@ type Props = NativeStackScreenProps<AppStackParamList, 'DocumentViewer'>;
  * shown, and deleted when the screen closes: a document is personal data and is never kept on the device.
  */
 export function DocumentViewerScreen({ route }: Props) {
-  const { id } = route.params;
+  const { id, source } = route.params;
   const [attempt, setAttempt] = useState(0);
   const key = `${id}:${attempt}`;
   // The result of the download that belongs to THIS id and attempt; anything older is ignored (no resets inside the effect).
@@ -28,7 +28,7 @@ export function DocumentViewerScreen({ route }: Props) {
 
   useEffect(() => {
     let alive = true;
-    downloadToCache(id)
+    downloadToCache(id, source)
       .then((f) => {
         if (alive) setResult({ key, file: { uri: f.uri, image: /\.(jpe?g|png)$/i.test(f.uri) } });
       })

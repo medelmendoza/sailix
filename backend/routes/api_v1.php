@@ -35,6 +35,18 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
     Route::get('announcements', [Me\AnnouncementController::class, 'index']);
     Route::get('announcements/{announcement}', [Me\AnnouncementController::class, 'show']);
     Route::put('announcements/{announcement}/read', [Me\AnnouncementController::class, 'read']);
+    // Call-it: only for organizations that have the module on (and a role that may use it)
+    Route::prefix('callit')->middleware('module:callit')->group(function () {
+        Route::get('stats', [Me\CallItController::class, 'stats']);
+        Route::get('reports', [Me\CallItController::class, 'index']);
+        Route::post('reports', [Me\CallItController::class, 'store'])->middleware('throttle:callit-write');
+        Route::get('reports/{report}', [Me\CallItController::class, 'show']);
+        Route::patch('reports/{report}', [Me\CallItController::class, 'update'])->middleware('throttle:callit-write');
+        Route::delete('reports/{report}', [Me\CallItController::class, 'destroy']);
+        Route::post('reports/{report}/file', [Me\CallItController::class, 'attach'])->middleware('throttle:document-upload');
+        Route::delete('reports/{report}/file', [Me\CallItController::class, 'detach']);
+        Route::get('reports/{report}/file', [Me\CallItController::class, 'file']);
+    });
     Route::get('document-types', [Me\DocumentController::class, 'types']);
     Route::get('documents', [Me\DocumentController::class, 'index']);
     Route::post('documents', [Me\DocumentController::class, 'store'])->name('documents.store')->middleware('throttle:document-upload');
@@ -63,6 +75,9 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::get('audit-logs', [Tenant\AuditLogController::class, 'index']);
         Route::get('deletion-requests', [Tenant\DeletionRequestController::class, 'index']);
         Route::get('feedback', [Tenant\FeedbackController::class, 'index']);
+        Route::get('callit/reports', [Tenant\CallItController::class, 'index']);
+        Route::get('callit/reports/{report}/file', [Tenant\CallItController::class, 'file']);
+        Route::post('callit/reports/{report}/review', [Tenant\CallItController::class, 'review']);
         Route::get('document-types', [Tenant\DocumentTypeController::class, 'index']);
         Route::post('document-types', [Tenant\DocumentTypeController::class, 'store']);
         Route::patch('document-types/{documentType}', [Tenant\DocumentTypeController::class, 'update']);

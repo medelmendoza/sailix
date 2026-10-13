@@ -41,6 +41,7 @@ export const ADMIN_ABILITIES = [
   'announcements.manage',
   'todos.manage',
   'documents.manage',
+  'callit.manage',
   'module.tala.use',
   'module.tala.manage',
 ];

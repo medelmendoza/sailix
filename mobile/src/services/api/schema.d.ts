@@ -775,6 +775,151 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/callit/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * How many reports the caller has made, and the milestones reached
+         * @description Only for organizations that have the Call-it module switched on (`403 module_disabled` otherwise).
+         */
+        get: operations["getCallItStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/callit/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller's own reports (drafts included), most recently changed first */
+        get: operations["listMyCallItReports"];
+        put?: never;
+        /**
+         * Save a draft report, or send a complete one (with submit true)
+         * @description A draft may be half written. With `submit: true` the report must be complete (classification, sub-classification, location, vessel, details; the other-location text when the location is `others`; the intervention text when `intervened`), otherwise `422`. The reporter, organization and status come from the session. Limited to 60 per hour.
+         */
+        post: operations["createCallItReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/callit/reports/{reportId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One of the caller's own reports */
+        get: operations["getMyCallItReport"];
+        put?: never;
+        post?: never;
+        /** Delete a draft (and its file) */
+        delete: operations["deleteMyCallItDraft"];
+        options?: never;
+        head?: never;
+        /**
+         * Change a draft, and optionally send it
+         * @description Only a draft (`409 report_not_draft` after it was sent). Send only what changes; submit true checks the whole draft.
+         */
+        patch: operations["updateMyCallItReport"];
+        trace?: never;
+    };
+    "/callit/reports/{reportId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The attached file of one of the caller's own reports */
+        get: operations["getMyCallItFile"];
+        put?: never;
+        /**
+         * Attach (or replace) one file on a draft
+         * @description Multipart. PDF, JPEG or PNG judged by content, within the organization's `upload_max_mb`. Only a draft.
+         */
+        post: operations["attachCallItFile"];
+        /** Remove the attached file from a draft */
+        delete: operations["detachCallItFile"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/callit/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The reports members of the organization sent (not drafts), unreviewed first
+         * @description Requires `callit.manage`.
+         */
+        get: operations["listTenantCallItReports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/callit/reports/{reportId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The attached file of a sent report in the caller's organization
+         * @description Requires `callit.manage`. A draft is `404`.
+         */
+        get: operations["getTenantCallItFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/callit/reports/{reportId}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark a sent report as reviewed
+         * @description Requires `callit.manage`. Only a submitted report (`409 not_submitted`); a draft is `404`.
+         */
+        post: operations["reviewCallItReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenant": {
         parameters: {
             query?: never;
@@ -1431,6 +1576,73 @@ export interface components {
         DeletionRequestPage: components["schemas"]["PageEnvelope"] & {
             data?: components["schemas"]["DeletionRequest"][];
         };
+        CallItStats: {
+            /** @description Reports sent (not drafts). */
+            reports_made: number;
+            badges: {
+                reports: number;
+                label: string;
+            }[];
+            /** @description The next milestone, or null when all are reached. */
+            next_badge: number | null;
+        };
+        CallItReportInput: {
+            /** @enum {string|null} */
+            classification?: "unsafe_acts" | "unsafe_conditions" | "unsafe_behaviour" | null;
+            /** @enum {string|null} */
+            sub_classification?: "people" | "materials" | "processes" | "equipment" | "environment" | null;
+            /** @enum {string|null} */
+            location?: "accommodation" | "main_deck" | "poop_deck" | "cargo_space" | "ballast_space" | "hold_space" | "machinery_space" | "others" | null;
+            /** @description Required to send when the location is `others`. */
+            location_other?: string | null;
+            vessel?: string | null;
+            details?: string | null;
+            intervened?: boolean;
+            /** @description Required to send when `intervened`. */
+            intervention_details?: string | null;
+            /** @description The reporter says this needs official reporting. */
+            official_report?: boolean;
+            /** @description Send the report (it must be complete). */
+            submit?: boolean;
+        };
+        CallItReport: {
+            id: string;
+            /** @enum {string} */
+            status: "draft" | "submitted" | "reviewed";
+            classification: string | null;
+            sub_classification: string | null;
+            location: string | null;
+            location_other: string | null;
+            vessel: string | null;
+            /** @description Plain text; show it as text, never as HTML. */
+            details: string | null;
+            intervened: boolean;
+            intervention_details: string | null;
+            official_report: boolean;
+            file: {
+                name: string;
+                type: string;
+                size: number;
+            } | null;
+            /** Format: date-time */
+            submitted_at: string | null;
+            /** Format: date-time */
+            reviewed_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** @description Present on the administrator views only. */
+            reporter?: {
+                id?: string;
+                user?: {
+                    id?: string;
+                    username?: string;
+                    email?: string;
+                };
+            };
+        };
+        CallItReportPage: components["schemas"]["PageEnvelope"] & {
+            data?: components["schemas"]["CallItReport"][];
+        };
         DocumentType: {
             id: string;
             name: string;
@@ -1685,7 +1897,7 @@ export interface components {
          * @description Module registry. Only `tala` exists in the MVP; new modules are added here.
          * @enum {string}
          */
-        ModuleCode: "tala" | "astra";
+        ModuleCode: "tala" | "astra" | "callit";
         TalaLink: {
             /** @enum {string} */
             status: "not_linked" | "linked" | "needs_relink" | "revoked";
@@ -1950,6 +2162,7 @@ export interface components {
         };
     };
     parameters: {
+        ReportId: string;
         DocumentId: string;
         DocumentTypeId: string;
         PayslipId: string;
@@ -3326,6 +3539,344 @@ export interface operations {
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    getCallItStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stats. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CallItStats"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    listMyCallItReports: {
+        parameters: {
+            query?: {
+                status?: "draft" | "submitted" | "reviewed";
+                page?: number;
+                per_page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page of reports. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallItReportPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    createCallItReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CallItReportInput"];
+            };
+        };
+        responses: {
+            /** @description Saved. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CallItReport"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+        };
+    };
+    getMyCallItReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CallItReport"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    deleteMyCallItDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    updateMyCallItReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CallItReportInput"];
+            };
+        };
+        responses: {
+            /** @description Saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CallItReport"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+        };
+    };
+    getMyCallItFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file (PDF, JPEG or PNG), with `nosniff` and no caching. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                    "image/jpeg": string;
+                    "image/png": string;
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    attachCallItFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Attached. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CallItReport"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+        };
+    };
+    detachCallItFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CallItReport"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    listTenantCallItReports: {
+        parameters: {
+            query?: {
+                status?: "submitted" | "reviewed";
+                page?: number;
+                per_page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page of reports with their reporter. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallItReportPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getTenantCallItFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                    "image/jpeg": string;
+                    "image/png": string;
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    reviewCallItReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: components["parameters"]["ReportId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reviewed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CallItReport"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
         };
     };
     getTenant: {

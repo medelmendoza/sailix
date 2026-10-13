@@ -265,7 +265,7 @@ function InviteDialog({
 }
 
 /** Modules built into the app: nothing to map to an external team, an organization simply has them or not. */
-const BUILT_IN_MODULES = ['astra'];
+const BUILT_IN_MODULES = ['astra', 'callit'];
 const TEAM_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 const moduleSchema = z.object({

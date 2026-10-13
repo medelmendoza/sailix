@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\CallItReport;
 use App\Models\CrewDocument;
 use App\Support\Settings\SettingsRegistry;
 use Illuminate\Http\UploadedFile;
@@ -31,13 +32,13 @@ final class DocumentFiles
     /**
      * @return array{file_disk: string, file_path: string, file_original_name: string, file_mime: string, file_size: int}
      */
-    public static function store(UploadedFile $file, string $tenantId): array
+    public static function store(UploadedFile $file, string $tenantId, string $folder = 'documents'): array
     {
         $mime = (string) $file->getMimeType(); // detected from the content
         $ext = self::TYPES[$mime] ?? null;
         abort_if($ext === null, 422, 'Unsupported file type.');
 
-        $path = "documents/{$tenantId}/".bin2hex(random_bytes(16)).'.'.$ext;
+        $path = "{$folder}/{$tenantId}/".bin2hex(random_bytes(16)).'.'.$ext;
         Storage::disk(self::disk())->putFileAs(dirname($path), $file, basename($path));
 
         return [
@@ -50,13 +51,16 @@ final class DocumentFiles
         ];
     }
 
-    public static function delete(CrewDocument $document): void
+    public static function delete(CrewDocument|CallItReport $document): void
     {
-        Storage::disk($document->file_disk)->delete($document->file_path);
+        if ($document->file_disk !== null && $document->file_path !== null) {
+            Storage::disk($document->file_disk)->delete($document->file_path);
+        }
     }
 
-    public static function stream(CrewDocument $document): StreamedResponse
+    public static function stream(CrewDocument|CallItReport $document): StreamedResponse
     {
+        abort_if($document->file_disk === null || $document->file_path === null || $document->file_mime === null, 404);
         $disk = Storage::disk($document->file_disk);
         abort_unless($disk->exists($document->file_path), 404);
         $ext = self::TYPES[$document->file_mime] ?? 'bin';

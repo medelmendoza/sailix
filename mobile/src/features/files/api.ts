@@ -93,7 +93,10 @@ export function useSaveDocument(id?: string) {
  * Downloads a document to a TEMPORARY file in the cache so it can be shown. The request carries the bearer token, the
  * file is never kept (the viewer deletes it on leaving), and nothing is added to the offline store.
  */
-export async function downloadToCache(id: string): Promise<File> {
+export async function downloadToCache(
+  id: string,
+  source: 'document' | 'callit' = 'document',
+): Promise<File> {
   const token = useSessionStore.getState().credential?.token;
   const base = api.defaults.baseURL ?? '';
   const dir = new Directory(Paths.cache, 'viewing');
@@ -101,7 +104,11 @@ export async function downloadToCache(id: string): Promise<File> {
   const target = new Directory(dir, id.replace(/[^A-Za-z0-9-]/g, ''));
   if (target.exists) target.delete();
   target.create();
-  return File.downloadFileAsync(`${base}/documents/${encodeURIComponent(id)}/file`, target, {
+  const path =
+    source === 'callit'
+      ? `/callit/reports/${encodeURIComponent(id)}/file`
+      : `/documents/${encodeURIComponent(id)}/file`;
+  return File.downloadFileAsync(`${base}${path}`, target, {
     headers: token ? { Authorization: `Bearer ${token}`, Accept: '*/*' } : {},
   });
 }

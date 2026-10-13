@@ -13,6 +13,7 @@ tags:
   - { name: auth, description: 'Login, logout, token rotation and invitations' }
   - { name: me, description: 'The authenticated principal' }
   - { name: announcements, description: "The caller's organization announcements" }
+  - { name: callit, description: "Call-it: the caller's own incident / safety reports" }
   - { name: documents, description: "The caller's own documents (Files)" }
   - { name: finance, description: "The caller's own payslips and cash advances" }
   - { name: todos, description: "The caller's own to-dos" }
@@ -1130,6 +1131,255 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /callit/stats:
+    get:
+      tags: [callit]
+      operationId: getCallItStats
+      summary: How many reports the caller has made, and the milestones reached
+      description: Only for organizations that have the Call-it module switched on (`403 module_disabled` otherwise).
+      responses:
+        '200':
+          description: Stats.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CallItStats' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /callit/reports:
+    get:
+      tags: [callit]
+      operationId: listMyCallItReports
+      summary: The caller's own reports (drafts included), most recently changed first
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [draft, submitted, reviewed] } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200':
+          description: Page of reports.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CallItReportPage' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [callit]
+      operationId: createCallItReport
+      summary: 'Save a draft report, or send a complete one (with submit true)'
+      description: >
+        A draft may be half written. With `submit: true` the report must be complete (classification, sub-classification,
+        location, vessel, details; the other-location text when the location is `others`; the intervention text when
+        `intervened`), otherwise `422`. The reporter, organization and status come from the session. Limited to 60 per hour.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CallItReportInput' }
+      responses:
+        '201':
+          description: Saved.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CallItReport' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /callit/reports/{reportId}:
+    get:
+      tags: [callit]
+      operationId: getMyCallItReport
+      summary: One of the caller's own reports
+      parameters:
+        - { $ref: '#/components/parameters/ReportId' }
+      responses:
+        '200':
+          description: The report.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CallItReport' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [callit]
+      operationId: updateMyCallItReport
+      summary: Change a draft, and optionally send it
+      description: 'Only a draft (`409 report_not_draft` after it was sent). Send only what changes; submit true checks the whole draft.'
+      parameters:
+        - { $ref: '#/components/parameters/ReportId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CallItReportInput' }
+      responses:
+        '200':
+          description: Saved.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CallItReport' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [callit]
+      operationId: deleteMyCallItDraft
+      summary: Delete a draft (and its file)
+      parameters:
+        - { $ref: '#/components/parameters/ReportId' }
+      responses:
+        '204': { description: Deleted. }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+  /callit/reports/{reportId}/file:
+    get:
+      tags: [callit]
+      operationId: getMyCallItFile
+      summary: The attached file of one of the caller's own reports
+      parameters:
+        - { $ref: '#/components/parameters/ReportId' }
+      responses:
+        '200':
+          description: The file (PDF, JPEG or PNG), with `nosniff` and no caching.
+          content:
+            application/pdf: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+            image/png: { schema: { type: string, format: binary } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [callit]
+      operationId: attachCallItFile
+      summary: Attach (or replace) one file on a draft
+      description: Multipart. PDF, JPEG or PNG judged by content, within the organization's `upload_max_mb`. Only a draft.
+      parameters:
+        - { $ref: '#/components/parameters/ReportId' }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '200':
+          description: Attached.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CallItReport' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [callit]
+      operationId: detachCallItFile
+      summary: Remove the attached file from a draft
+      parameters:
+        - { $ref: '#/components/parameters/ReportId' }
+      responses:
+        '200':
+          description: Removed.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CallItReport' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+  /tenant/callit/reports:
+    get:
+      tags: [tenant]
+      operationId: listTenantCallItReports
+      summary: The reports members of the organization sent (not drafts), unreviewed first
+      description: Requires `callit.manage`.
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [submitted, reviewed] } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200':
+          description: Page of reports with their reporter.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CallItReportPage' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /tenant/callit/reports/{reportId}/file:
+    get:
+      tags: [tenant]
+      operationId: getTenantCallItFile
+      summary: The attached file of a sent report in the caller's organization
+      description: Requires `callit.manage`. A draft is `404`.
+      parameters:
+        - { $ref: '#/components/parameters/ReportId' }
+      responses:
+        '200':
+          description: The file.
+          content:
+            application/pdf: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+            image/png: { schema: { type: string, format: binary } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /tenant/callit/reports/{reportId}/review:
+    post:
+      tags: [tenant]
+      operationId: reviewCallItReport
+      summary: Mark a sent report as reviewed
+      description: Requires `callit.manage`. Only a submitted report (`409 not_submitted`); a draft is `404`.
+      parameters:
+        - { $ref: '#/components/parameters/ReportId' }
+      responses:
+        '200':
+          description: Reviewed.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CallItReport' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
   /tenant:
     get:
       tags: [tenant]
@@ -2093,6 +2343,11 @@ components:
       name: laravel_session
       description: Sanctum SPA cookie session (web). Mutations require X-XSRF-TOKEN. Cookie name is configurable (SESSION_COOKIE).
   parameters:
+    ReportId:
+      name: reportId
+      in: path
+      required: true
+      schema: { type: string, minLength: 36, maxLength: 36, pattern: '^[0-9a-fA-F-]+$' }
     DocumentId:
       name: documentId
       in: path
@@ -2282,6 +2537,77 @@ components:
             data:
               type: array
               items: { $ref: '#/components/schemas/DeletionRequest' }
+    CallItStats:
+      type: object
+      required: [reports_made, badges, next_badge]
+      properties:
+        reports_made: { type: integer, minimum: 0, description: 'Reports sent (not drafts).' }
+        badges:
+          type: array
+          items:
+            type: object
+            required: [reports, label]
+            properties:
+              reports: { type: integer }
+              label: { type: string }
+        next_badge: { type: [integer, 'null'], description: 'The next milestone, or null when all are reached.' }
+    CallItReportInput:
+      type: object
+      properties:
+        classification: { type: [string, 'null'], enum: [unsafe_acts, unsafe_conditions, unsafe_behaviour, null] }
+        sub_classification: { type: [string, 'null'], enum: [people, materials, processes, equipment, environment, null] }
+        location: { type: [string, 'null'], enum: [accommodation, main_deck, poop_deck, cargo_space, ballast_space, hold_space, machinery_space, others, null] }
+        location_other: { type: [string, 'null'], maxLength: 120, description: 'Required to send when the location is `others`.' }
+        vessel: { type: [string, 'null'], maxLength: 120 }
+        details: { type: [string, 'null'], maxLength: 2000 }
+        intervened: { type: boolean }
+        intervention_details: { type: [string, 'null'], maxLength: 2000, description: 'Required to send when `intervened`.' }
+        official_report: { type: boolean, description: 'The reporter says this needs official reporting.' }
+        submit: { type: boolean, description: 'Send the report (it must be complete).' }
+    CallItReport:
+      type: object
+      required: [id, status, classification, sub_classification, location, location_other, vessel, details, intervened, intervention_details, official_report, file, submitted_at, reviewed_at, created_at]
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [draft, submitted, reviewed] }
+        classification: { type: [string, 'null'] }
+        sub_classification: { type: [string, 'null'] }
+        location: { type: [string, 'null'] }
+        location_other: { type: [string, 'null'] }
+        vessel: { type: [string, 'null'] }
+        details: { type: [string, 'null'], description: 'Plain text; show it as text, never as HTML.' }
+        intervened: { type: boolean }
+        intervention_details: { type: [string, 'null'] }
+        official_report: { type: boolean }
+        file:
+          type: [object, 'null']
+          required: [name, type, size]
+          properties:
+            name: { type: string }
+            type: { type: string }
+            size: { type: integer }
+        submitted_at: { type: [string, 'null'], format: date-time }
+        reviewed_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+        reporter:
+          type: object
+          description: Present on the administrator views only.
+          properties:
+            id: { type: string }
+            user:
+              type: object
+              properties:
+                id: { type: string }
+                username: { type: string }
+                email: { type: string }
+    CallItReportPage:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/CallItReport' }
     DocumentType:
       type: object
       required: [id, name, short_name]
@@ -2556,7 +2882,7 @@ components:
               items: { $ref: '#/components/schemas/Feedback' }
     ModuleCode:
       type: string
-      enum: [tala, astra]
+      enum: [tala, astra, callit]
       description: Module registry. Only `tala` exists in the MVP; new modules are added here.
     TalaLink:
       type: object

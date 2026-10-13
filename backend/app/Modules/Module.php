@@ -12,12 +12,15 @@ enum Module: string
     case Tala = 'tala';
     /** Built into the app (no upstream system, no linking): an organization simply has it or not. */
     case Astra = 'astra';
+    /** Built into the app too: incident / safety observation reports (the old "Call-It"). */
+    case CallIt = 'callit';
 
     public function label(): string
     {
         return match ($this) {
             self::Tala => 'Tala',
             self::Astra => 'Astra',
+            self::CallIt => 'Call-it',
         };
     }
 
@@ -37,6 +40,7 @@ enum Module: string
         return match ($this) {
             self::Tala => true,
             self::Astra => false,
+            self::CallIt => false,
         };
     }
 
@@ -45,7 +49,7 @@ enum Module: string
     {
         return match ($this) {
             self::Tala => 'tala_api_base_url',
-            self::Astra => '', // no upstream: never read (requiresEndpoint() is false)
+            self::Astra, self::CallIt => '', // no upstream: never read (requiresEndpoint() is false)
         };
     }
 

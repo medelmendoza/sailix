@@ -6,6 +6,7 @@ import type {
   Announcement,
   AnnouncementInput,
   AuditEntry,
+  CallItReport,
   CrewDocument,
   DocumentType,
   DeletionRequest,
@@ -201,6 +202,35 @@ export function useReviewDocument() {
 /** Opens a document in a new tab. The file is fetched with the admin's own session (it is never at a public address). */
 export async function openDocumentFile(id: string): Promise<void> {
   const res = await api.get<Blob>(`/tenant/documents/${id}/file`, { responseType: 'blob' });
+  const url = URL.createObjectURL(res.data);
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+export function useCallItReports(params: ListParams) {
+  return useQuery({
+    queryKey: ['callit-reports', params],
+    queryFn: async () =>
+      (await api.get<Page<CallItReport>>('/tenant/callit/reports', { params })).data,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useReviewCallItReport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) =>
+      (await api.post<Envelope<CallItReport>>(`/tenant/callit/reports/${id}/review`, {})).data.data,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['callit-reports'] });
+      void qc.invalidateQueries({ queryKey: ['audit'] });
+    },
+  });
+}
+
+/** Opens a report's attached file in a new tab, fetched with the administrator's own session. */
+export async function openCallItFile(id: string): Promise<void> {
+  const res = await api.get<Blob>(`/tenant/callit/reports/${id}/file`, { responseType: 'blob' });
   const url = URL.createObjectURL(res.data);
   window.open(url, '_blank', 'noopener');
   setTimeout(() => URL.revokeObjectURL(url), 60_000);

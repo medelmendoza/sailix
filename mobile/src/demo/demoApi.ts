@@ -2,6 +2,7 @@ import { api } from '@/services/api/client';
 import { useSessionStore } from '@/store/sessionStore';
 import {
   demoAnnouncements,
+  demoCallIt,
   demoDocuments,
   demoDocumentTypes,
   demoLoans,
@@ -26,6 +27,16 @@ function respond(method: string, path: string, params: Record<string, unknown> =
       meta: { current_page: 1, per_page: 20, total: 3, last_page: 1 },
       unread_count: demoAnnouncements.filter((a) => !a.is_read).length,
     };
+  if (method === 'GET' && path === '/callit/stats') return { data: demoCallIt.stats };
+  if (method === 'GET' && path === '/callit/reports')
+    return {
+      data: demoCallIt.reports,
+      links: {},
+      meta: { current_page: 1, per_page: 100, total: 3, last_page: 1 },
+    };
+  const rep = /^\/callit\/reports\/(\w+)$/.exec(path);
+  if (method === 'GET' && rep)
+    return { data: demoCallIt.reports.find((r) => r.id === rep[1]) ?? demoCallIt.reports[1] };
   if (method === 'GET' && path === '/document-types') return { data: demoDocumentTypes };
   if (method === 'GET' && path === '/documents') {
     const view = params.status === 'review' ? 'review' : 'approved';

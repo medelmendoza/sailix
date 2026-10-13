@@ -11,6 +11,7 @@ import { AccountPage } from '../../features/tenant/AccountPage';
 import { AppShell } from '../../features/tenant/AppShell';
 import { AuditPage } from '../../features/tenant/AuditPage';
 import { DashboardPage } from '../../features/tenant/DashboardPage';
+import { CallItPage } from '../../features/tenant/CallItPage';
 import { DocumentsPage } from '../../features/tenant/DocumentsPage';
 import { DocumentTypesPage } from '../../features/tenant/DocumentTypesPage';
 import { TodosPage } from '../../features/tenant/TodosPage';
@@ -58,6 +59,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <DashboardPage /> },
       { path: 'members', element: guard('users.view', <MembersPage />) },
       { path: 'deletion-requests', element: guard('users.manage', <DeletionRequestsPage />) },
+      { path: 'callit', element: guard('callit.manage', <CallItPage />) },
       { path: 'documents', element: guard('documents.manage', <DocumentsPage />) },
       { path: 'document-types', element: guard('documents.manage', <DocumentTypesPage />) },
       { path: 'todos', element: guard('todos.manage', <TodosPage />) },

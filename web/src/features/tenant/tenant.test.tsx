@@ -488,6 +488,85 @@ describe('settings and account', () => {
     expect(screen.getByText(/Nothing is deleted automatically/)).toBeInTheDocument();
   });
 
+  describe('call-it reports', () => {
+    const report = (over: Record<string, unknown> = {}) => ({
+      id: 'r1',
+      status: 'submitted',
+      classification: 'unsafe_acts',
+      sub_classification: 'people',
+      location: 'others',
+      location_other: 'Gangway',
+      vessel: 'MV Test',
+      details: 'Saw <b>no guard</b> on the shaft',
+      intervened: true,
+      intervention_details: 'Stopped the work',
+      official_report: true,
+      file: null,
+      submitted_at: '2026-10-02T10:00:00+00:00',
+      reviewed_at: null,
+      created_at: '2026-10-02T09:00:00+00:00',
+      reporter: { id: 'm1', user: { id: 'u1', username: 'crew1', email: 'crew1@example.test' } },
+      ...over,
+    });
+
+    it('lists what members sent, waiting for review by default', async () => {
+      asTenantAdmin();
+      const urls: URL[] = [];
+      server.use(
+        http.get(
+          `${V1}/tenant/callit/reports`,
+          ({ request }) => (urls.push(new URL(request.url)), HttpResponse.json(pageOf([report()]))),
+        ),
+      );
+      renderApp('/app/callit');
+      expect(await screen.findByText('Unsafe acts')).toBeInTheDocument();
+      expect(screen.getByText('Others: Gangway')).toBeInTheDocument();
+      expect(screen.getByText('Official report')).toBeInTheDocument();
+      expect(urls[0]!.searchParams.get('status')).toBe('submitted');
+    });
+
+    it('opens a report, shows its text as plain text, and marks it reviewed', async () => {
+      asTenantAdmin();
+      const reviewed = capture();
+      server.use(
+        http.get(`${V1}/tenant/callit/reports`, () => HttpResponse.json(pageOf([report()]))),
+        http.post(`${V1}/tenant/callit/reports/r1/review`, async ({ request }) => {
+          await reviewed.record(request);
+          return HttpResponse.json({ data: report({ status: 'reviewed' }) });
+        }),
+      );
+      const { user } = renderApp('/app/callit');
+      await user.click(await screen.findByRole('button', { name: /^Open the report from crew1/ }));
+      const dialog = await screen.findByRole('dialog');
+      expect(within(dialog).getByText('Saw <b>no guard</b> on the shaft')).toBeInTheDocument();
+      expect(within(dialog).getByText('Stopped the work')).toBeInTheDocument();
+      await user.click(within(dialog).getByRole('button', { name: 'Mark as reviewed' }));
+      await waitFor(() => expect(reviewed.calls).toHaveLength(1));
+    });
+
+    it('offers no review button for a report that was already reviewed', async () => {
+      asTenantAdmin();
+      server.use(
+        http.get(`${V1}/tenant/callit/reports`, () =>
+          HttpResponse.json(pageOf([report({ status: 'reviewed' })])),
+        ),
+      );
+      const { user } = renderApp('/app/callit');
+      await user.click(await screen.findByRole('button', { name: /^Open the report from crew1/ }));
+      expect(
+        within(await screen.findByRole('dialog')).queryByRole('button', {
+          name: 'Mark as reviewed',
+        }),
+      ).toBeNull();
+    });
+
+    it('is blocked for someone without the ability', async () => {
+      asTenantAdmin(makeMe({ abilities: ['tenant.view', 'users.view'] }));
+      renderApp('/app/callit');
+      expect(await screen.findByText('You do not have access to this page')).toBeInTheDocument();
+    });
+  });
+
   describe('documents', () => {
     const doc = (over: Record<string, unknown> = {}) => ({
       id: 'd1',

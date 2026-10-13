@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\ModuleStatus;
 use App\Enums\Role;
+use App\Models\CallItReport;
 use App\Models\CrewDocument;
 use App\Models\DocumentType;
 use App\Models\Loan;
@@ -39,16 +40,37 @@ class CrewPortalDemoSeeder extends Seeder
                 $this->documents($tenant, $member, $types);
                 $this->payslips($tenant, $member);
                 $this->loans($tenant, $member);
+                $this->reports($tenant, $member);
             }
         }
     }
 
-    /** Astra is built into the app: the demo organizations simply have it switched on. */
+    /** Astra and Call-it are built into the app: the demo organizations simply have them switched on. */
     private function astra(Tenant $tenant): void
     {
-        $row = TenantModule::withoutTenantScope()->where('tenant_id', $tenant->id)->where('module', 'astra')->first()
-            ?? (new TenantModule)->forceFill(['tenant_id' => $tenant->id, 'module' => Module::Astra]);
-        $row->forceFill(['status' => ModuleStatus::Enabled])->save();
+        foreach ([Module::Astra, Module::CallIt] as $module) {
+            $row = TenantModule::withoutTenantScope()->where('tenant_id', $tenant->id)->where('module', $module->value)->first()
+                ?? (new TenantModule)->forceFill(['tenant_id' => $tenant->id, 'module' => $module]);
+            $row->forceFill(['status' => ModuleStatus::Enabled])->save();
+        }
+    }
+
+    private function reports(Tenant $tenant, Membership $member): void
+    {
+        CallItReport::withoutTenantScope()->where('membership_id', $member->id)->get()->each->delete();
+
+        foreach ([
+            ['unsafe_conditions', 'equipment', 'main_deck', null, 'Oil leak under the starboard winch, floor slippery.', false, null, 'draft'],
+            ['unsafe_acts', 'people', 'machinery_space', null, 'Saw a crew member working near the rotating shaft without a guard.', true, 'Stopped the work and called the duty engineer.', 'submitted'],
+            ['unsafe_behaviour', 'processes', 'others', 'Gangway', 'Gangway net was not rigged during cargo operations.', false, null, 'reviewed'],
+        ] as [$class, $sub, $loc, $other, $details, $intervened, $how, $status]) {
+            (new CallItReport)->forceFill([
+                'tenant_id' => $tenant->id, 'membership_id' => $member->id, 'classification' => $class, 'sub_classification' => $sub,
+                'location' => $loc, 'location_other' => $other, 'vessel' => 'MV Pacific Dawn', 'details' => $details,
+                'intervened' => $intervened, 'intervention_details' => $how, 'status' => $status,
+                'submitted_at' => $status === 'draft' ? null : now()->subDays(3), 'reviewed_at' => $status === 'reviewed' ? now()->subDay() : null,
+            ])->save();
+        }
     }
 
     /** @return array<string, DocumentType> by short name */
