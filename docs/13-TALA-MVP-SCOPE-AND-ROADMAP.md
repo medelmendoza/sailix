@@ -311,3 +311,11 @@ Everything in the §15.1 verification list. Needs either a working touch-injecti
 
 ### 15.7 CI
 `ci.yml` validated structurally (Python YAML load; jobs `changes, web, mobile, e2e, backend, secrets`). A new `e2e` job (MySQL service, `npx playwright install --with-deps chromium`, `npm run e2e`) was added. **It has not run on a real runner**; nothing was pushed or triggered. The local equivalents all pass (see PROJECT-STATUS).
+
+## 16. Organization switching (implemented; awaiting review)
+
+Built exactly as recommended in §15.4, after you asked to proceed with the next unblocked item. Tala T0/M3 remain blocked on D-T1; nothing Tala-related was touched.
+- **Contract first:** `GET /me` now returns `memberships[]` (id, role, tenant id/code/name, `current`). It lists only the *authenticated user's own* organizations that are usable right now (active membership in an active organization); suspended organizations and memberships are omitted. The existing `POST /auth/token/switch` re-validates the choice server-side (foreign, suspended or unknown membership → 403, current token untouched) and revokes the old token.
+- **Mobile:** Account → "Switch organization" appears only with 2+ organizations and lists the others. `switchOrganization()` leaves the authenticated area first (so no old-organization screen can read or refetch), cancels and clears the whole query cache, calls the switch endpoint, then loads `/me` with the new token and stores it. Failures: refused or offline → stays in the current organization and Home explains why; expired session → signed out with a notice; new organization cannot be loaded → nothing of either session stays on the device.
+- **Tests:** backend 327 (+2: `/me` lists only own usable organizations with exactly one `current`; switch to a suspended organization refused and current token still valid); mobile 123 (+9: switch request carries only the membership id, cache wiped, new token and tenant hint used afterwards, refused/offline/expired/new-org-unloadable paths, same-organization no-op, UI shows nothing for single-organization users and excludes the current one); web 88 and Playwright 26 unchanged and green.
+- **Not done:** web has no switcher (sign out and in, as before); Android and on-device behaviour unverified (see §15.1/§15.6); "join a second organization" remains deferred (§15.5).

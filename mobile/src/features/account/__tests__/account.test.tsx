@@ -202,3 +202,91 @@ it('shows nothing of the previous person after another one signs in on the same 
   expect(await screen.findByText('Hello, Maria')).toBeTruthy();
   expect(screen.queryByText(/previous/)).toBeNull();
 });
+
+describe('switching organization', () => {
+  const acme = {
+    id: 'm2',
+    role: 'tenant_admin' as const,
+    tenant: { id: 't2', code: 'ACME', name: 'Acme Crewing' },
+  };
+  const southfield = {
+    id: 'm1',
+    role: 'crew' as const,
+    tenant: { id: 't1', code: 'SFAI', name: 'Southfield Agencies' },
+  };
+
+  it('offers nothing when the person belongs to one organization', async () => {
+    await openAccount();
+    await screen.findByText('Maria Santos');
+    expect(screen.queryByText('Switch organization')).toBeNull();
+  });
+
+  it('lists only the other organizations and moves to the chosen one', async () => {
+    const acmeMe = makeMe({
+      membership: { id: 'm2', role: 'tenant_admin', status: 'active' },
+      tenant: acme.tenant,
+      memberships: [
+        { ...southfield, current: false },
+        { ...acme, current: true },
+      ],
+    });
+    mockApi({
+      'GET /me': (call) => ({
+        data: { data: call.headers.Authorization === 'Bearer 2|acme' ? acmeMe : me1 },
+      }),
+      'POST /auth/token/switch': {
+        data: {
+          data: {
+            token: '2|acme',
+            expires_at: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+            membership: acme,
+          },
+        },
+      },
+    });
+    const me1 = makeMe({
+      memberships: [
+        { ...southfield, current: true },
+        { ...acme, current: false },
+      ],
+    });
+    signedInAs(me1);
+    await renderApp();
+    await fireEvent.press(await screen.findByLabelText(/Account/));
+
+    expect(await screen.findByText('Switch organization')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Southfield Agencies/ })).toBeNull(); // not the current one
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Acme Crewing (Administrator)' }),
+    );
+
+    await waitFor(() => expect(useSessionStore.getState().me?.tenant.code).toBe('ACME'));
+    expect(await screen.findByText(/Acme Crewing/)).toBeTruthy();
+  });
+
+  it('shows why a refused switch failed and stays where it is', async () => {
+    const me1 = makeMe({
+      memberships: [
+        { ...southfield, current: true },
+        { ...acme, current: false },
+      ],
+    });
+    mockApi({
+      'POST /auth/token/switch': problem(
+        403,
+        'forbidden',
+        'You cannot switch to that organization.',
+      ),
+    });
+    signedInAs(me1);
+    await renderApp();
+    await fireEvent.press(await screen.findByLabelText(/Account/));
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Acme Crewing (Administrator)' }),
+    );
+
+    // the app returns to Home (the screens are rebuilt during a switch) and says why
+    expect(await screen.findByText(/Could not switch organization.*not allowed/)).toBeTruthy();
+    expect(useSessionStore.getState().me?.tenant.code).toBe('SFAI');
+  });
+});

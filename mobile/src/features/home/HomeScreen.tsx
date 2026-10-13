@@ -49,6 +49,7 @@ function ModuleCard({ module, onPress }: { module: MyModule; onPress: () => void
 export function HomeScreen({ navigation }: Props) {
   const me = useSessionStore((s) => s.me);
   const refreshMe = useSessionStore((s) => s.refreshMe);
+  const switchError = useSessionStore((s) => s.switchError);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,7 +80,9 @@ export function HomeScreen({ navigation }: Props) {
         </AppText>
         <AppText muted>{me.tenant.name}</AppText>
       </View>
-      <FormError message={error} />
+      <FormError
+        message={error ?? (switchError ? `Could not switch organization. ${switchError}` : null)}
+      />
       <AppText variant="heading">Services</AppText>
       {me.modules.length === 0 ? (
         <EmptyState

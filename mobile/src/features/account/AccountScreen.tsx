@@ -31,6 +31,8 @@ function Row({ label, value }: { label: string; value: string }) {
 export function AccountScreen({ navigation }: Props) {
   const me = useSessionStore((s) => s.me);
   const signOut = useSessionStore((s) => s.signOut);
+  const switchOrganization = useSessionStore((s) => s.switchOrganization);
+  const [switching, setSwitching] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [requesting, setRequesting] = useState(false);
@@ -40,12 +42,24 @@ export function AccountScreen({ navigation }: Props) {
     ? [me.profile.first_name, me.profile.last_name].filter(Boolean).join(' ')
     : (me.user.display_name ?? me.user.username);
 
+  const others = me.memberships.filter((m) => !m.current);
+
   async function openPrivacy() {
     setError(null);
     try {
       await Linking.openURL(env.privacyUrl);
     } catch {
       setError('Could not open the privacy policy. Try again later.');
+    }
+  }
+
+  async function switchTo(membershipId: string) {
+    setError(null);
+    setSwitching(membershipId);
+    try {
+      await switchOrganization(membershipId);
+    } catch {
+      setSwitching(null); // the reason is in the store (this screen is remounted during a switch)
     }
   }
 
@@ -101,6 +115,23 @@ export function AccountScreen({ navigation }: Props) {
           value={me.membership.role === 'tenant_admin' ? 'Administrator' : 'Crew'}
         />
       </Card>
+      {others.length > 0 ? (
+        <Card style={{ gap: spacing.md }}>
+          <AppText variant="heading" accessibilityRole="header">
+            Switch organization
+          </AppText>
+          {others.map((m) => (
+            <Button
+              key={m.id}
+              title={`${m.tenant.name} (${m.role === 'tenant_admin' ? 'Administrator' : 'Crew'})`}
+              variant="secondary"
+              loading={switching === m.id}
+              disabled={switching !== null}
+              onPress={() => void switchTo(m.id)}
+            />
+          ))}
+        </Card>
+      ) : null}
       <Button
         title="Change password"
         variant="secondary"

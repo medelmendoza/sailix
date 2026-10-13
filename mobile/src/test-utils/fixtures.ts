@@ -14,6 +14,14 @@ export function makeMe(overrides: Partial<Me> = {}): Me {
     },
     abilities: ['module.tala.use'],
     modules: [],
+    memberships: [
+      {
+        id: 'm1',
+        role: 'crew',
+        tenant: { id: 't1', code: 'SFAI', name: 'Southfield Agencies' },
+        current: true,
+      },
+    ],
     ...overrides,
   };
 }

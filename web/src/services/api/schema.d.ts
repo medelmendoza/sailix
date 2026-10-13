@@ -644,6 +644,10 @@ export interface components {
             abilities: string[];
             /** @description Modules this organization is entitled to AND this role may use, with the caller's link state. */
             modules: components["schemas"]["MyModule"][];
+            /** @description Every organization the authenticated user can currently sign in to (active membership in an active organization), derived server-side from the credential. Used to offer organization switching via POST /auth/token/switch, which re-validates the choice. */
+            memberships: (components["schemas"]["MembershipSummary"] & {
+                current: boolean;
+            })[];
         };
         /** @description Personal data held per organization (tenant-owned). Date of birth is deliberately not collected. */
         Profile: {

@@ -20,9 +20,17 @@ type SessionState = {
   me: Me | null;
   /** Why the user was sent back to sign-in (expired, organization suspended...). */
   notice: string | null;
+  /** Why the last organization switch failed; read by the Account screen, which is remounted during a switch. */
+  switchError: string | null;
   bootstrap: () => Promise<void>;
   completeSignIn: (grant: TokenGrant) => Promise<void>;
   refreshMe: () => Promise<void>;
+  /**
+   * Moves this device to another of the user's own organizations. The server re-validates the choice and
+   * revokes the current token; everything scoped to the old organization is dropped before the new one loads.
+   * Rejects (state unchanged) when the server refuses or cannot be reached.
+   */
+  switchOrganization: (membershipId: string) => Promise<void>;
   refreshTokenIfNeeded: () => Promise<void>;
   /** Single logout path: memory, query cache, secure storage and (best effort) the server-side token. */
   signOut: (options?: { notice?: string; revoke?: boolean }) => Promise<void>;
@@ -51,6 +59,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   credential: null,
   me: null,
   notice: null,
+  switchError: null,
 
   async bootstrap() {
     const stored = await loadCredential();
@@ -114,6 +123,43 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     if (get().credential?.token === token) set({ me });
   },
 
+  async switchOrganization(membershipId) {
+    const current = get().credential;
+    if (get().status !== 'authenticated' || !current || membershipId === current.membershipId)
+      return;
+
+    // Leave the authenticated area first: no screen of the old organization can read or refetch while
+    // the token changes (and a stray 401 in this window must not be mistaken for an expired session).
+    set({ status: 'bootstrapping', switchError: null });
+    await queryClient.cancelQueries();
+    queryClient.clear();
+
+    let grant: TokenGrant;
+    try {
+      grant = (
+        await api.post<Envelope<TokenGrant>>('/auth/token/switch', { membership_id: membershipId })
+      ).data.data;
+    } catch (error) {
+      if (toApiError(error).kind === 'unauthorized') {
+        await get().signOut({ notice: SESSION_ENDED, revoke: false });
+      } else {
+        // refused or offline: the current token is still valid
+        set({ status: 'authenticated', switchError: describeError(error) });
+      }
+      throw error;
+    }
+
+    // The old token is revoked from here on; the new one replaces it or the session ends.
+    set({ me: null });
+    try {
+      await get().completeSignIn(grant);
+    } catch (error) {
+      await clearCredential();
+      set({ notice: 'Could not open that organization. Please sign in again.' });
+      throw error;
+    }
+  },
+
   refreshTokenIfNeeded() {
     const credential = get().credential;
     if (!credential?.expiresAt || refreshing) return refreshing ?? Promise.resolve();
@@ -140,7 +186,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const { notice = null, revoke = true } = options;
     const token = get().credential?.token;
     // 1. The UI leaves the authenticated area immediately and nothing from this session can be read again.
-    set({ status: 'unauthenticated', credential: null, me: null, notice });
+    set({ status: 'unauthenticated', credential: null, me: null, notice, switchError: null });
     await queryClient.cancelQueries();
     queryClient.clear();
     await clearCredential();

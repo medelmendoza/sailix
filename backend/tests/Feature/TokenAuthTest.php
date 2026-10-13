@@ -172,6 +172,39 @@ class TokenAuthTest extends TestCase
         $this->postJson('/api/v1/auth/token/switch', ['membership_id' => $other->getKey()], $this->bearer($token))->assertStatus(403);
     }
 
+    public function test_me_lists_only_the_users_own_usable_organizations_and_marks_the_current_one(): void
+    {
+        $user = $this->makeUser('multi');
+        $a = $this->makeMembership($this->makeTenant('AAA'), $user);
+        $b = $this->makeMembership($this->makeTenant('BBB'), $user, Role::TenantAdmin);
+        $this->makeMembership($this->makeTenant('CCC', TenantStatus::Suspended), $user);             // organization not active
+        $this->makeMembership($this->makeTenant('DDD'), $user, Role::Crew, MembershipStatus::Suspended); // membership not active
+        $this->makeMember($this->makeTenant('EEE'), Role::Crew, 'someone-else');                       // another person's
+
+        $token = $this->tokenFor('multi', 'AAA');
+        $r = $this->getJson('/api/v1/me', $this->bearer($token))->assertOk();
+
+        $codes = collect($r->json('data.memberships'))->pluck('tenant.code')->sort()->values()->all();
+        $this->assertSame(['AAA', 'BBB'], $codes);
+        $current = collect($r->json('data.memberships'))->where('current', true);
+        $this->assertCount(1, $current);
+        $this->assertSame($a->getKey(), $current->first()['id']);
+        $this->assertSame($b->getKey(), collect($r->json('data.memberships'))->firstWhere('tenant.code', 'BBB')['id']);
+        $this->assertSame('tenant_admin', collect($r->json('data.memberships'))->firstWhere('tenant.code', 'BBB')['role']);
+    }
+
+    public function test_cannot_switch_to_an_organization_that_is_not_active(): void
+    {
+        $user = $this->makeUser('multi');
+        $this->makeMembership($this->makeTenant('AAA'), $user);
+        $suspended = $this->makeMembership($this->makeTenant('CCC', TenantStatus::Suspended), $user);
+        $token = $this->tokenFor('multi', 'AAA');
+
+        $this->postJson('/api/v1/auth/token/switch', ['membership_id' => $suspended->getKey()], $this->bearer($token))->assertStatus(403);
+        $this->app['auth']->forgetGuards();
+        $this->getJson('/api/v1/me', $this->bearer($token))->assertOk(); // the current token is untouched by a refused switch
+    }
+
     public function test_logout_revokes_only_the_current_token(): void
     {
         $this->makeMember($this->makeTenant(), Role::Crew, 'c1');

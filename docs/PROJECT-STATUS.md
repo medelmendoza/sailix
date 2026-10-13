@@ -73,3 +73,4 @@ Read-only. Branch `medel_dev_march2025`, HEAD `2094806`, 66 pre-existing uncommi
 | 2026-10-13 | Mobile audit gate redesigned: blocking baseline gate on production deps (fails on any unreviewed high/critical advisory or unavailable audit) + report-only full audit; 2 exceptions expire 2026-12-15 | Replaces the earlier blanket report-only exception |
 | 2026-10-13 | Bug found by Playwright: unauthenticated API call without `Accept: application/json` returned 500; fixed + regression test | Fixed |
 | 2026-10-13 | Simulator touch injection did not work on iOS 17.5 or 26.3 under Xcode 27, so UI behaviour is NOT verified on a simulator | Open — needs tooling decision |
+| 2026-10-13 | User asked to proceed with the next unblocked item; built organization switching (docs/13 §16). M3/T0 still blocked on D-T1 | Implemented; stopped for review |

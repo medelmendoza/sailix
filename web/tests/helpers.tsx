@@ -55,6 +55,14 @@ export function makeMe(overrides: Partial<Me> = {}): Me {
     profile: null,
     abilities: ADMIN_ABILITIES,
     modules: [],
+    memberships: [
+      {
+        id: 'm-me',
+        role: 'tenant_admin',
+        tenant: { id: 't1', code: 'SFAI', name: 'Southfield Agencies' },
+        current: true,
+      },
+    ],
     ...overrides,
   };
 }

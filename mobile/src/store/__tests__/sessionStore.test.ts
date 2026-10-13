@@ -316,3 +316,148 @@ describe('scoped query keys', () => {
     expect(queryClient.getQueryData(scopedKey('courses'))).toBeUndefined();
   });
 });
+
+describe('switching organization', () => {
+  const two = [
+    {
+      id: 'm1',
+      role: 'crew' as const,
+      tenant: { id: 't1', code: 'SFAI', name: 'Southfield' },
+      current: true,
+    },
+    {
+      id: 'm2',
+      role: 'crew' as const,
+      tenant: { id: 't2', code: 'ACME', name: 'Acme Crewing' },
+      current: false,
+    },
+  ];
+  const acmeMe = makeMe({
+    membership: { id: 'm2', role: 'crew', status: 'active' },
+    tenant: { id: 't2', code: 'ACME', name: 'Acme Crewing' },
+    memberships: [
+      { ...two[0]!, current: false },
+      { ...two[1]!, current: true },
+    ],
+  });
+  const acmeGrant = makeGrant({
+    token: '2|acme-token',
+    membership: {
+      id: 'm2',
+      role: 'crew',
+      tenant: { id: 't2', code: 'ACME', name: 'Acme Crewing' },
+    },
+  });
+
+  async function signedInToSouthfield() {
+    await saveCredential(stored);
+    await state().bootstrap();
+  }
+
+  it('sends only the membership id, drops every cached record of the old organization and uses the new token', async () => {
+    const api = mockApi({
+      'GET /me': (call) => ({
+        data: {
+          data:
+            call.headers.Authorization === 'Bearer 2|acme-token'
+              ? acmeMe
+              : makeMe({ memberships: two }),
+        },
+      }),
+      'POST /auth/token/switch': { data: { data: acmeGrant } },
+    });
+    await signedInToSouthfield();
+    queryClient.setQueryData(scopedKey('courses'), ['Southfield course']);
+
+    await state().switchOrganization('m2');
+
+    expect(api.callsTo('POST /auth/token/switch')[0]?.body).toEqual({ membership_id: 'm2' });
+    expect(api.callsTo('POST /auth/token/switch')[0]?.headers.Authorization).toBe(
+      'Bearer 1|stored-token',
+    );
+    expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
+    expect(state()).toMatchObject({
+      status: 'authenticated',
+      credential: { token: '2|acme-token', membershipId: 'm2', tenantId: 't2', tenantCode: 'ACME' },
+      me: { tenant: { code: 'ACME' } },
+    });
+    expect(scopedKey('courses')).toEqual(['t2', 'm2', 'courses']);
+    const last = api.calls.at(-1)!;
+    expect(last.headers.Authorization).toBe('Bearer 2|acme-token');
+    expect(last.headers['X-Tenant-Hint']).toBe('ACME');
+    expect(await loadCredential()).toMatchObject({ token: '2|acme-token', tenantCode: 'ACME' });
+  });
+
+  it('a refused switch leaves the current organization, token and cache-free state usable', async () => {
+    mockApi({
+      'GET /me': { data: { data: makeMe({ memberships: two }) } },
+      'POST /auth/token/switch': problem(
+        403,
+        'forbidden',
+        'You cannot switch to that organization.',
+      ),
+    });
+    await signedInToSouthfield();
+
+    await expect(state().switchOrganization('m2')).rejects.toBeDefined();
+
+    expect(state()).toMatchObject({
+      status: 'authenticated',
+      credential: { token: '1|stored-token' },
+    });
+    expect(await loadCredential()).toMatchObject({ token: '1|stored-token' });
+  });
+
+  it('being offline during the switch changes nothing', async () => {
+    mockApi({
+      'GET /me': { data: { data: makeMe({ memberships: two }) } },
+      'POST /auth/token/switch': { networkError: true },
+    });
+    await signedInToSouthfield();
+
+    await expect(state().switchOrganization('m2')).rejects.toBeDefined();
+
+    expect(state()).toMatchObject({
+      status: 'authenticated',
+      credential: { token: '1|stored-token' },
+    });
+  });
+
+  it('an expired session during the switch ends the session with a notice', async () => {
+    mockApi({
+      'GET /me': { data: { data: makeMe({ memberships: two }) } },
+      'POST /auth/token/switch': problem(401, 'unauthenticated'),
+    });
+    await signedInToSouthfield();
+
+    await expect(state().switchOrganization('m2')).rejects.toBeDefined();
+
+    expect(state()).toMatchObject({ status: 'unauthenticated', credential: null, me: null });
+    expect(state().notice).toMatch(/session expired/i);
+    expect(storeSize()).toBe(0);
+  });
+
+  it('if the new organization cannot be loaded, nothing of either session stays on the device', async () => {
+    mockApi({
+      'GET /me': (call) =>
+        call.headers.Authorization === 'Bearer 2|acme-token'
+          ? problem(500, 'server_error')
+          : { data: { data: makeMe({ memberships: two }) } },
+      'POST /auth/token/switch': { data: { data: acmeGrant } },
+    });
+    await signedInToSouthfield();
+
+    await expect(state().switchOrganization('m2')).rejects.toBeDefined();
+
+    expect(state()).toMatchObject({ status: 'unauthenticated', credential: null, me: null });
+    expect(state().notice).toMatch(/sign in again/i);
+    expect(storeSize()).toBe(0);
+  });
+
+  it('switching to the organization you are already in does nothing', async () => {
+    const api = mockApi({ 'GET /me': { data: { data: makeMe({ memberships: two }) } } });
+    await signedInToSouthfield();
+    await state().switchOrganization('m1');
+    expect(api.callsTo('POST /auth/token/switch')).toHaveLength(0);
+  });
+});
