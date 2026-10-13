@@ -13,7 +13,47 @@ jobs:
     outputs:
       web: ${{ steps.f.outputs.web }}
       mobile: ${{ steps.f.outputs.mobile }}
-      backend:
+      backend: ${{ steps.f.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: f
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            web: ['web/**', 'contracts/**']
+            mobile: ['mobile/**', 'contracts/**']
+            backend: ['backend/**', 'contracts/**']
+
+  web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - run: npm ci
+      - run: npm run validate
+      - run: npm run build
+      - run: npm run gen:api:check # generated API types must match contracts/openapi.yaml
+      - run: npm audit --audit-level=high
+
+  mobile:
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: mobile } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: mobile/package-lock.json }
+      - run: npm ci
+      - run: npm run validate
+      - run: npx expo-doctor
+      - run: npm audit --audit-level=high
+
+  backend:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
