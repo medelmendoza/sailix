@@ -11,6 +11,7 @@ const course = (over = {}) => ({
   name: 'Safety at sea',
   description: 'Basics',
   thumbnail_url: null,
+  creator: 'Capt. Reyes',
   date_from: '2026-01-01',
   date_to: '2026-12-31',
   status: 'ongoing',
@@ -133,11 +134,12 @@ describe('linking', () => {
 });
 
 describe('courses', () => {
-  it('lists the courses with due date and progress', async () => {
+  it('lists the courses as picture cards: title, creator, time left and progress', async () => {
     mockApi({ 'GET /modules/tala/courses': { data: { data: [course()] } } });
     await openTala();
     expect(await screen.findByText('Safety at sea')).toBeTruthy();
-    expect(screen.getByText(/due 2026-12-31/)).toBeTruthy();
+    expect(screen.getByText('Capt. Reyes')).toBeTruthy(); // who made it
+    expect(screen.getByText(/days left|Overdue|Due today|Due tomorrow/)).toBeTruthy(); // time left
     expect(screen.getByText('1 of 4 items completed · In progress')).toBeTruthy();
     expect(screen.getByRole('progressbar', { name: 'Safety at sea progress' })).toBeTruthy();
   });
@@ -184,10 +186,11 @@ describe('course detail', () => {
     mockApi(routes());
     await openCourse();
     expect(await screen.findByText('Intro video')).toBeTruthy();
-    expect(screen.getByText('Video · 100% · done')).toBeTruthy();
+    expect(screen.getAllByText('Type : Video').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Status : done').length).toBeGreaterThan(0);
     expect(screen.getByText('Final quiz')).toBeTruthy();
     expect(screen.getByText(/Quizzes are not available in this version/)).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: /Watch|Open/ })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /^(Watch|Open): / })).toHaveLength(2);
     expect(screen.getByText(/2 item\(s\) in this course are not supported/)).toBeTruthy();
     expect(screen.getByText(/Taking quizzes and recording progress is not available/)).toBeTruthy();
   });
@@ -210,7 +213,7 @@ describe('course detail', () => {
       },
     });
     await openCourse();
-    await fireEvent.press(await screen.findByRole('button', { name: 'Watch' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Watch: / }));
     await waitFor(() => expect(open).toHaveBeenCalledWith('https://files.example.com/v.mp4'));
   });
 
@@ -220,7 +223,7 @@ describe('course detail', () => {
       'GET /modules/tala/courses/A1/materials/v1': problem(503, 'module_unavailable'),
     });
     await openCourse();
-    await fireEvent.press(await screen.findByRole('button', { name: 'Watch' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Watch: / }));
     expect(await screen.findByText(/not reachable right now/)).toBeTruthy();
   });
 });

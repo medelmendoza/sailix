@@ -1474,12 +1474,13 @@ components:
         last_verified_at: { type: [string, 'null'], format: date-time }
     TalaCourse:
       type: object
-      required: [id, name, description, thumbnail_url, date_from, date_to, status, progress, completed, total, percent, state, total_materials]
+      required: [id, name, description, thumbnail_url, creator, date_from, date_to, status, progress, completed, total, percent, state, total_materials]
       properties:
         id: { type: string, description: 'Assignment id (the only id the client ever uses)' }
         name: { type: string }
         description: { type: [string, 'null'] }
-        thumbnail_url: { type: [string, 'null'] }
+        thumbnail_url: { type: [string, 'null'], description: 'https address of the course picture' }
+        creator: { type: [string, 'null'], description: 'Who made the course, as Tala records it' }
         date_from: { type: [string, 'null'], format: date }
         date_to: { type: [string, 'null'], format: date, description: 'Due date, YYYY-MM-DD' }
         status: { type: [string, 'null'], description: 'As reported by Tala (e.g. INACTIVE, NOT YET COMPLETED, COMPLETED)' }

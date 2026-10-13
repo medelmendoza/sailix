@@ -397,7 +397,7 @@ describe('marking completed', () => {
     await openCourse(false, { 'GET /modules/tala/courses/A1/materials/v1': material('v1') });
     await fireEvent.press(screen.getAllByRole('button', { name: 'Download for offline' })[0]!);
 
-    expect(await screen.findByRole('button', { name: 'Watch offline copy' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /^Watch offline copy/ })).toBeTruthy();
     expect(screen.getByText(/Saved on this device/)).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Remove download' }));

@@ -876,7 +876,10 @@ export interface components {
             id: string;
             name: string;
             description: string | null;
+            /** @description https address of the course picture */
             thumbnail_url: string | null;
+            /** @description Who made the course, as Tala records it */
+            creator: string | null;
             /** Format: date */
             date_from: string | null;
             /**

@@ -125,14 +125,14 @@ describe('taking a quiz', () => {
   it('is offered only when the server says it can be taken', async () => {
     await openQuiz({}, false);
     expect(await screen.findByText(/Quizzes are not available in this version/)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Take quiz' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Take quiz/ })).toBeNull();
   });
 
   it('shows the questions, needs every answer, and sends answers only (never a score)', async () => {
     const api = await openQuiz({
       'POST /modules/tala/courses/A1/quizzes/q1/attempts': { data: { data: result() } },
     });
-    await fireEvent.press(await screen.findByRole('button', { name: 'Take quiz' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Take quiz/ }));
 
     expect(await screen.findByText('1. Which colour is a lifebuoy?')).toBeTruthy();
     expect(screen.getByText('Answer every question to submit.')).toBeTruthy();
@@ -163,7 +163,7 @@ describe('taking a quiz', () => {
     const api = await openQuiz({
       'POST /modules/tala/courses/A1/quizzes/q1/attempts': { data: { data: result(false) } },
     });
-    await fireEvent.press(await screen.findByRole('button', { name: 'Take quiz' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Take quiz/ }));
     await screen.findByText('1. Which colour is a lifebuoy?');
     await answerAll();
     await fireEvent.press(screen.getByRole('button', { name: 'Submit answers' }));
@@ -173,7 +173,7 @@ describe('taking a quiz', () => {
     expect(screen.getByText('1 correct, 2 wrong, 3 questions')).toBeTruthy();
     expect(screen.queryByText(/Which colour/)).toBeNull(); // no per-question review
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Retake quiz' }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Retake quiz/ }));
     expect(await screen.findByText('1. Which colour is a lifebuoy?')).toBeTruthy();
     expect(api.callsTo('GET /modules/tala/courses/A1/quizzes/q1').length).toBeGreaterThanOrEqual(2); // fetched fresh
     expect(screen.getByRole('radio', { name: 'orange' }).props.accessibilityState?.checked).toBe(
@@ -188,7 +188,7 @@ describe('taking a quiz', () => {
     ['relink_required', 409, /link expired/i],
   ])('explains %s and keeps the answers so nothing is retyped', async (code, status, text) => {
     await openQuiz({ 'POST /modules/tala/courses/A1/quizzes/q1/attempts': problem(status, code) });
-    await fireEvent.press(await screen.findByRole('button', { name: 'Take quiz' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Take quiz/ }));
     await screen.findByText('1. Which colour is a lifebuoy?');
     await answerAll();
     await fireEvent.press(screen.getByRole('button', { name: 'Submit answers' }));
@@ -208,7 +208,7 @@ describe('taking a quiz', () => {
       }),
       'POST /modules/tala/courses/A1/quizzes/q1/attempts': problem(409, 'quiz_changed'),
     });
-    await fireEvent.press(await screen.findByRole('button', { name: 'Take quiz' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Take quiz/ }));
     await screen.findByText('1. Which colour is a lifebuoy?');
     await answerAll();
     await fireEvent.press(screen.getByRole('button', { name: 'Submit answers' }));
@@ -226,7 +226,7 @@ describe('taking a quiz', () => {
 
   it('needs a connection: offline is an honest message with retry, and nothing about a quiz is stored', async () => {
     await openQuiz({ 'GET /modules/tala/courses/A1/quizzes/q1': { networkError: true } });
-    await fireEvent.press(await screen.findByRole('button', { name: 'Take quiz' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Take quiz/ }));
     expect(await screen.findByText(/No connection/, {}, { timeout: 4000 })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
     expect((await AsyncStorage.getAllKeys()).filter((k) => /quiz/i.test(k))).toEqual([]);
@@ -241,6 +241,6 @@ describe('taking a quiz', () => {
     await renderApp();
     await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
     await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
-    expect(await screen.findByRole('button', { name: 'Retake quiz' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /^Retake quiz/ })).toBeTruthy();
   });
 });

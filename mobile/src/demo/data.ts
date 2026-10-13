@@ -42,6 +42,7 @@ const course = (id: string, name: string, over: Record<string, unknown> = {}) =>
   name,
   description: 'Learn the essentials step by step.',
   thumbnail_url: null,
+  creator: 'Capt. Reyes',
   date_from: day(-30),
   date_to: day(30),
   status: 'NOT YET COMPLETED',

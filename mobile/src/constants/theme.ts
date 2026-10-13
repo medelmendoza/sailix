@@ -44,6 +44,8 @@ export const colors = {
 
 export const gradients = {
   primary: 'linear-gradient(135deg, #3E6F8A 0%, #4A7C98 100%)',
+  /** Decorative placeholder fill (lavender to mint); never a background for text that matters. */
+  soft: 'linear-gradient(135deg, #B8A9C9 0%, #A8D5BA 100%)',
 } as const;
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;

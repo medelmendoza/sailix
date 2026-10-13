@@ -7,8 +7,17 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, Button, Card, ErrorState, FormError, Notice, SkeletonList } from '@/components';
-import { spacing } from '@/constants/theme';
+import {
+  AppText,
+  Button,
+  Card,
+  CourseImage,
+  ErrorState,
+  FormError,
+  Notice,
+  SkeletonList,
+} from '@/components';
+import { colors, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import type { TalaMaterialSummary } from '@/services/api/types';
 import { scopedKey } from '@/store/scopedKey';
@@ -18,43 +27,14 @@ import { pendingCompletions, queueCompletion, syncOutbox } from './offline/outbo
 import { savedCopyText } from './TalaCourseList';
 import { TalaCourseProgress } from './TalaCourseProgress';
 import { TalaFeedbackModal } from './TalaFeedbackModal';
+import { isDone } from './materials';
+import { TalaMaterialRow } from './TalaMaterialRow';
+import { dueInfo } from './stats';
 import type { Feedback } from './offline/outbox';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'TalaCourse'>;
 
-const TYPE_LABEL: Record<string, string> = {
-  video: 'Video',
-  pdf: 'PDF',
-  quiz: 'Quiz',
-  flashcards: 'Flashcards',
-};
-const isDone = (m: TalaMaterialSummary) => m.status?.toUpperCase() === 'COMPLETED';
-
-/** Tala's status words are shouted and some mean nothing to a learner; say only what helps. */
-export function statusWord(status: string | null): string | null {
-  if (!status) return null;
-  const s = status.toUpperCase();
-  if (s === 'COMPLETED') return 'Completed';
-  if (s === 'DEFAULT' || s === 'NOT STARTED' || s === 'NOT YET COMPLETED' || s === 'INACTIVE')
-    return null;
-  return status;
-}
-
-/** What the learner achieved on one item, from Tala's stored record. */
-export function materialStatsLine(m: TalaMaterialSummary): string | null {
-  const s = m.stats;
-  if (!s) return null;
-  if (m.type === 'video' && typeof s.rating === 'number') return `Your rating: ${s.rating} of 5`;
-  if (m.type === 'quiz' && typeof s.average === 'number') {
-    const verdict =
-      s.remarks === 'PASSED' ? 'Passed' : s.remarks === 'FAILED' ? 'Not passed' : null;
-    return `Score ${s.average}%${verdict ? ` · ${verdict}` : ''} (${s.correct ?? 0} correct, ${s.wrong ?? 0} wrong)`;
-  }
-  if (m.type === 'flashcards' && (s.easy ?? 0) + (s.medium ?? 0) + (s.hard ?? 0) > 0) {
-    return `Easy ${s.easy ?? 0} · Medium ${s.medium ?? 0} · Hard ${s.hard ?? 0}`;
-  }
-  return null;
-}
+export { materialStatsLine, statusWord } from './materials';
 
 export function TalaCourseScreen({ route }: Props) {
   const { assignId } = route.params;
@@ -156,125 +136,104 @@ export function TalaCourseScreen({ route }: Props) {
     }
   }
 
+  function openMaterial(m: TalaMaterialSummary) {
+    if (m.type === 'flashcards') {
+      navigation.navigate('TalaFlashcards', { assignId, cardId: m.id, name: m.name });
+    } else if (m.type === 'quiz') {
+      navigation.navigate('TalaQuiz', { assignId, quizId: m.id, name: m.name });
+    } else if (downloaded[m.id]) {
+      openOffline(m);
+    } else {
+      void openOnline(m);
+    }
+  }
+
+  const due = dueInfo(c);
+
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <AppText variant="title" accessibilityRole="header">
-        {c.name}
-      </AppText>
-      {c.description ? <AppText muted>{c.description}</AppText> : null}
-      <TalaCourseProgress course={c} />
-      {course.data.fromCache ? <Notice message={savedCopyText(course.data.fetchedAt)} /> : null}
-      <Notice
-        message={
-          c.progress_submission
-            ? 'Videos and documents are marked completed by you and are not checked. Quiz scores and flashcard results are recorded in Tala.'
-            : 'You can view your courses here. Taking quizzes and recording progress is not available in this version of the app.'
-        }
-      />
-      {pending.size > 0 ? (
+    <ScrollView contentContainerStyle={styles.scroll}>
+      {/* the course picture, full width, as in the original app */}
+      <CourseImage uri={c.thumbnail_url} title={c.name} style={styles.hero} />
+
+      <View style={styles.content}>
         <Card style={{ gap: spacing.sm }}>
-          <AppText>
-            {pending.size} completion{pending.size === 1 ? '' : 's'} waiting to be sent.
+          <AppText variant="title" accessibilityRole="header" style={styles.courseName}>
+            {c.name}
           </AppText>
-          <Button
-            title="Send now"
-            variant="secondary"
-            loading={busy === 'sync'}
-            onPress={() => void syncNow()}
-          />
+          <AppText>Creator : {c.creator ?? 'Unknown'}</AppText>
+          {due ? (
+            <AppText>
+              Due : {due.text}
+              {due.tone !== 'done' && c.date_to ? ` (${c.date_to})` : ''}
+            </AppText>
+          ) : null}
+          <TalaCourseProgress course={c} showDue={false} />
         </Card>
-      ) : null}
-      <FormError message={error} />
-      {c.materials.map((m) => {
-        const rec = downloaded[m.id];
-        const waiting = pending.has(m.id);
-        const done = isDone(m) || waiting;
-        return (
-          <Card key={m.id} style={{ gap: spacing.sm }}>
-            <View style={{ gap: 2 }}>
-              <AppText variant="heading">{m.name}</AppText>
-              <AppText variant="caption" muted>
-                {TYPE_LABEL[m.type] ?? m.type}
-                {m.progress ? ` · ${m.progress}%` : ''}
-                {waiting
-                  ? ' · Completed, waiting to send'
-                  : statusWord(m.status)
-                    ? ` · ${statusWord(m.status)}`
-                    : ''}
-                {materialStatsLine(m) ? ` · ${materialStatsLine(m)}` : ''}
-                {rec
-                  ? ` · Saved on this device (${Math.max(1, Math.round(rec.bytes / 1024))} KB)`
-                  : ''}
-              </AppText>
-            </View>
-            {m.viewable && m.type === 'flashcards' ? (
-              <Button
-                title={isDone(m) ? 'Practice flashcards' : 'Study flashcards'}
-                onPress={() =>
-                  navigation.navigate('TalaFlashcards', { assignId, cardId: m.id, name: m.name })
-                }
-              />
-            ) : m.viewable && m.type === 'quiz' ? (
-              <Button
-                title={isDone(m) ? 'Retake quiz' : 'Take quiz'}
-                onPress={() =>
-                  navigation.navigate('TalaQuiz', { assignId, quizId: m.id, name: m.name })
-                }
-              />
-            ) : m.viewable ? (
-              <View style={{ gap: spacing.sm }}>
-                {rec ? (
-                  <View style={styles.actions}>
-                    <Button
-                      title={m.type === 'video' ? 'Watch' : 'Open'}
-                      accessibilityLabel={
-                        m.type === 'video' ? 'Watch offline copy' : 'Open offline copy'
-                      }
-                      variant="secondary"
-                      onPress={() => openOffline(m)}
-                      style={styles.half}
-                    />
-                    <Button
-                      title="Remove"
-                      accessibilityLabel="Remove download"
-                      variant="secondary"
-                      loading={busy === m.id}
-                      onPress={() => void remove(m)}
-                      style={styles.half}
-                    />
-                  </View>
-                ) : (
-                  <View style={styles.actions}>
-                    <Button
-                      title="Download"
-                      accessibilityLabel="Download for offline"
-                      variant="secondary"
-                      loading={busy === m.id}
-                      onPress={() => void download(m)}
-                      style={styles.half}
-                    />
-                    <Button
-                      title={m.type === 'video' ? 'Watch' : 'Open'}
-                      variant="secondary"
-                      onPress={() => void openOnline(m)}
-                      style={styles.half}
-                    />
-                  </View>
-                )}
-                {c.progress_submission && !done ? (
-                  <Button title="Mark as completed" onPress={() => void markCompleted(m)} />
-                ) : null}
-              </View>
-            ) : (
-              <AppText muted>
-                {m.type === 'flashcards'
-                  ? 'Flashcards are not available in this version.'
-                  : 'Quizzes are not available in this version.'}
-              </AppText>
-            )}
+
+        <Card style={{ gap: spacing.sm }}>
+          <AppText variant="heading" accessibilityRole="header">
+            Description
+          </AppText>
+          <AppText muted={!c.description}>{c.description ?? 'No description.'}</AppText>
+        </Card>
+
+        {course.data.fromCache ? <Notice message={savedCopyText(course.data.fetchedAt)} /> : null}
+        <Notice
+          message={
+            c.progress_submission
+              ? 'Videos and documents are marked completed by you and are not checked. Quiz scores and flashcard results are recorded in Tala.'
+              : 'You can view your courses here. Taking quizzes and recording progress is not available in this version of the app.'
+          }
+        />
+        {pending.size > 0 ? (
+          <Card style={{ gap: spacing.sm }}>
+            <AppText>
+              {pending.size} completion{pending.size === 1 ? '' : 's'} waiting to be sent.
+            </AppText>
+            <Button
+              title="Send now"
+              variant="secondary"
+              loading={busy === 'sync'}
+              onPress={() => void syncNow()}
+            />
           </Card>
-        );
-      })}
+        ) : null}
+        <FormError message={error} />
+
+        <Card style={{ gap: spacing.xs }}>
+          <AppText variant="heading" accessibilityRole="header">
+            Materials
+          </AppText>
+          {c.materials.length === 0 ? <AppText muted>No materials yet.</AppText> : null}
+          {c.materials.map((m, i) => (
+            <View key={m.id} style={i > 0 ? styles.divider : undefined}>
+              <TalaMaterialRow
+                m={m}
+                saved={downloaded[m.id]}
+                waiting={pending.has(m.id)}
+                busy={busy === m.id}
+                canMarkCompleted={
+                  c.progress_submission &&
+                  (m.type === 'video' || m.type === 'pdf') &&
+                  m.viewable &&
+                  !(isDone(m) || pending.has(m.id))
+                }
+                onOpen={() => openMaterial(m)}
+                onDownload={() => void download(m)}
+                onRemove={() => void remove(m)}
+                onMarkCompleted={() => markCompleted(m)}
+              />
+            </View>
+          ))}
+          {c.hidden_materials > 0 ? (
+            <AppText variant="caption" muted>
+              {c.hidden_materials} item(s) in this course are not supported in this version of the
+              app.
+            </AppText>
+          ) : null}
+        </Card>
+      </View>
+
       <TalaFeedbackModal
         visible={feedbackFor !== null}
         title={feedbackFor?.name ?? ''}
@@ -285,17 +244,14 @@ export function TalaCourseScreen({ route }: Props) {
           if (m) void completeWith(m, feedback);
         }}
       />
-      {c.hidden_materials > 0 ? (
-        <AppText variant="caption" muted>
-          {c.hidden_materials} item(s) in this course are not supported in this version of the app.
-        </AppText>
-      ) : null}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: { paddingBottom: spacing.xxxl },
+  hero: { width: '100%', height: 260 },
   content: { padding: spacing.lg, gap: spacing.lg },
-  actions: { flexDirection: 'row', gap: spacing.md },
-  half: { flex: 1, paddingHorizontal: spacing.sm },
+  courseName: { fontSize: 22, lineHeight: 28 },
+  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderSoft },
 });

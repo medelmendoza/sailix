@@ -36,7 +36,7 @@ trait FakesTala
         $assignment = [
             'assignId' => 'A1', 'courseId' => 'C1', 'dateFrom' => '2026-01-01', 'dateTo' => '2026-12-31', 'status' => 'NOT YET COMPLETED', 'progress' => '2/5',
             'course' => [
-                'courseName' => 'Safety at sea', 'courseDescription' => 'Basics', 'courseThumbnailUrl' => 'https://cdn.example.com/c.png', 'totalMaterial' => '5',
+                'courseName' => 'Safety at sea', 'courseDescription' => 'Basics', 'courseThumbnailUrl' => 'https://cdn.example.com/c.png', 'courseCreator' => 'Capt. Reyes', 'totalMaterial' => '5',
                 'materialDetails' => [
                     ['materialId' => 'v1', 'materialType' => 'video', 'materialName' => 'Intro video', 'materialDescription' => 'd', 'materialThumbnailUrl' => 'https://cdn.example.com/v.png'],
                     ['materialId' => 'p1', 'materialType' => 'pdf', 'materialName' => 'Manual'],

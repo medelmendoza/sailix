@@ -2,6 +2,8 @@ export { AppText } from './AppText';
 export { BrandMark } from './BrandMark';
 export { Button } from './Button';
 export { Card } from './Card';
+export { CourseImage } from './CourseImage';
+export { GlyphIcon, type GlyphName } from './GlyphIcon';
 export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
 export { FormError } from './FormError';

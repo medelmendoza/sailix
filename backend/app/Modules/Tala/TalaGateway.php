@@ -575,6 +575,7 @@ final class TalaGateway
             'name' => $this->str($course['courseName'] ?? null) ?? '',
             'description' => $this->str($course['courseDescription'] ?? null),
             'thumbnail_url' => $this->https($course['courseThumbnailUrl'] ?? null),
+            'creator' => $this->str($course['courseCreator'] ?? null),
             'date_from' => $this->isoDate($a['dateFrom'] ?? null),
             'date_to' => $this->isoDate($a['dateTo'] ?? null),
             'status' => $this->str($a['status'] ?? null),

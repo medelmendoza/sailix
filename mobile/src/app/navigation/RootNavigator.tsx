@@ -133,7 +133,7 @@ export function RootNavigator() {
         <AppStack.Screen
           name="TalaCourse"
           component={TalaCourseScreen}
-          options={({ route }) => ({ title: route.params.name })}
+          options={{ title: 'My Courses' }}
         />
         <AppStack.Screen
           name="TalaFlashcards"
@@ -143,7 +143,7 @@ export function RootNavigator() {
         <AppStack.Screen
           name="TalaQuiz"
           component={TalaQuizScreen}
-          options={({ route }) => ({ title: route.params.name })}
+          options={{ title: 'My Courses' }}
         />
         <AppStack.Screen
           name="TalaPdf"

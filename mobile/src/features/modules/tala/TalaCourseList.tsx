@@ -1,13 +1,13 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, Card, EmptyState, ErrorState, Notice, SkeletonList } from '@/components';
+import { AppText, EmptyState, ErrorState, Notice, SkeletonList } from '@/components';
 import { minTouchTarget, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { useTalaCourses } from './api';
-import { TalaCourseProgress } from './TalaCourseProgress';
+import { TalaCourseCard } from './TalaCourseCard';
 
 export function savedCopyText(fetchedAt: string | null): string {
   const when = fetchedAt ? new Date(fetchedAt).toLocaleString() : 'earlier';
@@ -48,21 +48,11 @@ export function TalaCourseList({ header }: { header: React.ReactNode }) {
             />
           ) : (
             courses.data.data.map((c) => (
-              <Pressable
+              <TalaCourseCard
                 key={c.id}
-                accessibilityRole="button"
-                accessibilityLabel={`${c.name}, ${c.completed} of ${c.total} items completed`}
+                course={c}
                 onPress={() => navigation.navigate('TalaCourse', { assignId: c.id, name: c.name })}
-                style={({ pressed }) => (pressed ? styles.pressed : undefined)}
-              >
-                <Card style={styles.row}>
-                  <View style={{ flex: 1, gap: spacing.xs }}>
-                    <AppText variant="heading">{c.name}</AppText>
-                    <TalaCourseProgress course={c} />
-                  </View>
-                  <AppText muted>›</AppText>
-                </Card>
-              </Pressable>
+              />
             ))
           )}
         </>

@@ -27,9 +27,11 @@ export type CourseProgressData = Pick<
 export function TalaCourseProgress({
   course,
   showState = true,
+  showDue = true,
 }: {
   course: CourseProgressData;
   showState?: boolean;
+  showDue?: boolean;
 }) {
   const due = dueInfo(course);
   return (
@@ -39,7 +41,7 @@ export function TalaCourseProgress({
         {course.completed} of {course.total} items completed
         {showState ? ` · ${STATE[course.state]}` : ''}
       </AppText>
-      {due ? (
+      {showDue && due ? (
         <AppText variant="caption" style={{ color: TONE[due.tone] }}>
           {due.text}
           {due.tone !== 'done' && course.date_to ? ` · due ${course.date_to}` : ''}

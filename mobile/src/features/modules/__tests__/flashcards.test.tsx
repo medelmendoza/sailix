@@ -108,12 +108,12 @@ describe('flashcard study', () => {
   it('is offered only when the server says it can be studied', async () => {
     await openDeck({}, false);
     expect(await screen.findByText(/Flashcards are not available in this version/)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Study flashcards' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Study flashcards/ })).toBeNull();
   });
 
   it('shows a card, reveals the answer on request, and rates it', async () => {
     await openDeck();
-    await fireEvent.press(await screen.findByRole('button', { name: 'Study flashcards' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Study flashcards/ }));
 
     expect(await screen.findByText(/Card 1 of 3 · Rated 0 of 3/)).toBeTruthy();
     expect(screen.queryByText(/^Answer \d$/)).toBeNull(); // not revealed yet
@@ -128,7 +128,7 @@ describe('flashcard study', () => {
 
   it('sends nothing until every card is rated, then sends the complete set once', async () => {
     const api = await openDeck({ [POST]: { data: { data: RESULT } } });
-    await fireEvent.press(await screen.findByRole('button', { name: 'Study flashcards' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Study flashcards/ }));
     await screen.findByText(/Card 1 of 3/);
 
     // rate two of the three cards: nothing is sent yet
@@ -154,7 +154,7 @@ describe('flashcard study', () => {
   it('keeps the finished set on the device while offline and sends it when back online', async () => {
     const api = await openDeck({ [POST]: { data: { data: RESULT } } });
     jest.mocked(NetInfo.fetch).mockResolvedValue({ isConnected: false } as never);
-    await fireEvent.press(await screen.findByRole('button', { name: 'Study flashcards' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Study flashcards/ }));
     await screen.findByText(/Card 1 of 3/);
     await rateShown(() => 'Hard');
 
@@ -175,7 +175,7 @@ describe('flashcard study', () => {
         data: { data: deck([card(0, { rating: 'hard' }), card(1), card(2)]) },
       },
     });
-    await fireEvent.press(await screen.findByRole('button', { name: 'Study flashcards' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Study flashcards/ }));
     expect(await screen.findByText(/Card 1 of 2 · Rated 1 of 3/)).toBeTruthy(); // only the two unrated cards
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show answer' }));
@@ -204,7 +204,7 @@ describe('flashcard study', () => {
       true,
       'COMPLETED',
     );
-    await fireEvent.press(await screen.findByRole('button', { name: 'Practice flashcards' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Practice flashcards/ }));
 
     expect(await screen.findByText(/Card 1 of 3 · Rated 3 of 3 · Practice/)).toBeTruthy();
     expect(screen.getByText('Question 1')).toBeTruthy(); // hard first
@@ -228,7 +228,7 @@ describe('flashcard study', () => {
           deck: deck() as never,
         }),
     );
-    await fireEvent.press(await screen.findByRole('button', { name: 'Study flashcards' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Study flashcards/ }));
 
     expect(await screen.findByText(/studying the copy saved on this device/)).toBeTruthy();
     expect(await screen.findByText(/Card 1 of 3/)).toBeTruthy();
@@ -236,14 +236,14 @@ describe('flashcard study', () => {
 
   it('a first visit while offline is an honest error with a retry', async () => {
     await openDeck({ 'GET /modules/tala/courses/A1/flashcards/c1': { networkError: true } });
-    await fireEvent.press(await screen.findByRole('button', { name: 'Study flashcards' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Study flashcards/ }));
     expect(await screen.findByText(/No connection/, {}, { timeout: 4000 })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
   });
 
   it('a set that changed meanwhile is dropped from the queue with a message', async () => {
     const api = await openDeck({ [POST]: problem(409, 'deck_changed') });
-    await fireEvent.press(await screen.findByRole('button', { name: 'Study flashcards' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Study flashcards/ }));
     await screen.findByText(/Card 1 of 3/);
     await rateShown(() => 'Easy');
 
@@ -266,7 +266,7 @@ describe('flashcard study', () => {
         },
       },
     });
-    await fireEvent.press(await screen.findByRole('button', { name: 'Study flashcards' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Study flashcards/ }));
     expect(await screen.findByLabelText('Question picture')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Show answer' }));
     await fireEvent.press(await screen.findByRole('button', { name: 'Play audio' }));

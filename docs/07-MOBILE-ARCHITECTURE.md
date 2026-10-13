@@ -58,3 +58,11 @@ Unit (mappers, money/date), component (forms, gate), navigation (auth swap), aut
 **Demo mode (build-time, never in production):** `DEMO_MODE=1` builds the app signed in with invented sample data (no network, no storage) and a scripted tour through Home, My Stats, a course, a quiz, flashcards and Account every 7 seconds — used to review the design on real screens without touching them, and useful for stakeholder demos. `parseEnv` forces it off for `appEnv: production` (tested).
 **Not done:** the web administration portal still has its own Tailwind look (not restyled); dark mode; larger-text (Dynamic Type) review; a design pass on the registration/forgot-password screens beyond the shared components; screenshots of the Android build.
 
+
+### 7.1 Tala screen layout (copied from the original Tala app)
+
+Only the *placement* is copied; colours, type and shadows stay the Sailix soft-UI tokens (§7).
+
+- **Course list**: one card per course. A large course picture with the title over it, then a footer row with the creator and the time left, then the progress bar and "N of M items completed".
+- **Course detail**: hero picture; info card (name, "Creator", "Due", progress); Description card; Materials card. Each material row has a thumbnail (or a type icon), the name, "Type : …" and "Status : …" lines, and a trailing download / remove icon for video and PDF. Tapping a row opens the video, PDF, quiz or flashcards.
+- A missing or failed picture shows a soft placeholder (first letter), never a broken image. The gateway returns `creator` (string or null).

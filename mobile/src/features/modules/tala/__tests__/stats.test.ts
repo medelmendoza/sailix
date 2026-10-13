@@ -6,6 +6,7 @@ const course = (over: Partial<TalaCourse> = {}): TalaCourse => ({
   name: 'Course A',
   description: null,
   thumbnail_url: null,
+  creator: 'Capt. Reyes',
   date_from: '2026-01-01',
   date_to: '2026-10-20',
   status: 'NOT YET COMPLETED',
