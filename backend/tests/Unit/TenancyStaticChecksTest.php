@@ -131,6 +131,7 @@ class TenancyStaticChecksTest extends TestCase
             'users' => 'login identity; tenancy lives on memberships',
             'platform_admins' => 'superadmin identity, separate guard',
             'platform_settings' => 'platform-wide configuration',
+            'password_reset_tokens' => 'framework password broker: hashed one-time tokens keyed by the account email (identity-level, 60 min expiry)',
             'external_identities' => 'identity-level link of a Sailix user to an external account; uniqueness must be global (ADR-0017)',
             'sessions' => 'framework session store',
             'cache' => 'framework cache store (keys are tenant-prefixed in code)',

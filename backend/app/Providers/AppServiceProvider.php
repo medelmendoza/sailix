@@ -45,6 +45,17 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('platform-login', fn (Request $r) => [
             Limit::perMinute(5)->by('plogin:'.mb_strtolower((string) $r->input('email')).'|'.$r->ip()),
         ]);
+        RateLimiter::for('register', fn (Request $r) => [
+            Limit::perHour(5)->by('register-ip:'.$r->ip()),
+            Limit::perHour(3)->by('register-email:'.mb_strtolower((string) $r->input('email'))),
+        ]);
+        RateLimiter::for('forgot', fn (Request $r) => [
+            Limit::perHour(5)->by('forgot-ip:'.$r->ip()),
+            Limit::perHour(3)->by('forgot-email:'.mb_strtolower((string) $r->input('email'))),
+        ]);
+        RateLimiter::for('reset', fn (Request $r) => Limit::perHour(10)->by('reset-ip:'.$r->ip()));
+        RateLimiter::for('password-change', fn (Request $r) => Limit::perMinute(5)->by('pwchange:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
+        RateLimiter::for('deletion', fn (Request $r) => Limit::perDay(3)->by('deletion:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
         RateLimiter::for('invitation', fn (Request $r) => Limit::perHour(10)->by('invite:'.$r->ip()));
         RateLimiter::for('api', fn (Request $r) => Limit::perMinute(120)->by('api:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
     }

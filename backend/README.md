@@ -32,6 +32,8 @@ Suites: `Unit`, `Feature`, `Isolation`, `Contract` (tests run against real MySQL
 
 Module/Tala safety: `SAILIX_TALA_ALLOWED_HOSTS` (comma-separated exact hosts; empty = nothing allowed) is deployment config. A superadmin sets `tala_api_base_url` through `PATCH /platform/settings`; until that succeeds every Tala route answers `503 module_unavailable`. No code or test contacts Tala (`Http::preventStrayRequests()` and a fake DNS resolver are installed in every test).
 
+Mail: transactional mail uses the Laravel driver in `MAIL_MAILER` (default `log` writes to `storage/logs/laravel.log`; production provider undecided, D-11). `SAILIX_RESET_URL` is the web page the reset link opens (default `<first web origin>/reset-password`).
+
 Rules: never accept a tenant id as authority; `withoutTenantScope()` only in `app/Platform` and `app/Identity` (enforced by `tests/Unit/TenancyStaticChecksTest.php`); raw SQL on tenant tables is security-sensitive (no RLS on MySQL, see `../docs/03` §3.6).
 
 ## Auth quick reference

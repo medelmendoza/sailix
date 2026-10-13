@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /** (user, tenant, role, status). Authorization always evaluates this, never a global role. */
@@ -38,6 +39,12 @@ class Membership extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** @return HasOne<CrewProfile, $this> */
+    public function profile(): HasOne
+    {
+        return $this->hasOne(CrewProfile::class);
     }
 
     public function isActive(): bool

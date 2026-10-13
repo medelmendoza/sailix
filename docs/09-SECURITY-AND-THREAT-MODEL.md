@@ -69,3 +69,15 @@ Legacy API remains exposed if it stays online (D-2) — out of this project's co
 | T29 | Access after suspension/disable | Per-request checks; no token-cached entitlement | `RequireModuleTest` |
 | T30 | Plaintext upstream (Tala uses `http://`) | HTTPS-only client rules; fail-closed `module_unavailable`; production blocked (D-T2) | `RequireModuleTest`, `TalaEndpointGuardTest` |
 | T31 | Client-computed scores trusted (D-T8) | Not authoritative by default; server-side recomputation to be investigated; limitation must be stated before production approval | open |
+
+## 6. Threats addressed by M2 (account lifecycle)
+| # | Threat | Controls | Verified by |
+|---|---|---|---|
+| T32 | Privilege/tenant injection at registration | Role, status, tenant fixed server-side; mass-assignment tests with injected fields | `RegistrationTest` |
+| T33 | Email enumeration | Identical `202` for new vs existing email; existing owner notified; hashing on both paths. **Username existence is revealed** (accepted trade-off, Q-5) | `RegistrationTest`, `PasswordResetTest` |
+| T34 | Reset-token abuse (reuse, expiry, cross-account, replay after suspension) | Hashed single-use 60-min tokens; indistinguishable `422`; active accounts only; all tokens/sessions revoked on success | `PasswordResetTest` |
+| T35 | Password-change hijack / stale sessions | Current password required; other tokens and sessions revoked; throttled | `ChangePasswordTest` |
+| T36 | PII exposure across organizations | Profiles tenant-owned and composite-FK bound; admins only see own organization; no DOB collected | `AccountLifecycleIsolationTest` |
+| T37 | Broken emailed links / content injection | Text templates render raw values; render-level tests; org names are platform-controlled | `MailTemplatesTest` |
+| T38 | Mail outage leaks existence or breaks flows | `SafeMailer` swallows and logs without PII; responses unchanged | `RegistrationTest`, `PasswordResetTest` |
+Residual: no email-verification flow at registration (a squatted address only ever receives mail it can't act on); reset links travel in a URL query string (the web page must strip it from history/referrers); deletion semantics undecided (Q-3).

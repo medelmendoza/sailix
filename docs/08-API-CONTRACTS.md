@@ -91,3 +91,14 @@ Auth: lockout/throttle, uniform failure, suspended tenant/membership, token boun
 | `/platform/tenants/{tenant}/modules/{module}` | PUT `{external_team_id, enabled?}` | superadmin | `409 team_already_mapped`, `409 links_exist` |
 | `/platform/settings` | PATCH | superadmin | new `tala_api_base_url` (https, allow-listed, public destination) |
 New problem codes: `module_disabled`, `module_forbidden`, `module_unavailable` (503), `module_not_provisioned`, `links_exist`, `team_already_mapped`. `{module}` is an enum (`tala`); anything else is `404`.
+
+## 8. M2 additions (authoritative definition: `contracts/openapi.yaml`)
+| Endpoint | Method | Auth | Notes |
+|---|---|---|---|
+| `/auth/register` | POST | public, throttled | pending crew membership; identical `202` for existing emails |
+| `/auth/forgot-password` | POST | public, throttled | always `202` |
+| `/auth/reset-password` | POST | public, throttled | `204`; `422 invalid_reset_token` |
+| `/me/password` | PUT | any member | `204`; `422 invalid_current_password`; revokes other tokens/sessions |
+| `/me/deletion-request` | POST | any member | `202`, idempotent, nothing deleted |
+| `/tenant/deletion-requests` | GET | `users.manage` | pending requests with member profile |
+`/me` gains `profile`; `/tenant/users` items gain `profile`. New problem codes: `invalid_agency_code`, `invalid_reset_token`, `invalid_current_password`.

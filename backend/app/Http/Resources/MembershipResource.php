@@ -22,6 +22,7 @@ class MembershipResource extends JsonResource
                 'email' => $this->user->email,
                 'display_name' => $this->user->display_name,
             ]),
+            'profile' => $this->whenLoaded('profile', fn () => $this->profile ? (new ProfileResource($this->profile))->resolve() : null),
             'created_at' => $this->created_at->toIso8601String(),
         ];
     }

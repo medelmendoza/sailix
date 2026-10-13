@@ -28,5 +28,8 @@ return [
         ],
     ],
 
+    // Page of the web portal that completes a password reset (emailed link target).
+    'reset_password_url' => env('SAILIX_RESET_URL') ?: rtrim((string) (explode(',', (string) env('SAILIX_WEB_ORIGINS', 'http://localhost:5173'))[0]), '/').'/reset-password',
+
     'web_origins' => array_values(array_filter(explode(',', (string) env('SAILIX_WEB_ORIGINS', 'http://localhost:5173')))),
 ];

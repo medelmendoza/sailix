@@ -8,9 +8,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\UpdateMembershipRequest;
 use App\Http\Resources\MembershipResource;
 use App\Identity\TokenIssuer;
+use App\Mail\MembershipActivated;
 use App\Models\Membership;
+use App\Models\Tenant;
 use App\Support\ApiProblem;
 use App\Support\Audit;
+use App\Support\SafeMailer;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -23,7 +26,7 @@ class UserController extends Controller
     {
         Gate::authorize('viewAny', Membership::class);
 
-        $q = Membership::with('user')
+        $q = Membership::with(['user', 'profile'])
             ->when($request->input('filter.status'), fn ($b, $v) => $b->where('status', $v))
             ->when($request->input('filter.role'), fn ($b, $v) => $b->where('role', $v))
             ->when($request->input('filter.q'), fn ($b, $v) => $b->whereHas('user', fn ($u) => $u->where('username', 'like', '%'.addcslashes($v, '%_\\').'%')))
@@ -46,9 +49,10 @@ class UserController extends Controller
             throw ApiProblem::conflict('invalid_transition', 'Invited members activate through their invitation.');
         }
 
-        DB::transaction(function () use ($membership, $newRole, $newStatus, $context, $tokens) {
+        $activated = DB::transaction(function () use ($membership, $newRole, $newStatus, $context, $tokens): bool {
             $locked = Membership::whereKey($membership->getKey())->lockForUpdate()->firstOrFail();
             $before = ['role' => $locked->role->value, 'status' => $locked->status->value];
+            $wasPending = $locked->status === MembershipStatus::Pending;
 
             $losesAdmin = $locked->role === Role::TenantAdmin && $locked->isActive()
                 && (($newRole && $newRole !== Role::TenantAdmin) || $newStatus === MembershipStatus::Suspended);
@@ -65,8 +69,16 @@ class UserController extends Controller
                 $tokens->revokeForMembership($locked->getKey());
             }
             Audit::record('membership.updated', $context->tenantId(), $locked, ['before' => $before, 'after' => ['role' => $locked->role->value, 'status' => $locked->status->value]]);
+
+            return $wasPending && $locked->status === MembershipStatus::Active;
         });
 
-        return new MembershipResource($membership->refresh()->load('user'));
+        $membership->refresh()->load(['user', 'profile']);
+
+        if ($activated) { // pending registration approved: tell the member (after commit; delivery never fails the call)
+            SafeMailer::send($membership->user->email, new MembershipActivated(Tenant::findOrFail($context->tenantId())->name));
+        }
+
+        return new MembershipResource($membership);
     }
 }

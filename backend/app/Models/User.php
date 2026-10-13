@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\UserStatus;
+use App\Mail\PasswordResetLink;
+use App\Support\SafeMailer;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -40,5 +42,17 @@ class User extends Authenticatable
     public function isActive(): bool
     {
         return $this->status === UserStatus::Active;
+    }
+
+    /**
+     * Password-broker hook: sends our own plain mail with a link to the web reset page instead of the
+     * framework notification. Delivery failure is logged (without the link/token) and never surfaces to the caller.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $base = (string) config('sailix.reset_password_url');
+        $url = $base.'?'.http_build_query(['token' => $token, 'email' => $this->email]);
+
+        SafeMailer::send($this->email, new PasswordResetLink($url));
     }
 }

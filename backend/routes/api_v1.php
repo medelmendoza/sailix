@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\InvitationController;
+use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
+use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\SessionController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
+use App\Http\Controllers\Api\V1\Me;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\Platform;
 use App\Http\Controllers\Api\V1\Tenant;
@@ -19,10 +22,15 @@ Route::middleware('throttle:login')->group(function () {
     Route::post('platform/auth/session', [Platform\AuthController::class, 'store'])->middleware('throttle:platform-login');
 });
 Route::post('auth/invitations/accept', [InvitationController::class, 'accept'])->middleware('throttle:invitation');
+Route::post('auth/register', [RegisterController::class, 'store'])->middleware('throttle:register');
+Route::post('auth/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:forgot');
+Route::post('auth/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:reset');
 
 // Tenant-authenticated (mobile token or web cookie session). Tenant context derived server-side.
 Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(function () {
     Route::get('me', [MeController::class, 'show']);
+    Route::put('me/password', [Me\PasswordController::class, 'update'])->middleware('throttle:password-change');
+    Route::post('me/deletion-request', [Me\DeletionRequestController::class, 'store'])->middleware('throttle:deletion');
 
     Route::delete('auth/token', [TokenController::class, 'destroy']);
     Route::post('auth/token/refresh', [TokenController::class, 'refresh']);
@@ -35,6 +43,7 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::get('users', [Tenant\UserController::class, 'index']);
         Route::patch('users/{membership}', [Tenant\UserController::class, 'update']);
         Route::get('audit-logs', [Tenant\AuditLogController::class, 'index']);
+        Route::get('deletion-requests', [Tenant\DeletionRequestController::class, 'index']);
         Route::get('modules', [Tenant\ModuleController::class, 'index']);
         Route::put('modules/{module}', [Tenant\ModuleController::class, 'update']);
     });

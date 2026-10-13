@@ -1,6 +1,6 @@
 # 13 — Tala-only MVP: scope, impact on Phase B, revised roadmap
 
-Status: **APPROVED 2026-10-13 with conditions (§10). M1 implemented and awaiting your review (§11).** Supersedes the Phase C–I ordering and the Phase D module list in `12-MASTER-IMPLEMENTATION-PLAN.md` (Phases A and B stand as completed).
+Status: **APPROVED 2026-10-13 with conditions (§10). M1 done (§11); M2 implemented and awaiting your review (§12).** Supersedes the Phase C–I ordering and the Phase D module list in `12-MASTER-IMPLEMENTATION-PLAN.md` (Phases A and B stand as completed).
 Evidence: read-only analysis of the Tala Flutter working tree in `docs/reference/tala-analysis/` (`01` identity, `02` courses/content, `03` stats/offline/platform). Citations below are to those files. **[V]** verified in Tala source · **[I]** inferred · **[P]** proposed · **[U]** unknown, needs the Tala backend owner.
 
 ## 1. What changes
@@ -223,3 +223,19 @@ Estimates are omitted (no velocity data). Ordering is by dependency; M1 and T0 c
 5. **Changes to existing tests (not weakened):** `RoleAndLifecycleTest::test_role_abilities` — crew now holds exactly the module-use abilities (approved change) and the test additionally asserts crew lacks manage/admin abilities; `TenantAdminTest` settings test — `services_enabled` replaced by other settings and now asserts it is rejected (422) and `/me` has no `features`; `TenancyStaticChecksTest` — now inspects only the connected database (it also saw the dev schema) and gains the un-scoped-table allow-list check.
 6. **Bug fixed:** setting a nullable setting to `null` caused a 500 (NOT NULL json column); `null` now means "unset".
 7. Crew-portal leftovers `payslip_step_up` and `upload_max_mb` remain in the settings registry (unused); remove with the crew-portal decision.
+
+## 12. M2 outcome (implemented; awaiting review) — evidence in `PROJECT-STATUS.md`
+
+Scope delivered (docs/13 §6 "M2 Identity completion for MVP"): registration with agency code → pending → admin activation, password reset, password change, account-deletion request, email plumbing (configurable driver). Details: docs/04 §5, docs/08 §8.
+
+**Decisions I made that you should confirm (all reversible):**
+1. **No date of birth, no crew id collected.** The earlier profile design listed birth date; nothing in the Tala MVP needs it, and it is the most sensitive field. Add later with a reason.
+2. **Username existence is revealed** on registration (email existence is not). Alternative is silent success, which hides typos from users (Q-5).
+3. **Registering with an already-used email creates nothing** and mails the owner. **There is still no way for an existing user to join a second organization** (no self-join, no admin invite): the model supports it, the flow is not built. Needs your decision (small follow-up).
+4. **Forgot/reset are enabled** (docs/04 originally said "behind a flag until Q-34"): link-based only, never a password by email.
+5. **No email-verification flow**; a successful reset marks the mailbox verified.
+6. **Deletion request only records and notifies**; it deletes/anonymizes nothing (Q-3 still open).
+7. **Mail is synchronous with failure swallowed** (log driver by default; provider undecided D-11). A queue-based sender is the production-grade follow-up.
+8. Tenant admins are **not emailed** about new registrations (they see the pending queue; the web portal in M4 should badge it).
+
+**Bug found by the real-HTTP smoke test (not by unit tests) and fixed:** text email templates used HTML-escaping, so the reset link was emailed with `&amp;` and would have lost its `email` parameter. Templates now render raw values; `MailTemplatesTest` renders real bodies and fails if the escaping returns (verified by reverting the fix once).

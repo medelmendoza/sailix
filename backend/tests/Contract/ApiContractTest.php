@@ -4,6 +4,8 @@ namespace Tests\Contract;
 
 use App\Enums\MembershipStatus;
 use App\Enums\Role;
+use App\Mail\PasswordResetLink;
+use App\Models\Membership;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -228,6 +230,68 @@ class ApiContractTest extends TestCase
         $admin = $this->bearer($this->tokenFor('admin1'));
         $this->ok($this->fresh()->putJson('/api/v1/tenant/modules/tala', ['enabled' => true], $admin), '/tenant/modules/{module}', 'put', 409);
         $this->ok($this->fresh()->getJson('/api/v1/tenant/modules'), '/tenant/modules', 'get', 401);
+    }
+
+    public function test_account_lifecycle_operations_conform(): void
+    {
+        Mail::fake();
+        $tenant = $this->makeTenant('SFAI');
+        $this->makeMember($tenant, Role::TenantAdmin, 'admin1');
+        $this->makeMember($tenant, Role::Crew, 'crew1');
+        $reg = fn (array $o = []) => $this->fresh()->postJson('/api/v1/auth/register', $o + [
+            'agency_code' => 'SFAI', 'username' => 'new.person', 'email' => 'new@example.test',
+            'password' => 'a-long-enough-pass', 'password_confirmation' => 'a-long-enough-pass',
+            'first_name' => 'New', 'last_name' => 'Person', 'mobile' => '+63 900 000 0000',
+        ]);
+
+        $this->ok($reg(), '/auth/register', 'post', 202);
+        $this->app['cache']->store()->flush();
+        $this->ok($reg(['agency_code' => 'NOPE', 'email' => 'x@example.test']), '/auth/register', 'post', 422);
+        $this->app['cache']->store()->flush();
+        $this->ok($reg(['first_name' => '', 'email' => 'y@example.test']), '/auth/register', 'post', 422);
+
+        $this->app['cache']->store()->flush();
+        $this->ok($this->fresh()->postJson('/api/v1/auth/forgot-password', ['email' => 'crew1@example.test']), '/auth/forgot-password', 'post', 202);
+        $this->ok($this->fresh()->postJson('/api/v1/auth/forgot-password', ['email' => 'nope']), '/auth/forgot-password', 'post', 422);
+        $mail = Mail::sent(PasswordResetLink::class)->first();
+        parse_str((string) parse_url($mail->url, PHP_URL_QUERY), $q);
+        $this->ok($this->fresh()->postJson('/api/v1/auth/reset-password', ['email' => 'crew1@example.test', 'token' => 'bad', 'password' => 'a-long-enough-pass', 'password_confirmation' => 'a-long-enough-pass']), '/auth/reset-password', 'post', 422);
+        $this->ok($this->fresh()->postJson('/api/v1/auth/reset-password', ['email' => $q['email'], 'token' => $q['token'], 'password' => 'a-long-enough-pass', 'password_confirmation' => 'a-long-enough-pass']), '/auth/reset-password', 'post', 204);
+
+        $change = ['current_password' => self::PASSWORD, 'password' => 'another-long-pass', 'password_confirmation' => 'another-long-pass'];
+        // password was reset above; sign in with the new one
+        $crew = $this->bearer($this->fresh()->postJson('/api/v1/auth/token', ['username' => 'crew1', 'password' => 'a-long-enough-pass', 'device_name' => 'd'])->json('data.token'));
+        $change['current_password'] = 'a-long-enough-pass';
+        $this->ok($this->fresh()->putJson('/api/v1/me/password', $change, $crew), '/me/password', 'put', 204);
+        $this->ok($this->fresh()->putJson('/api/v1/me/password', ['current_password' => 'wrong-wrong'] + $change, $crew), '/me/password', 'put', 422);
+        $this->ok($this->fresh()->putJson('/api/v1/me/password', $change), '/me/password', 'put', 401);
+
+        $this->ok($this->fresh()->postJson('/api/v1/me/deletion-request', [], $crew), '/me/deletion-request', 'post', 202);
+        $this->ok($this->fresh()->postJson('/api/v1/me/deletion-request'), '/me/deletion-request', 'post', 401);
+        $this->ok($this->fresh()->getJson('/api/v1/tenant/deletion-requests', $crew), '/tenant/deletion-requests', 'get', 403);
+
+        $admin = $this->bearer($this->tokenFor('admin1'));
+        $this->ok($this->fresh()->getJson('/api/v1/tenant/deletion-requests', $admin), '/tenant/deletion-requests', 'get', 200);
+        $this->ok($this->fresh()->getJson('/api/v1/tenant/users?filter[status]=pending', $admin), '/tenant/users', 'get', 200);
+        $this->ok($this->fresh()->getJson('/api/v1/me', $admin), '/me', 'get', 200);
+    }
+
+    public function test_me_with_a_profile_conforms(): void
+    {
+        Mail::fake();
+        $tenant = $this->makeTenant('SFAI');
+        [, $admin] = $this->makeMember($tenant, Role::TenantAdmin, 'admin1');
+        $this->postJson('/api/v1/auth/register', [
+            'agency_code' => 'SFAI', 'username' => 'new.person', 'email' => 'new@example.test',
+            'password' => 'a-long-enough-pass', 'password_confirmation' => 'a-long-enough-pass', 'first_name' => 'New', 'last_name' => 'Person',
+        ])->assertStatus(202);
+        $id = Membership::withoutTenantScope()->where('status', 'pending')->firstOrFail()->id;
+        $h = $this->bearer($this->tokenFor('admin1'));
+        $this->fresh()->patchJson("/api/v1/tenant/users/$id", ['status' => 'active'], $h)->assertOk();
+
+        $token = $this->fresh()->postJson('/api/v1/auth/token', ['username' => 'new.person', 'password' => 'a-long-enough-pass', 'device_name' => 'd'])->json('data.token');
+        $me = $this->ok($this->fresh()->getJson('/api/v1/me', $this->bearer($token)), '/me', 'get', 200);
+        $this->assertSame('New', $me->json('data.profile.first_name'));
     }
 
     /** Guards the guard: the validator must actually reject a payload that does not match the contract. */

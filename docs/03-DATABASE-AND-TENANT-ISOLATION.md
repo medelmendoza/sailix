@@ -131,3 +131,10 @@ Laravel migrations only; forward-only in staging/prod; dev DB only until approva
 | `module_links` | tenant-owned | `unique(tenant_id, membership_id, module)`; composite FK `(tenant_id, membership_id)` → memberships; composite FK `(tenant_id, module, external_team_id)` → `tenant_modules` (**a link can only use its own organization's mapped team**; the mapping cannot change while links exist); tokens encrypted by cast, hidden from serialization, nullable until M3 |
 
 `TenancyStaticChecksTest` now also asserts the exact set of tables **without** `tenant_id` (each justified), so a new un-scoped table is a conscious, reviewed decision, and that it inspects only the connected database (it previously also saw the dev schema).
+
+## 8. M2 additions — account lifecycle tables
+| Table | Scope | Notes |
+|---|---|---|
+| `crew_profiles` | tenant-owned | first/middle/last name, suffix, mobile; **no date of birth, no crew id** (data minimization: no Tala need; the legacy payslip gate that used DOB is deferred). `unique(tenant_id, membership_id)`; composite FK to `memberships` |
+| `deletion_requests` | tenant-owned | one per membership (`unique(tenant_id, membership_id)`), composite FK; status `pending` only until Q-3 defines processing |
+| `password_reset_tokens` | un-scoped (reviewed): framework broker table keyed by account email, hashed tokens | listed and justified in `TenancyStaticChecksTest` |
