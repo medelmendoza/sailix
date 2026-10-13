@@ -110,6 +110,7 @@ function MainTabs() {
         component={HomeScreen}
         options={{
           title: 'Dashboard',
+          headerShown: false, // the Dashboard has its own gradient header, with the Account button in it
           tabBarIcon: ({ color }) => <TabIcon name="home" color={color} />,
         }}
       />

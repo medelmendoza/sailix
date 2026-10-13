@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, within } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
 import { makeMe, TALA } from '@/test-utils/fixtures';
 import { mockApi } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
@@ -10,7 +10,7 @@ describe('the five tabs (as in the original Sailix, plus Services)', () => {
   it('shows Dashboard, Files, Announcements, Finance and Services, and an Account button in the header', async () => {
     signedInAs();
     await renderApp();
-    await screen.findByText('Hello, Maria');
+    await screen.findByText('Maria');
     for (const tab of [/^Dashboard/, /^Files/, /^Announcements/, /^Finance/, /^Services/]) {
       expect(screen.getByLabelText(tab)).toBeTruthy();
     }
@@ -87,9 +87,7 @@ describe('services tab', () => {
     signedInAs(makeMe({ modules: [TALA('linked')] }));
     mockApi({ 'GET /modules/tala/courses': { data: { data: [] } } });
     await renderApp();
-    await screen.findByText('Hello, Maria');
+    await screen.findByText('Maria');
     expect(screen.queryByRole('button', { name: 'Tala, Linked' })).toBeNull();
-    const dashboard = screen.getByTestId('home-scroll');
-    expect(within(dashboard).queryByText('Services')).toBeNull();
   });
 });

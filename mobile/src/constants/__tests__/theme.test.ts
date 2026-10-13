@@ -27,6 +27,7 @@ describe('colour contrast (WCAG 2.1 AA)', () => {
     ['dark text on the Medium rating button', colors.text, colors.ratingMedium],
     ['white on the Easy rating button', colors.onPrimary, colors.success],
     ['white on the Hard rating button', colors.onPrimary, colors.danger],
+    ['white on the end of the Dashboard header gradient', colors.onPrimary, '#2A7F8F'],
     ['body text on the surface', colors.text, colors.surface],
     ['muted text on the surface', colors.textMuted, colors.surface],
     ['muted text on a sunken well', colors.textMuted, colors.surfaceSunken],

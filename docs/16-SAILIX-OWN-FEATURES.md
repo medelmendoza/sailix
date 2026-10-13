@@ -89,9 +89,14 @@ The old Call-it was a mock: hard-coded name ("Jaycob"), "88 reports", a hard-cod
 - **Not built:** notifications to administrators when a report arrives (no email provider, no push), a vessel list, editing a report after it was sent, "official report" follow-up workflow, offline drafts (a draft needs a connection to save).
 - **State:** checks run (see PROJECT-STATUS). Not verified: the file picker and upload on a device, Android.
 
-## Dashboard shortcuts and document alerts
+## Dashboard (copied from the original Sailix dashboard)
 
-- **Shortcuts (DASH-02):** four round buttons under the greeting: **Upload a document** (opens the add-document form; the old app only switched tab), **Finance**, **To-do list**, **My documents**. The old "Request appointment" shortcut was a no-op with no spec and is not built.
-- **Documents need attention (DASH-05):** appears only when an approved document is expired or expiring within 90 days; shows the counts, up to three documents (expired first) and a button to Files. It uses the same server-computed expiry state as the Files tab, and renders nothing while loading, on an error, or when everything is fine.
-- **Not built:** the old iOS tracking prompt (removed on purpose: the app has no ad or analytics SDK) and the disabled onboarding coach marks.
-- **State:** typechecked only; tests written, none run (no checks until asked).
+The first version put Tala content on the Dashboard (a learning summary and a course list) and a stack of cards; the product owner asked for the original Sailix dashboard instead. Nothing from a service lives on the Dashboard now: Tala, Astra and Call-it are under Services.
+
+- **Header:** a blue-to-teal gradient with rounded bottom corners (the logo's blue; the old one went blue to green, but white text must stay readable), "Welcome," and the member's first name large and bold, the organization name under it, and the Account button in the corner. The tab bar's own header is hidden for the Dashboard.
+- **Shortcuts card:** three round blue buttons: **Upload documents** (opens the add-document form; the old app only switched tab), **View finances**, and **Services** (the old third button, "Request appointment", was a no-op with no spec, so it is replaced by a way into Services).
+- **Two tiles:** **To-do list** and **Documents** (round icon and title, as in the old app). New: a live note under each, "3 open, 1 overdue" or "All done" on the to-do tile, and "1 expired, 2 expiring soon" on the Documents tile when something needs attention (the old app counted expired documents and never showed them).
+- **Announcements card:** the title with a "new" count, a bell that opens the Announcements tab, a green rule, then the latest three announcements, or "No announcements yet." (the old "No data found...").
+- **Removed from the Dashboard:** the Tala "My learning" card (progress and due dates) and the separate to-do list and document alert cards. Tala's progress and due dates are on its own My stats screen (Services > Tala > My stats).
+- **Left out on purpose:** the iOS tracking prompt (the app has no ad or analytics SDK) and the disabled onboarding tips.
+- **State:** typechecked only; tests rewritten for the new layout (shortcuts, tiles, header, announcements card, no Tala content), none run (no checks until asked).

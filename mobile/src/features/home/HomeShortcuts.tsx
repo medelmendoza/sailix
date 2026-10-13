@@ -1,24 +1,25 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { AppText, GlyphIcon, TabIcon } from '@/components';
+import { AppText, Card, GlyphIcon, TabIcon } from '@/components';
 import { colors, minTouchTarget, radius, shadows, spacing } from '@/constants/theme';
 
-type Shortcut = { label: string; icon: React.ReactNode; onPress: () => void };
+/** A round blue button with an icon, used by the shortcuts and the two tiles. */
+export function Circle({ children }: { children: React.ReactNode }) {
+  return <View style={styles.circle}>{children}</View>;
+}
 
-/** The four quick ways in the old Sailix dashboard had: upload a document, open finances, the to-do list, and your documents. */
-export function HomeShortcuts({
+/** The first card of the old Sailix dashboard: three round shortcuts. */
+export function ShortcutsCard({
   onUpload,
   onFinance,
-  onTodos,
-  onFiles,
+  onServices,
 }: {
   onUpload: () => void;
   onFinance: () => void;
-  onTodos: () => void;
-  onFiles: () => void;
+  onServices: () => void;
 }) {
-  const items: Shortcut[] = [
+  const items = [
     {
-      label: 'Upload a document',
+      label: 'Upload documents',
       icon: (
         <View style={{ transform: [{ rotate: '180deg' }] }}>
           <GlyphIcon name="download" color={colors.onPrimary} size={26} />
@@ -27,43 +28,80 @@ export function HomeShortcuts({
       onPress: onUpload,
     },
     {
-      label: 'Finance',
+      label: 'View finances',
       icon: <TabIcon name="coins" color={colors.onPrimary} />,
       onPress: onFinance,
     },
     {
-      label: 'To-do list',
-      icon: <GlyphIcon name="check" color={colors.onPrimary} size={26} />,
-      onPress: onTodos,
-    },
-    {
-      label: 'My documents',
-      icon: <TabIcon name="folder" color={colors.onPrimary} />,
-      onPress: onFiles,
+      label: 'Services',
+      icon: <TabIcon name="grid" color={colors.onPrimary} />,
+      onPress: onServices,
     },
   ];
   return (
-    <View style={styles.row}>
-      {items.map((i) => (
-        <Pressable
-          key={i.label}
-          accessibilityRole="button"
-          accessibilityLabel={i.label}
-          onPress={i.onPress}
-          style={({ pressed }) => [styles.item, pressed && { opacity: 0.75 }]}
-        >
-          <View style={styles.circle}>{i.icon}</View>
-          <AppText variant="caption" style={styles.label}>
-            {i.label}
+    <Card style={styles.card}>
+      <View style={styles.row}>
+        {items.map((i) => (
+          <Pressable
+            key={i.label}
+            accessibilityRole="button"
+            accessibilityLabel={i.label}
+            onPress={i.onPress}
+            style={({ pressed }) => [styles.item, pressed && { opacity: 0.75 }]}
+          >
+            <Circle>{i.icon}</Circle>
+            <AppText variant="caption" style={styles.label}>
+              {i.label}
+            </AppText>
+          </Pressable>
+        ))}
+      </View>
+    </Card>
+  );
+}
+
+/** One of the two tiles under it (To-do list, Documents): a round icon, the title, and a short live note. */
+export function Tile({
+  title,
+  note,
+  noteColor,
+  icon,
+  onPress,
+}: {
+  title: string;
+  note?: string | null;
+  noteColor?: string;
+  icon: React.ReactNode;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={note ? `${title}, ${note}` : title}
+      onPress={onPress}
+      style={({ pressed }) => [styles.tile, pressed && { opacity: 0.75 }]}
+    >
+      <Card style={styles.tileCard}>
+        <Circle>{icon}</Circle>
+        <AppText variant="heading" style={styles.label}>
+          {title}
+        </AppText>
+        {note ? (
+          <AppText
+            variant="caption"
+            style={[styles.label, { color: noteColor ?? colors.textMuted }]}
+          >
+            {note}
           </AppText>
-        </Pressable>
-      ))}
-    </View>
+        ) : null}
+      </Card>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
+  card: { padding: spacing.lg },
+  row: { flexDirection: 'row', justifyContent: 'space-around', gap: spacing.sm },
   item: { flex: 1, alignItems: 'center', gap: spacing.sm, minHeight: minTouchTarget },
   circle: {
     width: 56,
@@ -75,4 +113,6 @@ const styles = StyleSheet.create({
     boxShadow: shadows.raisedSm,
   },
   label: { textAlign: 'center' },
+  tile: { flex: 1, minHeight: minTouchTarget },
+  tileCard: { alignItems: 'center', gap: spacing.sm, padding: spacing.lg, flex: 1 },
 });

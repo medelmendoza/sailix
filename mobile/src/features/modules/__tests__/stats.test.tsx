@@ -53,59 +53,22 @@ async function home(courses: unknown, extra: Record<string, unknown> = {}) {
   return api;
 }
 
-describe('home: my learning', () => {
-  it('shows overall progress and the most urgent due dates, overdue first', async () => {
-    await home({ data: { data: LIST } });
-
-    expect(await screen.findByText('My learning')).toBeTruthy();
-    expect(screen.getByText(/8 of 16 items completed · 1 of 4 courses completed/)).toBeTruthy();
-    expect(
-      screen.getByRole('progressbar', { name: 'Overall progress' }).props.accessibilityValue.now,
-    ).toBe(50);
-    expect(screen.getByRole('button', { name: /Fire safety, Overdue by 2 days/ })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /First aid, 3 days left/ })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Navigation, 60 days left/ })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Seamanship/ })).toBeNull(); // finished courses are not "due"
-  });
-
-  it('does not appear when Tala is not linked, and never blocks Home when Tala fails or is empty', async () => {
-    const api = mockApi({});
-    signedInAs(makeMe({ modules: [TALA('not_linked')] }));
-    await renderApp();
-    expect(await screen.findByText('Services')).toBeTruthy();
+describe('dashboard', () => {
+  it('has nothing from Tala on it: services live under the Services tab', async () => {
+    const api = await home({ data: { data: LIST } });
+    expect(await screen.findByText('Maria')).toBeTruthy();
     expect(screen.queryByText('My learning')).toBeNull();
-    expect(api.callsTo('GET /modules/tala/courses')).toHaveLength(0);
-  });
-
-  it('stays out of the way on a Tala outage', async () => {
-    await home({
-      status: 503,
-      data: { code: 'module_unavailable', type: 'x', title: 'x', status: 503 },
-    });
-    expect(await screen.findByText('Hello, Maria')).toBeTruthy(); // Home still works
-    expect(screen.queryByText('My learning')).toBeNull();
-  });
-
-  it('opens the course from a due date and the stats from the button', async () => {
-    await home(
-      { data: { data: LIST } },
-      {
-        'GET /modules/tala/courses/A2': {
-          data: {
-            data: { ...LIST[1], hidden_materials: 0, progress_submission: false, materials: [] },
-          },
-        },
-      },
-    );
-    await fireEvent.press(await screen.findByRole('button', { name: /First aid, 3 days left/ }));
-    expect(await screen.findByText('3 of 4 items completed · In progress')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Fire safety/ })).toBeNull();
+    expect(api.callsTo('GET /modules/tala/courses')).toHaveLength(0); // the Dashboard never asks Tala for anything
   });
 });
 
 describe('my stats screen', () => {
   async function openStats(courses: unknown) {
     await home(courses);
-    await fireEvent.press(await screen.findByRole('button', { name: 'See my stats' }));
+    await fireEvent.press(await screen.findByLabelText(/^Services/));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Tala, Linked' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'My stats' }));
   }
 
   it('summarizes everything and lists courses most urgent first', async () => {
@@ -201,7 +164,11 @@ describe('course detail: progress and achievements', () => {
       { data: { data: LIST } },
       { 'GET /modules/tala/courses/A2': { data: { data: detail } } },
     );
-    await fireEvent.press(await screen.findByRole('button', { name: /First aid, 3 days left/ }));
+    await fireEvent.press(await screen.findByLabelText(/^Services/));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Tala, Linked' }));
+    await fireEvent.press(
+      await screen.findByRole('button', { name: /^First aid, 3 of 4 items completed/ }),
+    );
 
     expect(await screen.findByRole('progressbar', { name: 'First aid progress' })).toBeTruthy();
     expect(screen.getByText(/Your rating: 4.5 of 5/)).toBeTruthy();

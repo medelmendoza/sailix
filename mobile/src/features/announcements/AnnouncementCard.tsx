@@ -8,9 +8,12 @@ import { ageLabel } from './age';
 export function AnnouncementCard({
   announcement,
   onPress,
+  flat,
 }: {
   announcement: Announcement;
   onPress: () => void;
+  /** Inside another card (the Dashboard): no raised card of its own. */
+  flat?: boolean;
 }) {
   const unread = announcement.is_read === false;
   const age = ageLabel(announcement.created_at);
@@ -21,7 +24,10 @@ export function AnnouncementCard({
       onPress={onPress}
       style={({ pressed }) => [styles.press, pressed && { opacity: 0.75 }]}
     >
-      <Card style={styles.card}>
+      <Card
+        variant={flat ? 'inset' : 'raised'}
+        style={flat ? { ...styles.card, padding: spacing.lg } : styles.card}
+      >
         <View style={styles.head}>
           {unread ? <View style={styles.dot} /> : null}
           <AppText variant="heading" style={styles.title} numberOfLines={2}>

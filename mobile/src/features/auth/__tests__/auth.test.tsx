@@ -39,7 +39,7 @@ describe('sign in', () => {
 
     await fillLogin();
 
-    expect(await screen.findByText('Hello, Maria')).toBeTruthy();
+    expect(await screen.findByText('Maria')).toBeTruthy();
     expect(api.callsTo('POST /auth/token')[0]?.body).toEqual({
       username: 'maria',
       password: 'secret-password',

@@ -32,14 +32,14 @@ describe('auth gate (state, not navigation calls)', () => {
   it('shows the app when signed in', async () => {
     signedInAs();
     await renderApp();
-    expect(await screen.findByText('Hello, Maria')).toBeTruthy();
+    expect(await screen.findByText('Maria')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Sign in' })).toBeNull();
   });
 
   it('a session that ends elsewhere (state change) swaps the app for sign-in with no navigate call', async () => {
     signedInAs();
     await renderApp();
-    await screen.findByText('Hello, Maria');
+    await screen.findByText('Maria');
 
     await act(async () => {
       await useSessionStore
@@ -49,7 +49,7 @@ describe('auth gate (state, not navigation calls)', () => {
 
     expect(await screen.findByRole('button', { name: 'Sign in' })).toBeTruthy();
     expect(screen.getByText('Your organization is not active.')).toBeTruthy();
-    expect(screen.queryByText('Hello, Maria')).toBeNull();
+    expect(screen.queryByText('Maria')).toBeNull();
   });
 
   it('restores a stored session at launch', async () => {
@@ -57,7 +57,7 @@ describe('auth gate (state, not navigation calls)', () => {
     mockApi({ 'GET /me': { data: { data: makeMe() } } });
     await useSessionStore.getState().bootstrap();
     await renderApp();
-    expect(await screen.findByText('Hello, Maria')).toBeTruthy();
+    expect(await screen.findByText('Maria')).toBeTruthy();
   });
 });
 
@@ -74,7 +74,7 @@ describe('unreachable server at launch', () => {
     api.set('GET /me', { data: { data: makeMe() } });
     await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
 
-    expect(await screen.findByText('Hello, Maria')).toBeTruthy();
+    expect(await screen.findByText('Maria')).toBeTruthy();
   });
 
   it('lets the person sign out locally from that screen', async () => {
@@ -102,7 +102,7 @@ describe('connectivity', () => {
     signedInAs();
     (useNetInfo as jest.Mock).mockReturnValue({ isConnected: true });
     await renderApp();
-    await screen.findByText('Hello, Maria');
+    await screen.findByText('Maria');
     expect(screen.queryByText('You are offline.')).toBeNull();
   });
 });

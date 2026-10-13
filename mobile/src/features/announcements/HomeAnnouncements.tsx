@@ -1,38 +1,79 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, Button } from '@/components';
-import { spacing } from '@/constants/theme';
+import { AppText, Card, SkeletonList, TabIcon } from '@/components';
+import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { AnnouncementCard } from './AnnouncementCard';
 import { useAnnouncements } from './api';
 
 /**
- * Home card: the latest announcements. Like the learning summary it never gets in the way of the rest of Home: while
- * loading, on an error, or when there is nothing, it renders nothing.
+ * The announcements card of the old Sailix dashboard: a title with a bell that opens the Announcements tab, a green
+ * rule, then the latest announcements (or a plain "none yet"). A load failure shows nothing rather than an error box.
  */
-export function HomeAnnouncements({ onSeeAll }: { onSeeAll: () => void }) {
+export function HomeAnnouncements({ onOpenAll }: { onOpenAll: () => void }) {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const list = useAnnouncements();
   const latest = list.data?.pages[0]?.data.slice(0, 3) ?? [];
   const unread = list.data?.pages[0]?.unread_count ?? 0;
-  if (latest.length === 0) return null;
+  if (list.isError) return null;
 
   return (
-    <View style={styles.wrap}>
-      <AppText variant="heading" accessibilityRole="header">
-        Announcements{unread > 0 ? ` (${unread} new)` : ''}
-      </AppText>
-      {latest.map((a) => (
-        <AnnouncementCard
-          key={a.id}
-          announcement={a}
-          onPress={() => navigation.navigate('Announcement', { id: a.id })}
-        />
-      ))}
-      <Button title="See all announcements" variant="secondary" onPress={onSeeAll} />
-    </View>
+    <Card style={styles.card}>
+      <View style={styles.head}>
+        <AppText variant="heading" accessibilityRole="header" style={{ flex: 1 }}>
+          Announcements
+        </AppText>
+        {unread > 0 ? (
+          <View style={styles.count} accessible accessibilityLabel={`${unread} new`}>
+            <AppText variant="caption" style={{ color: colors.onPrimary }}>
+              {unread} new
+            </AppText>
+          </View>
+        ) : null}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open announcements"
+          onPress={onOpenAll}
+          hitSlop={8}
+          style={styles.bell}
+        >
+          <TabIcon name="bell" color={colors.primary} />
+        </Pressable>
+      </View>
+      <View style={styles.rule} />
+      {list.isPending ? (
+        <SkeletonList />
+      ) : latest.length === 0 ? (
+        <AppText muted>No announcements yet.</AppText>
+      ) : (
+        latest.map((a) => (
+          <AnnouncementCard
+            key={a.id}
+            announcement={a}
+            flat
+            onPress={() => navigation.navigate('Announcement', { id: a.id })}
+          />
+        ))
+      )}
+    </Card>
   );
 }
 
-const styles = StyleSheet.create({ wrap: { gap: spacing.md } });
+const styles = StyleSheet.create({
+  card: { gap: spacing.md },
+  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  count: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+  },
+  bell: {
+    minWidth: minTouchTarget,
+    minHeight: minTouchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rule: { height: 2, borderRadius: 1, backgroundColor: colors.seafoam },
+});

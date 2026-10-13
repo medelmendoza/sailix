@@ -16,7 +16,7 @@ describe('home', () => {
   it('greets the member and names the organization', async () => {
     signedInAs();
     await renderApp();
-    expect(await screen.findByText('Hello, Maria')).toBeTruthy();
+    expect(await screen.findByText('Maria')).toBeTruthy();
     expect(screen.getByText('Southfield Agencies')).toBeTruthy();
   });
 
@@ -28,7 +28,7 @@ describe('home', () => {
       }),
     );
     await renderApp();
-    expect(await screen.findByText('Hello, Alex Admin')).toBeTruthy();
+    expect(await screen.findByText('Alex Admin')).toBeTruthy();
   });
 
   it('shows a refresh failure without losing what is on screen', async () => {
@@ -38,12 +38,12 @@ describe('home', () => {
       'GET /modules/tala/courses': { data: { data: [] } },
     });
     await renderApp();
-    await screen.findByText('Hello, Maria');
+    await screen.findByText('Maria');
 
     await pullToRefresh();
 
     expect(await screen.findByText(/No connection/)).toBeTruthy();
-    expect(screen.getByText('Hello, Maria')).toBeTruthy();
+    expect(screen.getByText('Maria')).toBeTruthy();
     expect(useSessionStore.getState().status).toBe('authenticated');
   });
 
@@ -51,7 +51,7 @@ describe('home', () => {
     signedInAs();
     mockApi({ 'GET /me': problem(403, 'tenant_suspended') });
     await renderApp();
-    await screen.findByText('Hello, Maria');
+    await screen.findByText('Maria');
 
     await pullToRefresh();
 

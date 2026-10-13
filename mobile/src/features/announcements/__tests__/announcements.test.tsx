@@ -138,21 +138,23 @@ describe('announcement detail', () => {
 });
 
 describe('home announcements card', () => {
-  it('shows the latest three with a new-count, and nothing when there are none', async () => {
+  it('shows the latest three with a new-count and a bell that opens the tab', async () => {
     await openTab({
       'GET /announcements': page(
         [ann('a1', 'A'), ann('a2', 'B'), ann('a3', 'C'), ann('a4', 'D')],
         4,
       ),
     });
-    expect(await screen.findByText('Announcements (4 new)')).toBeTruthy();
+    expect(await screen.findByText('4 new')).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Announcements' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Unread: D/ })).toBeNull(); // only the latest three
-    expect(screen.getByRole('button', { name: 'See all announcements' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Open announcements' }));
+    expect(await screen.findByRole('button', { name: /^Unread: A/ })).toBeTruthy();
   });
 
-  it('renders nothing on Home when there are no announcements', async () => {
+  it('says there are none yet instead of hiding the card', async () => {
     await openTab({});
-    await screen.findByText('Hello, Maria');
-    expect(screen.queryByRole('header', { name: /^Announcements/ })).toBeNull(); // no card on Home
+    await screen.findByText('Maria');
+    expect(await screen.findByText('No announcements yet.')).toBeTruthy();
   });
 });

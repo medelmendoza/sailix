@@ -191,7 +191,7 @@ it('shows nothing of the previous person after another one signs in on the same 
     }),
   );
   await renderApp();
-  await screen.findByText('Hello, previous');
+  await screen.findByText('previous');
 
   await act(async () => {
     await useSessionStore.getState().signOut({ revoke: false });
@@ -199,7 +199,7 @@ it('shows nothing of the previous person after another one signs in on the same 
   expect(await screen.findByRole('button', { name: 'Sign in' })).toBeTruthy();
 
   await act(async () => signedInAs());
-  expect(await screen.findByText('Hello, Maria')).toBeTruthy();
+  expect(await screen.findByText('Maria')).toBeTruthy();
   expect(screen.queryByText(/previous/)).toBeNull();
 });
 

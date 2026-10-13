@@ -32,33 +32,33 @@ async function openList(routes: Record<string, unknown>) {
   const api = mockApi({ 'GET /todos': page([]), ...routes } as never);
   signedInAs(makeMe({ modules: [] }));
   await renderApp();
-  await fireEvent.press(await screen.findByRole('button', { name: 'See all to-dos' }));
+  await fireEvent.press(await screen.findByRole('button', { name: /^To-do list/ }));
   return api;
 }
 
-describe('dashboard to-do card', () => {
-  it('shows the next open tasks with when they are due', async () => {
+describe('dashboard to-do tile', () => {
+  it('says how many tasks are open and how many are overdue', async () => {
     mockApi({
-      'GET /todos': page([
-        todo('t1', 'Renew passport', { due_date: day(-2) }),
-        todo('t2', 'Sign form', { due_date: day(1) }),
-      ]),
+      'GET /todos': page(
+        [
+          todo('t1', 'Renew passport', { due_date: day(-2) }),
+          todo('t2', 'Sign form', { due_date: day(1) }),
+        ],
+        { overdue_count: 1 },
+      ),
     } as never);
     signedInAs(makeMe({ modules: [] }));
     await renderApp();
 
-    expect(await screen.findByText('To-do (2)')).toBeTruthy();
     expect(
-      screen.getByRole('checkbox', { name: 'Renew passport, Overdue by 2 days' }),
+      await screen.findByRole('button', { name: 'To-do list, 2 open, 1 overdue' }),
     ).toBeTruthy();
-    expect(screen.getByRole('checkbox', { name: 'Sign form, Due tomorrow' })).toBeTruthy();
   });
 
-  it('renders nothing when nothing is open', async () => {
+  it('says all done when nothing is open', async () => {
     signedInAs(makeMe({ modules: [] }));
     await renderApp();
-    await screen.findByText('Hello, Maria');
-    expect(screen.queryByRole('header', { name: /^To-do/ })).toBeNull();
+    expect(await screen.findByRole('button', { name: 'To-do list, All done' })).toBeTruthy();
   });
 });
 
@@ -83,7 +83,7 @@ describe('to-do list', () => {
     mockApi({ 'GET /todos': page([todo('t1', 'x')]) } as never);
     signedInAs(makeMe({ modules: [] }));
     await renderApp();
-    await fireEvent.press(await screen.findByRole('button', { name: 'See all to-dos' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^To-do list/ }));
     mockApi({ 'GET /todos': page([]) } as never);
     await fireEvent.press(await screen.findByRole('radio', { name: 'Done' }));
     expect(await screen.findByText('Nothing done yet')).toBeTruthy();
@@ -125,7 +125,7 @@ describe('to-do list', () => {
     mockApi({ 'GET /todos': page([todo('t1', 'x')]) } as never);
     signedInAs(makeMe({ modules: [] }));
     await renderApp();
-    await fireEvent.press(await screen.findByRole('button', { name: 'See all to-dos' }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^To-do list/ }));
     mockApi({ 'GET /todos': problem(500, 'server_error') } as never);
     await fireEvent.press(await screen.findByRole('radio', { name: 'Done' }));
     expect(await screen.findByRole('button', { name: 'Retry' })).toBeTruthy();

@@ -41,6 +41,8 @@ export const colors = {
 
 export const gradients = {
   primary: 'linear-gradient(135deg, #355DAD 0%, #2F67B3 100%)',
+  /** The Dashboard header: the logo's blue fading to a teal (white text stays readable on both ends, see the tokens test). */
+  header: 'linear-gradient(180deg, #355DAD 0%, #2A7F8F 100%)',
   /** Decorative placeholder fill (blue to teal); never a background for text that matters. */
   soft: 'linear-gradient(135deg, #355DAD 0%, #409DA5 100%)',
 } as const;
