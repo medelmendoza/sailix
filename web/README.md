@@ -19,12 +19,12 @@ Demo accounts (local seeder only): organization admin `admin.sfai` / `admin.acme
 
 ## Scripts
 
-| Script | What |
-|---|---|
-| `npm run validate` | `tsc` + ESLint (`--max-warnings=0`) + Prettier check + Vitest |
-| `npm run build` | typecheck + production build (superadmin pages are separate chunks) |
-| `npm run gen:api` | regenerate `src/services/api/schema.d.ts` from the OpenAPI contract |
-| `npm run gen:api:check` | fail if the committed types drift from the contract (CI) |
+| Script                  | What                                                                |
+| ----------------------- | ------------------------------------------------------------------- |
+| `npm run validate`      | `tsc` + ESLint (`--max-warnings=0`) + Prettier check + Vitest       |
+| `npm run build`         | typecheck + production build (superadmin pages are separate chunks) |
+| `npm run gen:api`       | regenerate `src/services/api/schema.d.ts` from the OpenAPI contract |
+| `npm run gen:api:check` | fail if the committed types drift from the contract (CI)            |
 
 `openapi-typescript` runs through a pinned `npx` because its peer range stops at TypeScript 5; it is not a project dependency.
 
