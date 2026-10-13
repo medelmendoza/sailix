@@ -23,6 +23,7 @@ backend/
 │   ├── Policies/
 │   ├── Actions/                 # RegisterCrew, SubmitCrewDocument, ReviewDocument, ImportPayslips…
 │   ├── Support/Tenancy/         # TenantContext, BelongsToTenant, TenantScope, TenantAwareJob, TenantCache
+│   ├── Modules/                 # module registry, entitlements; Modules/Tala = Tala adapter (guard now, gateway in M3)
 │   ├── Identity/                # login/token/invitation resolution (cross-tenant by nature)
 │   ├── Platform/                # tenant lifecycle, invitations; with Identity/ the ONLY code allowed to use withoutTenantScope()
 │   ├── Jobs/  Events/  Listeners/  Notifications/
@@ -79,3 +80,6 @@ Domain grouping inside `Actions/` and `Models/` by feature (Announcements, Docum
 
 ## 7. Migrations & seeding
 Version-controlled migrations; seeders for local dev only (one platform admin placeholder password from env, two demo tenants for isolation tests, clearly flagged as non-production). No production DB access during development.
+
+## M1 note
+`app/Modules` holds the module registry (`Module` enum), `ModuleAccess`, `SetModuleEnabled`, and `Tala/` (`TalaEndpointGuard`, `ApprovedTalaEndpoint`). `app/Support/Net` holds the DNS seam (`HostResolver`) and `PublicAddress`. Platform provisioning lives in `app/Platform/TenantModules`.

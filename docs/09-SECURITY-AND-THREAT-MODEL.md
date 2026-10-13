@@ -57,3 +57,15 @@ Secrets only in environment/secret manager; `.env*` ignored; example files with 
 
 ## 4. Known risks accepted pending your decision
 Legacy API remains exposed if it stays online (D-2) — out of this project's control but should be escalated; client-supplied identity in the old app means compat shims must **ignore** path identity and use the token.
+
+## 5. Threats added by the Tala module integration (M1 controls; M3 completes them)
+| # | Threat | Controls | Verified by |
+|---|---|---|---|
+| T24 | Credential custody (Tala password/tokens) | Password never stored/logged; tokens encrypted, hidden, never returned; key rotation TBD | `ModuleManagementTest` (encryption at rest, no leakage in `/me`/audit) |
+| T25 | SSRF via the upstream URL | Platform-only setting; https-only; deployment allow-list; hostname-form checks; every resolved address public; per-request re-check + IP pinning in M3 | `TalaEndpointGuardTest` (98 cases), `PlatformTalaSettingTest` |
+| T26 | Confused deputy / forged `userId`, `teamId`, tenant, role | Identity only from context + link; spoofing tests | `RequireModuleTest` |
+| T27 | One organization using another's Tala team/membership | Platform-only mapping, unique team, composite FKs link→mapped team | `ModuleIsolationTest` |
+| T28 | One Tala account claimed by several Sailix users | Global unique constraints on `external_identities` | `ModuleIsolationTest` |
+| T29 | Access after suspension/disable | Per-request checks; no token-cached entitlement | `RequireModuleTest` |
+| T30 | Plaintext upstream (Tala uses `http://`) | HTTPS-only client rules; fail-closed `module_unavailable`; production blocked (D-T2) | `RequireModuleTest`, `TalaEndpointGuardTest` |
+| T31 | Client-computed scores trusted (D-T8) | Not authoritative by default; server-side recomputation to be investigated; limitation must be stated before production approval | open |

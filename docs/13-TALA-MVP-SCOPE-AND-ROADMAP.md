@@ -1,6 +1,6 @@
 # 13 — Tala-only MVP: scope, impact on Phase B, revised roadmap
 
-Status: **PROPOSED — awaiting your approval. No code has been changed for this scope change.** Supersedes the Phase C–I ordering and the Phase D module list in `12-MASTER-IMPLEMENTATION-PLAN.md` (Phases A and B stand as completed).
+Status: **APPROVED 2026-10-13 with conditions (§10). M1 implemented and awaiting your review (§11).** Supersedes the Phase C–I ordering and the Phase D module list in `12-MASTER-IMPLEMENTATION-PLAN.md` (Phases A and B stand as completed).
 Evidence: read-only analysis of the Tala Flutter working tree in `docs/reference/tala-analysis/` (`01` identity, `02` courses/content, `03` stats/offline/platform). Citations below are to those files. **[V]** verified in Tala source · **[I]** inferred · **[P]** proposed · **[U]** unknown, needs the Tala backend owner.
 
 ## 1. What changes
@@ -188,3 +188,38 @@ Estimates are omitted (no velocity data). Ordering is by dependency; M1 and T0 c
 5. **Client-trusted scoring and on-device answer keys** — inherited; documented; server-side verification deferred.
 6. **Scope creep** back to Sailix crew modules or Tala account creation — held behind explicit approvals.
 7. **No RLS on MySQL** (Phase B residual) applies equally to the new tables; static checks extended.
+
+## 10. Approval record (2026-10-13) — decisions and mandatory conditions
+
+**Approved:** Tala-only MVP scope, revised roadmap, M1 (backend/contract/docs/database/authorization/tests only). Sailix crew portal, SRT, Call-it, Astra deferred (Q-S1 confirmed). Tala's own data stays in Tala's database. The Tala Flutter repository must remain untouched (45 pre-existing uncommitted changes preserved).
+
+| ID | Decision |
+|---|---|
+| D-T1 | **Not authorized.** Source-based analysis only; no Tala network calls until you approve an environment and provide/authorize a test account |
+| D-T2 | **Unconfirmed.** Production connectivity/cutover blocked until HTTPS is verified |
+| D-T3 | **No** Tala account creation through Sailix; MVP links existing accounts only |
+| D-T4/T5 | Encrypted token storage + relink (provisional). Investigate refresh/expiry before finalizing. Never store Tala passwords, expose tokens to mobile, or log credentials/tokens |
+| D-T6 | Legacy `QUIZ` and EPUB excluded unless compatibility is verified and approved |
+| D-T7 | One Tala team per Sailix organization; mapping/membership/authorization enforced server-side; no trust in client `userId`/`teamId` |
+| D-T8 | Client-computed scores are **not authoritative by default**; document behaviour and risks; investigate server-side validation/recomputation; state remaining integrity limits before production approval |
+| D-11 | Email provider unresolved; keep delivery configurable; dev/test mail driver |
+
+**Mandatory security conditions → where enforced:**
+1. No Tala credentials over HTTP; block linking if the auth endpoint can't be verified as HTTPS → `TalaEndpointGuard` (https only) + `RequireModule` answers `503 module_unavailable` until an approved endpoint is configured. (Link endpoint itself is M3.)
+2. Never trust client `userId`/`teamId`/org/role → context-only identity; `RequireModuleTest::test_client_supplied_identity_values_are_ignored`.
+3. External account not claimable by several users; no cross-organization team use → DB constraints + `ModuleIsolationTest`.
+4. Suspension / module disable blocks next gateway request → `RequireModuleTest`.
+5. Platform-controlled, approved-HTTPS-only, SSRF-validated, never tenant-configurable Tala URL → `TalaEndpointGuard` (scheme + host form + allow-list + public-address check), `PlatformTalaSettingTest`.
+6. No production migrations/data/cutover → none performed.
+7. No weakened tests/removed checks → see §11 "Changes to existing tests".
+
+## 11. M1 outcome (implemented; awaiting review) — details and evidence in `PROJECT-STATUS.md`
+
+**Deviations from the M1 text you approved (each is stricter or a bug fix; please confirm):**
+1. **Team mapping is platform-only.** §7 had `PUT /tenant/modules/tala` carry `tala_team_id` for the tenant admin. Implemented instead: the superadmin provisions the entitlement *and* team (`PUT /platform/tenants/{tenant}/modules/{module}`); the tenant admin only toggles `enabled`. Reason: a tenant admin choosing the team could point their organization at another organization's team (condition 3). One-line change to relax if you disagree.
+2. **HTTPS-only with no local exemption.** The plan allowed `localhost` in local/testing; condition 1/5 won, so even local/testing reject `http://` and `localhost`.
+3. **Deployment allow-list** `SAILIX_TALA_ALLOWED_HOSTS` added (condition 5: host restrictions beyond scheme). Empty by default ⇒ nothing is accepted.
+4. **`503 module_unavailable`** added to `RequireModule` (fail closed until an endpoint is configured).
+5. **Changes to existing tests (not weakened):** `RoleAndLifecycleTest::test_role_abilities` — crew now holds exactly the module-use abilities (approved change) and the test additionally asserts crew lacks manage/admin abilities; `TenantAdminTest` settings test — `services_enabled` replaced by other settings and now asserts it is rejected (422) and `/me` has no `features`; `TenancyStaticChecksTest` — now inspects only the connected database (it also saw the dev schema) and gains the un-scoped-table allow-list check.
+6. **Bug fixed:** setting a nullable setting to `null` caused a 500 (NOT NULL json column); `null` now means "unset".
+7. Crew-portal leftovers `payslip_step_up` and `upload_max_mb` remain in the settings registry (unused); remove with the crew-portal decision.

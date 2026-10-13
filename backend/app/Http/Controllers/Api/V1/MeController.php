@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Modules\ModuleAccess;
 use App\Support\Settings\SettingsRegistry;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Http\JsonResponse;
@@ -10,7 +11,7 @@ use Illuminate\Http\Request;
 
 class MeController extends Controller
 {
-    public function show(Request $request, TenantContext $context): JsonResponse
+    public function show(Request $request, TenantContext $context, ModuleAccess $modules): JsonResponse
     {
         $user = $request->user();
         $membership = $request->attributes->get('membership');
@@ -29,7 +30,7 @@ class MeController extends Controller
                 'name' => SettingsRegistry::tenant('display_name') ?? $membership->tenant->name,
             ],
             'abilities' => $context->role()->abilities(),
-            'features' => ['services_enabled' => (bool) SettingsRegistry::tenant('services_enabled')],
+            'modules' => $modules->forMembership($membership),
         ]]);
     }
 }

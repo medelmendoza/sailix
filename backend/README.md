@@ -30,6 +30,8 @@ Suites: `Unit`, `Feature`, `Isolation`, `Contract` (tests run against real MySQL
 
 `app/Support/Tenancy` (context, fail-closed scope, trait) · `app/Identity` (login, tokens, invitations — cross-tenant by nature) · `app/Platform` (tenant lifecycle, invitations) · `app/Http` (controllers `Api/V1/{Auth,Tenant,Platform}`, requests, resources, middleware) · `app/Policies` · `routes/api_v1.php`.
 
+Module/Tala safety: `SAILIX_TALA_ALLOWED_HOSTS` (comma-separated exact hosts; empty = nothing allowed) is deployment config. A superadmin sets `tala_api_base_url` through `PATCH /platform/settings`; until that succeeds every Tala route answers `503 module_unavailable`. No code or test contacts Tala (`Http::preventStrayRequests()` and a fake DNS resolver are installed in every test).
+
 Rules: never accept a tenant id as authority; `withoutTenantScope()` only in `app/Platform` and `app/Identity` (enforced by `tests/Unit/TenancyStaticChecksTest.php`); raw SQL on tenant tables is security-sensitive (no RLS on MySQL, see `../docs/03` §3.6).
 
 ## Auth quick reference

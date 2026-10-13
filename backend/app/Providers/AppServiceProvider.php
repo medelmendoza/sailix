@@ -7,6 +7,8 @@ use App\Models\Membership;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Policies\MembershipPolicy;
+use App\Support\Net\DnsHostResolver;
+use App\Support\Net\HostResolver;
 use App\Support\Tenancy\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -21,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Request/job scoped: discarded between requests and queued jobs.
         $this->app->scoped(TenantContext::class);
+        $this->app->bind(HostResolver::class, DnsHostResolver::class);
     }
 
     public function boot(): void

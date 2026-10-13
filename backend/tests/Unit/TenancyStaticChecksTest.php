@@ -4,6 +4,8 @@ namespace Tests\Unit;
 
 use App\Support\Tenancy\BelongsToTenant;
 use Illuminate\Database\Eloquent\MassAssignmentException;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\Finder\Finder;
 use Tests\TestCase;
@@ -112,10 +114,61 @@ class TenancyStaticChecksTest extends TestCase
     /** @return list<string> */
     private function tenantTables(): array
     {
-        return collect(Schema::getTables())
-            ->pluck('name')
+        return $this->currentTables()
             ->filter(fn ($t) => in_array('tenant_id', Schema::getColumnListing($t), true))
             ->reject(fn ($t) => $t === 'tenants')
             ->values()->all();
+    }
+
+    /**
+     * Tables WITHOUT tenant_id are an explicit, reviewed set. Adding an un-scoped table must be a conscious
+     * decision (extend this list with a justification), never an accident.
+     */
+    public function test_tables_without_tenant_id_are_a_known_reviewed_set(): void
+    {
+        $justified = [
+            'tenants' => 'the organization itself',
+            'users' => 'login identity; tenancy lives on memberships',
+            'platform_admins' => 'superadmin identity, separate guard',
+            'platform_settings' => 'platform-wide configuration',
+            'external_identities' => 'identity-level link of a Sailix user to an external account; uniqueness must be global (ADR-0017)',
+            'sessions' => 'framework session store',
+            'cache' => 'framework cache store (keys are tenant-prefixed in code)',
+            'cache_locks' => 'framework',
+            'jobs' => 'framework queue (payload carries tenant context when jobs exist)',
+            'job_batches' => 'framework',
+            'failed_jobs' => 'framework',
+            'migrations' => 'framework',
+        ];
+
+        $actual = $this->currentTables()
+            ->reject(fn ($t) => in_array('tenant_id', Schema::getColumnListing($t), true))
+            ->sort()->values()->all();
+
+        $this->assertSame(collect(array_keys($justified))->sort()->values()->all(), $actual, 'Un-scoped table set changed: justify it in this test.');
+    }
+
+    public function test_module_tables_are_covered_by_the_scoped_model_rule(): void
+    {
+        $tables = $this->tenantTables();
+
+        $this->assertContains('tenant_modules', $tables);
+        $this->assertContains('module_links', $tables);
+        $this->assertNotContains('external_identities', $tables, 'identity-level by design (ADR-0017)');
+    }
+
+    /**
+     * Table names of THIS connection's database only (getTables() otherwise lists every schema the
+     * MySQL user can see, e.g. the dev database next to the test database).
+     *
+     * @return Collection<int, string>
+     */
+    private function currentTables(): Collection
+    {
+        $database = DB::connection()->getDatabaseName();
+
+        return collect(Schema::getTables())
+            ->filter(fn ($t) => ! isset($t['schema']) || $t['schema'] === $database)
+            ->pluck('name')->unique()->values();
     }
 }

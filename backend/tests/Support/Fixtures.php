@@ -3,13 +3,17 @@
 namespace Tests\Support;
 
 use App\Enums\MembershipStatus;
+use App\Enums\ModuleStatus;
 use App\Enums\Role;
 use App\Enums\TenantStatus;
 use App\Enums\UserStatus;
 use App\Models\Membership;
 use App\Models\PlatformAdmin;
 use App\Models\Tenant;
+use App\Models\TenantModule;
 use App\Models\User;
+use App\Modules\Module;
+use App\Support\Net\HostResolver;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use PragmaRX\Google2FA\Google2FA;
@@ -100,5 +104,40 @@ trait Fixtures
         }
 
         return $this;
+    }
+
+    protected function provisionModule(Tenant $tenant, string $team = 'TEAM-1', bool $enabled = true, Module $module = Module::Tala): TenantModule
+    {
+        $row = (new TenantModule)->forceFill([
+            'tenant_id' => $tenant->getKey(), 'module' => $module,
+            'external_team_id' => $team, 'status' => $enabled ? ModuleStatus::Enabled : ModuleStatus::Disabled,
+        ]);
+        $row->save();
+
+        return $row;
+    }
+
+    /** Approve hosts and fake their DNS. @param array<string, list<string>> $dns */
+    protected function fakeTalaDns(array $dns = ['tala.example.com' => ['93.184.216.34']], ?array $allowed = null): void
+    {
+        config(['sailix.modules.tala.allowed_hosts' => $allowed ?? array_keys($dns)]);
+        $this->app->instance(HostResolver::class, new FakeHostResolver($dns));
+    }
+
+    /** Sign in as a superadmin; returns this test with the session cookie carried. */
+    protected function platformSession(string $email = 'root@example.test'): static
+    {
+        [, $secret] = $this->makePlatformAdmin($email);
+        $r = $this->spa()->postJson('/api/v1/platform/auth/session', ['email' => $email, 'password' => self::PASSWORD, 'otp' => $this->otp($secret)])->assertOk();
+
+        return $this->carrySession($r);
+    }
+
+    /** A fresh request context (guards forgotten) for the platform SPA. */
+    protected function platform(): static
+    {
+        $this->app['auth']->forgetGuards();
+
+        return $this->spa();
     }
 }

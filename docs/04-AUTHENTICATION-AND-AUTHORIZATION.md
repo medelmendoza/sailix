@@ -69,3 +69,11 @@ Tenant admin → platform routes (403); crew → tenant admin routes (403); crew
 | Rate limits | login 5/min per username+IP, 20/min per IP; platform login 5/min; invitation 10/h; API 120/min per principal | – |
 | Not yet built | forgot/reset password, registration, MFA for tenant admins, step-up, device/session list, email verification | Phase D1 / E |
 | `users.display_name` | Added to the login identity so admins without a crew profile have a label | Small addition to docs/03 |
+
+## 4. Module gateway security rules (M1; enforced from M3)
+1. **Never trust client-supplied `userId`, `teamId`, organization id or role.** Gateway identity comes only from the established context (token → membership → tenant) and the stored link; tests assert query/body/header spoofing has no effect and `X-Tenant-Hint` mismatches are `409`.
+2. **Per-request checks** (`tenant.context` then `module:<code>`): tenant active → module provisioned+enabled (`403 module_disabled`) → role ability (`403 module_forbidden`) → approved upstream configured (`503 module_unavailable`). Suspending an organization or disabling the module blocks the next request with an existing token.
+3. **Upstream address is platform-controlled.** `tala_api_base_url` is settable only by a superadmin, only as an `https://` bare origin whose host is on the deployment allow-list (`SAILIX_TALA_ALLOWED_HOSTS`, env, not editable via API; empty ⇒ nothing allowed) and resolves only to public unicast addresses (private, loopback, link-local/metadata, CGNAT, ULA, mapped/NAT64 and documentation ranges rejected). Tenants cannot set it (`422 unknown setting`).
+4. **M3 obligations** (documented because no HTTP client exists yet): call `TalaEndpointGuard::assertSafe()` per request, connect to a returned address (IP pinning), disable redirects, enforce timeouts/size limits, never send Tala credentials unless the endpoint passed the guard, never log credentials or tokens.
+5. **HTTPS unverified (D-T2)** ⇒ the default state is closed: no allow-listed host and no configured URL means every gateway route answers `503 module_unavailable`, and account linking cannot start.
+6. **Credential custody:** Tala passwords are never stored or logged; tokens (M3) are stored encrypted, never returned to clients. Key rotation procedure still to be designed.

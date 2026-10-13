@@ -20,5 +20,13 @@ return [
     // Optional client hint header; compared with the authenticated tenant, never trusted.
     'tenant_hint_header' => 'X-Tenant-Hint',
 
+    // Module integration settings. Allow-lists are deployment configuration, never editable through the API.
+    'modules' => [
+        'tala' => [
+            // Exact host names the Tala gateway may ever contact (HTTPS only). Empty = nothing is allowed.
+            'allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', (string) env('SAILIX_TALA_ALLOWED_HOSTS', ''))))),
+        ],
+    ],
+
     'web_origins' => array_values(array_filter(explode(',', (string) env('SAILIX_WEB_ORIGINS', 'http://localhost:5173')))),
 ];

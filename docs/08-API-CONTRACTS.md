@@ -19,7 +19,7 @@ Legend — **Scope**: P = platform, T = tenant, S = self (own membership within 
 | `/auth/register` | POST | public (throttled) | – | `{agency_code, username, email, password, first_name, middle_name?, last_name, suffix?, mobile, birth_date?}` → `201` pending activation; no auto-login |
 | `/auth/forgot-password`, `/auth/reset-password` | POST | public (throttled) | – | link-based; always `202` (flag until Q-34) |
 | `/auth/step-up` | POST | token | S | `{password}` → `{expires_at}`; enables `/payslips*` |
-| `/me` | GET | any authenticated | S | profile, role, tenant summary (name, branding), abilities, feature flags (`services_enabled`) |
+| `/me` | GET | any authenticated | S | profile, role, tenant summary (name, branding), abilities, **`modules[]`** (`{code,label,enabled,linked,status}`; M1 replaces the removed `features.services_enabled`) |
 | `/me/password` | PUT | self | S | `{current_password, password, password_confirmation}` → `204`; revokes other tokens |
 | `/me/sessions`, `/me/sessions/{id}` | GET / DELETE | self | S | device list / revoke |
 | `/me/deletion-request` | POST | crew | S | → `202` (Q-3) |
@@ -81,3 +81,13 @@ Auth: lockout/throttle, uniform failure, suspended tenant/membership, token boun
 | `GET /user/{crewId}/payslip*`, `…/datepro/{d}` | `GET /payslips`, `GET /payslips/{id}` |
 | `GET /user/{crewId}/deductions` | `GET /loans` |
 | `PUT /user/{id}/change/password` | `PUT /me/password` |
+
+## 7. M1 additions (authoritative definition: `contracts/openapi.yaml`)
+| Endpoint | Method | Permission | Notes |
+|---|---|---|---|
+| `/tenant/modules` | GET | `tenant.view` | all registry modules with entitlement state |
+| `/tenant/modules/{module}` | PUT `{enabled}` | `module.<code>.manage` | toggle only; `409 module_not_provisioned`; team mapping can NOT be sent here |
+| `/platform/tenants/{tenant}/modules` | GET | superadmin | includes `links_count` |
+| `/platform/tenants/{tenant}/modules/{module}` | PUT `{external_team_id, enabled?}` | superadmin | `409 team_already_mapped`, `409 links_exist` |
+| `/platform/settings` | PATCH | superadmin | new `tala_api_base_url` (https, allow-listed, public destination) |
+New problem codes: `module_disabled`, `module_forbidden`, `module_unavailable` (503), `module_not_provisioned`, `links_exist`, `team_already_mapped`. `{module}` is an enum (`tala`); anything else is `404`.

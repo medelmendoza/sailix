@@ -58,7 +58,7 @@ All transitions write `audit_logs` and revoke affected sessions/tokens immediate
 | Layer | Examples | Stored | Override rule |
 |---|---|---|---|
 | Platform | password minimums, allowed upload size ceiling, token TTLs, maintenance flag | `platform_settings` | Code defaults < platform settings |
-| Tenant | display name, logo, payslip header/footer text, privacy-policy URL, `services_enabled`, payslip step-up mode (Q-10), upload size (≤ platform ceiling) | `tenant_settings` | Platform ≤ tenant, tenant may only tighten security-related settings |
+| Tenant | display name, logo, payslip header/footer text, privacy-policy URL, module entitlements (see §10), payslip step-up mode (Q-10), upload size (≤ platform ceiling) | `tenant_settings` | Platform ≤ tenant, tenant may only tighten security-related settings |
 | User | none required by spec (UI prefs live on device) | — | — |
 | Device | none server-side; token row records device name/last used | `personal_access_tokens` | — |
 
@@ -91,3 +91,9 @@ Everything the crew module touches is tenant-owned (announcements, crew profiles
 
 ## 9. Open items for this document
 D-3 tenant definition · D-4 username scope · D-5 staff roles · D-8 suspension behaviour · D-9 retention · G-04 document-type ownership · G-03 announcement audience.
+
+## 10. Module entitlements and external-account links (M1, Tala-only MVP)
+- **Entitlement is a platform decision.** The superadmin provisions a module for an organization and maps it to exactly one team of the external system (`tenant_modules.external_team_id`, unique across organizations). A tenant admin may only enable/disable a provisioned module; they cannot create entitlements or change the team.
+- **Use** requires: tenant `active` ∧ module provisioned and enabled ∧ role ability `module.<code>.use` (`crew`, `tenant_admin`) ∧ a configured approved upstream endpoint. **Manage** (`module.<code>.manage`) is `tenant_admin` only.
+- **Links** are per membership (one person, several organizations ⇒ one link each, pinned to that organization's team). An external account belongs to **one** Sailix user globally. Links are created by the gateway in M3.
+- Suspending/deactivating the tenant or disabling the module stops gateway access on the very next request (checked per request, not cached in tokens).

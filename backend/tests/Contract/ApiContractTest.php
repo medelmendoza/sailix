@@ -183,6 +183,53 @@ class ApiContractTest extends TestCase
         $this->ok($this->getJson('/api/v1/tenant/users?per_page=1&page=2', $this->bearer($this->tokenFor('admin1'))), '/tenant/users', 'get', 200);
     }
 
+    public function test_module_operations_conform(): void
+    {
+        $this->fakeTalaDns(['tala.example.com' => ['93.184.216.34']]);
+        $tenant = $this->makeTenant('SFAI');
+        $other = $this->makeTenant('OTHER');
+        $this->makeMember($tenant, Role::TenantAdmin, 'admin1');
+        [, $secret] = $this->makePlatformAdmin();
+        $login = $this->spa()->postJson('/api/v1/platform/auth/session', ['email' => 'root@example.test', 'password' => self::PASSWORD, 'otp' => $this->otp($secret)]);
+        $this->ok($login, '/platform/auth/session', 'post', 200);
+        $this->carrySession($login);
+        $p = fn () => $this->fresh()->spa();
+        $base = "/api/v1/platform/tenants/{$tenant->id}/modules";
+
+        $this->ok($p()->getJson($base), '/platform/tenants/{tenant}/modules', 'get', 200);
+        $this->ok($p()->putJson("$base/tala", ['external_team_id' => 'TEAM-1']), '/platform/tenants/{tenant}/modules/{module}', 'put', 200);
+        $this->ok($p()->putJson("$base/tala", ['external_team_id' => 'bad team!']), '/platform/tenants/{tenant}/modules/{module}', 'put', 422);
+        $this->ok($p()->putJson("/api/v1/platform/tenants/{$other->id}/modules/tala", ['external_team_id' => 'TEAM-1']), '/platform/tenants/{tenant}/modules/{module}', 'put', 409);
+        $this->ok($p()->putJson('/api/v1/platform/tenants/'.Str::uuid().'/modules/tala', ['external_team_id' => 'T']), '/platform/tenants/{tenant}/modules/{module}', 'put', 404);
+        $this->ok($p()->getJson('/api/v1/platform/tenants/'.Str::uuid().'/modules'), '/platform/tenants/{tenant}/modules', 'get', 404);
+
+        $this->ok($p()->patchJson('/api/v1/platform/settings', ['settings' => ['tala_api_base_url' => 'https://tala.example.com']]), '/platform/settings', 'patch', 200);
+        $this->ok($p()->patchJson('/api/v1/platform/settings', ['settings' => ['tala_api_base_url' => 'http://tala.example.com']]), '/platform/settings', 'patch', 422);
+        $this->ok($p()->getJson('/api/v1/platform/settings'), '/platform/settings', 'get', 200);
+
+        $h = $this->bearer($this->tokenFor('admin1'));
+        $this->ok($this->fresh()->getJson('/api/v1/tenant/modules', $h), '/tenant/modules', 'get', 200);
+        $this->ok($this->fresh()->putJson('/api/v1/tenant/modules/tala', ['enabled' => true], $h), '/tenant/modules/{module}', 'put', 200);
+        $this->ok($this->fresh()->putJson('/api/v1/tenant/modules/tala', ['enabled' => 'x'], $h), '/tenant/modules/{module}', 'put', 422);
+        $this->ok($this->fresh()->putJson('/api/v1/tenant/modules/srt', ['enabled' => true], $h), '/tenant/modules/{module}', 'put', 404);
+        $this->ok($this->fresh()->getJson('/api/v1/me', $h), '/me', 'get', 200);
+    }
+
+    public function test_module_endpoints_forbidden_and_conflict_conform(): void
+    {
+        $tenant = $this->makeTenant('SFAI');
+        $this->makeMember($tenant, Role::Crew, 'crew1');
+        $this->makeMember($tenant, Role::TenantAdmin, 'admin1');
+
+        $crew = $this->bearer($this->tokenFor('crew1'));
+        $this->ok($this->fresh()->getJson('/api/v1/tenant/modules', $crew), '/tenant/modules', 'get', 403);
+        $this->ok($this->fresh()->putJson('/api/v1/tenant/modules/tala', ['enabled' => true], $crew), '/tenant/modules/{module}', 'put', 403);
+
+        $admin = $this->bearer($this->tokenFor('admin1'));
+        $this->ok($this->fresh()->putJson('/api/v1/tenant/modules/tala', ['enabled' => true], $admin), '/tenant/modules/{module}', 'put', 409);
+        $this->ok($this->fresh()->getJson('/api/v1/tenant/modules'), '/tenant/modules', 'get', 401);
+    }
+
     /** Guards the guard: the validator must actually reject a payload that does not match the contract. */
     public function test_validator_rejects_a_mismatching_response(): void
     {

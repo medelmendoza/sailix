@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Sailix Platform API
   version: 0.1.0
-  license: { name: Proprietary }
+  license: { name: Proprietary, identifier: LicenseRef-Proprietary }
   description: |
     Source of truth for /api/v1 (ADR-0006). Phase B covers authentication, `/me`, tenant administration
     core and platform administration. Business modules are added in Phase D.
@@ -359,6 +359,61 @@ paths:
               schema: { $ref: '#/components/schemas/AuditPage' }
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
+  /tenant/modules:
+    get:
+      tags: [tenant]
+      operationId: listTenantModules
+      summary: List modules and this organization's entitlement state
+      description: Requires `tenant.view`. Lists every module in the registry.
+      responses:
+        '200':
+          description: Module states for the caller's tenant.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/TenantModule' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /tenant/modules/{module}:
+    put:
+      tags: [tenant]
+      operationId: setTenantModuleEnabled
+      summary: Enable or disable a module for the caller's organization
+      description: >
+        Requires `module.<code>.manage`. Only toggles use of a module the platform has already
+        provisioned (entitlement + team mapping). The team mapping can NOT be changed here. Disabling
+        takes effect on the next gateway request.
+      parameters:
+        - { name: module, in: path, required: true, schema: { $ref: '#/components/schemas/ModuleCode' } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+      responses:
+        '200':
+          description: Updated module state.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TenantModule' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /platform/auth/session:
     post:
       tags: [platform]
@@ -590,10 +645,73 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /platform/tenants/{tenant}/modules:
+    parameters:
+      - { name: tenant, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [platform]
+      operationId: listPlatformTenantModules
+      summary: List module entitlements of a tenant
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Module states of the tenant, including link counts.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/PlatformTenantModule' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /platform/tenants/{tenant}/modules/{module}:
+    put:
+      tags: [platform]
+      operationId: provisionTenantModule
+      summary: Grant a module to a tenant and map it to the external team
+      description: >
+        Platform-only. `external_team_id` binds the organization to exactly one team of the external
+        system; it must be unique across all organizations. It cannot change while links exist
+        (409 `links_exist`). A team already mapped to another organization is refused
+        (409 `team_already_mapped`).
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - { name: tenant, in: path, required: true, schema: { type: string } }
+        - { name: module, in: path, required: true, schema: { $ref: '#/components/schemas/ModuleCode' } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [external_team_id]
+              properties:
+                external_team_id: { type: string, pattern: '^[A-Za-z0-9_-]{1,64}$' }
+                enabled: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Provisioned module.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/PlatformTenantModule' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /platform/settings:
     get:
       tags: [platform]
       operationId: getPlatformSettings
+      description: >
+        Includes `tala_api_base_url` (platform-only; never tenant-configurable): an `https://` origin whose
+        host is on the deployment allow-list (`SAILIX_TALA_ALLOWED_HOSTS`) and resolves only to public addresses.
       summary: Get platform settings
       security: [{ sessionCookie: [] }]
       responses:
@@ -682,7 +800,8 @@ components:
             unauthenticated, forbidden, not_found, validation, throttled, csrf_mismatch, invalid_credentials,
             invalid_ticket, invalid_invitation, invalid_transition, no_active_admin, last_admin, already_member,
             account_suspended, tenant_suspended, membership_suspended, membership_pending, web_access_denied,
-            no_access, mfa_not_enrolled, tenant_mismatch, tenant_context_missing, server_error
+            no_access, mfa_not_enrolled, tenant_mismatch, tenant_context_missing, module_disabled,
+            module_forbidden, module_unavailable, module_not_provisioned, links_exist, team_already_mapped, server_error
         detail: { type: string }
         errors:
           type: object
@@ -744,7 +863,7 @@ components:
             name: { type: string }
     Me:
       type: object
-      required: [user, membership, tenant, abilities, features]
+      required: [user, membership, tenant, abilities, modules]
       properties:
         user:
           type: object
@@ -765,11 +884,41 @@ components:
         abilities:
           type: array
           items: { type: string }
-        features:
-          type: object
-          required: [services_enabled]
+        modules:
+          description: Modules this organization is entitled to AND this role may use, with the caller's link state.
+          type: array
+          items: { $ref: '#/components/schemas/MyModule' }
+    ModuleCode:
+      type: string
+      enum: [tala]
+      description: Module registry. Only `tala` exists in the MVP; new modules are added here.
+    MyModule:
+      type: object
+      required: [code, label, enabled, linked, status]
+      properties:
+        code: { $ref: '#/components/schemas/ModuleCode' }
+        label: { type: string }
+        enabled: { type: boolean }
+        linked: { type: boolean }
+        status:
+          type: string
+          enum: [disabled, not_linked, linked, needs_relink, revoked]
+    TenantModule:
+      type: object
+      required: [code, label, entitled, enabled, external_team_id]
+      properties:
+        code: { $ref: '#/components/schemas/ModuleCode' }
+        label: { type: string }
+        entitled: { type: boolean, description: Platform has provisioned this module for the tenant. }
+        enabled: { type: boolean }
+        external_team_id: { type: [string, 'null'] }
+    PlatformTenantModule:
+      allOf:
+        - $ref: '#/components/schemas/TenantModule'
+        - type: object
+          required: [links_count]
           properties:
-            services_enabled: { type: boolean }
+            links_count: { type: integer, minimum: 0 }
     TenantDetail:
       type: object
       required: [id, code, name, status, settings]

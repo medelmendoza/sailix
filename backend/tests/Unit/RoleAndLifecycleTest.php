@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Enums\Role;
 use App\Enums\TenantStatus as S;
+use App\Modules\Module;
 use App\Platform\TenantTransition as T;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -55,7 +56,11 @@ class RoleAndLifecycleTest extends TestCase
     {
         $this->assertTrue(Role::TenantAdmin->can('users.manage'));
         $this->assertFalse(Role::Crew->can('users.manage'));
-        $this->assertSame([], Role::Crew->abilities());
+        // Crew holds ONLY module-use abilities (approved M1 change); no admin/manage abilities.
+        $this->assertSame(Module::useAbilities(), Role::Crew->abilities());
+        $this->assertFalse(Role::Crew->can('tenant.manage'));
+        $this->assertFalse(Role::Crew->can('module.tala.manage'));
+        $this->assertTrue(Role::TenantAdmin->can('module.tala.manage'));
         $this->assertGreaterThan(Role::Crew->rank(), Role::TenantAdmin->rank());
         $this->assertTrue(Role::TenantAdmin->canUseWeb());
         $this->assertFalse(Role::Crew->canUseWeb());

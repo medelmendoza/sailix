@@ -3,6 +3,7 @@
 use App\Exceptions\ProblemRenderer;
 use App\Http\Middleware\EnsurePlatformContext;
 use App\Http\Middleware\RequestId;
+use App\Http\Middleware\RequireModule;
 use App\Http\Middleware\ResolveTenantContext;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant.context' => ResolveTenantContext::class,
             'platform.context' => EnsurePlatformContext::class,
+            'module' => RequireModule::class,
         ]);
         // The tenant/platform context must exist BEFORE implicit route-model binding runs,
         // otherwise a scoped model cannot be resolved (and a foreign id could never 404 correctly).

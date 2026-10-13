@@ -122,3 +122,12 @@ erDiagram
 
 ## 6. Migration policy
 Laravel migrations only; forward-only in staging/prod; dev DB only until approval; no destructive migration without verified backup + approval; schema-lint test (Phase C) fails CI if a table with `tenant_id` lacks the composite index/FK pattern or a tenant-owned model lacks `BelongsToTenant`.
+
+## 7. M1 additions — module tables
+| Table | Scope | Key constraints |
+|---|---|---|
+| `tenant_modules` | tenant-owned (`BelongsToTenant`) | `unique(tenant_id, module)`; `unique(tenant_id, id)`; `unique(tenant_id, module, external_team_id)` (FK parent); **`unique(module, external_team_id)`** — one external team per organization (NULL rows exempt); `external_team_id` is `utf8mb4_bin` |
+| `external_identities` | **identity-level, no `tenant_id`** (reviewed exception, ADR-0017) | **`unique(module, external_user_id)`** (one external account per Sailix user, any tenant); `unique(user_id, module)`; case-sensitive id |
+| `module_links` | tenant-owned | `unique(tenant_id, membership_id, module)`; composite FK `(tenant_id, membership_id)` → memberships; composite FK `(tenant_id, module, external_team_id)` → `tenant_modules` (**a link can only use its own organization's mapped team**; the mapping cannot change while links exist); tokens encrypted by cast, hidden from serialization, nullable until M3 |
+
+`TenancyStaticChecksTest` now also asserts the exact set of tables **without** `tenant_id` (each justified), so a new un-scoped table is a conscious, reviewed decision, and that it inspects only the connected database (it previously also saw the dev schema).

@@ -35,6 +35,8 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::get('users', [Tenant\UserController::class, 'index']);
         Route::patch('users/{membership}', [Tenant\UserController::class, 'update']);
         Route::get('audit-logs', [Tenant\AuditLogController::class, 'index']);
+        Route::get('modules', [Tenant\ModuleController::class, 'index']);
+        Route::put('modules/{module}', [Tenant\ModuleController::class, 'update']);
     });
 });
 
@@ -51,6 +53,9 @@ Route::prefix('platform')->middleware(['auth:platform', 'platform.context', 'thr
         ->whereIn('action', ['activate', 'suspend', 'reactivate', 'deactivate', 'archive']);
     Route::get('tenants/{tenant}/admins', [Platform\TenantAdminController::class, 'index']);
     Route::post('tenants/{tenant}/admins', [Platform\TenantAdminController::class, 'store']);
+
+    Route::get('tenants/{tenant}/modules', [Platform\TenantModuleController::class, 'index']);
+    Route::put('tenants/{tenant}/modules/{module}', [Platform\TenantModuleController::class, 'update']);
 
     Route::get('settings', [Platform\SettingsController::class, 'show']);
     Route::patch('settings', [Platform\SettingsController::class, 'update']);

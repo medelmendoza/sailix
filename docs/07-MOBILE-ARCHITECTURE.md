@@ -33,7 +33,7 @@ Licensing and maintenance status of each library are to be checked and recorded 
 - Payslip gate: server step-up (`403 step_up_required` → app shows password prompt → `POST /auth/step-up`); biometric convenience optional.
 - Error handling: map problem+json `code`s (`tenant_suspended`, `account_suspended`, `step_up_required`, `validation`, `throttled`) to UI states; `401` → session clear.
 - Delete account: calls deletion-request endpoint (Q-3).
-- Services (ASTRA) remain behind `SERVICES_ENABLED` and the tenant setting `services_enabled`; Call-It not built (no backend, Q-21).
+- **Superseded (M1):** Services (ASTRA/Call-It) are deferred; the mobile shell shows the modules returned by `/me.modules[]` (Tala only in the MVP). The `services_enabled` setting no longer exists.
 - Seed decision D-10: copy `sailix-rn` M0 into `sailix_v2/mobile` (original left untouched), then re-run its gates.
 
 ## 4. Needs & behaviours carried unchanged

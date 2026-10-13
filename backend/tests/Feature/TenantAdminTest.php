@@ -112,11 +112,13 @@ class TenantAdminTest extends TestCase
         $this->makeMember($tenant, Role::TenantAdmin, 'admin1');
         $h = $this->as('admin1');
 
-        $this->patchJson('/api/v1/tenant', ['settings' => ['services_enabled' => true, 'display_name' => 'Southfield']], $h)
-            ->assertOk()->assertJsonPath('data.settings.services_enabled', true)->assertJsonPath('data.settings.display_name', 'Southfield');
-        $this->getJson('/api/v1/me', $this->as('admin1'))->assertJsonPath('data.features.services_enabled', true)->assertJsonPath('data.tenant.name', 'Southfield');
+        $this->patchJson('/api/v1/tenant', ['settings' => ['privacy_policy_url' => 'https://example.com/privacy', 'display_name' => 'Southfield']], $h)
+            ->assertOk()->assertJsonPath('data.settings.privacy_policy_url', 'https://example.com/privacy')->assertJsonPath('data.settings.display_name', 'Southfield');
+        $this->getJson('/api/v1/me', $this->as('admin1'))->assertJsonPath('data.tenant.name', 'Southfield')->assertJsonMissingPath('data.features');
 
         $this->patchJson('/api/v1/tenant', ['settings' => ['nonsense' => 1]], $this->as('admin1'))->assertStatus(422)->assertJsonStructure(['errors' => ['nonsense']]);
+        // removed in M1 (ADR-0016): superseded by module entitlements
+        $this->patchJson('/api/v1/tenant', ['settings' => ['services_enabled' => true]], $this->as('admin1'))->assertStatus(422)->assertJsonStructure(['errors' => ['services_enabled']]);
         $this->patchJson('/api/v1/tenant', ['settings' => ['payslip_step_up' => 'fingerprint']], $this->as('admin1'))->assertStatus(422);
         $this->patchJson('/api/v1/tenant', ['settings' => ['privacy_policy_url' => 'http://insecure.test']], $this->as('admin1'))->assertStatus(422);
 

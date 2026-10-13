@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Modules\Module;
+
 /**
  * Tenant-level roles (docs/04, ADR-0005). Superadmin is NOT a role: it is a separate
  * identity (PlatformAdmin) on a separate guard.
@@ -31,8 +33,9 @@ enum Role: string
         return match ($this) {
             self::TenantAdmin => [
                 'tenant.view', 'tenant.manage', 'users.view', 'users.manage', 'audit.view',
+                ...Module::useAbilities(), ...Module::manageAbilities(),
             ],
-            self::Crew => [],
+            self::Crew => Module::useAbilities(),
         };
     }
 
