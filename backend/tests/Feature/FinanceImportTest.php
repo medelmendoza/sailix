@@ -71,10 +71,11 @@ class FinanceImportTest extends TestCase
         $this->assertTrue($r['imported']);
         $this->assertSame(1, $r['created']);
 
-        $p = Payslip::withoutTenantScope()->with('deductions')->firstOrFail();
+        $p = Payslip::withoutTenantScope()->firstOrFail();
+        $deductions = PayslipDeduction::withoutTenantScope()->where('payslip_id', $p->id)->orderBy('position')->get();
         $this->assertSame('19000.00', $p->net_amount);
         $this->assertFalse($p->is_dollar);
-        $this->assertSame([['Medical', '1000.00'], ['Tickets', '750.00']], $p->deductions->map(fn ($d) => [$d->description, $d->amount])->all());
+        $this->assertSame([['Medical', '1000.00'], ['Tickets', '750.00']], $deductions->map(fn ($d) => [$d->description, $d->amount])->all());
         $this->assertSame('crewA', Membership::withoutTenantScope()->with('user')->find($p->membership_id)->user->username);
 
         // the member sees it once they unlock, with the masked account

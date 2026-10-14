@@ -920,6 +920,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenant/finance/imports/{kind}/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A CSV template (the header and one example row) for the payslip or loan import
+         * @description Requires `finance.manage`.
+         */
+        get: operations["getFinanceImportTemplate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/finance/imports/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check, or load, a CSV of payslips or cash advances for the caller's own members
+         * @description Requires `finance.manage`. Multipart. The members are named by `username` and must belong to the caller's organization. The file is checked as a WHOLE: with `commit` false (the default) nothing is written and the answer says what would happen; with `commit` true it is loaded only if every row is valid (all or nothing). Re-loading the same file updates the same records (a payslip is its member, kind, pay date and period label; a loan is its member and code). Amounts are stored exactly as given. At most 2000 rows and 2 MB. Limited to 30 per hour. The audit trail records counts only.
+         */
+        post: operations["importFinanceCsv"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenant": {
         parameters: {
             query?: never;
@@ -1575,6 +1615,19 @@ export interface components {
         };
         DeletionRequestPage: components["schemas"]["PageEnvelope"] & {
             data?: components["schemas"]["DeletionRequest"][];
+        };
+        FinanceImportResult: {
+            rows: number;
+            /** @description New records (or that would be new, in a check). */
+            created: number;
+            updated: number;
+            /** @description At most 50. Line 1 is the header. Any error means nothing was loaded. */
+            errors: {
+                line: number;
+                message: string;
+            }[];
+            /** @description True only when the file was loaded. */
+            imported: boolean;
         };
         CallItStats: {
             /** @description Reports sent (not drafts). */
@@ -3879,6 +3932,72 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+        };
+    };
+    getFinanceImportTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "payslips" | "loans";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The CSV. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    importFinanceCsv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "payslips" | "loans";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description A .csv or .txt file.
+                     */
+                    file: string;
+                    /** @default false */
+                    commit?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description The result of the check or the load. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FinanceImportResult"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
         };
     };
     getTenant: {
