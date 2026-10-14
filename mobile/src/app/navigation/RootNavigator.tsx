@@ -86,16 +86,16 @@ const tabOptions = {
   tabBarInactiveTintColor: colors.textMuted,
   tabBarHideOnKeyboard: true,
   tabBarButton: (props: BottomTabBarButtonProps) => <TabButton {...props} />,
-  tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 12 },
+  tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 11 },
   tabBarItemStyle: { paddingVertical: 6 },
   tabBarStyle: {
     position: 'absolute' as const,
-    start: 20, // the library's own style uses start/end, which win over left/right
-    end: 20,
+    start: 16, // the library's own style uses start/end, which win over left/right
+    end: 16,
     elevation: 0, // the shadow below is drawn by boxShadow; Android's elevation would add a grey one
     height: TAB_BAR_HEIGHT,
     paddingBottom: 0,
-    paddingHorizontal: 6,
+    paddingHorizontal: 4,
     borderRadius: 34,
     borderTopWidth: 0,
     backgroundColor: colors.surface,
