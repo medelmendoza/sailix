@@ -78,6 +78,7 @@ const TAB_BAR_HEIGHT = 68;
 
 /** Tab bar: a rounded bar floating above the bottom edge, the active tab on a light-blue pill. */
 const tabOptions = {
+  animation: 'fade' as const, // pages fade in when you switch tabs
   tabBarActiveTintColor: colors.primary,
   tabBarInactiveTintColor: colors.textMuted,
   tabBarHideOnKeyboard: true,
@@ -85,11 +86,11 @@ const tabOptions = {
   tabBarItemStyle: { paddingVertical: 6 },
   tabBarStyle: {
     position: 'absolute' as const,
-    left: 16,
-    right: 16,
+    left: 28,
+    right: 28,
     height: TAB_BAR_HEIGHT,
     paddingBottom: 0,
-    paddingHorizontal: 6,
+    paddingHorizontal: 14,
     borderRadius: 34,
     borderTopWidth: 0,
     backgroundColor: colors.surface,
@@ -251,7 +252,12 @@ export function RootNavigator() {
     <View style={styles.flex}>
       <OfflineBanner />
       <AppStack.Navigator
-        screenOptions={{ ...headerOptions, headerBackButtonDisplayMode: 'minimal' }}
+        screenOptions={{
+          ...headerOptions,
+          headerBackButtonDisplayMode: 'minimal',
+          animation: 'fade', // pages fade in instead of sliding
+          animationDuration: 250,
+        }}
       >
         <AppStack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
         <AppStack.Screen
