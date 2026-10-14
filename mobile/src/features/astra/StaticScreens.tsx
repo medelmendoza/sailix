@@ -45,8 +45,8 @@ export function RiskScreen() {
       <View style={styles.chart}>
         <View style={styles.chartRow}>
           <View style={styles.axisY} accessibilityElementsHidden importantForAccessibility="no">
-            <AppText style={styles.axisYLabel}>Probability</AppText>
             <AppText style={styles.axisArrow}>↑</AppText>
+            <AppText style={styles.axisYLabel}>Probability</AppText>
           </View>
           <View style={styles.grid}>
             {QUADRANTS.map((cell, i) => {
