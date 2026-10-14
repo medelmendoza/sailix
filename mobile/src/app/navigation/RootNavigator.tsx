@@ -80,10 +80,9 @@ const TAB_BAR_HEIGHT = 68;
 const tabOptions = {
   tabBarActiveTintColor: colors.primary,
   tabBarInactiveTintColor: colors.textMuted,
-  tabBarActiveBackgroundColor: colors.infoBg,
   tabBarHideOnKeyboard: true,
   tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 12 },
-  tabBarItemStyle: { borderRadius: 28, marginVertical: 6, marginHorizontal: 2 },
+  tabBarItemStyle: { paddingVertical: 6 },
   tabBarStyle: {
     position: 'absolute' as const,
     left: 16,
@@ -97,6 +96,11 @@ const tabOptions = {
     boxShadow: '0 8px 24px rgba(18, 36, 61, 0.14)',
   },
 };
+
+/** The tab's icon on a light-blue pill while its tab is open. */
+function TabPill({ focused, children }: { focused: boolean; children: React.ReactNode }) {
+  return <View style={[styles.pill, focused && styles.pillOn]}>{children}</View>;
+}
 
 /** The old Sailix "settings menu": reachable from every tab's header. */
 function AccountButton() {
@@ -137,13 +141,23 @@ function MainTabs() {
         options={{
           title: 'Dashboard',
           headerShown: false, // the Dashboard has its own gradient header, with the Account button in it
-          tabBarIcon: ({ color }) => <TabIcon name="home" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabPill focused={focused}>
+              <TabIcon name="home" color={color} />
+            </TabPill>
+          ),
         }}
       />
       <Tabs.Screen
         name="Files"
         component={FilesScreen}
-        options={{ tabBarIcon: ({ color }) => <TabIcon name="folder" color={color} /> }}
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <TabPill focused={focused}>
+              <TabIcon name="folder" color={color} />
+            </TabPill>
+          ),
+        }}
       />
       <Tabs.Screen
         name="Announcements"
@@ -152,19 +166,35 @@ function MainTabs() {
           // "Announcements" does not fit under a fifth of the screen: the tab says "Notices", the screen and VoiceOver say Announcements
           tabBarLabel: 'Notices',
           tabBarAccessibilityLabel: 'Announcements',
-          tabBarIcon: ({ color }) => <TabIcon name="bell" color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <TabPill focused={focused}>
+              <TabIcon name="bell" color={color} />
+            </TabPill>
+          ),
           tabBarBadge: unread.data && unread.data > 0 ? unread.data : undefined,
         }}
       />
       <Tabs.Screen
         name="Finance"
         component={FinanceScreen}
-        options={{ tabBarIcon: ({ color }) => <TabIcon name="coins" color={color} /> }}
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <TabPill focused={focused}>
+              <TabIcon name="coins" color={color} />
+            </TabPill>
+          ),
+        }}
       />
       <Tabs.Screen
         name="Services"
         component={ServicesScreen}
-        options={{ tabBarIcon: ({ color }) => <TabIcon name="grid" color={color} /> }}
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <TabPill focused={focused}>
+              <TabIcon name="grid" color={color} />
+            </TabPill>
+          ),
+        }}
       />
     </Tabs.Navigator>
   );
@@ -389,6 +419,8 @@ export function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
+  pill: { width: 56, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  pillOn: { backgroundColor: colors.infoBg },
   flex: { flex: 1 },
   accountButton: {
     minWidth: 44,
