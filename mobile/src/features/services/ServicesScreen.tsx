@@ -3,6 +3,7 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { onTabScroll } from '@/app/navigation/tabBarCollapse';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
 import { AppText, Card, FormError, NavRow, type GlyphName } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
@@ -97,6 +98,8 @@ export function ServicesScreen({ navigation }: Props) {
 
   return (
     <ScrollView
+      onScroll={onTabScroll}
+      scrollEventThrottle={16}
       testID="services-scroll"
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}

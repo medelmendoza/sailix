@@ -3,6 +3,7 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
+import { onTabScroll } from '@/app/navigation/tabBarCollapse';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
 import { Button, EmptyState, ErrorState, Notice, Segmented, SkeletonList } from '@/components';
 import { spacing } from '@/constants/theme';
@@ -32,6 +33,8 @@ export function FilesScreen({ navigation }: Props) {
 
   return (
     <ScrollView
+      onScroll={onTabScroll}
+      scrollEventThrottle={16}
       contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl

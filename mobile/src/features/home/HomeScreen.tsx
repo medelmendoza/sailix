@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { onTabScroll } from '@/app/navigation/tabBarCollapse';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
 import { AppText, FormError, GlyphIcon, TabIcon } from '@/components';
 import { colors, gradients, minTouchTarget, spacing } from '@/constants/theme';
@@ -71,6 +72,8 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <ScrollView
+      onScroll={onTabScroll}
+      scrollEventThrottle={16}
       testID="home-scroll"
       contentContainerStyle={styles.scroll}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}

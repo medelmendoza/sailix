@@ -2,6 +2,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScrollView, StyleSheet } from 'react-native';
+import { onTabScroll } from '@/app/navigation/tabBarCollapse';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
 import { NavRow, type GlyphName } from '@/components';
 import { spacing } from '@/constants/theme';
@@ -33,7 +34,11 @@ export function FinanceScreen({ navigation }: Props) {
     },
   ];
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView
+      onScroll={onTabScroll}
+      scrollEventThrottle={16}
+      contentContainerStyle={styles.content}
+    >
       {items.map((i) => (
         <NavRow key={i.title} title={i.title} note={i.note} glyph={i.glyph} onPress={i.go} />
       ))}

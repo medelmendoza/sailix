@@ -62,6 +62,7 @@ import { TalaPdfScreen, TalaVideoScreen } from '@/features/modules/tala/TalaView
 import { ModuleScreen } from '@/features/modules/ModuleScreen';
 import { useSessionStore } from '@/store/sessionStore';
 import type { AppStackParamList, AuthStackParamList, MainTabParamList } from './types';
+import { resetTabBar, tabBarCollapse } from './tabBarCollapse';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const AppStack = createNativeStackNavigator<AppStackParamList>();
@@ -77,21 +78,21 @@ const headerOptions = {
 };
 
 /** The floating tab bar's own height; the screens keep clear of it (see MainTabs). */
-const TAB_BAR_HEIGHT = 68;
+const TAB_BAR_HEIGHT = 60;
 
 /** Tab bar: a rounded bar floating above the bottom edge, the active tab on a light-blue pill. */
 const tabOptions = {
   animation: 'fade' as const, // pages fade in when you switch tabs
   tabBarActiveTintColor: colors.primary,
   tabBarInactiveTintColor: colors.textMuted,
+  tabBarShowLabel: false, // icons only; each tab still has its name for screen readers
   tabBarHideOnKeyboard: true,
   tabBarButton: (props: BottomTabBarButtonProps) => <TabButton {...props} />,
-  tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 11 },
-  tabBarItemStyle: { paddingVertical: 6 },
+  tabBarItemStyle: { justifyContent: 'center' as const },
   tabBarStyle: {
     position: 'absolute' as const,
-    start: 16, // the library's own style uses start/end, which win over left/right
-    end: 16,
+    start: 28, // the library's own style uses start/end, which win over left/right
+    end: 28,
     elevation: 0, // the shadow below is drawn by boxShadow; Android's elevation would add a grey one
     height: TAB_BAR_HEIGHT,
     paddingBottom: 0,
@@ -100,6 +101,11 @@ const tabOptions = {
     borderTopWidth: 0,
     backgroundColor: colors.surface,
     boxShadow: '0 8px 24px rgba(18, 36, 61, 0.14)',
+    // shrinks toward the bottom while you scroll down, grows back when you scroll up
+    transform: [
+      { translateY: tabBarCollapse.interpolate({ inputRange: [0, 1], outputRange: [0, 12] }) },
+      { scale: tabBarCollapse.interpolate({ inputRange: [0, 1], outputRange: [1, 0.78] }) },
+    ],
   },
 };
 
@@ -135,6 +141,7 @@ function MainTabs() {
   const bottom = Math.max(insets.bottom, 8) + 8; // the bar floats this far above the bottom edge
   return (
     <Tabs.Navigator
+      screenListeners={{ focus: resetTabBar }}
       screenOptions={{
         ...headerOptions,
         ...tabOptions,
@@ -435,7 +442,7 @@ export function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
-  pill: { width: 56, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  pill: { width: 56, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   pillOn: { backgroundColor: colors.infoBg },
   flex: { flex: 1 },
   accountButton: {
