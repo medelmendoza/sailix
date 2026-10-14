@@ -167,6 +167,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
     padding: spacing.xl,
+    paddingBottom: spacing.xxxl,
     gap: spacing.lg,
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },

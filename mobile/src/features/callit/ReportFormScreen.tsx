@@ -533,6 +533,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
     padding: spacing.xl,
+    paddingBottom: spacing.xxxl,
     gap: spacing.md,
   },
   option: {
