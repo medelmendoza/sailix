@@ -73,15 +73,28 @@ const headerOptions = {
   contentStyle: { backgroundColor: colors.background },
 };
 
-/** Tab bar: a raised strip of the surface (shadow cast upwards), active tab in the brand blue. */
+/** The floating tab bar's own height; the screens keep clear of it (see MainTabs). */
+const TAB_BAR_HEIGHT = 68;
+
+/** Tab bar: a rounded bar floating above the bottom edge, the active tab on a light-blue pill. */
 const tabOptions = {
   tabBarActiveTintColor: colors.primary,
   tabBarInactiveTintColor: colors.textMuted,
+  tabBarActiveBackgroundColor: colors.infoBg,
+  tabBarHideOnKeyboard: true,
   tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 12 },
+  tabBarItemStyle: { borderRadius: 28, marginVertical: 6, marginHorizontal: 2 },
   tabBarStyle: {
+    position: 'absolute' as const,
+    left: 16,
+    right: 16,
+    height: TAB_BAR_HEIGHT,
+    paddingBottom: 0,
+    paddingHorizontal: 6,
+    borderRadius: 34,
+    borderTopWidth: 0,
     backgroundColor: colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.borderSoft,
+    boxShadow: '0 8px 24px rgba(18, 36, 61, 0.14)',
   },
 };
 
@@ -103,9 +116,17 @@ function AccountButton() {
 
 function MainTabs() {
   const unread = useUnreadCount(true);
+  const insets = useSafeAreaInsets();
+  const bottom = Math.max(insets.bottom, 8) + 8; // the bar floats this far above the bottom edge
   return (
     <Tabs.Navigator
-      screenOptions={{ ...headerOptions, ...tabOptions, headerRight: () => <AccountButton /> }}
+      screenOptions={{
+        ...headerOptions,
+        ...tabOptions,
+        tabBarStyle: { ...tabOptions.tabBarStyle, bottom },
+        sceneStyle: { backgroundColor: colors.background, paddingBottom: TAB_BAR_HEIGHT + bottom + 8 },
+        headerRight: () => <AccountButton />,
+      }}
     >
       <Tabs.Screen
         name="Home"
