@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useLayoutEffect, useState, type ReactNode } from 'react';
 import { Image, Modal, Pressable, StyleSheet, View, type ImageSourcePropType } from 'react-native';
 import { AppText, Button, Card, GlyphIcon, type GlyphName } from '@/components';
-import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
+import { colors, gradients, minTouchTarget, radius, spacing } from '@/constants/theme';
 
 /**
  * The "What is ...?" explanation, as in the original: a round "?" in the header opens a sheet that slides up from the
@@ -53,17 +53,20 @@ export function GridTile({
   image,
   onPress,
   label,
-  glass,
 }: {
   title: string;
   glyph?: GlyphName;
-  glass?: boolean;
   tone?: 'primary' | 'teal' | 'coral';
   image?: ImageSourcePropType;
   onPress: () => void;
   label?: string;
 }) {
-  const bg = tone === 'primary' ? colors.primary : tone === 'teal' ? '#2A7F8F' : colors.coralText;
+  const bg =
+    tone === 'primary'
+      ? gradients.cardBlue
+      : tone === 'teal'
+        ? gradients.cardTeal
+        : gradients.cardCoral;
   return (
     <Pressable
       accessibilityRole="button"
@@ -71,7 +74,7 @@ export function GridTile({
       onPress={onPress}
       style={({ pressed }) => [styles.gridCell, pressed && { opacity: 0.75 }]}
     >
-      <View style={[styles.gridTile, glass ? styles.glassTile : { backgroundColor: bg }]}>
+      <View style={[styles.gridTile, { experimental_backgroundImage: bg }]}>
         {image ? (
           <Image source={image} accessibilityElementsHidden style={styles.gridImage} />
         ) : glyph ? (
@@ -177,17 +180,12 @@ const styles = StyleSheet.create({
   gridTile: {
     flex: 1,
     borderRadius: radius.lg,
+    boxShadow: '0 6px 16px rgba(18, 36, 61, 0.18)',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
     padding: spacing.md,
     overflow: 'hidden',
-  },
-  glassTile: {
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
-    boxShadow: '0 8px 24px rgba(10, 30, 70, 0.25)',
   },
   gridIcon: { height: 44, alignItems: 'center', justifyContent: 'center' },
   gridImage: { width: 64, height: 64, borderRadius: radius.md },

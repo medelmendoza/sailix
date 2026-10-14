@@ -19,7 +19,7 @@ export function HomeAnnouncements({ onOpenAll }: { onOpenAll: () => void }) {
   if (list.isError) return null;
 
   return (
-    <Card style={styles.card}>
+    <Card variant="flat" style={styles.card}>
       <View style={styles.head}>
         <AppText variant="heading" accessibilityRole="header" style={{ flex: 1 }}>
           Announcements

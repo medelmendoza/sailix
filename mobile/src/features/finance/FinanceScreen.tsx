@@ -4,7 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
 import { AppText, GlyphIcon, type GlyphName } from '@/components';
-import { minTouchTarget, spacing } from '@/constants/theme';
+import { gradients, minTouchTarget, spacing } from '@/constants/theme';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Finance'>,
@@ -16,21 +16,21 @@ export function FinanceScreen({ navigation }: Props) {
     {
       title: 'Allotment',
       glyph: 'chart' as GlyphName,
-      gradient: 'linear-gradient(135deg, #355DAD 0%, #2A7F8F 100%)',
+      gradient: gradients.cardBlue,
       note: 'Your monthly and special pay. Asks for your password.',
       go: () => navigation.navigate('PayslipList', { kind: 'allotment' }),
     },
     {
       title: 'Final pay',
       glyph: 'medal' as GlyphName,
-      gradient: 'linear-gradient(135deg, #2A7F8F 0%, #2E8B6A 100%)',
+      gradient: gradients.cardTeal,
       note: 'Your pay at the end of a contract. Asks for your password.',
       go: () => navigation.navigate('PayslipList', { kind: 'final' }),
     },
     {
       title: 'Cash advance',
       glyph: 'clock' as GlyphName,
-      gradient: 'linear-gradient(135deg, #A8391A 0%, #C2603A 100%)',
+      gradient: gradients.cardCoral,
       note: 'What you borrowed and what is left to pay.',
       go: () => navigation.navigate('Loans'),
     },

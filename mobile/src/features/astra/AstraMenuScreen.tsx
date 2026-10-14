@@ -1,14 +1,13 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScrollView, StyleSheet } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, GlassBackground, useGlassHeader } from '@/components';
+import { AppText } from '@/components';
 import { spacing } from '@/constants/theme';
 import { Grid, GridTile } from './parts';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'AstraMenu'>;
 
 export function AstraMenuScreen({ navigation }: Props) {
-  useGlassHeader();
   const items = [
     {
       title: 'Pomodoro',
@@ -48,25 +47,14 @@ export function AstraMenuScreen({ navigation }: Props) {
     },
   ] as const;
   return (
-    <GlassBackground>
-      <ScrollView contentContainerStyle={styles.content}>
-        <AppText style={{ color: '#FFFFFF' }}>
-          Tools for clear thinking, focus and communication.
-        </AppText>
-        <Grid>
-          {items.map((i) => (
-            <GridTile
-              key={i.title}
-              title={i.title}
-              glyph={i.glyph}
-              tone={i.tone}
-              glass
-              onPress={i.go}
-            />
-          ))}
-        </Grid>
-      </ScrollView>
-    </GlassBackground>
+    <ScrollView contentContainerStyle={styles.content}>
+      <AppText muted>Tools for clear thinking, focus and communication.</AppText>
+      <Grid>
+        {items.map((i) => (
+          <GridTile key={i.title} title={i.title} glyph={i.glyph} tone={i.tone} onPress={i.go} />
+        ))}
+      </Grid>
+    </ScrollView>
   );
 }
 

@@ -45,7 +45,7 @@ export function FilesScreen({ navigation }: Props) {
         />
       }
     >
-      <AppText variant="title" accessibilityRole="header" style={{ fontSize: 34, lineHeight: 42 }}>
+      <AppText variant="title" accessibilityRole="header">
         Files
       </AppText>
       {warn.length > 0 ? (

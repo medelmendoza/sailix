@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useController, type Control, type FieldValues, type Path } from 'react-hook-form';
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
-import { colors, fonts, minTouchTarget, radius, shadows, spacing } from '@/constants/theme';
+import { colors, fonts, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { AppText } from './AppText';
 
 type Props<T extends FieldValues> = Omit<
@@ -89,7 +89,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
-    boxShadow: shadows.inset, // a field is a well pressed into the surface
   },
   boxError: { borderColor: colors.danger },
   input: {

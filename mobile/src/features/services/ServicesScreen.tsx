@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
 import { AppText, Card, FormError, GlyphIcon, type GlyphName } from '@/components';
-import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
+import { gradients, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { STATUS_LABEL } from '@/features/modules/availability';
 import { describeError } from '@/services/api/errors';
 import type { MyModule } from '@/services/api/types';
@@ -27,9 +27,9 @@ const PLANNED = [
 ] as const;
 
 const LOOK: Record<string, { glyph: GlyphName; gradient: string }> = {
-  tala: { glyph: 'video', gradient: 'linear-gradient(135deg, #355DAD 0%, #2A7F8F 100%)' },
-  astra: { glyph: 'target', gradient: 'linear-gradient(135deg, #2A7F8F 0%, #2E8B6A 100%)' },
-  callit: { glyph: 'alert', gradient: 'linear-gradient(135deg, #A8391A 0%, #C2603A 100%)' },
+  tala: { glyph: 'video', gradient: gradients.cardBlue },
+  astra: { glyph: 'target', gradient: gradients.cardTeal },
+  callit: { glyph: 'alert', gradient: gradients.cardCoral },
 };
 const DEFAULT_LOOK = LOOK.tala!;
 

@@ -67,13 +67,13 @@ export function Button({
 const styles = StyleSheet.create({
   base: {
     minHeight: minTouchTarget,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
   primary: { backgroundColor: colors.primary, experimental_backgroundImage: gradients.primary },
-  secondary: { backgroundColor: colors.surface },
+  secondary: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderSoft },
   dim: { opacity: 0.55 },
 });

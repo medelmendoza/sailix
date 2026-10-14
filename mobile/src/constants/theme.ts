@@ -40,6 +40,10 @@ export const colors = {
 } as const;
 
 export const gradients = {
+  /** Bold launcher cards (Finance, Services, Astra, Call-it). White text meets AA on every colour (see the tokens test). */
+  cardBlue: 'linear-gradient(135deg, #355DAD 0%, #2A7F8F 100%)',
+  cardTeal: 'linear-gradient(135deg, #2A7F8F 0%, #2A7D60 100%)',
+  cardCoral: 'linear-gradient(135deg, #A8391A 0%, #B5482A 100%)',
   primary: 'linear-gradient(135deg, #355DAD 0%, #2F67B3 100%)',
   /** The Dashboard header: the logo's blue fading to a teal (white text stays readable on both ends, see the tokens test). */
   header: 'linear-gradient(180deg, #355DAD 0%, #2A7F8F 100%)',
@@ -48,14 +52,11 @@ export const gradients = {
 } as const;
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
-export const radius = { sm: 8, md: 12, lg: 18, pill: 999 } as const;
+export const radius = { sm: 10, md: 16, lg: 24, pill: 999 } as const;
 
 /** Elevation: a card lifts off the sand with a soft shadow; an inset well is a quiet inner shadow. */
 export const shadows = {
-  raised: [
-    { offsetX: 0, offsetY: 4, blurRadius: 16, color: colors.shadow },
-    { offsetX: 0, offsetY: 1, blurRadius: 2, color: colors.shadow },
-  ],
+  raised: [{ offsetX: 0, offsetY: 2, blurRadius: 10, color: 'rgba(18, 36, 61, 0.06)' }],
   raisedSm: [{ offsetX: 0, offsetY: 1, blurRadius: 4, color: colors.shadow }],
   inset: [{ offsetX: 0, offsetY: 1, blurRadius: 4, color: colors.shadow, inset: true as const }],
   insetSm: [{ offsetX: 0, offsetY: 1, blurRadius: 3, color: colors.shadow, inset: true as const }],
@@ -70,7 +71,7 @@ export const fonts = {
 } as const;
 
 export const typography = {
-  title: { fontFamily: fonts.heading, fontSize: 28, lineHeight: 36 },
+  title: { fontFamily: fonts.heading, fontSize: 32, lineHeight: 40 },
   heading: { fontFamily: fonts.heading, fontSize: 19, lineHeight: 26 },
   body: { fontFamily: fonts.body, fontSize: 16, lineHeight: 24 },
   caption: { fontFamily: fonts.bodySemiBold, fontSize: 13, lineHeight: 18 },
