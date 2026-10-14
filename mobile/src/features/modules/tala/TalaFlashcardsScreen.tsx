@@ -298,7 +298,7 @@ function Study({
       </Card>
       {fromCache ? <Notice message="You are studying the copy saved on this device." /> : null}
 
-      <View style={{ height: cardHeight }}>
+      <View style={{ height: cardHeight, marginVertical: spacing.sm }}>
         <Face
           title="Question"
           text={card.question}
@@ -377,7 +377,7 @@ function Face({
       style={[
         styles.face,
         accent && styles.faceAccent,
-        { transform: [{ perspective: 1200 }, { rotateY: turn }] },
+        { transform: [{ perspective: 2600 }, { rotateY: turn }] },
       ]}
     >
       <View
@@ -445,7 +445,7 @@ function RatingButton({
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
   center: { textAlign: 'center' },
-  progress: { gap: spacing.sm, padding: spacing.lg },
+  progress: { gap: spacing.sm, padding: spacing.lg, zIndex: 2 },
   resultTile: {
     flex: 1,
     alignItems: 'center',
