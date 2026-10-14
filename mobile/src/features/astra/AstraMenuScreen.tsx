@@ -13,43 +13,42 @@ export function AstraMenuScreen({ navigation }: Props) {
     {
       title: 'Pomodoro',
       glyph: 'clock',
-      tone: 'coral',
       go: () => navigation.navigate('AstraPomodoro'),
     },
     {
       title: 'Focus and Rest sounds',
       glyph: 'music',
-      tone: 'coral',
       go: () => navigation.navigate('AstraNoise'),
     },
     {
       title: 'Risk management',
       glyph: 'alert',
-      tone: 'teal',
       go: () => navigation.navigate('AstraRisk'),
     },
     {
       title: 'Root cause analysis',
       glyph: 'search',
-      tone: 'teal',
       go: () => navigation.navigate('AstraRca'),
     },
     {
       title: 'SCARIL',
       glyph: 'target',
-      tone: 'primary',
       go: () => navigation.navigate('AstraScaril'),
     },
     {
       title: 'Military style emails',
       glyph: 'mail',
-      tone: 'primary',
       go: () => navigation.navigate('AstraEmails'),
     },
   ] as const;
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <AppText muted>Tools for clear thinking, focus and communication.</AppText>
+      <View style={styles.intro}>
+        <ServiceLogo code="astra" size={56} />
+        <AppText muted style={{ flex: 1 }}>
+          Tools for clear thinking, focus and communication.
+        </AppText>
+      </View>
       <Grid>
         {items.map((i) => (
           <GridTile key={i.title} title={i.title} glyph={i.glyph} onPress={i.go} />
