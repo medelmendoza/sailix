@@ -5,7 +5,7 @@ import {
 } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText, Button, GlyphIcon, OfflineBanner, TabIcon } from '@/components';
 import { colors, fonts, spacing } from '@/constants/theme';
 import { TodosScreen } from '@/features/todos/TodosScreen';
@@ -124,7 +124,10 @@ function MainTabs() {
         ...headerOptions,
         ...tabOptions,
         tabBarStyle: { ...tabOptions.tabBarStyle, bottom },
-        sceneStyle: { backgroundColor: colors.background, paddingBottom: TAB_BAR_HEIGHT + bottom + 8 },
+        sceneStyle: {
+          backgroundColor: colors.background,
+          paddingBottom: TAB_BAR_HEIGHT + bottom + 8,
+        },
         headerRight: () => <AccountButton />,
       }}
     >
