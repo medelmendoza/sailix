@@ -111,7 +111,13 @@ const tabOptions = {
 
 /** A tab's button without the grey press ripple (the open tab already shows on its pill). */
 function TabButton(props: BottomTabBarButtonProps) {
-  return <Pressable {...(props as PressableProps)} android_ripple={{ color: 'transparent' }} />;
+  return (
+    <Pressable
+      {...(props as PressableProps)}
+      android_ripple={{ color: 'transparent' }}
+      style={[props.style, styles.tabCentered]} // the library lays a tab out from the top; icons only, so centre it
+    />
+  );
 }
 
 /** The tab's icon on a light-blue pill while its tab is open. */
@@ -442,6 +448,7 @@ export function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
+  tabCentered: { justifyContent: 'center', alignItems: 'center' },
   pill: { width: 56, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   pillOn: { backgroundColor: colors.infoBg },
   flex: { flex: 1 },
