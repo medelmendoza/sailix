@@ -30,6 +30,7 @@ import { CallItScreen } from '@/features/callit/CallItScreen';
 import { ReportFormScreen } from '@/features/callit/ReportFormScreen';
 import { ReportScreen } from '@/features/callit/ReportScreen';
 import { ReportsScreen } from '@/features/callit/ReportsScreen';
+import { ScannerScreen } from '@/features/scanner/ScannerScreen';
 import { DocumentFormScreen } from '@/features/files/DocumentFormScreen';
 import { DocumentScreen } from '@/features/files/DocumentScreen';
 import { DocumentViewerScreen } from '@/features/files/DocumentViewerScreen';
@@ -267,6 +268,11 @@ export function RootNavigator() {
         />
         <AppStack.Screen name="Payslip" component={PayslipScreen} options={{ title: 'Payslip' }} />
         <AppStack.Screen name="Loans" component={LoansScreen} options={{ title: 'Cash advance' }} />
+        <AppStack.Screen
+          name="Scanner"
+          component={ScannerScreen}
+          options={{ title: 'Scan a document' }}
+        />
         <AppStack.Screen name="CallIt" component={CallItScreen} options={{ title: 'Call-it' }} />
         <AppStack.Screen
           name="CallItForm"

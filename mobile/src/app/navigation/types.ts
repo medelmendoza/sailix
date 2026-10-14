@@ -55,6 +55,7 @@ export type AppStackParamList = {
   Document: { id: string };
   DocumentForm: { id?: string };
   DocumentViewer: { id: string; name: string; source?: 'document' | 'callit' };
+  Scanner: undefined;
   CallIt: undefined;
   CallItForm: { id?: string };
   CallItReports: undefined;

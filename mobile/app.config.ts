@@ -44,6 +44,24 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ['expo-secure-store', { faceIDPermission: false }],
     'expo-font',
     'expo-video',
+    // The document scanner: the camera (no microphone, no barcode reading) and the photo library picker
+    [
+      'expo-camera',
+      {
+        cameraPermission: 'Sailix uses the camera to scan your documents.',
+        microphonePermission: false,
+        recordAudioAndroid: false,
+        barcodeScannerEnabled: false,
+      },
+    ],
+    [
+      'expo-image-picker',
+      {
+        photosPermission: 'Sailix lets you choose photos of your documents from your library.',
+        cameraPermission: false,
+        microphonePermission: false,
+      },
+    ],
     // Astra's background sounds play only while its screen is open, so no background audio and no microphone are declared
     ['expo-audio', { microphonePermission: false, enableBackgroundPlayback: false }],
     [

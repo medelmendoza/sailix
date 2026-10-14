@@ -54,7 +54,8 @@ The old Sailix backend cannot be run, so these were rebuilt as a NEW backend fro
 - **Admin (web):** Documents (review queue: view file, approve, send back with a reason) and Document types (add / rename / switch off / delete when unused).
 - **Files:** stored on a PRIVATE disk (`SAILIX_DOCUMENTS_DISK`, default local) under a random name; the type is judged by content (PDF/JPEG/PNG only), size limited by the organization's `upload_max_mb`; every read goes through an ownership-checked endpoint (own document, or admin of the same organization) with `nosniff`, no caching and a locked-down CSP. The mobile viewer downloads with the bearer token into a temporary cache file and deletes it on leaving: documents are never kept on the device.
 - **Security:** owner, organization, status and review fields never come from the request; another member's or organization's document is `404`; crew cannot review or manage types; audit records submitted / resubmitted / approved / rejected without numbers or reasons.
-- **Not built:** the camera document SCANNER (native, needs a real-device test; the picker takes a PDF or an existing photo), automatic expiry reminders, per-type required documents, an admin "add a document on a member's behalf".
+- **Scanner:** built later, see "Document scanner" below.
+- **Not built:** automatic expiry reminders, per-type required documents, an admin "add a document on a member's behalf".
 
 ### Finance (Finance tab)
 
@@ -113,3 +114,14 @@ The Finance screens read payslips and cash advances, but until now only the demo
 - **Security:** administrators only; the bank account number is encrypted at rest and masked in every response; the audit trail records the kind and the row counts, never contents; limited to 30 uploads an hour; the template and upload are `nosniff`.
 - **Not built:** a direct feed or API from a payroll system, scheduled imports, an import history screen, deleting payslips or loans through the portal, and an Excel (.xlsx) reader (export as CSV).
 - **State:** written and typechecked only; tests exist for backend and web, none run (no checks until asked).
+
+## Document scanner (DOC-07)
+
+Scan a document into one PDF from the **Add a document** form (Files) and the **Call-it** report form: a **Scan with the camera** button next to the file picker.
+
+- **How it works:** take up to **five** pictures with the camera, or pick them from the photo library (it only asks the library for as many as there is room for), put them in order (earlier / later / remove), then **Make a PDF**. The PDF (one picture per US-Letter page, shrunk to 1600 px wide and compressed, so it stays small enough to upload) goes back to the form as the chosen file; the page pictures are deleted, and the PDF is deleted from the cache once it has been sent. Cancel hands nothing over.
+- **Camera permission:** asked when the scanner opens, with an explanation; refused for good shows "Open Settings"; and the scanner always works from the photo library, so a phone or a simulator without a camera is not stuck. The app declares only the camera (no microphone, no barcode reading) and the photo library picker.
+- **Built with:** `expo-camera`, `expo-image-picker`, `expo-image-manipulator`, `expo-print` (all native: a rebuild is needed). The pictures are inlined into the PDF as base64 because the print engine cannot read local file addresses on iOS.
+- **Not the same as the old scanner:** the old app used Google's ML Kit document scanner, which finds the page edges, straightens and cleans the picture automatically. This one does NOT: it keeps the picture as taken. Say if you want automatic edge detection and cropping (a bigger native dependency).
+- **Privacy:** a scan is personal data. It stays on the phone until the PDF is sent, is never added to the offline store, and the temporary files are removed.
+- **State:** written and typechecked only; tests exist (page model, PDF html, scanner screen flows), not run.

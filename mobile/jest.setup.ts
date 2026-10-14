@@ -160,3 +160,73 @@ jest.mock('expo-asset', () => ({
     })),
   },
 }));
+
+// The document scanner's native modules
+jest.mock('expo-camera', () => {
+  const React = require('react');
+  const state = { grantOnRequest: true, canAskAgain: true, initialGranted: true, shots: 0 };
+  const CameraView = React.forwardRef((props: { onCameraReady?: () => void }, ref: unknown) => {
+    React.useImperativeHandle(ref, () => ({
+      takePictureAsync: jest.fn(async () => ({
+        uri: `file:///cache/camera-${++state.shots}.jpg`,
+        width: 100,
+        height: 100,
+      })),
+    }));
+    React.useEffect(() => props.onCameraReady?.(), []);
+    return null;
+  });
+  const useCameraPermissions = () => {
+    const [p, setP] = React.useState({
+      granted: state.initialGranted,
+      canAskAgain: state.canAskAgain,
+      status: state.initialGranted ? 'granted' : 'undetermined',
+    });
+    const request = async () => {
+      const next = {
+        granted: state.grantOnRequest,
+        canAskAgain: state.canAskAgain,
+        status: state.grantOnRequest ? 'granted' : 'denied',
+      };
+      setP(next);
+      return next;
+    };
+    return [p, request];
+  };
+  return { CameraView, useCameraPermissions, __state: state };
+});
+jest.mock('expo-image-picker', () => {
+  const state: { next: { uri: string }[] | null; calls: unknown[] } = {
+    next: [{ uri: 'file:///library/1.jpg' }],
+    calls: [],
+  };
+  return {
+    launchImageLibraryAsync: jest.fn(async (options: unknown) => {
+      state.calls.push(options);
+      return state.next
+        ? { canceled: false, assets: state.next }
+        : { canceled: true, assets: null };
+    }),
+    __state: state,
+  };
+});
+jest.mock('expo-image-manipulator', () => ({
+  SaveFormat: { JPEG: 'jpeg' },
+  ImageManipulator: {
+    manipulate: jest.fn(() => {
+      const chain: { resize: jest.Mock; renderAsync: jest.Mock } = {
+        resize: jest.fn(() => chain),
+        renderAsync: jest.fn(async () => ({
+          saveAsync: jest.fn(async () => ({ uri: 'file:///cache/page.jpg', base64: 'QUJD' })),
+        })),
+      };
+      return chain;
+    }),
+  },
+}));
+jest.mock('expo-print', () => ({
+  printToFileAsync: jest.fn(async () => ({
+    uri: 'file:///cache/Print/scan.pdf',
+    numberOfPages: 1,
+  })),
+}));

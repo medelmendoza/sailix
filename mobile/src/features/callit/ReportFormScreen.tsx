@@ -1,12 +1,15 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as DocumentPicker from 'expo-document-picker';
-import { useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText, Button, Card, ErrorState, FormError, SkeletonList } from '@/components';
 import { colors, fonts, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { describeError, toApiError } from '@/services/api/errors';
 import type { PickedFile } from '@/features/files/api';
+import { discard } from '@/features/scanner/scan';
+import { useScanStore } from '@/features/scanner/scanStore';
 import { useCallItReport, useDeleteDraft, useSaveReport } from './api';
 import { CLASSIFICATIONS, LOCATIONS, SUB_CLASSIFICATIONS, labelOf } from './content';
 
@@ -40,6 +43,14 @@ export function ReportFormScreen({ route, navigation }: Props) {
   const remove = useDeleteDraft();
   const [v, setV] = useState<Values | null>(id ? null : EMPTY);
   const [file, setFile] = useState<PickedFile | null>(null);
+  const takeScan = useScanStore((s) => s.take);
+
+  useFocusEffect(
+    useCallback(() => {
+      const scanned = takeScan();
+      if (scanned) setFile(scanned);
+    }, [takeScan]),
+  );
   const [error, setError] = useState<string | null>(null);
   const [problems, setProblems] = useState<Record<string, string>>({});
   const [confirming, setConfirming] = useState(false);
@@ -108,6 +119,7 @@ export function ReportFormScreen({ route, navigation }: Props) {
     try {
       await save.mutateAsync({ id, fields: payload(submit), file, submit });
       setConfirming(false);
+      if (file) discard([file.uri]);
       navigation.goBack();
     } catch (e) {
       setConfirming(false);
@@ -205,6 +217,11 @@ export function ReportFormScreen({ route, navigation }: Props) {
         />
       ) : null}
 
+      <Button
+        title="Scan with the camera"
+        variant="secondary"
+        onPress={() => navigation.navigate('Scanner')}
+      />
       <Button
         title={
           file

@@ -1,11 +1,14 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as DocumentPicker from 'expo-document-picker';
-import { useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText, Button, ErrorState, FormError, Notice, SkeletonList } from '@/components';
 import { colors, fonts, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { describeError, toApiError } from '@/services/api/errors';
+import { discard } from '@/features/scanner/scan';
+import { useScanStore } from '@/features/scanner/scanStore';
 import { useDocument, useDocumentTypes, useSaveDocument, type PickedFile } from './api';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'DocumentForm'>;
@@ -45,6 +48,15 @@ export function DocumentFormScreen({ route, navigation }: Props) {
   const save = useSaveDocument(id);
   const [v, setV] = useState<Values | null>(id ? null : EMPTY);
   const [file, setFile] = useState<PickedFile | null>(null);
+  const takeScan = useScanStore((s) => s.take);
+
+  // a scan made on the scanner screen arrives when this screen is shown again
+  useFocusEffect(
+    useCallback(() => {
+      const scanned = takeScan();
+      if (scanned) setFile(scanned);
+    }, [takeScan]),
+  );
   const [error, setError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<Record<string, string>>({});
 
@@ -109,6 +121,7 @@ export function DocumentFormScreen({ route, navigation }: Props) {
         },
         file,
       });
+      if (file) discard([file.uri]); // a scan is personal data: it does not stay in the cache once sent
       navigation.goBack();
     } catch (e) {
       const api = toApiError(e);
@@ -178,6 +191,11 @@ export function DocumentFormScreen({ route, navigation }: Props) {
         date
       />
 
+      <Button
+        title="Scan with the camera"
+        variant="secondary"
+        onPress={() => navigation.navigate('Scanner')}
+      />
       <Button
         title={
           file ? 'Choose a different file' : id ? 'Replace the file (optional)' : 'Choose the file'
