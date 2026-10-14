@@ -217,6 +217,9 @@ export function ReportFormScreen({ route, navigation }: Props) {
         />
       ) : null}
 
+      <AppText variant="caption" style={styles.label}>
+        Upload files
+      </AppText>
       <Button
         title="Scan with the camera"
         variant="secondary"
@@ -239,13 +242,29 @@ export function ReportFormScreen({ route, navigation }: Props) {
         <AppText muted>{existing.data.file.name}</AppText>
       ) : null}
 
-      <Button title="Send report" onPress={send} loading={save.isPending && confirming} />
-      <Button
-        title="Save as draft"
-        variant="secondary"
-        loading={save.isPending && !confirming}
-        onPress={() => void run(false)}
-      />
+      <View style={styles.actions}>
+        <Button
+          title="Cancel"
+          variant="secondary"
+          style={styles.action}
+          onPress={() => navigation.goBack()}
+        />
+        <Button
+          title="Save draft"
+          accessibilityLabel="Save as draft"
+          variant="secondary"
+          style={styles.action}
+          loading={save.isPending && !confirming}
+          onPress={() => void run(false)}
+        />
+        <Button
+          title="Send"
+          accessibilityLabel="Send report"
+          style={styles.action}
+          onPress={send}
+          loading={save.isPending && confirming}
+        />
+      </View>
       {id ? <Button title="Delete this draft" variant="secondary" onPress={deleteDraft} /> : null}
 
       <Modal
@@ -317,7 +336,9 @@ function Choice({
 }) {
   return (
     <View style={{ gap: spacing.sm }}>
-      <AppText variant="caption">{label}</AppText>
+      <AppText variant="caption" style={styles.label}>
+        {label}
+      </AppText>
       <View style={styles.chips} accessibilityRole="radiogroup">
         {options.map((o) => {
           const picked = value === o.value;
@@ -361,7 +382,11 @@ function YesNo({
 }) {
   return (
     <View style={{ gap: spacing.sm }}>
-      {label ? <AppText variant="caption">{label}</AppText> : null}
+      {label ? (
+        <AppText variant="caption" style={styles.label}>
+          {label}
+        </AppText>
+      ) : null}
       <View style={styles.chips} accessibilityRole="radiogroup">
         {(
           [
@@ -414,7 +439,9 @@ function Field({
 }) {
   return (
     <View style={{ gap: spacing.xs }}>
-      <AppText variant="caption">{label}</AppText>
+      <AppText variant="caption" style={styles.label}>
+        {label}
+      </AppText>
       <TextInput
         accessibilityLabel={label}
         accessibilityHint={hint}
@@ -441,6 +468,9 @@ function Field({
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.md },
+  label: { fontFamily: fonts.heading, fontSize: 15, color: colors.text },
+  actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  action: { flex: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
     minHeight: minTouchTarget,
