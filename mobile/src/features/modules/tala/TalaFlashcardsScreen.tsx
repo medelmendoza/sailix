@@ -15,8 +15,8 @@ import {
 } from 'react-native';
 import { env } from '@/app/config/env';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, Button, Card, ErrorState, Notice, SkeletonList } from '@/components';
-import { colors, radius, shadows, spacing } from '@/constants/theme';
+import { AppText, Button, Card, ErrorState, Notice, ProgressBar, SkeletonList } from '@/components';
+import { colors, fonts, radius, shadows, spacing } from '@/constants/theme';
 import { describeError, toApiError } from '@/services/api/errors';
 import type { TalaDeck } from '@/services/api/types';
 import { scopedKey } from '@/store/scopedKey';
@@ -248,6 +248,16 @@ function Study({
         </AppText>
         <Card style={{ gap: spacing.sm }}>
           <AppText variant="heading">{deck.name}</AppText>
+          <View style={styles.ratings} accessibilityElementsHidden>
+            <ResultTile n={counts.easy} label="Easy" bg={colors.successBg} fg={colors.success} />
+            <ResultTile
+              n={counts.medium}
+              label="Medium"
+              bg={colors.warningBg}
+              fg={colors.warning}
+            />
+            <ResultTile n={counts.hard} label="Hard" bg={colors.dangerBg} fg={colors.danger} />
+          </View>
           <AppText>
             Easy {counts.easy} · Medium {counts.medium} · Hard {counts.hard}
           </AppText>
@@ -276,10 +286,16 @@ function Study({
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <AppText variant="caption" muted>
-        Card {session.pos + 1} of {session.order.length} · Rated {rated} of {deck.cards.length}
-        {session.practice ? ' · Practice' : ''}
-      </AppText>
+      <Card variant="flat" style={styles.progress}>
+        <AppText variant="caption" muted>
+          Card {session.pos + 1} of {session.order.length} · Rated {rated} of {deck.cards.length}
+          {session.practice ? ' · Practice' : ''}
+        </AppText>
+        <ProgressBar
+          percent={deck.cards.length === 0 ? 0 : (rated / deck.cards.length) * 100}
+          label={`${rated} of ${deck.cards.length} cards rated`}
+        />
+      </Card>
       {fromCache ? <Notice message="You are studying the copy saved on this device." /> : null}
 
       <View style={{ height: cardHeight }}>
@@ -308,36 +324,28 @@ function Study({
             How well did you know it?
           </AppText>
           <View style={styles.ratings}>
-            <RoundButton
+            <RatingButton
               label="Easy"
-              bg={colors.success}
-              fg={colors.onPrimary}
+              bg={colors.successBg}
+              fg={colors.success}
               onPress={() => void rate(card, 'easy')}
             />
-            <RoundButton
+            <RatingButton
               label="Medium"
-              bg={colors.ratingMedium}
-              fg={colors.text}
+              bg={colors.warningBg}
+              fg={colors.warning}
               onPress={() => void rate(card, 'medium')}
             />
-            <RoundButton
+            <RatingButton
               label="Hard"
-              bg={colors.danger}
-              fg={colors.onPrimary}
+              bg={colors.dangerBg}
+              fg={colors.danger}
               onPress={() => void rate(card, 'hard')}
             />
           </View>
         </>
       ) : (
-        <View style={styles.ratings}>
-          <RoundButton
-            label="Show answer"
-            text="Answer"
-            bg={colors.primary}
-            fg={colors.onPrimary}
-            onPress={() => reveal(card)}
-          />
-        </View>
+        <Button title="Show answer" onPress={() => reveal(card)} />
       )}
     </ScrollView>
   );
@@ -372,12 +380,16 @@ function Face({
         { transform: [{ perspective: 1200 }, { rotateY: turn }] },
       ]}
     >
-      <AppText variant="caption" style={{ color: accent ? colors.success : colors.primary }}>
-        {title}
-      </AppText>
+      <View
+        style={[styles.faceChip, { backgroundColor: accent ? colors.successBg : colors.infoBg }]}
+      >
+        <AppText variant="caption" style={{ color: accent ? colors.success : colors.primary }}>
+          {title}
+        </AppText>
+      </View>
       <ScrollView contentContainerStyle={styles.faceBody} showsVerticalScrollIndicator={false}>
         {text ? (
-          <AppText variant="heading" style={styles.center}>
+          <AppText variant="heading" style={[styles.center, styles.faceText]}>
             {text}
           </AppText>
         ) : null}
@@ -387,16 +399,27 @@ function Face({
   );
 }
 
-/** The big round buttons of the Tala app: one to turn the card, then Easy / Medium / Hard. */
-function RoundButton({
+function ResultTile({ n, label, bg, fg }: { n: number; label: string; bg: string; fg: string }) {
+  return (
+    <View style={[styles.resultTile, { backgroundColor: bg }]}>
+      <AppText style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, color: fg }}>
+        {n}
+      </AppText>
+      <AppText variant="caption" style={{ color: fg }}>
+        {label}
+      </AppText>
+    </View>
+  );
+}
+
+/** One of the three ratings, as a tinted pill. */
+function RatingButton({
   label,
-  text,
   bg,
   fg,
   onPress,
 }: {
   label: string;
-  text?: string;
   bg: string;
   fg: string;
   onPress: () => void;
@@ -407,13 +430,13 @@ function RoundButton({
       accessibilityLabel={label}
       onPress={onPress}
       style={({ pressed }) => [
-        styles.round,
-        { backgroundColor: bg },
-        pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] },
+        styles.rating,
+        { backgroundColor: bg, borderColor: fg },
+        pressed && { opacity: 0.8 },
       ]}
     >
       <AppText variant="button" maxFontSizeMultiplier={1.5} style={{ color: fg }}>
-        {(text ?? label).toUpperCase()}
+        {label}
       </AppText>
     </Pressable>
   );
@@ -422,23 +445,29 @@ function RoundButton({
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
   center: { textAlign: 'center' },
-  ratings: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-evenly',
+  progress: { gap: spacing.sm, padding: spacing.lg },
+  resultTile: {
+    flex: 1,
     alignItems: 'center',
-    gap: spacing.md,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
   },
-  round: {
-    minWidth: 96,
-    minHeight: 96,
-    aspectRatio: 1,
-    padding: spacing.sm,
+  ratings: { flexDirection: 'row', gap: spacing.md },
+  rating: {
+    flex: 1,
+    minHeight: 56,
     borderRadius: radius.pill,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: shadows.raised,
   },
+  faceChip: {
+    alignSelf: 'flex-start',
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 2,
+  },
+  faceText: { fontSize: 22, lineHeight: 30 },
   face: {
     position: 'absolute',
     top: 0,

@@ -71,19 +71,28 @@ export function ModuleScreen({ route, navigation }: Props) {
             <View style={styles.wrap}>
               {statusCard}
               <FormError message={error} />
-              <Button title="My stats" onPress={() => navigation.navigate('TalaStats')} />
-              <Button
-                title="Join a course"
-                variant="secondary"
-                onPress={() => navigation.navigate('TalaJoinCourse')}
-              />
-              <Button
-                title="Disconnect Tala"
-                variant="secondary"
-                loading={unlink.isPending}
-                onPress={confirmDisconnect}
-              />
+              <View style={styles.actions}>
+                <Button
+                  title="My stats"
+                  style={styles.action}
+                  onPress={() => navigation.navigate('TalaStats')}
+                />
+                <Button
+                  title="Join a course"
+                  variant="secondary"
+                  style={styles.action}
+                  onPress={() => navigation.navigate('TalaJoinCourse')}
+                />
+              </View>
             </View>
+          }
+          footer={
+            <Button
+              title="Disconnect Tala"
+              variant="secondary"
+              loading={unlink.isPending}
+              onPress={confirmDisconnect}
+            />
           }
         />
       </Screen>
@@ -113,4 +122,6 @@ export function ModuleScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   wrap: { gap: spacing.lg },
   status: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
+  actions: { flexDirection: 'row', gap: spacing.md },
+  action: { flex: 1 },
 });

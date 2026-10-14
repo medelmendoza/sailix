@@ -41,6 +41,14 @@ export async function downloadMaterial(
   return record;
 }
 
+/** Remembers that the saved file was opened (a PDF can be marked completed only after it has been opened). */
+export async function markOpened(materialId: string): Promise<void> {
+  const scope = currentScope();
+  const rec = (await getDownloads(scope))[assertSafeSegment(materialId)];
+  if (!rec || rec.openedAt) return;
+  await putDownload(scope, { ...rec, openedAt: new Date().toISOString() });
+}
+
 export async function deleteDownload(materialId: string): Promise<void> {
   const scope = currentScope();
   const dir = new Directory(Paths.document, ROOT_DIR_NAME, scope, assertSafeSegment(materialId));

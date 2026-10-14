@@ -22,7 +22,7 @@ import { describeError } from '@/services/api/errors';
 import type { TalaMaterialSummary } from '@/services/api/types';
 import { scopedKey } from '@/store/scopedKey';
 import { useTalaCourse } from './api';
-import { deleteDownload, downloadMaterial, listDownloads } from './offline/downloads';
+import { deleteDownload, downloadMaterial, listDownloads, markOpened } from './offline/downloads';
 import { pendingCompletions, queueCompletion, syncOutbox } from './offline/outbox';
 import { savedCopyText } from './TalaCourseList';
 import { TalaCourseProgress } from './TalaCourseProgress';
@@ -108,8 +108,10 @@ export function TalaCourseScreen({ route }: Props) {
   function openOffline(m: TalaMaterialSummary) {
     const rec = downloaded[m.id];
     if (!rec) return;
-    if (m.type === 'pdf') navigation.navigate('TalaPdf', { name: m.name, uri: rec.uri });
-    else {
+    if (m.type === 'pdf') {
+      void markOpened(m.id).then(refreshLocal); // opening it is what lets the learner mark it completed
+      navigation.navigate('TalaPdf', { name: m.name, uri: rec.uri });
+    } else {
       navigation.navigate('TalaVideo', {
         name: m.name,
         uri: rec.uri,
@@ -202,7 +204,17 @@ export function TalaCourseScreen({ route }: Props) {
                   c.progress_submission &&
                   m.type === 'pdf' &&
                   m.viewable &&
+                  Boolean(downloaded[m.id]?.openedAt) &&
                   !(isDone(m) || pending.has(m.id))
+                }
+                completeHint={
+                  c.progress_submission &&
+                  m.type === 'pdf' &&
+                  m.viewable &&
+                  !downloaded[m.id]?.openedAt &&
+                  !(isDone(m) || pending.has(m.id))
+                    ? 'Download and open it to mark it completed.'
+                    : null
                 }
                 onOpen={() => openMaterial(m)}
                 onDownload={() => void download(m)}

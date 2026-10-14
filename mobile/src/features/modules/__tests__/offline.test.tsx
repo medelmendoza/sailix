@@ -13,7 +13,7 @@ import { signedInAs } from '@/test-utils/session';
 import { deleteDownload, downloadMaterial, listDownloads } from '../tala/offline/downloads';
 import { pendingCompletions, queueCompletion, syncOutbox } from '../tala/offline/outbox';
 import { currentScope } from '../tala/offline/paths';
-import { getCachedCourses, setCachedCourses, setOutbox } from '../tala/offline/store';
+import { getCachedCourses, putDownload, setCachedCourses, setOutbox } from '../tala/offline/store';
 import { wipeOfflineData } from '../tala/offline/wipe';
 import { openTala } from '@/test-utils/steps';
 
@@ -22,6 +22,22 @@ const fs = (
     __fs: { files: Map<string, unknown>; dirs: Set<string>; state: { failNextDownload: boolean } };
   }
 ).__fs;
+/** A PDF saved on the device, as if it had been downloaded (and, if `opened`, opened at least once). */
+async function seedPdf(id: string, opened: boolean) {
+  const scope = currentScope();
+  const uri = `file:///documents/tala/${scope}/${id}/${id}.pdf`;
+  fs.files.set(uri, { size: 1 });
+  await putDownload(scope, {
+    materialId: id,
+    assignId: 'A1',
+    type: 'pdf',
+    name: `Item ${id}`,
+    uri,
+    bytes: 1,
+    downloadedAt: '2026-10-14T00:00:00Z',
+    ...(opened ? { openedAt: '2026-10-14T00:01:00Z' } : {}),
+  });
+}
 const keys = async () => (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('tala:'));
 const offline = (on: boolean) =>
   jest.mocked(NetInfo.fetch).mockResolvedValue({ isConnected: !on } as never);
@@ -334,6 +350,7 @@ describe('marking completed', () => {
     submission: boolean,
     extra: Record<string, unknown> = {},
     more: ReturnType<typeof mat>[] = [],
+    openedPdfs: string[] = [],
   ) {
     const api = mockApi({
       'GET /modules/tala/courses': { data: { data: [course] } },
@@ -341,6 +358,7 @@ describe('marking completed', () => {
       ...extra,
     } as never);
     signedInAs(makeMe({ modules: [TALA('linked')] }));
+    for (const id of openedPdfs) await seedPdf(id, true);
     await renderApp();
     await openTala();
     await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
@@ -370,8 +388,9 @@ describe('marking completed', () => {
         },
       },
       [mat('p2', 'pdf')],
+      ['p2'],
     );
-    expect(screen.getAllByRole('button', { name: 'Mark as completed' })).toHaveLength(1); // only the open PDF
+    expect(screen.getAllByRole('button', { name: 'Mark as completed' })).toHaveLength(1); // only the opened PDF
 
     await fireEvent.press(screen.getByRole('button', { name: 'Mark as completed' }));
 
@@ -389,6 +408,7 @@ describe('marking completed', () => {
       true,
       { 'POST /modules/tala/courses/A1/progress': { data: { data: {} } } },
       [mat('p2', 'pdf')],
+      ['p2'],
     );
     offline(true);
 
@@ -407,6 +427,20 @@ describe('marking completed', () => {
       expect(api.callsTo('POST /modules/tala/courses/A1/progress')).toHaveLength(1),
     );
     await waitFor(() => expect(screen.queryByText(/waiting to be sent/)).toBeNull());
+  });
+
+  it('a PDF can be marked completed only after it has been downloaded and opened', async () => {
+    await openCourse(true, {}, [mat('p2', 'pdf')]);
+    expect(screen.queryByRole('button', { name: 'Mark as completed' })).toBeNull(); // not downloaded
+    expect(screen.getByText('Download and open it to mark it completed.')).toBeTruthy();
+
+    await seedPdf('p2', false); // downloaded but never opened
+    await queryClient.invalidateQueries();
+    expect(await screen.findByRole('button', { name: /^Open: Item p2/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Mark as completed' })).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: /^Open: Item p2/ })); // opening it unlocks the button
+    await waitFor(async () => expect((await listDownloads())['p2']?.openedAt).toBeTruthy());
   });
 
   it('a video is downloaded first (never opened in the phone browser), then offered to watch and to remove', async () => {
@@ -543,6 +577,7 @@ describe('video feedback', () => {
       'POST /modules/tala/courses/A1/progress': { data: { data: {} } },
     });
     signedInAs(makeMe({ modules: [TALA('linked')] }));
+    await seedPdf('p9', true);
     await renderApp();
     await openTala();
     await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));

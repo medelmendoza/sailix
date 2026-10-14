@@ -38,6 +38,7 @@ export function TalaMaterialRow({
   waiting,
   busy,
   canMarkCompleted,
+  completeHint,
   onOpen,
   onDownload,
   onRemove,
@@ -48,6 +49,8 @@ export function TalaMaterialRow({
   waiting: boolean;
   busy: boolean;
   canMarkCompleted: boolean;
+  /** Why a document cannot be marked completed yet. */
+  completeHint?: string | null;
   onOpen: () => void;
   onDownload: () => void;
   onRemove: () => void;
@@ -154,6 +157,11 @@ export function TalaMaterialRow({
             </Pressable>
           ) : null}
         </View>
+      ) : null}
+      {completeHint ? (
+        <AppText variant="caption" muted>
+          {completeHint}
+        </AppText>
       ) : null}
       {canMarkCompleted ? (
         <Button

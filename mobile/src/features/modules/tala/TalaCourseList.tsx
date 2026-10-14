@@ -14,7 +14,13 @@ export function savedCopyText(fetchedAt: string | null): string {
   return `You are viewing the copy saved on this device (${when}). It updates when you are back online.`;
 }
 
-export function TalaCourseList({ header }: { header: React.ReactNode }) {
+export function TalaCourseList({
+  header,
+  footer,
+}: {
+  header: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const courses = useTalaCourses();
   const [refreshing, setRefreshing] = useState(false);
@@ -57,6 +63,7 @@ export function TalaCourseList({ header }: { header: React.ReactNode }) {
           )}
         </>
       )}
+      {footer}
     </ScrollView>
   );
 }

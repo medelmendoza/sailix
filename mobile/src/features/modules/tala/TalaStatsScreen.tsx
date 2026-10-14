@@ -12,7 +12,7 @@ import {
   ProgressBar,
   SkeletonList,
 } from '@/components';
-import { minTouchTarget, spacing } from '@/constants/theme';
+import { colors, fonts, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { useTalaCourses } from './api';
 import { TalaCourseProgress } from './TalaCourseProgress';
@@ -57,14 +57,31 @@ export function TalaStatsScreen() {
         />
       ) : (
         <>
-          <Card style={{ gap: spacing.sm }}>
+          <Card variant="flat" style={styles.overall}>
             <AppText variant="heading" accessibilityRole="header">
               Overall
             </AppText>
-            <ProgressBar percent={o.percent} label="Overall progress" />
-            <AppText>
-              {o.itemsDone} of {o.itemsTotal} items completed ({o.percent}%)
-            </AppText>
+            <View style={styles.big}>
+              <AppText style={styles.bigNumber} accessibilityElementsHidden>
+                {o.percent}%
+              </AppText>
+              <View style={{ flex: 1, gap: spacing.xs }}>
+                <ProgressBar percent={o.percent} label="Overall progress" />
+                <AppText>
+                  {o.itemsDone} of {o.itemsTotal} items completed ({o.percent}%)
+                </AppText>
+              </View>
+            </View>
+            <View style={styles.tiles}>
+              <Tile n={o.completed} label="completed" bg={colors.successBg} ink={colors.success} />
+              <Tile n={o.inProgress} label="in progress" bg={colors.infoBg} ink={colors.primary} />
+              <Tile
+                n={o.notStarted}
+                label="not started"
+                bg={colors.surfaceSunken}
+                ink={colors.textMuted}
+              />
+            </View>
             <AppText variant="caption" muted>
               {o.completed} completed · {o.inProgress} in progress · {o.notStarted} not started
             </AppText>
@@ -84,9 +101,9 @@ export function TalaStatsScreen() {
               onPress={() => navigation.navigate('TalaCourse', { assignId: c.id, name: c.name })}
               style={({ pressed }) => (pressed ? styles.pressed : undefined)}
             >
-              <Card style={styles.row}>
+              <Card variant="flat" style={styles.row}>
                 <View style={{ flex: 1, gap: spacing.xs }}>
-                  <AppText variant="heading">{c.name}</AppText>
+                  <AppText style={styles.courseName}>{c.name}</AppText>
                   <TalaCourseProgress course={c} />
                 </View>
                 <AppText muted>›</AppText>
@@ -99,8 +116,30 @@ export function TalaStatsScreen() {
   );
 }
 
+function Tile({ n, label, bg, ink }: { n: number; label: string; bg: string; ink: string }) {
+  return (
+    <View
+      style={[styles.tile, { backgroundColor: bg }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <AppText style={[styles.tileNumber, { color: ink }]}>{n}</AppText>
+      <AppText variant="caption" style={{ color: ink }}>
+        {label}
+      </AppText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
+  overall: { gap: spacing.md, padding: spacing.lg },
+  big: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
+  bigNumber: { fontFamily: fonts.heading, fontSize: 40, lineHeight: 48, color: colors.primary },
+  tiles: { flexDirection: 'row', gap: spacing.sm },
+  tile: { flex: 1, alignItems: 'center', borderRadius: radius.md, paddingVertical: spacing.md },
+  tileNumber: { fontFamily: fonts.heading, fontSize: 24, lineHeight: 30 },
+  courseName: { fontFamily: fonts.heading, fontSize: 17, lineHeight: 23, color: colors.text },
   row: { flexDirection: 'row', alignItems: 'center', minHeight: minTouchTarget, gap: spacing.md },
   pressed: { opacity: 0.7 },
 });

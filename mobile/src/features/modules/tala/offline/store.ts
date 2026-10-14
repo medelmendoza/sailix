@@ -13,6 +13,8 @@ export type DownloadRecord = {
   uri: string;
   bytes: number;
   downloadedAt: string;
+  /** When the learner first opened the saved file; a PDF can be marked completed only after this. */
+  openedAt?: string;
 };
 export type OutboxItem = {
   kind: 'completed' | 'flashcards';
