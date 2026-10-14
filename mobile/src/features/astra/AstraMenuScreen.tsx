@@ -1,64 +1,128 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText } from '@/components';
-import { spacing } from '@/constants/theme';
+import { AppText, type GlyphName } from '@/components';
+import { colors, gradients, radius, spacing } from '@/constants/theme';
 import { ServiceLogo } from '@/features/services/ServiceLogo';
-import { Grid, GridTile } from './parts';
+import { useSessionStore } from '@/store/sessionStore';
+import { Grid, MenuCard } from './parts';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'AstraMenu'>;
 
+type Tool = {
+  title: string;
+  note: string;
+  glyph: GlyphName;
+  go: () => void;
+};
+
 export function AstraMenuScreen({ navigation }: Props) {
-  const items = [
+  const me = useSessionStore((s) => s.me);
+  const name = me?.profile?.first_name ?? me?.user.display_name ?? me?.user.username ?? '';
+  const sections: { heading: string; tint: 'amber' | 'green' | 'blue'; tools: Tool[] }[] = [
     {
-      title: 'Pomodoro',
-      glyph: 'clock',
-      go: () => navigation.navigate('AstraPomodoro'),
+      heading: 'Focus',
+      tint: 'amber',
+      tools: [
+        {
+          title: 'Pomodoro',
+          note: 'Work in focused 25-minute rounds with breaks.',
+          glyph: 'clock',
+          go: () => navigation.navigate('AstraPomodoro'),
+        },
+        {
+          title: 'Focus and Rest sounds',
+          note: 'Background noise to concentrate or unwind.',
+          glyph: 'music',
+          go: () => navigation.navigate('AstraNoise'),
+        },
+      ],
     },
     {
-      title: 'Focus and Rest sounds',
-      glyph: 'music',
-      go: () => navigation.navigate('AstraNoise'),
+      heading: 'Think it through',
+      tint: 'green',
+      tools: [
+        {
+          title: 'Risk management',
+          note: 'Reduce, avoid, accept or transfer a risk.',
+          glyph: 'alert',
+          go: () => navigation.navigate('AstraRisk'),
+        },
+        {
+          title: 'Root cause analysis',
+          note: '5 Whys and P.M.E.P.E.',
+          glyph: 'search',
+          go: () => navigation.navigate('AstraRca'),
+        },
+      ],
     },
     {
-      title: 'Risk management',
-      glyph: 'alert',
-      go: () => navigation.navigate('AstraRisk'),
+      heading: 'Communicate',
+      tint: 'blue',
+      tools: [
+        {
+          title: 'SCARIL',
+          note: 'A framework to assess and report a problem.',
+          glyph: 'target',
+          go: () => navigation.navigate('AstraScaril'),
+        },
+        {
+          title: 'Military style emails',
+          note: 'Write clear, effective emails.',
+          glyph: 'mail',
+          go: () => navigation.navigate('AstraEmails'),
+        },
+      ],
     },
-    {
-      title: 'Root cause analysis',
-      glyph: 'search',
-      go: () => navigation.navigate('AstraRca'),
-    },
-    {
-      title: 'SCARIL',
-      glyph: 'target',
-      go: () => navigation.navigate('AstraScaril'),
-    },
-    {
-      title: 'Military style emails',
-      glyph: 'mail',
-      go: () => navigation.navigate('AstraEmails'),
-    },
-  ] as const;
+  ];
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <View style={styles.intro}>
-        <ServiceLogo code="astra" size={56} />
-        <AppText muted style={{ flex: 1 }}>
-          Tools for clear thinking, focus and communication.
-        </AppText>
+      <View style={styles.hero}>
+        <View style={{ flex: 1, gap: spacing.xs }}>
+          <AppText style={styles.white}>Welcome,</AppText>
+          <AppText variant="title" accessibilityRole="header" style={styles.white}>
+            {name}
+          </AppText>
+          <AppText variant="caption" style={styles.white}>
+            Tools for clear thinking, focus and communication.
+          </AppText>
+        </View>
+        <ServiceLogo code="astra" size={60} />
       </View>
-      <Grid>
-        {items.map((i) => (
-          <GridTile key={i.title} title={i.title} glyph={i.glyph} onPress={i.go} />
-        ))}
-      </Grid>
+      {sections.map((section) => (
+        <View key={section.heading} style={styles.section}>
+          <AppText variant="heading" accessibilityRole="header">
+            {section.heading}
+          </AppText>
+          <Grid>
+            {section.tools.map((t) => (
+              <MenuCard
+                key={t.title}
+                title={t.title}
+                note={t.note}
+                glyph={t.glyph}
+                tint={section.tint}
+                onPress={t.go}
+              />
+            ))}
+          </Grid>
+        </View>
+      ))}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.lg },
-  intro: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  content: { padding: spacing.lg, gap: spacing.xl },
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.xl,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primary,
+    experimental_backgroundImage: gradients.header,
+  },
+  white: { color: colors.onPrimary },
+  section: { gap: spacing.md },
 });

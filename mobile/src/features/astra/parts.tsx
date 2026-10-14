@@ -82,6 +82,52 @@ export function GridTile({
   );
 }
 
+const TINTS = {
+  amber: { bg: colors.warningBg, ink: colors.warning },
+  green: { bg: colors.successBg, ink: colors.success },
+  blue: { bg: colors.infoBg, ink: colors.primary },
+} as const;
+
+/** A tool card for the Astra menu: a soft tinted icon, the name, and what it is for. */
+export function MenuCard({
+  title,
+  note,
+  glyph,
+  tint,
+  onPress,
+}: {
+  title: string;
+  note: string;
+  glyph: GlyphName;
+  tint: keyof typeof TINTS;
+  onPress: () => void;
+}) {
+  const t = TINTS[tint];
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityHint={note}
+      onPress={onPress}
+      style={({ pressed }) => [styles.menuCell, pressed && { opacity: 0.75 }]}
+    >
+      <Card variant="flat" style={styles.menuCard}>
+        <View style={[styles.menuIcon, { backgroundColor: t.bg }]}>
+          <GlyphIcon name={glyph} color={t.ink} size={28} />
+        </View>
+        <View style={{ gap: 2 }}>
+          <AppText variant="heading" style={styles.menuTitle}>
+            {title}
+          </AppText>
+          <AppText variant="caption" muted>
+            {note}
+          </AppText>
+        </View>
+      </Card>
+    </Pressable>
+  );
+}
+
 /** Lays grid tiles out two to a row. */
 export function Grid({ children }: { children: ReactNode }) {
   return <View style={styles.grid}>{children}</View>;
@@ -214,6 +260,22 @@ const styles = StyleSheet.create({
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   gridCell: { width: '48%', aspectRatio: 1 },
+  menuCell: { width: '48%' },
+  menuCard: {
+    flex: 1,
+    gap: spacing.lg,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    minHeight: 170,
+  },
+  menuIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuTitle: { fontSize: 17, lineHeight: 23 },
   gridTile: {
     flex: 1,
     alignItems: 'center',
