@@ -90,12 +90,12 @@ const tabOptions = {
   tabBarItemStyle: { paddingVertical: 6 },
   tabBarStyle: {
     position: 'absolute' as const,
-    start: 28, // the library's own style uses start/end, which win over left/right
-    end: 28,
+    start: 20, // the library's own style uses start/end, which win over left/right
+    end: 20,
     elevation: 0, // the shadow below is drawn by boxShadow; Android's elevation would add a grey one
     height: TAB_BAR_HEIGHT,
     paddingBottom: 0,
-    paddingHorizontal: 14,
+    paddingHorizontal: 6,
     borderRadius: 34,
     borderTopWidth: 0,
     backgroundColor: colors.surface,
