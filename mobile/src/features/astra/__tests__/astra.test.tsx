@@ -169,7 +169,7 @@ describe('static tools', () => {
     expect(await screen.findByText('RAID!')).toBeTruthy();
     expect(screen.getByLabelText(/^Urgent:/)).toBeTruthy();
     expect(
-      screen.getByText('Subject: [Urgent Request] Documents for Crew Change - MV Vessel A'),
+      screen.getByText(/Subject: \[Urgent Request\] Documents for Crew Change - MV Vessel A/),
     ).toBeTruthy();
   });
 });
