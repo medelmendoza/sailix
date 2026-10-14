@@ -250,7 +250,7 @@ export function ReportFormScreen({ route, navigation }: Props) {
           onPress={() => navigation.goBack()}
         />
         <Button
-          title="Save draft"
+          title="Save"
           accessibilityLabel="Save as draft"
           variant="secondary"
           style={styles.action}
@@ -497,7 +497,7 @@ function Field({
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.md },
+  content: { padding: spacing.lg, paddingBottom: spacing.xxxl, gap: spacing.md },
   label: { fontFamily: fonts.heading, fontSize: 15, color: colors.text },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   action: { flex: 1 },

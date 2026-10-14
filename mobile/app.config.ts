@@ -1,11 +1,22 @@
+import { withAndroidManifest } from 'expo/config-plugins';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
+
+const isDevelopmentBuild = !process.env.APP_ENV || process.env.APP_ENV === 'development';
+
+/** Plain HTTP to a local backend (the emulator's 10.0.2.2) is allowed ONLY in development builds, as on iOS. */
+const allowLocalHttp = (config: ExpoConfig): ExpoConfig =>
+  withAndroidManifest(config, (m) => {
+    const app = m.modResults.manifest.application?.[0];
+    if (app) app.$['android:usesCleartextTraffic'] = 'true';
+    return m;
+  });
 
 /**
  * Environment-specific values come from the EAS build profile / local shell
  * (see .env.example). Nothing secret belongs here: everything in the app
  * bundle is public.
  */
-export default ({ config }: ConfigContext): ExpoConfig => ({
+const build = ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Sailix',
   slug: 'sailix',
@@ -78,3 +89,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       process.env.PRIVACY_URL ?? 'https://www.btsolve.com/privacy/data-privacy-sailix.html',
   },
 });
+
+export default (context: ConfigContext): ExpoConfig => {
+  const config = build(context);
+  return isDevelopmentBuild ? allowLocalHttp(config) : config;
+};
