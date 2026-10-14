@@ -2,7 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText, Button, Card, ErrorState, GlyphIcon, SkeletonList } from '@/components';
-import { colors, spacing } from '@/constants/theme';
+import { colors, gradients, radius, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { useSessionStore } from '@/store/sessionStore';
 import { ServiceLogo } from '@/features/services/ServiceLogo';
@@ -23,13 +23,13 @@ export function CallItScreen({ navigation }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.hero}>
-        <ServiceLogo code="callit" size={60} />
-        <View>
-          <AppText muted>Welcome,</AppText>
-          <AppText variant="title" accessibilityRole="header">
+        <View style={{ flex: 1 }}>
+          <AppText style={styles.white}>Welcome,</AppText>
+          <AppText variant="title" accessibilityRole="header" style={styles.white}>
             {name}
           </AppText>
         </View>
+        <ServiceLogo code="callit" size={60} />
       </View>
       <Card variant="flat" style={styles.card}>
         <View style={styles.row}>
@@ -93,7 +93,16 @@ export function CallItScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
-  hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.xl,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primary,
+    experimental_backgroundImage: gradients.header,
+  },
+  white: { color: colors.onPrimary },
   card: { gap: spacing.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   statIcon: {

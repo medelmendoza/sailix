@@ -1,9 +1,9 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, ErrorState, SkeletonList } from '@/components';
-import { spacing } from '@/constants/theme';
+import { AppText, Card, ErrorState, SkeletonList, TabIcon } from '@/components';
+import { colors, spacing } from '@/constants/theme';
 import { describeError, toApiError } from '@/services/api/errors';
 import { ageLabel } from './age';
 import { useAnnouncement, useMarkRead } from './api';
@@ -35,15 +35,40 @@ export function AnnouncementScreen({ route }: Props) {
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <AppText variant="title" accessibilityRole="header">
-        {one.data.title}
-      </AppText>
-      <AppText variant="caption" muted>
-        {ageLabel(one.data.created_at)}
-      </AppText>
-      <AppText selectable>{one.data.body}</AppText>
+      <Card variant="flat" style={styles.card}>
+        <View style={styles.meta}>
+          <View style={styles.bell}>
+            <TabIcon name="bell" color={colors.primary} />
+          </View>
+          <AppText variant="caption" muted>
+            Announcement · {ageLabel(one.data.created_at)}
+          </AppText>
+        </View>
+        <AppText variant="title" accessibilityRole="header" style={styles.title}>
+          {one.data.title}
+        </AppText>
+        <View style={styles.rule} />
+        <AppText selectable style={styles.body}>
+          {one.data.body}
+        </AppText>
+      </Card>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({ content: { padding: spacing.lg, gap: spacing.md } });
+const styles = StyleSheet.create({
+  content: { padding: spacing.lg },
+  card: { gap: spacing.lg, padding: spacing.xl },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  bell: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.infoBg,
+  },
+  title: { fontSize: 26, lineHeight: 34 },
+  rule: { height: 2, borderRadius: 1, backgroundColor: colors.seafoam },
+  body: { fontSize: 17, lineHeight: 28 },
+});

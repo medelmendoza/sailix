@@ -154,7 +154,7 @@ function MainTabs() {
           headerShown: false, // the Dashboard has its own gradient header, with the Account button in it
           tabBarIcon: ({ color, focused }) => (
             <TabPill focused={focused}>
-              <TabIcon name="home" color={color} />
+              <TabIcon name="home" color={color} filled={focused} />
             </TabPill>
           ),
         }}
@@ -165,7 +165,7 @@ function MainTabs() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <TabPill focused={focused}>
-              <TabIcon name="folder" color={color} />
+              <TabIcon name="folder" color={color} filled={focused} />
             </TabPill>
           ),
         }}
@@ -179,7 +179,7 @@ function MainTabs() {
           tabBarAccessibilityLabel: 'Announcements',
           tabBarIcon: ({ color, focused }) => (
             <TabPill focused={focused}>
-              <TabIcon name="bell" color={color} />
+              <TabIcon name="bell" color={color} filled={focused} />
             </TabPill>
           ),
           tabBarBadge: unread.data && unread.data > 0 ? unread.data : undefined,
@@ -191,7 +191,7 @@ function MainTabs() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <TabPill focused={focused}>
-              <TabIcon name="coins" color={color} />
+              <TabIcon name="coins" color={color} filled={focused} />
             </TabPill>
           ),
         }}
@@ -202,7 +202,7 @@ function MainTabs() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <TabPill focused={focused}>
-              <TabIcon name="grid" color={color} />
+              <TabIcon name="grid" color={color} filled={focused} />
             </TabPill>
           ),
         }}
