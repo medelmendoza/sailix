@@ -1,17 +1,93 @@
-import { Image, Pressable, StyleSheet, View, type ImageSourcePropType } from 'react-native';
-import { AppText, Card } from '@/components';
+import { useNavigation } from '@react-navigation/native';
+import { useLayoutEffect, useState, type ReactNode } from 'react';
+import { Image, Modal, Pressable, StyleSheet, View, type ImageSourcePropType } from 'react-native';
+import { AppText, Button, Card, GlyphIcon, type GlyphName } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 
-/** The "What is ...?" explanation, shown at the top of a screen (the original used a bottom sheet). */
-export function HelpCard({ title, body }: { title: string; body: string }) {
+/**
+ * The "What is ...?" explanation, as in the original: a round "?" in the header opens a sheet that slides up from the
+ * bottom. Call it from a screen and render the returned element anywhere in that screen.
+ */
+export function useHelp({ title, body }: { title: string; body: string }) {
+  const navigation = useNavigation();
+  const [open, setOpen] = useState(false);
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Help"
+          onPress={() => setOpen(true)}
+          hitSlop={8}
+          style={styles.helpButton}
+        >
+          <GlyphIcon name="quiz" color={colors.primary} size={26} />
+        </Pressable>
+      ),
+    });
+  }, [navigation]);
   return (
-    <Card variant="inset" style={styles.help}>
-      <AppText variant="heading" accessibilityRole="header">
-        {title}
-      </AppText>
-      <AppText>{body}</AppText>
-    </Card>
+    <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+      <Pressable
+        accessibilityLabel="Close help"
+        accessibilityRole="button"
+        style={styles.scrim}
+        onPress={() => setOpen(false)}
+      />
+      <View style={styles.sheet}>
+        <AppText variant="heading" accessibilityRole="header">
+          {title}
+        </AppText>
+        <AppText>{body}</AppText>
+        <Button title="Got it" variant="secondary" onPress={() => setOpen(false)} />
+      </View>
+    </Modal>
   );
+}
+
+/** A square menu tile: a round icon over a bold title, two to a row (the original's menu grid). */
+export function GridTile({
+  title,
+  glyph,
+  tone = 'primary',
+  image,
+  onPress,
+  label,
+}: {
+  title: string;
+  glyph?: GlyphName;
+  tone?: 'primary' | 'teal' | 'coral';
+  image?: ImageSourcePropType;
+  onPress: () => void;
+  label?: string;
+}) {
+  const bg = tone === 'primary' ? colors.primary : tone === 'teal' ? '#2A7F8F' : colors.coralText;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label ?? title}
+      onPress={onPress}
+      style={({ pressed }) => [styles.gridCell, pressed && { opacity: 0.75 }]}
+    >
+      <View style={[styles.gridTile, { backgroundColor: bg }]}>
+        {image ? (
+          <Image source={image} accessibilityElementsHidden style={styles.gridImage} />
+        ) : glyph ? (
+          <View style={styles.gridIcon}>
+            <GlyphIcon name={glyph} color={colors.onPrimary} size={34} />
+          </View>
+        ) : null}
+        <AppText variant="heading" style={styles.gridTitle}>
+          {title}
+        </AppText>
+      </View>
+    </Pressable>
+  );
+}
+
+/** Lays grid tiles out two to a row. */
+export function Grid({ children }: { children: ReactNode }) {
+  return <View style={styles.grid}>{children}</View>;
 }
 
 /** A word on a coloured tag, with what it stands for next to it. */
@@ -79,7 +155,34 @@ export function Picture({ source, label }: { source: ImageSourcePropType; label:
 }
 
 const styles = StyleSheet.create({
-  help: { gap: spacing.sm },
+  helpButton: {
+    minWidth: minTouchTarget,
+    minHeight: minTouchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrim: { flex: 1, backgroundColor: 'rgba(18, 36, 61, 0.45)' },
+  sheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    padding: spacing.xl,
+    gap: spacing.lg,
+  },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  gridCell: { width: '48%', aspectRatio: 1 },
+  gridTile: {
+    flex: 1,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    overflow: 'hidden',
+  },
+  gridIcon: { height: 44, alignItems: 'center', justifyContent: 'center' },
+  gridImage: { width: 64, height: 64, borderRadius: radius.md },
+  gridTitle: { color: colors.onPrimary, textAlign: 'center' },
   pair: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: minTouchTarget },
   tag: {
     minWidth: 120,

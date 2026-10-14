@@ -3,7 +3,22 @@ import { colors } from '@/constants/theme';
 import { AppText } from './AppText';
 
 export type GlyphName =
-  'person' | 'clock' | 'download' | 'trash' | 'video' | 'pdf' | 'quiz' | 'cards' | 'check';
+  | 'person'
+  | 'clock'
+  | 'download'
+  | 'trash'
+  | 'video'
+  | 'pdf'
+  | 'quiz'
+  | 'cards'
+  | 'check'
+  | 'music'
+  | 'alert'
+  | 'search'
+  | 'mail'
+  | 'target'
+  | 'chart'
+  | 'medal';
 
 /**
  * A tiny icon set drawn from plain shapes: no icon font and no emoji (both rendered unreliably in this app's runtimes),
@@ -165,6 +180,109 @@ export function GlyphIcon({
               line,
               abs(8 * u, 6 * u, 14 * u, 15 * u),
               { borderWidth: 2.2 * u, borderRadius: 3 * u, backgroundColor: colors.surface },
+            ]}
+          />
+        </>
+      )}
+      {name === 'music' && (
+        <>
+          <View style={[fill, abs(15 * u, 3 * u, 2.4 * u, 14 * u), { borderRadius: u }]} />
+          <View style={[fill, abs(15 * u, 3 * u, 6 * u, 4 * u), { borderRadius: u }]} />
+          <View style={[fill, abs(6 * u, 14 * u, 10 * u, 8 * u), { borderRadius: 5 * u }]} />
+        </>
+      )}
+      {name === 'alert' && (
+        <>
+          <View
+            style={[
+              line,
+              abs(2 * u, 2 * u, 20 * u, 20 * u),
+              { borderWidth: 2.2 * u, borderRadius: 10 * u },
+            ]}
+          />
+          <View style={[fill, abs(10.8 * u, 6 * u, 2.4 * u, 8 * u), { borderRadius: u }]} />
+          <View style={[fill, abs(10.8 * u, 16 * u, 2.4 * u, 2.4 * u), { borderRadius: u }]} />
+        </>
+      )}
+      {name === 'search' && (
+        <>
+          <View
+            style={[
+              line,
+              abs(3 * u, 3 * u, 14 * u, 14 * u),
+              { borderWidth: 2.4 * u, borderRadius: 7 * u },
+            ]}
+          />
+          <View
+            style={[
+              fill,
+              abs(15 * u, 18 * u, 8 * u, 2.6 * u),
+              { borderRadius: u, transform: [{ rotate: '45deg' }] },
+            ]}
+          />
+        </>
+      )}
+      {name === 'mail' && (
+        <>
+          <View
+            style={[
+              line,
+              abs(2 * u, 5 * u, 20 * u, 14 * u),
+              { borderWidth: 2.2 * u, borderRadius: 3 * u },
+            ]}
+          />
+          <View
+            style={[
+              line,
+              abs(6.5 * u, 6 * u, 11 * u, 11 * u),
+              {
+                borderRightWidth: 2.2 * u,
+                borderBottomWidth: 2.2 * u,
+                transform: [{ rotate: '45deg' }, { scaleY: 0.6 }],
+              },
+            ]}
+          />
+        </>
+      )}
+      {name === 'target' && (
+        <>
+          <View
+            style={[
+              line,
+              abs(2 * u, 2 * u, 20 * u, 20 * u),
+              { borderWidth: 2.2 * u, borderRadius: 10 * u },
+            ]}
+          />
+          <View
+            style={[
+              line,
+              abs(7 * u, 7 * u, 10 * u, 10 * u),
+              { borderWidth: 2.2 * u, borderRadius: 5 * u },
+            ]}
+          />
+          <View style={[fill, abs(10.5 * u, 10.5 * u, 3 * u, 3 * u), { borderRadius: 1.5 * u }]} />
+        </>
+      )}
+      {name === 'chart' && (
+        <>
+          <View style={[fill, abs(3 * u, 12 * u, 5 * u, 9 * u), { borderRadius: u }]} />
+          <View style={[fill, abs(10 * u, 4 * u, 5 * u, 17 * u), { borderRadius: u }]} />
+          <View style={[fill, abs(17 * u, 9 * u, 5 * u, 12 * u), { borderRadius: u }]} />
+        </>
+      )}
+      {name === 'medal' && (
+        <>
+          <View
+            style={[fill, abs(5 * u, 2 * u, 5 * u, 9 * u), { transform: [{ rotate: '-18deg' }] }]}
+          />
+          <View
+            style={[fill, abs(14 * u, 2 * u, 5 * u, 9 * u), { transform: [{ rotate: '18deg' }] }]}
+          />
+          <View style={[fill, abs(5 * u, 9 * u, 14 * u, 14 * u), { borderRadius: 7 * u }]} />
+          <View
+            style={[
+              abs(8.5 * u, 12.5 * u, 7 * u, 7 * u),
+              { borderWidth: 1.8 * u, borderRadius: 3.5 * u, borderColor: colors.surface },
             ]}
           />
         </>

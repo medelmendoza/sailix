@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText } from '@/components';
 import { spacing } from '@/constants/theme';
-import { Tile } from './parts';
+import { Grid, GridTile } from './parts';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'AstraMenu'>;
 
@@ -11,41 +11,49 @@ export function AstraMenuScreen({ navigation }: Props) {
   const items = [
     {
       title: 'Pomodoro',
-      note: 'Work in focused 25-minute rounds with breaks.',
+      glyph: 'clock',
+      tone: 'coral',
       go: () => navigation.navigate('AstraPomodoro'),
     },
     {
       title: 'Focus and Rest sounds',
-      note: 'Background noise to concentrate or unwind.',
+      glyph: 'music',
+      tone: 'coral',
       go: () => navigation.navigate('AstraNoise'),
     },
     {
       title: 'Risk management',
-      note: 'Reduce, avoid, accept or transfer a risk.',
+      glyph: 'alert',
+      tone: 'teal',
       go: () => navigation.navigate('AstraRisk'),
     },
     {
       title: 'Root cause analysis',
-      note: '5 Whys and P.M.E.P.E.',
+      glyph: 'search',
+      tone: 'teal',
       go: () => navigation.navigate('AstraRca'),
     },
     {
       title: 'SCARIL',
-      note: 'A framework to assess and report a problem.',
+      glyph: 'target',
+      tone: 'primary',
       go: () => navigation.navigate('AstraScaril'),
     },
     {
       title: 'Military style emails',
-      note: 'Write clear, effective emails.',
+      glyph: 'mail',
+      tone: 'primary',
       go: () => navigation.navigate('AstraEmails'),
     },
-  ];
+  ] as const;
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <AppText muted>Tools for clear thinking, focus and communication.</AppText>
-      {items.map((i) => (
-        <Tile key={i.title} title={i.title} note={i.note} onPress={i.go} />
-      ))}
+      <Grid>
+        {items.map((i) => (
+          <GridTile key={i.title} title={i.title} glyph={i.glyph} tone={i.tone} onPress={i.go} />
+        ))}
+      </Grid>
     </ScrollView>
   );
 }

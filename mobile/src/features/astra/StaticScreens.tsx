@@ -16,7 +16,7 @@ import {
   TO_CC,
   WHYS_BLURB,
 } from './content';
-import { HelpCard, Pair, Picture, Tile } from './parts';
+import { Grid, GridTile, Pair, Picture, Tile, useHelp } from './parts';
 
 type Nav<N extends keyof AppStackParamList> = NativeStackScreenProps<AppStackParamList, N>;
 
@@ -24,11 +24,12 @@ const page = StyleSheet.create({ content: { padding: spacing.lg, gap: spacing.lg
 
 /** The 2x2 chart: probability up the page, impact across. Tap a cell to read what to do. */
 export function RiskScreen() {
+  const help = useHelp(HELP.risk);
   const [picked, setPicked] = useState<number | null>(null);
   const q = picked === null ? null : QUADRANTS[picked]!;
   return (
     <ScrollView contentContainerStyle={page}>
-      <HelpCard {...HELP.risk} />
+      {help}
       <AppText muted>Tap one of the boxes to learn more.</AppText>
       <View style={styles.chart} accessibilityRole="radiogroup">
         <AppText variant="caption" muted style={styles.axisY}>
@@ -76,19 +77,23 @@ export function RiskScreen() {
 }
 
 export function RcaScreen({ navigation }: Nav<'AstraRca'>) {
+  const help = useHelp(HELP.rca);
   return (
     <ScrollView contentContainerStyle={page}>
-      <HelpCard {...HELP.rca} />
-      <Tile
-        title="5 Whys"
-        note="Ask why again and again until you reach the root."
-        onPress={() => navigation.navigate('AstraWhys')}
-      />
-      <Tile
-        title="P.M.E.P.E"
-        note="Five places to look for a cause on a ship."
-        onPress={() => navigation.navigate('AstraPmepe')}
-      />
+      {help}
+      <Grid>
+        <GridTile
+          title="5 Whys"
+          glyph="quiz"
+          tone="coral"
+          onPress={() => navigation.navigate('AstraWhys')}
+        />
+        <GridTile
+          title="P.M.E.P.E"
+          glyph="search"
+          onPress={() => navigation.navigate('AstraPmepe')}
+        />
+      </Grid>
     </ScrollView>
   );
 }
@@ -115,9 +120,10 @@ export function WhysScreen() {
 }
 
 export function PmepeScreen({ navigation }: Nav<'AstraPmepe'>) {
+  const help = useHelp(HELP.pmepe);
   return (
     <ScrollView contentContainerStyle={page}>
-      <HelpCard {...HELP.pmepe} />
+      {help}
       <Picture
         source={require('../../../assets/astra/images/monkey.png')}
         label="Purple monkey eating a pink elephant"
@@ -161,9 +167,10 @@ export function PmepeScreen({ navigation }: Nav<'AstraPmepe'>) {
 }
 
 export function ScarilScreen({ navigation }: Nav<'AstraScaril'>) {
+  const help = useHelp(HELP.scaril);
   return (
     <ScrollView contentContainerStyle={page}>
-      <HelpCard {...HELP.scaril} />
+      {help}
       <AppText variant="title" accessibilityRole="header">
         S.C.A.R.I.L
       </AppText>
@@ -179,9 +186,10 @@ export function ScarilScreen({ navigation }: Nav<'AstraScaril'>) {
 }
 
 export function EmailsScreen({ navigation }: Nav<'AstraEmails'>) {
+  const help = useHelp(HELP.emails);
   return (
     <ScrollView contentContainerStyle={page}>
-      <HelpCard {...HELP.emails} />
+      {help}
       <AppText variant="title" accessibilityRole="header">
         How to write an effective email
       </AppText>

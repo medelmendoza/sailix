@@ -59,7 +59,9 @@ describe('pomodoro screen', () => {
     await openAstra();
     await tile('Pomodoro');
     expect(await screen.findByText('25:00')).toBeTruthy();
-    expect(screen.getByText(/longer 15-minute break/)).toBeTruthy(); // the help says what the timer really does
+    await fireEvent.press(screen.getByRole('button', { name: 'Help' }));
+    expect(await screen.findByText(/longer 15-minute break/)).toBeTruthy(); // the help says what the timer really does
+    await fireEvent.press(screen.getByRole('button', { name: 'Got it' }));
 
     await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
     await act(async () => {

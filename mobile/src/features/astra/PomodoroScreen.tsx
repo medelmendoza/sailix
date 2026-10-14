@@ -1,10 +1,10 @@
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { AppText, Button, Card } from '@/components';
+import { AppText, Button } from '@/components';
 import { colors, spacing } from '@/constants/theme';
 import { HELP } from './content';
-import { HelpCard } from './parts';
+import { useHelp } from './parts';
 import {
   CYCLES,
   PHASE_LABEL,
@@ -21,6 +21,7 @@ import {
 const KEEP_AWAKE = 'astra-pomodoro';
 
 export function PomodoroScreen() {
+  const help = useHelp(HELP.pomodoro);
   const [timer, setTimer] = useState(initial);
   const [now, setNow] = useState(() => Date.now());
 
@@ -49,56 +50,65 @@ export function PomodoroScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <HelpCard {...HELP.pomodoro} />
-      <Card style={styles.clockCard}>
-        <AppText variant="caption" muted accessibilityRole="header">
-          {PHASE_LABEL[view.phase]}
-        </AppText>
+      {help}
+      <View style={styles.clockBlock}>
+        {message ? <AppText style={styles.message}>{message}</AppText> : null}
         <AppText
           style={styles.clock}
           accessibilityLabel={`${Math.floor(left / 60)} minutes ${left % 60} seconds left`}
         >
           {clock(left)}
         </AppText>
-        {message ? <AppText style={styles.message}>{message}</AppText> : null}
-        <View
-          style={styles.dots}
-          accessible
-          accessibilityLabel={`${view.completed} of ${CYCLES} work sessions finished`}
-        >
-          {Array.from({ length: CYCLES }, (_, i) => (
-            <View key={i} style={[styles.dot, i < view.completed && styles.dotDone]} />
-          ))}
+        <AppText variant="heading" accessibilityRole="header" style={styles.phase}>
+          {PHASE_LABEL[view.phase]}
+        </AppText>
+      </View>
+      <View style={styles.buttons}>
+        <View style={styles.buttonCell}>
+          <Button
+            title={view.running ? 'Pause' : started ? 'Resume' : 'Start'}
+            onPress={() => {
+              const at = Date.now();
+              setNow(at);
+              setTimer((t) => (t.running ? pause(t, at) : start(t, at)));
+            }}
+          />
         </View>
-      </Card>
-      <Button
-        title={view.running ? 'Pause' : started ? 'Resume' : 'Start'}
-        onPress={() => {
-          const at = Date.now();
-          setNow(at);
-          setTimer((t) => (t.running ? pause(t, at) : start(t, at)));
-        }}
-      />
-      {started ? (
-        <Button
-          title="Reset"
-          variant="secondary"
-          onPress={() => {
-            setNow(Date.now());
-            setTimer(reset());
-          }}
-        />
-      ) : null}
+        {started ? (
+          <View style={styles.buttonCell}>
+            <Button
+              title="Reset"
+              variant="secondary"
+              onPress={() => {
+                setNow(Date.now());
+                setTimer(reset());
+              }}
+            />
+          </View>
+        ) : null}
+      </View>
+      <View
+        style={styles.dots}
+        accessible
+        accessibilityLabel={`${view.completed} of ${CYCLES} work sessions finished`}
+      >
+        {Array.from({ length: CYCLES }, (_, i) => (
+          <View key={i} style={[styles.dot, i < view.completed && styles.dotDone]} />
+        ))}
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.lg },
-  clockCard: { alignItems: 'center', gap: spacing.md },
-  clock: { fontSize: 72, lineHeight: 84, fontVariant: ['tabular-nums'], color: colors.text },
+  content: { padding: spacing.lg, gap: spacing.xl, paddingTop: spacing.xxxl },
+  clockBlock: { alignItems: 'center', gap: spacing.sm },
+  clock: { fontSize: 80, lineHeight: 92, fontVariant: ['tabular-nums'], color: colors.text },
+  phase: { color: colors.textMuted },
   message: { textAlign: 'center' },
-  dots: { flexDirection: 'row', gap: spacing.md },
+  buttons: { flexDirection: 'row', gap: spacing.md },
+  buttonCell: { flex: 1 },
+  dots: { flexDirection: 'row', gap: spacing.md, justifyContent: 'center' },
   dot: {
     width: 20,
     height: 20,
