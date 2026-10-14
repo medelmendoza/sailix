@@ -1,10 +1,13 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {
+  createBottomTabNavigator,
+  type BottomTabBarButtonProps,
+} from '@react-navigation/bottom-tabs';
 import {
   createNativeStackNavigator,
   type NativeStackNavigationProp,
 } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View, type PressableProps } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText, Button, GlyphIcon, OfflineBanner, TabIcon } from '@/components';
 import { colors, fonts, spacing } from '@/constants/theme';
@@ -82,12 +85,14 @@ const tabOptions = {
   tabBarActiveTintColor: colors.primary,
   tabBarInactiveTintColor: colors.textMuted,
   tabBarHideOnKeyboard: true,
+  tabBarButton: (props: BottomTabBarButtonProps) => <TabButton {...props} />,
   tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 12 },
   tabBarItemStyle: { paddingVertical: 6 },
   tabBarStyle: {
     position: 'absolute' as const,
-    left: 28,
-    right: 28,
+    start: 28, // the library's own style uses start/end, which win over left/right
+    end: 28,
+    elevation: 0, // the shadow below is drawn by boxShadow; Android's elevation would add a grey one
     height: TAB_BAR_HEIGHT,
     paddingBottom: 0,
     paddingHorizontal: 14,
@@ -97,6 +102,11 @@ const tabOptions = {
     boxShadow: '0 8px 24px rgba(18, 36, 61, 0.14)',
   },
 };
+
+/** A tab's button without the grey press ripple (the open tab already shows on its pill). */
+function TabButton(props: BottomTabBarButtonProps) {
+  return <Pressable {...(props as PressableProps)} android_ripple={{ color: 'transparent' }} />;
+}
 
 /** The tab's icon on a light-blue pill while its tab is open. */
 function TabPill({ focused, children }: { focused: boolean; children: React.ReactNode }) {
