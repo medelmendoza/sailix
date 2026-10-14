@@ -30,11 +30,11 @@ export function AnnouncementCard({
       >
         <View style={styles.head}>
           {unread ? <View style={styles.dot} /> : null}
-          <AppText variant="heading" style={styles.title} numberOfLines={2}>
+          <AppText variant="button" style={styles.title} numberOfLines={2}>
             {announcement.title}
           </AppText>
         </View>
-        <AppText muted numberOfLines={2}>
+        <AppText muted style={styles.preview} numberOfLines={2}>
           {announcement.body}
         </AppText>
         <AppText variant="caption" muted>
@@ -51,4 +51,5 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
   title: { flex: 1 },
+  preview: { fontSize: 14, lineHeight: 20 },
 });

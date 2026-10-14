@@ -1,8 +1,9 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText } from '@/components';
 import { spacing } from '@/constants/theme';
+import { ServiceLogo } from '@/features/services/ServiceLogo';
 import { Grid, GridTile } from './parts';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'AstraMenu'>;
@@ -58,4 +59,7 @@ export function AstraMenuScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({ content: { padding: spacing.lg, gap: spacing.lg } });
+const styles = StyleSheet.create({
+  content: { padding: spacing.lg, gap: spacing.lg },
+  intro: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+});

@@ -10,6 +10,7 @@ import { STATUS_LABEL } from '@/features/modules/availability';
 import { describeError } from '@/services/api/errors';
 import type { MyModule } from '@/services/api/types';
 import { useSessionStore } from '@/store/sessionStore';
+import { ServiceLogo, hasLogo } from './ServiceLogo';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Services'>,
@@ -44,6 +45,7 @@ function ServiceCard({ module, onPress }: { module: MyModule; onPress: () => voi
       note={label}
       noteColor={STATUS_COLOR[module.status]}
       glyph={GLYPH[module.code] ?? 'cards'}
+      icon={hasLogo(module.code) ? <ServiceLogo code={module.code} /> : undefined}
       accessibilityLabel={`${module.label}, ${label}`}
       onPress={onPress}
     />

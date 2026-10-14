@@ -5,6 +5,7 @@ import { AppText, Button, Card, ErrorState, GlyphIcon, SkeletonList } from '@/co
 import { colors, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { useSessionStore } from '@/store/sessionStore';
+import { ServiceLogo } from '@/features/services/ServiceLogo';
 import { useCallItStats } from './api';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'CallIt'>;
@@ -22,10 +23,13 @@ export function CallItScreen({ navigation }: Props) {
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.hero}>
-        <AppText muted>Welcome,</AppText>
-        <AppText variant="title" accessibilityRole="header">
-          {name}
-        </AppText>
+        <ServiceLogo code="callit" size={60} />
+        <View>
+          <AppText muted>Welcome,</AppText>
+          <AppText variant="title" accessibilityRole="header">
+            {name}
+          </AppText>
+        </View>
       </View>
       <Card variant="flat" style={styles.card}>
         <View style={styles.row}>
@@ -89,7 +93,7 @@ export function CallItScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
-  hero: { gap: spacing.xs },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   card: { gap: spacing.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   statIcon: {

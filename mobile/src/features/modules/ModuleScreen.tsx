@@ -5,6 +5,7 @@ import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText, Button, Card, EmptyState, FormError, Screen } from '@/components';
 import { colors, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
+import { ServiceLogo, hasLogo } from '@/features/services/ServiceLogo';
 import { useSessionStore } from '@/store/sessionStore';
 import { STATUS_DESCRIPTION, STATUS_LABEL } from './availability';
 import { useUnlinkTala } from './tala/api';
@@ -32,12 +33,15 @@ export function ModuleScreen({ route, navigation }: Props) {
   }
 
   const statusCard = (
-    <Card>
-      <AppText variant="caption" style={{ color: colors.textMuted }}>
-        Status
-      </AppText>
-      <AppText variant="heading">{STATUS_LABEL[module.status] ?? module.status}</AppText>
-      <AppText muted>{STATUS_DESCRIPTION[module.status] ?? ''}</AppText>
+    <Card style={styles.status}>
+      {hasLogo(module.code) ? <ServiceLogo code={module.code} size={56} /> : null}
+      <View style={{ flex: 1 }}>
+        <AppText variant="caption" style={{ color: colors.textMuted }}>
+          Status
+        </AppText>
+        <AppText variant="heading">{STATUS_LABEL[module.status] ?? module.status}</AppText>
+        <AppText muted>{STATUS_DESCRIPTION[module.status] ?? ''}</AppText>
+      </View>
     </Card>
   );
 
@@ -106,4 +110,7 @@ export function ModuleScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({ wrap: { gap: spacing.lg } });
+const styles = StyleSheet.create({
+  wrap: { gap: spacing.lg },
+  status: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
+});

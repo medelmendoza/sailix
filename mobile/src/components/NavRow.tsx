@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { AppText } from './AppText';
@@ -10,6 +11,7 @@ export function NavRow({
   note,
   noteColor,
   glyph,
+  icon,
   onPress,
   accessibilityLabel,
 }: {
@@ -17,6 +19,8 @@ export function NavRow({
   note?: string;
   noteColor?: string;
   glyph: GlyphName;
+  /** Replaces the round glyph (a service's logo). */
+  icon?: ReactNode;
   onPress: () => void;
   accessibilityLabel?: string;
 }) {
@@ -28,9 +32,11 @@ export function NavRow({
       style={({ pressed }) => [styles.press, pressed && { opacity: 0.75 }]}
     >
       <Card variant="flat" style={styles.card}>
-        <View style={styles.icon}>
-          <GlyphIcon name={glyph} color={colors.primary} size={26} />
-        </View>
+        {icon ?? (
+          <View style={styles.icon}>
+            <GlyphIcon name={glyph} color={colors.primary} size={26} />
+          </View>
+        )}
         <View style={styles.text}>
           <AppText variant="heading">{title}</AppText>
           {note ? (
