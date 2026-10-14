@@ -7,16 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import {
-  AppText,
-  Button,
-  Card,
-  CourseImage,
-  ErrorState,
-  FormError,
-  Notice,
-  SkeletonList,
-} from '@/components';
+import { AppText, Button, Card, CourseImage, ErrorState, FormError, Notice } from '@/components';
 import { spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import type { TalaMaterialSummary } from '@/services/api/types';
@@ -28,6 +19,7 @@ import { savedCopyText } from './TalaCourseList';
 import { TalaCourseProgress } from './TalaCourseProgress';
 import { isDone } from './materials';
 import { TalaMaterialRow } from './TalaMaterialRow';
+import { CourseDetailSkeleton } from './TalaSkeletons';
 import { dueInfo } from './stats';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'TalaCourse'>;
@@ -93,7 +85,7 @@ export function TalaCourseScreen({ route }: Props) {
       if (r.stopped === 'disabled') throw new Error('Sending progress is not enabled.');
     });
 
-  if (course.isPending) return <SkeletonList />;
+  if (course.isPending) return <CourseDetailSkeleton />;
   if (course.isError) {
     return (
       <ErrorState message={describeError(course.error)} onRetry={() => void course.refetch()} />

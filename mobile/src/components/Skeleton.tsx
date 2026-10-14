@@ -1,21 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
-import { colors, radius, spacing } from '@/constants/theme';
+import { StyleSheet, View } from 'react-native';
+import { radius, spacing } from '@/constants/theme';
+import { ShimmerBlock } from './Shimmer';
 
-/** Loading placeholder list (replaces Flutter's shimmer). Hidden from screen readers; the parent announces loading. */
+/** Generic loading placeholder: rows with a sweeping shimmer. Hidden from screen readers; the parent announces loading. */
 export function SkeletonList({ count = 6, height = 80 }: { count?: number; height?: number }) {
-  const [opacity] = useState(() => new Animated.Value(0.5));
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.5, duration: 700, useNativeDriver: true }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [opacity]);
-
   return (
     <View
       accessibilityLabel="Loading"
@@ -23,12 +11,12 @@ export function SkeletonList({ count = 6, height = 80 }: { count?: number; heigh
       importantForAccessibility="yes"
     >
       {Array.from({ length: count }, (_, i) => (
-        <Animated.View key={i} style={[styles.row, { height, opacity }]} />
+        <ShimmerBlock key={i} style={[styles.row, { height }]} />
       ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { backgroundColor: colors.skeleton, borderRadius: radius.lg, marginBottom: spacing.md },
+  row: { borderRadius: radius.lg, marginBottom: spacing.md },
 });

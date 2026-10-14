@@ -2,15 +2,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Platform, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { z } from 'zod';
 import type { AuthStackParamList } from '@/app/navigation/types';
 import {
   AppText,
-  BrandMark,
+  AuthLayout,
   Button,
   FormError,
-  FormScreen,
   LinkButton,
   Notice,
   TextField,
@@ -70,16 +69,16 @@ export function LoginScreen({ navigation }: Props) {
   }
 
   return (
-    <FormScreen>
-      <View style={{ gap: spacing.md }}>
-        <BrandMark />
-        <View style={{ gap: spacing.xs }}>
-          <AppText variant="caption" muted>
-            SAILIX
-          </AppText>
-          <AppText variant="title">Sign in</AppText>
+    <AuthLayout
+      title="Sign in"
+      subtitle="Welcome back"
+      footer={
+        <View style={styles.footer}>
+          <AppText muted>New to Sailix?</AppText>
+          <LinkButton title="Create an account" onPress={() => navigation.navigate('Register')} />
         </View>
-      </View>
+      }
+    >
       {notice ? <Notice tone="warning" message={notice} /> : null}
       <FormError message={formError} />
       <TextField
@@ -108,7 +107,10 @@ export function LoginScreen({ navigation }: Props) {
         title="Forgot your password?"
         onPress={() => navigation.navigate('ForgotPassword')}
       />
-      <LinkButton title="Create an account" onPress={() => navigation.navigate('Register')} />
-    </FormScreen>
+    </AuthLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  footer: { alignItems: 'center', gap: spacing.xs },
+});
