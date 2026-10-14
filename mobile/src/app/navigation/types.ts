@@ -48,6 +48,7 @@ export type AppStackParamList = {
   AstraRca: undefined;
   AstraWhys: undefined;
   AstraPmepe: undefined;
+  AstraPmepeDetail: undefined;
   AstraScaril: undefined;
   AstraEmails: undefined;
   AstraEmailStep: { step: 'to-cc' | 'raid' | 'bluf' | 'next' };

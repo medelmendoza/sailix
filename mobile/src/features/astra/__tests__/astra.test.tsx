@@ -138,6 +138,7 @@ describe('static tools', () => {
     await openAstra();
     await tile('Root cause analysis');
     await fireEvent.press(await screen.findByRole('button', { name: 'P.M.E.P.E' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Click to learn more' }));
     for (const c of ['People', 'Materials', 'Equipment', 'Process and Policies', 'Environment']) {
       expect(await screen.findByLabelText(new RegExp(`^${c}:`))).toBeTruthy();
     }

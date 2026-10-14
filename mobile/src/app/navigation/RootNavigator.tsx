@@ -20,6 +20,7 @@ import { SoundScreen } from '@/features/astra/SoundScreen';
 import {
   EmailsScreen,
   EmailStepScreen,
+  PmepeDetailScreen,
   PmepeScreen,
   RcaScreen,
   RiskScreen,
@@ -315,11 +316,20 @@ export function RootNavigator() {
           component={RcaScreen}
           options={{ title: 'Root cause analysis' }}
         />
-        <AppStack.Screen name="AstraWhys" component={WhysScreen} options={{ title: '5 Whys' }} />
+        <AppStack.Screen
+          name="AstraWhys"
+          component={WhysScreen}
+          options={{ title: 'Root cause analysis' }}
+        />
         <AppStack.Screen
           name="AstraPmepe"
           component={PmepeScreen}
-          options={{ title: 'P.M.E.P.E' }}
+          options={{ title: 'Root cause analysis' }}
+        />
+        <AppStack.Screen
+          name="AstraPmepeDetail"
+          component={PmepeDetailScreen}
+          options={{ title: 'Root cause analysis' }}
         />
         <AppStack.Screen
           name="AstraScaril"
@@ -334,7 +344,7 @@ export function RootNavigator() {
         <AppStack.Screen
           name="AstraEmailStep"
           component={EmailStepScreen}
-          options={{ title: 'Email steps' }}
+          options={{ title: 'Military style emails' }}
         />
         <AppStack.Screen name="AstraDoc" component={AstraDocScreen} options={{ title: 'Guide' }} />
         <AppStack.Screen name="Todos" component={TodosScreen} options={{ title: 'To-do list' }} />

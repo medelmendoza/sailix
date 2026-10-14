@@ -87,29 +87,74 @@ export function Grid({ children }: { children: ReactNode }) {
   return <View style={styles.grid}>{children}</View>;
 }
 
-/** A word on a coloured tag, with what it stands for next to it. */
-export function Pair({
+/** A coloured pill with a word on it (the old app's blue and orange buttons). */
+export function Tag({ word, tone = 'primary' }: { word: string; tone?: 'primary' | 'accent' }) {
+  return (
+    <View
+      style={[
+        styles.tag,
+        { backgroundColor: tone === 'primary' ? colors.primary : colors.coralText },
+      ]}
+    >
+      <AppText variant="button" style={{ color: colors.onPrimary }}>
+        {word}
+      </AppText>
+    </View>
+  );
+}
+
+/** Explanation text in a bordered box, under a tag. */
+export function NoteBox({ children }: { children: ReactNode }) {
+  return (
+    <View style={styles.note}>
+      <AppText variant="button" style={{ color: colors.text }}>
+        {children}
+      </AppText>
+    </View>
+  );
+}
+
+/** A tag with its explanation under it: one item of SCARIL, RAID, BLUF, To and CC. */
+export function TagNote({
   word,
   covers,
-  tone = 'primary',
+  tone,
 }: {
   word: string;
   covers: string;
   tone?: 'primary' | 'accent';
 }) {
   return (
-    <View style={styles.pair} accessible accessibilityLabel={`${word}: ${covers}`}>
-      <View
-        style={[
-          styles.tag,
-          { backgroundColor: tone === 'primary' ? colors.primary : colors.coralText },
-        ]}
-      >
-        <AppText variant="button" style={{ color: colors.onPrimary }}>
-          {word}
+    <View style={styles.tagNote} accessible accessibilityLabel={`${word}: ${covers}`}>
+      <Tag word={word} tone={tone} />
+      <NoteBox>{covers}</NoteBox>
+    </View>
+  );
+}
+
+/** A small round arrow pointing down, between two steps. */
+export function DownArrow() {
+  return (
+    <View style={styles.arrow} accessibilityElementsHidden importantForAccessibility="no">
+      <View style={styles.chevron} />
+    </View>
+  );
+}
+
+/** The centered bold title and optional line under it that the old Astra screens open with. */
+export function CenterTitle({ title, sub }: { title?: string; sub?: string }) {
+  return (
+    <View style={styles.centerTitle}>
+      {title ? (
+        <AppText variant="title" accessibilityRole="header" style={{ textAlign: 'center' }}>
+          {title}
         </AppText>
-      </View>
-      <AppText style={styles.covers}>{covers}</AppText>
+      ) : null}
+      {sub ? (
+        <AppText variant="button" style={{ textAlign: 'center' }}>
+          {sub}
+        </AppText>
+      ) : null}
     </View>
   );
 }
@@ -187,15 +232,41 @@ const styles = StyleSheet.create({
   },
   gridImage: { width: 64, height: 64, borderRadius: radius.md },
   gridTitle: { textAlign: 'center' },
-  pair: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: minTouchTarget },
   tag: {
-    minWidth: 120,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
+    alignSelf: 'flex-start',
+    minHeight: 44,
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.sm,
-    alignItems: 'center',
   },
-  covers: { flex: 1 },
+  note: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+  },
+  tagNote: { gap: spacing.sm },
+  arrow: {
+    alignSelf: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.infoBg,
+  },
+  chevron: {
+    width: 12,
+    height: 12,
+    marginTop: -4,
+    borderRightWidth: 3,
+    borderBottomWidth: 3,
+    borderColor: colors.primary,
+    transform: [{ rotate: '45deg' }],
+  },
+  centerTitle: { gap: spacing.sm, alignItems: 'center' },
   tile: { minHeight: minTouchTarget },
   tileCard: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.md },
   picture: {

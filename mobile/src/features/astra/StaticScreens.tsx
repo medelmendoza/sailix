@@ -1,9 +1,9 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, Button, Card } from '@/components';
-import { colors, radius, spacing } from '@/constants/theme';
+import { AppText, Button, GlyphIcon } from '@/components';
+import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import {
   BLUF,
   EMAIL_STEPS,
@@ -16,62 +16,80 @@ import {
   TO_CC,
   WHYS_BLURB,
 } from './content';
-import { Grid, GridTile, Pair, Picture, Tile, useHelp } from './parts';
+import {
+  CenterTitle,
+  DownArrow,
+  Grid,
+  GridTile,
+  NoteBox,
+  Picture,
+  Tag,
+  TagNote,
+  useHelp,
+} from './parts';
 
 type Nav<N extends keyof AppStackParamList> = NativeStackScreenProps<AppStackParamList, N>;
 
 const page = StyleSheet.create({ content: { padding: spacing.lg, gap: spacing.lg } }).content;
 
-/** The 2x2 chart: probability up the page, impact across. Tap a cell to read what to do. */
+/** The 2x2 chart, as in the original: probability up the side, impact along the bottom. Tapping a box opens its advice. */
 export function RiskScreen() {
   const help = useHelp(HELP.risk);
   const [picked, setPicked] = useState<number | null>(null);
+  const [open, setOpen] = useState(false);
   const q = picked === null ? null : QUADRANTS[picked]!;
   return (
     <ScrollView contentContainerStyle={page}>
       {help}
-      <AppText muted>Tap one of the boxes to learn more.</AppText>
-      <View style={styles.chart} accessibilityRole="radiogroup">
-        <AppText variant="caption" muted style={styles.axisY}>
-          Probability ↑
-        </AppText>
-        <View style={styles.grid}>
-          {QUADRANTS.map((cell, i) => {
-            const on = picked === i;
-            return (
-              <Pressable
-                key={cell.id}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: on }}
-                accessibilityLabel={`${cell.probability} probability, ${cell.impact} impact: ${cell.title}`}
-                onPress={() => setPicked(i)}
-                style={[styles.cell, on && styles.cellOn]}
-              >
-                <AppText variant="heading" style={{ color: on ? colors.onPrimary : colors.text }}>
-                  {cell.title.replace(' your risk!', '')}
-                </AppText>
-                <AppText
-                  variant="caption"
-                  style={{ color: on ? colors.onPrimary : colors.textMuted }}
+      <CenterTitle sub="Click one of the quadrants to learn more." />
+      <View style={styles.chart}>
+        <View style={styles.chartRow}>
+          <View style={styles.axisY} accessibilityElementsHidden importantForAccessibility="no">
+            <AppText style={styles.axisYLabel}>Probability</AppText>
+            <AppText style={styles.axisArrow}>↑</AppText>
+          </View>
+          <View style={styles.grid}>
+            {QUADRANTS.map((cell, i) => {
+              const on = picked === i;
+              return (
+                <Pressable
+                  key={cell.id}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: on }}
+                  accessibilityLabel={`${cell.probability} probability, ${cell.impact} impact: ${cell.title}`}
+                  onPress={() => {
+                    setPicked(i);
+                    setOpen(true);
+                  }}
+                  style={[styles.cell, on && styles.cellOn]}
                 >
-                  {cell.probability} probability · {cell.impact} impact
-                </AppText>
-              </Pressable>
-            );
-          })}
+                  <AppText variant="heading">{cell.title.replace(' your risk!', '')}</AppText>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-        <AppText variant="caption" muted style={styles.axisX}>
-          Impact →
+        <AppText style={styles.axisX} accessibilityElementsHidden>
+          → Impact
         </AppText>
       </View>
-      {q ? (
-        <View accessibilityLiveRegion="polite">
-          <Card style={{ gap: spacing.sm }}>
-            <AppText variant="heading">{q.title}</AppText>
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+          style={styles.scrim}
+          onPress={() => setOpen(false)}
+        />
+        {q ? (
+          <View style={styles.sheet}>
+            <AppText variant="heading" accessibilityRole="header">
+              {q.title}
+            </AppText>
             <AppText>{q.text}</AppText>
-          </Card>
-        </View>
-      ) : null}
+            <Button title="Got it" variant="secondary" onPress={() => setOpen(false)} />
+          </View>
+        ) : null}
+      </Modal>
     </ScrollView>
   );
 }
@@ -93,57 +111,94 @@ export function RcaScreen({ navigation }: Nav<'AstraRca'>) {
   );
 }
 
+/** Define the problem, ask why again and again, then decide: broader or deeper. */
 export function WhysScreen() {
   return (
     <ScrollView contentContainerStyle={page}>
-      <AppText>{WHYS_BLURB}</AppText>
-      <Pair word="Define the problem" covers="State clearly what went wrong." />
-      <Picture
-        source={require('../../../assets/astra/images/whys.png')}
-        label="Diagram of asking why five times"
-      />
-      <Pair word="Broader or deeper?" covers="Decide whether to look wider or ask why again." />
+      <CenterTitle title="5 Whys" sub={WHYS_BLURB} />
+      <View style={styles.flow}>
+        <Tag word="Define the problem" />
+        <DownArrow />
+        <Picture
+          source={require('../../../assets/astra/images/whys.png')}
+          label="Diagram of asking why five times"
+        />
+        <DownArrow />
+        <Tag word="Broader or deeper?" tone="accent" />
+      </View>
     </ScrollView>
   );
 }
 
+/** P.M.E.P.E, first page: the picture, the mnemonic with its initials picked out, and a way on to the details. */
 export function PmepeScreen({ navigation }: Nav<'AstraPmepe'>) {
   const help = useHelp(HELP.pmepe);
+  const initial = (t: string) => (
+    <AppText variant="title" style={{ color: colors.coralText }}>
+      {t}
+    </AppText>
+  );
+  const rest = (t: string) => <AppText variant="title">{t}</AppText>;
   return (
     <ScrollView contentContainerStyle={page}>
       {help}
+      <CenterTitle title="P.M.E.P.E" />
       <Picture
         source={require('../../../assets/astra/images/monkey.png')}
         label="Purple monkey eating a pink elephant"
       />
-      <AppText variant="heading" accessibilityLabel="Purple Monkey Eating Pink Elephant">
-        <AppText variant="heading" style={{ color: colors.coralText }}>
-          P
+      <View
+        style={styles.mnemonic}
+        accessible
+        accessibilityLabel="Purple Monkey Eating Pink Elephant"
+      >
+        <AppText style={{ textAlign: 'center' }}>
+          {initial('P')}
+          {rest('urple ')}
+          {initial('M')}
+          {rest('onkey ')}
+          {initial('E')}
+          {rest('ating ')}
+          {initial('P')}
+          {rest('ink ')}
+          {initial('E')}
+          {rest('lephant')}
         </AppText>
-        urple{' '}
-        <AppText variant="heading" style={{ color: colors.coralText }}>
-          M
-        </AppText>
-        onkey{' '}
-        <AppText variant="heading" style={{ color: colors.coralText }}>
-          E
-        </AppText>
-        ating{' '}
-        <AppText variant="heading" style={{ color: colors.coralText }}>
-          P
-        </AppText>
-        ink{' '}
-        <AppText variant="heading" style={{ color: colors.coralText }}>
-          E
-        </AppText>
-        lephant
-      </AppText>
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Click to learn more"
+        onPress={() => navigation.navigate('AstraPmepeDetail')}
+        style={styles.more}
+      >
+        <View style={styles.moreCircle}>
+          <GlyphIcon name="download" color={colors.onPrimary} size={26} />
+        </View>
+        <AppText variant="heading">Click to learn more.</AppText>
+      </Pressable>
+    </ScrollView>
+  );
+}
+
+/** P.M.E.P.E, second page: each category next to its word, with what it covers, and the detailed guide. */
+export function PmepeDetailScreen({ navigation }: Nav<'AstraPmepeDetail'>) {
+  const help = useHelp(HELP.pmepe);
+  return (
+    <ScrollView contentContainerStyle={page}>
+      {help}
+      <CenterTitle title="P.M.E.P.E" />
       {PMEPE.map((r) => (
-        <View key={r.category} style={{ gap: spacing.xs }}>
-          <Pair word={r.category} covers={r.word} />
-          <AppText muted style={{ marginLeft: spacing.sm }}>
-            {r.covers}
-          </AppText>
+        <View
+          key={r.category}
+          style={styles.pmepeRow}
+          accessible
+          accessibilityLabel={`${r.category}: ${r.word}. ${r.covers}`}
+        >
+          <View style={styles.pmepeTags}>
+            <Tag word={r.category} />
+            <Tag word={r.word} tone="accent" />
+          </View>
+          <NoteBox>{r.covers}</NoteBox>
         </View>
       ))}
       <Button
@@ -160,7 +215,7 @@ export function ScarilScreen({ navigation }: Nav<'AstraScaril'>) {
     <ScrollView contentContainerStyle={page}>
       {help}
       {SCARIL.map((r) => (
-        <Pair key={r.word} word={r.word} covers={r.covers} />
+        <TagNote key={r.word} word={r.word} covers={r.covers} />
       ))}
       <Button
         title="Detailed view"
@@ -170,21 +225,24 @@ export function ScarilScreen({ navigation }: Nav<'AstraScaril'>) {
   );
 }
 
+/** The four email steps as a chain of buttons with arrows between them. */
 export function EmailsScreen({ navigation }: Nav<'AstraEmails'>) {
   const help = useHelp(HELP.emails);
   return (
     <ScrollView contentContainerStyle={page}>
       {help}
-      <AppText variant="title" accessibilityRole="header">
-        How to write an effective email
-      </AppText>
-      {EMAIL_STEPS.map((s) => (
-        <Tile
-          key={s.step}
-          title={s.label}
-          onPress={() => navigation.navigate('AstraEmailStep', { step: s.step })}
-        />
-      ))}
+      <CenterTitle title="How to write an effective email" />
+      <View style={styles.flow}>
+        {EMAIL_STEPS.map((s, i) => (
+          <View key={s.step} style={styles.flowItem}>
+            {i > 0 ? <DownArrow /> : null}
+            <Button
+              title={s.label}
+              onPress={() => navigation.navigate('AstraEmailStep', { step: s.step })}
+            />
+          </View>
+        ))}
+      </View>
     </ScrollView>
   );
 }
@@ -194,15 +252,14 @@ export function EmailStepScreen({ route, navigation }: Nav<'AstraEmailStep'>) {
   if (step === 'to-cc') {
     return (
       <ScrollView contentContainerStyle={page}>
-        <AppText variant="title" accessibilityRole="header">
-          {TO_CC.heading}
-        </AppText>
-        <AppText muted>{TO_CC.sub}</AppText>
+        <CenterTitle title={TO_CC.heading} sub={TO_CC.sub} />
         {TO_CC.items.map((i) => (
-          <View key={i.word} style={{ gap: spacing.xs }}>
-            <Pair word={i.word} covers="" />
-            <AppText>{i.covers}</AppText>
-          </View>
+          <TagNote
+            key={i.word}
+            word={i.word}
+            covers={i.covers}
+            tone={i.word === 'CC' ? 'accent' : 'primary'}
+          />
         ))}
       </ScrollView>
     );
@@ -210,67 +267,104 @@ export function EmailStepScreen({ route, navigation }: Nav<'AstraEmailStep'>) {
   if (step === 'raid') {
     return (
       <ScrollView contentContainerStyle={page}>
-        <AppText variant="title" accessibilityRole="header">
-          {RAID.heading}
-        </AppText>
-        <AppText muted>{RAID.sub}</AppText>
+        <CenterTitle title={RAID.heading} sub={RAID.sub} />
         {RAID.items.map((i) => (
-          <Pair key={i.word} word={i.word} covers={i.covers} />
+          <TagNote key={i.word} word={i.word} covers={i.covers} />
         ))}
-        <Card variant="inset" style={{ gap: spacing.sm }}>
-          <AppText variant="heading">Example</AppText>
-          <AppText muted>Before:</AppText>
-          <AppText>{RAID.before}</AppText>
-          <AppText muted>After:</AppText>
-          <AppText>{RAID.after}</AppText>
-        </Card>
+        <Tag word="Example" tone="accent" />
+        <NoteBox>{`Before:\n${RAID.before}`}</NoteBox>
+        <NoteBox>{`After:\n${RAID.after}`}</NoteBox>
       </ScrollView>
     );
   }
   if (step === 'bluf') {
     return (
       <ScrollView contentContainerStyle={page}>
-        <AppText variant="title" accessibilityRole="header">
-          {BLUF.heading}
-        </AppText>
-        <AppText muted>{BLUF.sub}</AppText>
+        <CenterTitle title={BLUF.heading} sub={BLUF.sub} />
         {BLUF.items.map((i) => (
-          <Pair key={i.word} word={i.word} covers={i.covers} />
+          <TagNote key={i.word} word={i.word} covers={i.covers} />
         ))}
-        <Button
-          title="See an example"
-          onPress={() => navigation.navigate('AstraDoc', { doc: 'bluf' })}
-        />
+        <Button title="Example" onPress={() => navigation.navigate('AstraDoc', { doc: 'bluf' })} />
       </ScrollView>
     );
   }
   return (
     <ScrollView contentContainerStyle={page}>
-      <AppText variant="title" accessibilityRole="header">
-        Next steps
-      </AppText>
-      <AppText>{NEXT_STEPS}</AppText>
-      <Tile title="Root cause analysis" onPress={() => navigation.navigate('AstraRca')} />
-      <Tile title="SCARIL" onPress={() => navigation.navigate('AstraScaril')} />
+      <CenterTitle title="Next steps" sub={NEXT_STEPS} />
+      <Grid>
+        <GridTile
+          title="Root cause analysis"
+          glyph="search"
+          onPress={() => navigation.navigate('AstraRca')}
+        />
+        <GridTile
+          title="SCARIL"
+          glyph="target"
+          onPress={() => navigation.navigate('AstraScaril')}
+        />
+      </Grid>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  chart: { gap: spacing.sm },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chart: {
+    gap: spacing.sm,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+  },
+  chartRow: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.sm },
+  axisY: { width: 36, alignItems: 'center', justifyContent: 'flex-end', gap: spacing.lg },
+  axisYLabel: {
+    width: 90,
+    textAlign: 'center',
+    transform: [{ rotate: '-90deg' }],
+    marginBottom: 40,
+  },
+  axisArrow: { fontSize: 22, color: colors.coralText },
+  grid: { flex: 1, flexDirection: 'row', flexWrap: 'wrap' },
   cell: {
-    width: '48.5%',
-    minHeight: 110,
-    padding: spacing.md,
-    gap: spacing.xs,
+    width: '50%',
+    aspectRatio: 1,
+    alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.md,
-    borderWidth: 1.5,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    padding: spacing.sm,
+  },
+  cellOn: { backgroundColor: colors.infoBg },
+  axisX: { alignSelf: 'center', color: colors.coralText },
+  scrim: { flex: 1, backgroundColor: 'rgba(18, 36, 61, 0.45)' },
+  sheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    padding: spacing.xl,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.lg,
+  },
+  flow: { gap: spacing.sm, alignItems: 'stretch' },
+  flowItem: { gap: spacing.sm },
+  mnemonic: {
+    borderWidth: 2,
     borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.lg,
     backgroundColor: colors.surface,
   },
-  cellOn: { backgroundColor: colors.primary, borderColor: colors.primary },
-  axisY: { alignSelf: 'flex-start' },
-  axisX: { alignSelf: 'flex-end' },
+  more: { alignItems: 'center', gap: spacing.sm, minHeight: minTouchTarget },
+  moreCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    transform: [{ rotate: '-90deg' }],
+  },
+  pmepeRow: { gap: spacing.sm },
+  pmepeTags: { flexDirection: 'row', justifyContent: 'space-between' },
 });
