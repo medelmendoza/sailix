@@ -3,6 +3,7 @@ import { makeMe, TALA } from '@/test-utils/fixtures';
 import { mockApi, problem } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { openTala } from '@/test-utils/steps';
 
 async function openJoin(routes: Record<string, unknown> = {}) {
   const api = mockApi({
@@ -11,8 +12,7 @@ async function openJoin(routes: Record<string, unknown> = {}) {
   } as never);
   signedInAs(makeMe({ modules: [TALA('linked')] }));
   await renderApp();
-  await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-  await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+  await openTala();
   await fireEvent.press(await screen.findByRole('button', { name: 'Join a course' }));
   return api;
 }

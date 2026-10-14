@@ -4,6 +4,7 @@ import { useSessionStore } from '@/store/sessionStore';
 import { makeGrant, makeMe } from '@/test-utils/fixtures';
 import { mockApi, problem } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
+import { dashboardReady } from '@/test-utils/steps';
 
 const store = () => (SecureStore as unknown as { __store: Map<string, string> }).__store;
 
@@ -39,7 +40,7 @@ describe('sign in', () => {
 
     await fillLogin();
 
-    expect(await screen.findByText('Maria')).toBeTruthy();
+    await dashboardReady();
     expect(api.callsTo('POST /auth/token')[0]?.body).toEqual({
       username: 'maria',
       password: 'secret-password',

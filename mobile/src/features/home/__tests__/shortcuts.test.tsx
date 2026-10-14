@@ -3,6 +3,7 @@ import { makeMe, TALA } from '@/test-utils/fixtures';
 import { mockApi } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { dashboardReady } from '@/test-utils/steps';
 
 const docs = (counts: { expired: number; expiring: number }) => ({ data: { data: [], counts } });
 
@@ -13,7 +14,7 @@ async function openHome(
   const api = mockApi(routes as never);
   signedInAs(makeMe({ modules }));
   await renderApp();
-  await screen.findByText('Maria');
+  await dashboardReady();
   return api;
 }
 

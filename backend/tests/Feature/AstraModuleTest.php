@@ -11,13 +11,6 @@ use Tests\TestCase;
 /** Astra is built into the app: no upstream system, no team to map, nothing to link. */
 class AstraModuleTest extends TestCase
 {
-    private function as(string $username): array
-    {
-        $this->app['auth']->forgetGuards();
-
-        return $this->bearer($this->tokenFor($username));
-    }
-
     public function test_the_platform_provisions_astra_without_a_team_and_refuses_one(): void
     {
         $tenant = $this->makeTenant('SFAI');

@@ -3,6 +3,7 @@ import { CALLIT, makeMe } from '@/test-utils/fixtures';
 import { mockApi, problem } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { goToTab, openService } from '@/test-utils/steps';
 
 const report = (id: string, status: string, over: Record<string, unknown> = {}) => ({
   id,
@@ -41,8 +42,7 @@ async function openCallIt(routes: Record<string, unknown>) {
   } as never);
   signedInAs(makeMe({ modules: [CALLIT()] }));
   await renderApp();
-  await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-  await fireEvent.press(await screen.findByRole('button', { name: 'Call-it, Available' }));
+  await openService('Call-it, Available');
   return api;
 }
 
@@ -51,7 +51,7 @@ describe('call-it in services', () => {
     mockApi({});
     signedInAs(makeMe({ modules: [] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
+    await goToTab('Services');
     expect(await screen.findByLabelText('Call-it, coming soon')).toBeTruthy();
   });
 });

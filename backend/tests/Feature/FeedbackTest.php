@@ -8,13 +8,6 @@ use Tests\TestCase;
 
 class FeedbackTest extends TestCase
 {
-    private function as(string $username): array
-    {
-        $this->app['auth']->forgetGuards();
-
-        return $this->bearer($this->tokenFor($username));
-    }
-
     public function test_a_member_sends_feedback_and_it_is_stored_for_their_own_organization_and_membership(): void
     {
         $a = $this->makeTenant('AAA');

@@ -5,6 +5,7 @@ import { makeMe } from '@/test-utils/fixtures';
 import { mockApi, problem } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { dashboardReady } from '@/test-utils/steps';
 
 type AlertButton = { text?: string; style?: string; onPress?: () => void };
 
@@ -199,7 +200,7 @@ it('shows nothing of the previous person after another one signs in on the same 
   expect(await screen.findByRole('button', { name: 'Sign in' })).toBeTruthy();
 
   await act(async () => signedInAs());
-  expect(await screen.findByText('Maria')).toBeTruthy();
+  await dashboardReady();
   expect(screen.queryByText(/previous/)).toBeNull();
 });
 

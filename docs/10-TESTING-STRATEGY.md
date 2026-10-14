@@ -28,3 +28,10 @@ Unit (mappers, money, dates, state machines) · component (login incl. tenant se
 
 ## 5. CI gates
 Backend: Pint, PHPStan, tests (incl. Isolation, Contract), migrations on fresh DB, `composer audit`. Web: `tsc`, ESLint, Prettier check, Vitest, build, `npm audit`. Mobile: `tsc`, ESLint `--max-warnings=0`, jest, `expo-doctor`, prebuild smoke. Path-filtered per project; a contract change must pass all three.
+
+## Keeping the suites small and stable (2026-10-14)
+
+- **Shared steps:** screen tests start from `mobile/src/test-utils/steps.ts` (`dashboardReady`, `goToTab`, `openService`, `openTala`) so a change to wording or layout is a one-file change. Backend tests share `as()` (sign in as a member) and `realUpload()` (a genuine file whose content decides its type; Laravel's fake files take their type from the NAME and cannot test content checks) from `tests/Support/Fixtures.php`.
+- **Duplicates removed:** the "no Tala on the Dashboard" check lived in three places and the Files/Finance "opens its screen" and Account-button checks in two; each is now in one place.
+- **What stays on purpose:** every feature keeps its own small set of tenant-isolation checks (another organization, another member, crew vs administrator, signed out, malformed id, audit holds no contents). They look repetitive but each protects a separate controller; merging them into one generic test would let a single new endpoint ship unchecked.
+- **Native mocks** for the camera, image picker, image manipulator, print, audio, keep-awake and asset modules are in `mobile/jest.setup.ts`; modules are fetched with `jest.requireMock`.

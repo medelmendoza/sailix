@@ -11,13 +11,6 @@ use Tests\TestCase;
 
 class TenantAdminTest extends TestCase
 {
-    private function as(string $username): array
-    {
-        $this->app['auth']->forgetGuards();
-
-        return $this->bearer($this->tokenFor($username));
-    }
-
     public function test_crew_cannot_use_tenant_admin_endpoints(): void
     {
         $tenant = $this->makeTenant();

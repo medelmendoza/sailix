@@ -5,9 +5,8 @@ import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
 import { useScanStore } from '../scanStore';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const camera = (
-  require('expo-camera') as {
+  jest.requireMock('expo-camera') as {
     __state: {
       grantOnRequest: boolean;
       canAskAgain: boolean;
@@ -16,14 +15,12 @@ const camera = (
     };
   }
 ).__state;
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const picker = (
-  require('expo-image-picker') as {
+  jest.requireMock('expo-image-picker') as {
     __state: { next: { uri: string }[] | null; calls: Record<string, unknown>[] };
   }
 ).__state;
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const print = require('expo-print') as { printToFileAsync: jest.Mock };
+const print = jest.requireMock('expo-print') as { printToFileAsync: jest.Mock };
 
 beforeEach(() => {
   camera.initialGranted = true;

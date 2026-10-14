@@ -21,13 +21,6 @@ class DeletionRequestTest extends TestCase
         Mail::fake();
     }
 
-    private function as(string $username): array
-    {
-        $this->app['auth']->forgetGuards();
-
-        return $this->bearer($this->tokenFor($username));
-    }
-
     public function test_a_member_can_request_deletion_once_and_nothing_is_deleted(): void
     {
         $tenant = $this->makeTenant('SFAI');

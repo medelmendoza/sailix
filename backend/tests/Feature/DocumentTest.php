@@ -27,13 +27,6 @@ class DocumentTest extends TestCase
         config(['sailix.documents.disk' => 'local']);
     }
 
-    private function as(string $username): array
-    {
-        $this->app['auth']->forgetGuards();
-
-        return $this->bearer($this->tokenFor($username));
-    }
-
     private function setUpOrganizations(): void
     {
         foreach (['AAA' => ['adminA', 'crewA', 'crewA2'], 'BBB' => ['adminB', 'crewB']] as $code => $names) {
@@ -51,15 +44,6 @@ class DocumentTest extends TestCase
     private function pdf(string $name = 'passport.pdf'): UploadedFile
     {
         return UploadedFile::fake()->createWithContent($name, CrewPortalDemoSeeder::pdf('Test document'));
-    }
-
-    /** A genuine temporary file whose real content decides its type, as in production. */
-    private function realUpload(string $name, string $content): UploadedFile
-    {
-        $path = tempnam(sys_get_temp_dir(), 'up');
-        file_put_contents($path, $content);
-
-        return new UploadedFile($path, $name, null, null, true);
     }
 
     private function submit(string $as, array $extra = [], ?UploadedFile $file = null)

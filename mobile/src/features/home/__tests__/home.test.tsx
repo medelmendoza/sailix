@@ -1,9 +1,10 @@
-import { act, fireEvent, screen } from '@testing-library/react-native';
+import { act, screen } from '@testing-library/react-native';
 import { useSessionStore } from '@/store/sessionStore';
 import { makeMe, TALA } from '@/test-utils/fixtures';
 import { mockApi, problem } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { dashboardReady, openTala } from '@/test-utils/steps';
 
 async function pullToRefresh() {
   const control = screen.getByTestId('home-scroll').props.refreshControl as {
@@ -16,7 +17,7 @@ describe('home', () => {
   it('greets the member and names the organization', async () => {
     signedInAs();
     await renderApp();
-    expect(await screen.findByText('Maria')).toBeTruthy();
+    await dashboardReady();
     expect(screen.getByText('Southfield Agencies')).toBeTruthy();
   });
 
@@ -38,7 +39,7 @@ describe('home', () => {
       'GET /modules/tala/courses': { data: { data: [] } },
     });
     await renderApp();
-    await screen.findByText('Maria');
+    await dashboardReady();
 
     await pullToRefresh();
 
@@ -51,7 +52,7 @@ describe('home', () => {
     signedInAs();
     mockApi({ 'GET /me': problem(403, 'tenant_suspended') });
     await renderApp();
-    await screen.findByText('Maria');
+    await dashboardReady();
 
     await pullToRefresh();
 
@@ -60,16 +61,15 @@ describe('home', () => {
 });
 
 describe('module screen', () => {
-  async function openTala(status: string, enabled = true) {
+  async function openTalaWith(status: string, enabled = true) {
     mockApi({ 'GET /modules/tala/courses': { data: { data: [] } } });
     signedInAs(makeMe({ modules: [TALA(status, enabled)] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-    await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+    await openTala();
   }
 
   it('offers to link an existing account when not linked (and no courses are requested)', async () => {
-    await openTala('not_linked');
+    await openTalaWith('not_linked');
     expect(await screen.findByText('Not linked')).toBeTruthy();
     expect(screen.getByText('Link your Tala account')).toBeTruthy();
     expect(screen.getByLabelText('Tala username or email')).toBeTruthy();
@@ -77,26 +77,26 @@ describe('module screen', () => {
   });
 
   it('shows the courses area when linked', async () => {
-    await openTala('linked');
+    await openTalaWith('linked');
     expect(await screen.findByText('Linked')).toBeTruthy();
     expect(await screen.findByText('No courses assigned')).toBeTruthy();
   });
 
   it('asks for a re-link when the link expired, and says revoked access is the administrator’s call', async () => {
-    await openTala('needs_relink');
+    await openTalaWith('needs_relink');
     expect(await screen.findByText('Needs re-link')).toBeTruthy();
     expect(screen.getByText('Link your Tala account again')).toBeTruthy();
   });
 
   it('does not offer linking when access was revoked', async () => {
-    await openTala('revoked');
+    await openTalaWith('revoked');
     expect(await screen.findByText('Access revoked')).toBeTruthy();
     expect(screen.getByText(/was revoked/)).toBeTruthy();
     expect(screen.queryByLabelText('Tala password')).toBeNull();
   });
 
   it('explains a service the organization turned off, without any link form', async () => {
-    await openTala('disabled', false);
+    await openTalaWith('disabled', false);
     expect(await screen.findByText('Turned off')).toBeTruthy();
     expect(screen.getByText(/turned this service off/i)).toBeTruthy();
     expect(screen.queryByLabelText('Tala password')).toBeNull();

@@ -14,6 +14,7 @@ use App\Models\TenantModule;
 use App\Models\User;
 use App\Modules\Module;
 use App\Support\Net\HostResolver;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use PragmaRX\Google2FA\Google2FA;
@@ -139,5 +140,24 @@ trait Fixtures
         $this->app['auth']->forgetGuards();
 
         return $this->spa();
+    }
+
+    /** Auth headers for a signed-in member, as a fresh sign-in (the cached guard is cleared before and after). */
+    protected function as(string $username): array
+    {
+        $this->app['auth']->forgetGuards();
+        $token = $this->tokenFor($username);
+        $this->app['auth']->forgetGuards();
+
+        return $this->bearer($token);
+    }
+
+    /** A genuine temporary file whose real content decides its type, as in production (Laravel's fakes take it from the name). */
+    protected function realUpload(string $name, string $content): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'up');
+        file_put_contents($path, $content);
+
+        return new UploadedFile($path, $name, null, null, true);
     }
 }

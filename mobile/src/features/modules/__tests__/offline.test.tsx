@@ -14,6 +14,7 @@ import { pendingCompletions, queueCompletion, syncOutbox } from '../tala/offline
 import { currentScope } from '../tala/offline/paths';
 import { getCachedCourses, setCachedCourses, setOutbox } from '../tala/offline/store';
 import { wipeOfflineData } from '../tala/offline/wipe';
+import { openTala } from '@/test-utils/steps';
 
 const fs = (
   FileSystem as unknown as {
@@ -301,8 +302,7 @@ describe('saved copy when offline', () => {
     });
     signedInAs(makeMe({ modules: [TALA('linked')] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-    await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+    await openTala();
     expect(await screen.findByText('Safety at sea')).toBeTruthy();
     expect(screen.queryByText(/copy saved on this device/)).toBeNull();
 
@@ -316,8 +316,7 @@ describe('saved copy when offline', () => {
     mockApi({ 'GET /modules/tala/courses': { networkError: true } });
     signedInAs(makeMe({ modules: [TALA('linked')] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-    await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+    await openTala();
     expect(await screen.findByText(/No connection/, {}, { timeout: 4000 })).toBeTruthy(); // nothing saved yet: honest error
   });
 });
@@ -338,8 +337,7 @@ describe('marking completed', () => {
     } as never);
     signedInAs(makeMe({ modules: [TALA('linked')] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-    await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+    await openTala();
     await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
     await screen.findByText('Item v1');
     return api;
@@ -428,8 +426,7 @@ describe('video feedback', () => {
     });
     signedInAs(makeMe({ modules: [TALA('linked')] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-    await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+    await openTala();
     await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
     await fireEvent.press(await screen.findByRole('button', { name: 'Mark as completed' }));
     return api;
@@ -498,8 +495,7 @@ describe('video feedback', () => {
     });
     signedInAs(makeMe({ modules: [TALA('linked')] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-    await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+    await openTala();
     await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
     await fireEvent.press(await screen.findByRole('button', { name: 'Mark as completed' }));
 

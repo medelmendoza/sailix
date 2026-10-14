@@ -6,6 +6,7 @@ import { makeMe } from '@/test-utils/fixtures';
 import { mockApi, problem } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { dashboardReady } from '@/test-utils/steps';
 
 const stored = {
   token: '1|stored',
@@ -32,14 +33,14 @@ describe('auth gate (state, not navigation calls)', () => {
   it('shows the app when signed in', async () => {
     signedInAs();
     await renderApp();
-    expect(await screen.findByText('Maria')).toBeTruthy();
+    await dashboardReady();
     expect(screen.queryByRole('button', { name: 'Sign in' })).toBeNull();
   });
 
   it('a session that ends elsewhere (state change) swaps the app for sign-in with no navigate call', async () => {
     signedInAs();
     await renderApp();
-    await screen.findByText('Maria');
+    await dashboardReady();
 
     await act(async () => {
       await useSessionStore
@@ -57,7 +58,7 @@ describe('auth gate (state, not navigation calls)', () => {
     mockApi({ 'GET /me': { data: { data: makeMe() } } });
     await useSessionStore.getState().bootstrap();
     await renderApp();
-    expect(await screen.findByText('Maria')).toBeTruthy();
+    await dashboardReady();
   });
 });
 
@@ -74,7 +75,7 @@ describe('unreachable server at launch', () => {
     api.set('GET /me', { data: { data: makeMe() } });
     await fireEvent.press(screen.getByRole('button', { name: 'Try again' }));
 
-    expect(await screen.findByText('Maria')).toBeTruthy();
+    await dashboardReady();
   });
 
   it('lets the person sign out locally from that screen', async () => {
@@ -102,7 +103,7 @@ describe('connectivity', () => {
     signedInAs();
     (useNetInfo as jest.Mock).mockReturnValue({ isConnected: true });
     await renderApp();
-    await screen.findByText('Maria');
+    await dashboardReady();
     expect(screen.queryByText('You are offline.')).toBeNull();
   });
 });

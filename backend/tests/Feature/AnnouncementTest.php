@@ -13,13 +13,6 @@ use Tests\TestCase;
 
 class AnnouncementTest extends TestCase
 {
-    private function as(string $username): array
-    {
-        $this->app['auth']->forgetGuards();
-
-        return $this->bearer($this->tokenFor($username));
-    }
-
     private function setUpTwoOrganizations(): void
     {
         $a = $this->makeTenant('AAA');

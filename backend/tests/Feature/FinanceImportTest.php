@@ -17,13 +17,6 @@ class FinanceImportTest extends TestCase
 {
     private const HEADER = 'username,kind,pay_date,period_label,vessel_name,net_amount,account_number,deductions,is_dollar';
 
-    private function as(string $username): array
-    {
-        $this->app['auth']->forgetGuards();
-
-        return $this->bearer($this->tokenFor($username));
-    }
-
     private function setUpOrganizations(): void
     {
         foreach (['AAA' => ['adminA', 'crewA', 'crewA2'], 'BBB' => ['adminB', 'crewB']] as $code => $names) {

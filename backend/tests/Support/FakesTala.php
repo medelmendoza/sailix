@@ -63,15 +63,6 @@ trait FakesTala
         ]);
     }
 
-    private function as(string $username): array
-    {
-        $this->app['auth']->forgetGuards();
-        $token = $this->tokenFor($username);
-        $this->app['auth']->forgetGuards();
-
-        return $this->bearer($token);
-    }
-
     private function link(array $headers, array $extra = [])
     {
         return $this->postJson('/api/v1/modules/tala/link', ['username' => 'maria', 'password' => 'tala-pass-123'] + $extra, $headers);

@@ -19,13 +19,6 @@ class FinanceTest extends TestCase
 
     private array $tenantId = [];
 
-    private function as(string $username): array
-    {
-        $this->app['auth']->forgetGuards();
-
-        return $this->bearer($this->tokenFor($username));
-    }
-
     private function setUpOrganizations(): void
     {
         foreach (['AAA' => ['crewA', 'crewA2'], 'BBB' => ['crewB']] as $code => $names) {

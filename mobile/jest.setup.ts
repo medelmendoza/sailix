@@ -165,7 +165,10 @@ jest.mock('expo-asset', () => ({
 jest.mock('expo-camera', () => {
   const React = require('react');
   const state = { grantOnRequest: true, canAskAgain: true, initialGranted: true, shots: 0 };
-  const CameraView = React.forwardRef((props: { onCameraReady?: () => void }, ref: unknown) => {
+  const CameraView = React.forwardRef(function CameraViewMock(
+    { onCameraReady }: { onCameraReady?: () => void },
+    ref: unknown,
+  ) {
     React.useImperativeHandle(ref, () => ({
       takePictureAsync: jest.fn(async () => ({
         uri: `file:///cache/camera-${++state.shots}.jpg`,
@@ -173,7 +176,7 @@ jest.mock('expo-camera', () => {
         height: 100,
       })),
     }));
-    React.useEffect(() => props.onCameraReady?.(), []);
+    React.useEffect(() => onCameraReady?.(), [onCameraReady]);
     return null;
   });
   const useCameraPermissions = () => {

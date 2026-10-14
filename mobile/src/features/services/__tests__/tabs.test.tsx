@@ -3,6 +3,7 @@ import { makeMe, TALA } from '@/test-utils/fixtures';
 import { mockApi } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { dashboardReady } from '@/test-utils/steps';
 
 const goTo = async (tab: RegExp) => fireEvent.press(await screen.findByLabelText(tab));
 
@@ -10,29 +11,11 @@ describe('the five tabs (as in the original Sailix, plus Services)', () => {
   it('shows Dashboard, Files, Announcements, Finance and Services, and an Account button in the header', async () => {
     signedInAs();
     await renderApp();
-    await screen.findByText('Maria');
+    await dashboardReady();
     for (const tab of [/^Dashboard/, /^Files/, /^Announcements/, /^Finance/, /^Services, tab/]) {
       expect(screen.getByLabelText(tab)).toBeTruthy();
     }
     expect(screen.getByRole('button', { name: 'Account' })).toBeTruthy();
-  });
-
-  it('opens Account from the header button and goes back to the tab', async () => {
-    signedInAs();
-    await renderApp();
-    await fireEvent.press(await screen.findByRole('button', { name: 'Account' }));
-    expect(await screen.findByText('Maria Santos')).toBeTruthy();
-  });
-
-  it.each([
-    ['Files', /^Files/],
-    ['Finance', /^Finance/],
-  ])('%s opens its own screen', async (title, tab) => {
-    signedInAs();
-    await renderApp();
-    await goTo(tab);
-    expect(await screen.findByRole('header', { name: title })).toBeTruthy();
-    expect(screen.queryByText('Coming soon')).toBeNull();
   });
 });
 
@@ -81,13 +64,5 @@ describe('services tab', () => {
 
     expect(await screen.findByRole('button', { name: 'Tala, Linked' })).toBeTruthy();
     expect(api.callsTo('GET /me')).toHaveLength(1);
-  });
-
-  it('keeps Tala out of the Dashboard list: services live on their own tab', async () => {
-    signedInAs(makeMe({ modules: [TALA('linked')] }));
-    mockApi({ 'GET /modules/tala/courses': { data: { data: [] } } });
-    await renderApp();
-    await screen.findByText('Maria');
-    expect(screen.queryByRole('button', { name: 'Tala, Linked' })).toBeNull();
   });
 });

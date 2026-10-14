@@ -14,6 +14,7 @@ import {
 } from '../tala/offline/outbox';
 import { currentScope } from '../tala/offline/paths';
 import { setCachedDeck } from '../tala/offline/store';
+import { openTala } from '@/test-utils/steps';
 
 const course = {
   id: 'A1',
@@ -87,8 +88,7 @@ async function openDeck(
   signedInAs(makeMe({ modules: [TALA('linked')] }));
   await before?.();
   await renderApp();
-  await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-  await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+  await openTala();
   await fireEvent.press(await screen.findByRole('button', { name: /Seamanship/ }));
   return api;
 }

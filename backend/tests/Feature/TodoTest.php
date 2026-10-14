@@ -15,13 +15,6 @@ class TodoTest extends TestCase
     /** @var array<string, string> membership ids by username */
     private array $m = [];
 
-    private function as(string $username): array
-    {
-        $this->app['auth']->forgetGuards();
-
-        return $this->bearer($this->tokenFor($username));
-    }
-
     private function setUpOrganizations(): void
     {
         $a = $this->makeTenant('AAA');

@@ -3,6 +3,7 @@ import { makeMe } from '@/test-utils/fixtures';
 import { mockApi, problem } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { dashboardReady, goToTab } from '@/test-utils/steps';
 
 const ann = (id: string, title: string, over: Record<string, unknown> = {}) => ({
   id,
@@ -31,7 +32,6 @@ async function openTab(routes: Record<string, unknown>) {
   await renderApp();
   return api;
 }
-const goToTab = async () => fireEvent.press(await screen.findByLabelText(/^Announcements/));
 
 describe('announcements list', () => {
   it('shows each announcement with its title, a preview and how long ago, and marks the unread ones', async () => {
@@ -44,7 +44,7 @@ describe('announcements list', () => {
         }),
       ]),
     });
-    await goToTab();
+    await goToTab('Announcements');
 
     expect(
       await screen.findByRole('button', { name: /^Unread: Drill on Friday, Today/ }),
@@ -60,13 +60,13 @@ describe('announcements list', () => {
 
   it('says so when there are none', async () => {
     await openTab({});
-    await goToTab();
+    await goToTab('Announcements');
     expect(await screen.findByText('No announcements')).toBeTruthy();
   });
 
   it('offers a retry when it cannot load', async () => {
     await openTab({ 'GET /announcements': problem(500, 'server_error') });
-    await goToTab();
+    await goToTab('Announcements');
     expect(await screen.findByRole('button', { name: 'Retry' })).toBeTruthy();
   });
 
@@ -79,7 +79,7 @@ describe('announcements list', () => {
         return p;
       },
     });
-    await goToTab();
+    await goToTab('Announcements');
     await fireEvent.press(await screen.findByRole('button', { name: 'Load more' }));
 
     expect(await screen.findByRole('button', { name: /Item 2/ })).toBeTruthy();
@@ -96,7 +96,7 @@ describe('announcement detail', () => {
       'GET /announcements/a1': { data: { data: ann('a1', 'Drill on Friday <b>now</b>') } },
       'PUT /announcements/a1/read': { data: { data: ann('a1', 'x', { is_read: true }) } },
     });
-    await goToTab();
+    await goToTab('Announcements');
     await fireEvent.press(await screen.findByRole('button', { name: /^Unread: Drill on Friday/ }));
 
     expect(await screen.findByText('Body of Drill on Friday <b>now</b>')).toBeTruthy(); // not interpreted
@@ -108,7 +108,7 @@ describe('announcement detail', () => {
       'GET /announcements': page([ann('a1', 'Seen', { is_read: true })], 0),
       'GET /announcements/a1': { data: { data: ann('a1', 'Seen', { is_read: true }) } },
     });
-    await goToTab();
+    await goToTab('Announcements');
     await fireEvent.press(await screen.findByRole('button', { name: /^Seen/ }));
     expect(await screen.findByText('Body of Seen')).toBeTruthy();
     expect(api.callsTo('PUT /announcements/a1/read')).toHaveLength(0);
@@ -119,7 +119,7 @@ describe('announcement detail', () => {
       'GET /announcements': page([ann('a1', 'Gone soon')]),
       'GET /announcements/a1': problem(404, 'not_found'),
     });
-    await goToTab();
+    await goToTab('Announcements');
     await fireEvent.press(await screen.findByRole('button', { name: /^Unread: Gone soon/ }));
     expect(await screen.findByText('This announcement is no longer available.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
@@ -131,7 +131,7 @@ describe('announcement detail', () => {
       'GET /announcements/a1': { data: { data: ann('a1', 'Notice') } },
       'PUT /announcements/a1/read': problem(500, 'server_error'),
     });
-    await goToTab();
+    await goToTab('Announcements');
     await fireEvent.press(await screen.findByRole('button', { name: /^Unread: Notice/ }));
     expect(await screen.findByText('Body of Notice')).toBeTruthy();
   });
@@ -154,7 +154,7 @@ describe('home announcements card', () => {
 
   it('says there are none yet instead of hiding the card', async () => {
     await openTab({});
-    await screen.findByText('Maria');
+    await dashboardReady();
     expect(await screen.findByText('No announcements yet.')).toBeTruthy();
   });
 });

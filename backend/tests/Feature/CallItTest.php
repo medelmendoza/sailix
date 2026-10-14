@@ -24,13 +24,6 @@ class CallItTest extends TestCase
         config(['sailix.documents.disk' => 'local']);
     }
 
-    private function as(string $username): array
-    {
-        $this->app['auth']->forgetGuards();
-
-        return $this->bearer($this->tokenFor($username));
-    }
-
     private function setUpOrganizations(bool $callItOn = true): void
     {
         foreach (['AAA' => ['adminA', 'crewA', 'crewA2'], 'BBB' => ['adminB', 'crewB']] as $code => $names) {
@@ -55,14 +48,6 @@ class CallItTest extends TestCase
     private function make(string $as, array $body, bool $submit = false)
     {
         return $this->postJson('/api/v1/callit/reports', $body + ($submit ? ['submit' => true] : []), $this->as($as));
-    }
-
-    private function realUpload(string $name, string $content): UploadedFile
-    {
-        $path = tempnam(sys_get_temp_dir(), 'up');
-        file_put_contents($path, $content);
-
-        return new UploadedFile($path, $name, null, null, true);
     }
 
     public function test_only_organizations_with_the_module_on_can_use_it(): void

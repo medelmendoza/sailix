@@ -3,9 +3,9 @@ import { makeMe, TALA, ASTRA } from '@/test-utils/fixtures';
 import { mockApi } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { goToTab, openService } from '@/test-utils/steps';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { __player: player } = require('expo-audio') as {
+const { __player: player } = jest.requireMock('expo-audio') as {
   __player: { play: jest.Mock; pause: jest.Mock };
 };
 
@@ -13,8 +13,7 @@ async function openAstra() {
   mockApi({ 'GET /modules/tala/courses': { data: { data: [] } } });
   signedInAs(makeMe({ modules: [TALA('linked'), ASTRA()] }));
   await renderApp();
-  await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-  await fireEvent.press(await screen.findByRole('button', { name: 'Astra, Available' }));
+  await openService('Astra, Available');
 }
 const tile = (name: string) => fireEvent.press(screen.getByRole('button', { name }));
 
@@ -23,7 +22,7 @@ describe('astra in services', () => {
     mockApi({});
     signedInAs(makeMe({ modules: [ASTRA()] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
+    await goToTab('Services');
     expect(await screen.findByRole('button', { name: 'Astra, Available' })).toBeTruthy();
     expect(screen.queryByLabelText('Astra, coming soon')).toBeNull();
     expect(screen.getByLabelText('SRT, coming soon')).toBeTruthy();
@@ -33,7 +32,7 @@ describe('astra in services', () => {
     mockApi({});
     signedInAs(makeMe({ modules: [] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
+    await goToTab('Services');
     expect(await screen.findByLabelText('Astra, coming soon')).toBeTruthy();
   });
 

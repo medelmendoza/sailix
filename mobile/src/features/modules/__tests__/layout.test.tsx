@@ -3,6 +3,7 @@ import { makeMe, TALA } from '@/test-utils/fixtures';
 import { mockApi } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { openTala } from '@/test-utils/steps';
 
 /** The layout of the original Tala app: picture cards in the list; picture, info, description and materials in a course. */
 const course = (over = {}) => ({
@@ -64,8 +65,7 @@ async function open(list: unknown[], d: unknown = detail()) {
   } as never);
   signedInAs(makeMe({ modules: [TALA('linked')] }));
   await renderApp();
-  await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-  await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+  await openTala();
 }
 
 describe('course list', () => {

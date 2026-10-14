@@ -3,6 +3,7 @@ import { makeMe, TALA } from '@/test-utils/fixtures';
 import { mockApi } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { goToTab } from '@/test-utils/steps';
 
 const day = (offset: number) => {
   const d = new Date();
@@ -53,20 +54,10 @@ async function home(courses: unknown, extra: Record<string, unknown> = {}) {
   return api;
 }
 
-describe('dashboard', () => {
-  it('has nothing from Tala on it: services live under the Services tab', async () => {
-    const api = await home({ data: { data: LIST } });
-    expect(await screen.findByText('Maria')).toBeTruthy();
-    expect(screen.queryByText('My learning')).toBeNull();
-    expect(screen.queryByRole('button', { name: /Fire safety/ })).toBeNull();
-    expect(api.callsTo('GET /modules/tala/courses')).toHaveLength(0); // the Dashboard never asks Tala for anything
-  });
-});
-
 describe('my stats screen', () => {
   async function openStats(courses: unknown) {
     await home(courses);
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
+    await goToTab('Services');
     await fireEvent.press(await screen.findByRole('button', { name: 'Tala, Linked' }));
     await fireEvent.press(await screen.findByRole('button', { name: 'My stats' }));
   }
@@ -89,7 +80,7 @@ describe('my stats screen', () => {
   it('shows an empty state for no courses', async () => {
     await home({ data: { data: [] } }, {});
     // nothing to show on Home; open the stats from the module screen instead
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
+    await goToTab('Services');
     await fireEvent.press(await screen.findByRole('button', { name: 'Tala, Linked' }));
     await fireEvent.press(await screen.findByRole('button', { name: 'My stats' }));
     expect(await screen.findByText('No courses yet')).toBeTruthy();
@@ -164,7 +155,7 @@ describe('course detail: progress and achievements', () => {
       { data: { data: LIST } },
       { 'GET /modules/tala/courses/A2': { data: { data: detail } } },
     );
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
+    await goToTab('Services');
     await fireEvent.press(await screen.findByRole('button', { name: 'Tala, Linked' }));
     await fireEvent.press(
       await screen.findByRole('button', { name: /^First aid, 3 of 4 items completed/ }),

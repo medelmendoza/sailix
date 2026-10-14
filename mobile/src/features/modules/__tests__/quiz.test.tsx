@@ -5,6 +5,7 @@ import { makeMe, TALA } from '@/test-utils/fixtures';
 import { mockApi, problem } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { openTala } from '@/test-utils/steps';
 
 const course = {
   id: 'A1',
@@ -101,8 +102,7 @@ async function openQuiz(routes: Record<string, unknown> = {}, viewable = true) {
   } as never);
   signedInAs(makeMe({ modules: [TALA('linked')] }));
   await renderApp();
-  await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-  await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+  await openTala();
   await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
   return api;
 }
@@ -240,8 +240,7 @@ describe('taking a quiz', () => {
     });
     signedInAs(makeMe({ modules: [TALA('linked')] }));
     await renderApp();
-    await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-    await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+    await openTala();
     await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
     expect(await screen.findByRole('button', { name: /^Retake quiz/ })).toBeTruthy();
   });

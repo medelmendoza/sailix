@@ -5,6 +5,7 @@ import { makeMe, TALA } from '@/test-utils/fixtures';
 import { mockApi, problem, type Call } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { openTala } from '@/test-utils/steps';
 
 const course = (over = {}) => ({
   id: 'A1',
@@ -63,11 +64,10 @@ const detail = {
 const linkedMe = () => makeMe({ modules: [TALA('linked')] });
 const unlinkedMe = (status = 'not_linked') => makeMe({ modules: [TALA(status)] });
 
-async function openTala(me = linkedMe()) {
+async function openTalaFor(me = linkedMe()) {
   signedInAs(me);
   await renderApp();
-  await fireEvent.press(await screen.findByLabelText(/^Services, tab/));
-  await fireEvent.press(await screen.findByRole('button', { name: /^Tala,/ }));
+  await openTala();
 }
 
 beforeEach(() => {
@@ -92,7 +92,7 @@ describe('linking', () => {
       },
       'GET /modules/tala/courses': { data: { data: [course()] } },
     });
-    await openTala(unlinkedMe());
+    await openTalaFor(unlinkedMe());
     await submit('maria', 'tala-secret');
 
     expect(await screen.findByText('Safety at sea')).toBeTruthy();
@@ -109,7 +109,7 @@ describe('linking', () => {
     ['module_unavailable', 503, /not reachable right now/],
   ])('explains %s and clears the password field', async (code, status, text) => {
     mockApi({ 'POST /modules/tala/link': problem(status, code as string) });
-    await openTala(unlinkedMe());
+    await openTalaFor(unlinkedMe());
     await submit('maria', 'tala-secret');
 
     expect(await screen.findByText(text)).toBeTruthy();
@@ -119,7 +119,7 @@ describe('linking', () => {
 
   it('validates locally without calling the server', async () => {
     const api = mockApi({});
-    await openTala(unlinkedMe());
+    await openTalaFor(unlinkedMe());
     await fireEvent.press(await screen.findByRole('button', { name: 'Link account' }));
     expect(await screen.findByText('Enter your Tala username or email.')).toBeTruthy();
     expect(screen.getByText('Enter your Tala password.')).toBeTruthy();
@@ -128,7 +128,7 @@ describe('linking', () => {
 
   it('a link that needs re-linking says why', async () => {
     mockApi({});
-    await openTala(unlinkedMe('needs_relink'));
+    await openTalaFor(unlinkedMe('needs_relink'));
     expect(await screen.findByText('Link your Tala account again')).toBeTruthy();
     expect(screen.getAllByText(/link expired/i).length).toBeGreaterThan(0);
   });
@@ -137,7 +137,7 @@ describe('linking', () => {
 describe('courses', () => {
   it('lists the courses as picture cards: title, creator, time left and progress', async () => {
     mockApi({ 'GET /modules/tala/courses': { data: { data: [course()] } } });
-    await openTala();
+    await openTalaFor();
     expect(await screen.findByText('Safety at sea')).toBeTruthy();
     expect(screen.getByText('Capt. Reyes')).toBeTruthy(); // who made it
     expect(screen.getByText(/days left|Overdue|Due today|Due tomorrow/)).toBeTruthy(); // time left
@@ -151,7 +151,7 @@ describe('courses', () => {
       'GET /modules/tala/courses': () =>
         fail ? problem(503, 'module_unavailable') : { data: { data: [course()] } },
     });
-    await openTala();
+    await openTalaFor();
     expect(await screen.findByText(/not reachable right now/)).toBeTruthy();
     fail = false;
     await fireEvent.press(screen.getByRole('button', { name: 'Retry' }));
@@ -167,7 +167,7 @@ describe('courses', () => {
         return problem(409, 'relink_required');
       },
     });
-    await openTala();
+    await openTalaFor();
     expect(await screen.findByText('Link your Tala account again')).toBeTruthy();
   });
 });
@@ -179,7 +179,7 @@ describe('course detail', () => {
   });
 
   async function openCourse() {
-    await openTala();
+    await openTalaFor();
     await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
   }
 
@@ -240,7 +240,7 @@ describe('disconnecting', () => {
         return { status: 204 };
       },
     });
-    await openTala();
+    await openTalaFor();
     await fireEvent.press(await screen.findByRole('button', { name: 'Disconnect Tala' }));
     const buttons = jest.mocked(Alert.alert).mock.calls.at(-1)![2]!;
     expect(api.callsTo('DELETE /modules/tala/link')).toHaveLength(0); // nothing before the confirmation
@@ -261,7 +261,7 @@ describe('trust boundaries', () => {
       'GET /modules/tala/courses': { data: { data: [course()] } },
       'GET /modules/tala/courses/A1': { data: { data: detail } },
     });
-    await openTala();
+    await openTalaFor();
     await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
     await screen.findByText('Intro video');
 
