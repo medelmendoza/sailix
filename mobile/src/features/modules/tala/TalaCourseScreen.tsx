@@ -17,7 +17,7 @@ import {
   Notice,
   SkeletonList,
 } from '@/components';
-import { colors, spacing } from '@/constants/theme';
+import { spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import type { TalaMaterialSummary } from '@/services/api/types';
 import { scopedKey } from '@/store/scopedKey';
@@ -167,7 +167,7 @@ export function TalaCourseScreen({ route }: Props) {
         <Notice
           message={
             c.progress_submission
-              ? 'Download a video or a document to open it. A video is completed when you have watched it and sent your feedback; a document is marked completed by you. Quiz scores and flashcard results are recorded in Tala.'
+              ? 'Download a video or a document to open it. A video is completed after you watch it and send your feedback. Quiz scores and flashcard results are recorded in Tala.'
               : 'You can view your courses here. Taking quizzes and recording progress is not available in this version of the app.'
           }
         />
@@ -186,13 +186,13 @@ export function TalaCourseScreen({ route }: Props) {
         ) : null}
         <FormError message={error} />
 
-        <Card style={{ gap: spacing.xs }}>
+        <View style={{ gap: spacing.md }}>
           <AppText variant="heading" accessibilityRole="header">
             Materials
           </AppText>
           {c.materials.length === 0 ? <AppText muted>No materials yet.</AppText> : null}
-          {c.materials.map((m, i) => (
-            <View key={m.id} style={i > 0 ? styles.divider : undefined}>
+          {c.materials.map((m) => (
+            <View key={m.id}>
               <TalaMaterialRow
                 m={m}
                 saved={downloaded[m.id]}
@@ -217,7 +217,7 @@ export function TalaCourseScreen({ route }: Props) {
               app.
             </AppText>
           ) : null}
-        </Card>
+        </View>
       </View>
     </ScrollView>
   );
@@ -228,5 +228,4 @@ const styles = StyleSheet.create({
   hero: { width: '100%', height: 260 },
   content: { padding: spacing.lg, gap: spacing.lg },
   courseName: { fontSize: 22, lineHeight: 28 },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderSoft },
 });
