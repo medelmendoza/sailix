@@ -1,10 +1,10 @@
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
-import { AppText, GlyphIcon, type GlyphName } from '@/components';
-import { gradients, minTouchTarget, spacing } from '@/constants/theme';
+import { NavRow, type GlyphName } from '@/components';
+import { spacing } from '@/constants/theme';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Finance'>,
@@ -12,81 +12,33 @@ type Props = CompositeScreenProps<
 >;
 
 export function FinanceScreen({ navigation }: Props) {
-  const items = [
+  const items: { title: string; note: string; glyph: GlyphName; go: () => void }[] = [
     {
       title: 'Allotment',
-      glyph: 'chart' as GlyphName,
-      gradient: gradients.cardBlue,
       note: 'Your monthly and special pay. Asks for your password.',
+      glyph: 'chart',
       go: () => navigation.navigate('PayslipList', { kind: 'allotment' }),
     },
     {
       title: 'Final pay',
-      glyph: 'medal' as GlyphName,
-      gradient: gradients.cardTeal,
       note: 'Your pay at the end of a contract. Asks for your password.',
+      glyph: 'medal',
       go: () => navigation.navigate('PayslipList', { kind: 'final' }),
     },
     {
       title: 'Cash advance',
-      glyph: 'clock' as GlyphName,
-      gradient: gradients.cardCoral,
       note: 'What you borrowed and what is left to pay.',
+      glyph: 'clock',
       go: () => navigation.navigate('Loans'),
     },
   ];
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <AppText variant="title" accessibilityRole="header">
-        Finance
-      </AppText>
       {items.map((i) => (
-        <Pressable
-          key={i.title}
-          accessibilityRole="button"
-          accessibilityLabel={i.title}
-          onPress={i.go}
-          style={({ pressed }) => [styles.press, pressed && { opacity: 0.75 }]}
-        >
-          <View style={[styles.card, { experimental_backgroundImage: i.gradient }]}>
-            <View style={styles.badge}>
-              <GlyphIcon name={i.glyph} color="#FFFFFF" size={30} />
-            </View>
-            <View style={{ flex: 1, gap: 4 }}>
-              <AppText variant="heading" style={styles.white}>
-                {i.title}
-              </AppText>
-              <AppText variant="caption" style={styles.white}>
-                {i.note}
-              </AppText>
-            </View>
-            <AppText style={styles.white}>›</AppText>
-          </View>
-        </Pressable>
+        <NavRow key={i.title} title={i.title} note={i.note} glyph={i.glyph} onPress={i.go} />
       ))}
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.lg },
-  press: { minHeight: minTouchTarget },
-  white: { color: '#FFFFFF' },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-    minHeight: 104,
-    padding: spacing.xl,
-    borderRadius: 24,
-    boxShadow: '0 6px 16px rgba(18, 36, 61, 0.22)',
-  },
-  badge: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.22)',
-  },
-});
+const styles = StyleSheet.create({ content: { padding: spacing.lg, gap: spacing.lg } });

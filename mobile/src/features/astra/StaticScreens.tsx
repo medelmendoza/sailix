@@ -82,12 +82,7 @@ export function RcaScreen({ navigation }: Nav<'AstraRca'>) {
     <ScrollView contentContainerStyle={page}>
       {help}
       <Grid>
-        <GridTile
-          title="5 Whys"
-          glyph="quiz"
-          tone="coral"
-          onPress={() => navigation.navigate('AstraWhys')}
-        />
+        <GridTile title="5 Whys" glyph="quiz" onPress={() => navigation.navigate('AstraWhys')} />
         <GridTile
           title="P.M.E.P.E"
           glyph="search"
@@ -101,20 +96,13 @@ export function RcaScreen({ navigation }: Nav<'AstraRca'>) {
 export function WhysScreen() {
   return (
     <ScrollView contentContainerStyle={page}>
-      <AppText variant="title" accessibilityRole="header">
-        Root cause analysis: 5 Whys
-      </AppText>
       <AppText>{WHYS_BLURB}</AppText>
       <Pair word="Define the problem" covers="State clearly what went wrong." />
       <Picture
         source={require('../../../assets/astra/images/whys.png')}
         label="Diagram of asking why five times"
       />
-      <Pair
-        word="Broader or deeper?"
-        covers="Decide whether to look wider or ask why again."
-        tone="accent"
-      />
+      <Pair word="Broader or deeper?" covers="Decide whether to look wider or ask why again." />
     </ScrollView>
   );
 }
@@ -171,9 +159,6 @@ export function ScarilScreen({ navigation }: Nav<'AstraScaril'>) {
   return (
     <ScrollView contentContainerStyle={page}>
       {help}
-      <AppText variant="title" accessibilityRole="header">
-        S.C.A.R.I.L
-      </AppText>
       {SCARIL.map((r) => (
         <Pair key={r.word} word={r.word} covers={r.covers} />
       ))}
@@ -215,7 +200,7 @@ export function EmailStepScreen({ route, navigation }: Nav<'AstraEmailStep'>) {
         <AppText muted>{TO_CC.sub}</AppText>
         {TO_CC.items.map((i) => (
           <View key={i.word} style={{ gap: spacing.xs }}>
-            <Pair word={i.word} covers="" tone={i.word === 'To' ? 'primary' : 'accent'} />
+            <Pair word={i.word} covers="" />
             <AppText>{i.covers}</AppText>
           </View>
         ))}

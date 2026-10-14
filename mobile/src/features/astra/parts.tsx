@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useLayoutEffect, useState, type ReactNode } from 'react';
 import { Image, Modal, Pressable, StyleSheet, View, type ImageSourcePropType } from 'react-native';
 import { AppText, Button, Card, GlyphIcon, type GlyphName } from '@/components';
-import { colors, gradients, minTouchTarget, radius, spacing } from '@/constants/theme';
+import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 
 /**
  * The "What is ...?" explanation, as in the original: a round "?" in the header opens a sheet that slides up from the
@@ -45,28 +45,20 @@ export function useHelp({ title, body }: { title: string; body: string }) {
   );
 }
 
-/** A square menu tile: a round icon over a bold title, two to a row (the original's menu grid). */
+/** A square menu tile: a round light-blue icon (or picture) over a bold title, two to a row. */
 export function GridTile({
   title,
   glyph,
-  tone = 'primary',
   image,
   onPress,
   label,
 }: {
   title: string;
   glyph?: GlyphName;
-  tone?: 'primary' | 'teal' | 'coral';
   image?: ImageSourcePropType;
   onPress: () => void;
   label?: string;
 }) {
-  const bg =
-    tone === 'primary'
-      ? gradients.cardBlue
-      : tone === 'teal'
-        ? gradients.cardTeal
-        : gradients.cardCoral;
   return (
     <Pressable
       accessibilityRole="button"
@@ -74,18 +66,18 @@ export function GridTile({
       onPress={onPress}
       style={({ pressed }) => [styles.gridCell, pressed && { opacity: 0.75 }]}
     >
-      <View style={[styles.gridTile, { experimental_backgroundImage: bg }]}>
+      <Card variant="flat" style={styles.gridTile}>
         {image ? (
           <Image source={image} accessibilityElementsHidden style={styles.gridImage} />
         ) : glyph ? (
           <View style={styles.gridIcon}>
-            <GlyphIcon name={glyph} color={colors.onPrimary} size={34} />
+            <GlyphIcon name={glyph} color={colors.primary} size={30} />
           </View>
         ) : null}
         <AppText variant="heading" style={styles.gridTitle}>
           {title}
         </AppText>
-      </View>
+      </Card>
     </Pressable>
   );
 }
@@ -179,17 +171,22 @@ const styles = StyleSheet.create({
   gridCell: { width: '48%', aspectRatio: 1 },
   gridTile: {
     flex: 1,
-    borderRadius: radius.lg,
-    boxShadow: '0 6px 16px rgba(18, 36, 61, 0.18)',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
     padding: spacing.md,
-    overflow: 'hidden',
+    borderRadius: radius.lg,
   },
-  gridIcon: { height: 44, alignItems: 'center', justifyContent: 'center' },
+  gridIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.infoBg,
+  },
   gridImage: { width: 64, height: 64, borderRadius: radius.md },
-  gridTitle: { color: colors.onPrimary, textAlign: 'center' },
+  gridTitle: { textAlign: 'center' },
   pair: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: minTouchTarget },
   tag: {
     minWidth: 120,

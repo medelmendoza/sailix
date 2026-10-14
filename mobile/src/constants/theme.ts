@@ -40,10 +40,6 @@ export const colors = {
 } as const;
 
 export const gradients = {
-  /** Bold launcher cards (Finance, Services, Astra, Call-it). White text meets AA on every colour (see the tokens test). */
-  cardBlue: 'linear-gradient(135deg, #355DAD 0%, #2A7F8F 100%)',
-  cardTeal: 'linear-gradient(135deg, #2A7F8F 0%, #2A7D60 100%)',
-  cardCoral: 'linear-gradient(135deg, #A8391A 0%, #B5482A 100%)',
   primary: 'linear-gradient(135deg, #355DAD 0%, #2F67B3 100%)',
   /** The Dashboard header: the logo's blue fading to a teal (white text stays readable on both ends, see the tokens test). */
   header: 'linear-gradient(180deg, #355DAD 0%, #2A7F8F 100%)',
@@ -71,10 +67,10 @@ export const fonts = {
 } as const;
 
 export const typography = {
-  title: { fontFamily: fonts.heading, fontSize: 32, lineHeight: 40 },
+  title: { fontFamily: fonts.heading, fontSize: 28, lineHeight: 36 },
   heading: { fontFamily: fonts.heading, fontSize: 19, lineHeight: 26 },
   body: { fontFamily: fonts.body, fontSize: 16, lineHeight: 24 },
-  caption: { fontFamily: fonts.bodySemiBold, fontSize: 13, lineHeight: 18 },
+  caption: { fontFamily: fonts.bodySemiBold, fontSize: 14, lineHeight: 20 },
   button: { fontFamily: fonts.bodyBold, fontSize: 16, lineHeight: 22 },
 } as const;
 

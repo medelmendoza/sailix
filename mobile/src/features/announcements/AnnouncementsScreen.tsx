@@ -4,7 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
-import { AppText, Button, EmptyState, ErrorState, SkeletonList } from '@/components';
+import { Button, EmptyState, ErrorState, SkeletonList } from '@/components';
 import { spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { AnnouncementCard } from './AnnouncementCard';
@@ -32,9 +32,6 @@ export function AnnouncementsScreen({ navigation }: Props) {
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}
     >
-      <AppText variant="title" accessibilityRole="header">
-        Announcements
-      </AppText>
       {list.isPending ? (
         <SkeletonList />
       ) : list.isError ? (

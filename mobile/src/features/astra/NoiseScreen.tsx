@@ -25,7 +25,6 @@ export function NoiseScreen({ navigation }: Props) {
                 key={s.id}
                 title={s.title}
                 image={s.image}
-                tone={category === 'Focus' ? 'coral' : 'teal'}
                 label={`${s.title}, ${category} sound`}
                 onPress={() => navigation.navigate('AstraSound', { id: s.id })}
               />

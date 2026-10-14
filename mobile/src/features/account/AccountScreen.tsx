@@ -95,9 +95,6 @@ export function AccountScreen({ navigation }: Props) {
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <AppText variant="title" accessibilityRole="header">
-        Account
-      </AppText>
       {info ? <Notice tone="success" message={info} /> : null}
       <FormError message={error} />
       <Card style={{ gap: spacing.md }}>

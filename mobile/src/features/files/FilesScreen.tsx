@@ -4,15 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
-import {
-  AppText,
-  Button,
-  EmptyState,
-  ErrorState,
-  Notice,
-  Segmented,
-  SkeletonList,
-} from '@/components';
+import { Button, EmptyState, ErrorState, Notice, Segmented, SkeletonList } from '@/components';
 import { spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { DocumentCard } from './DocumentCard';
@@ -53,9 +45,6 @@ export function FilesScreen({ navigation }: Props) {
         />
       }
     >
-      <AppText variant="title" accessibilityRole="header">
-        Files
-      </AppText>
       {warn.length > 0 ? (
         <Notice tone="warning" message={`Check your documents: ${warn.join(', ')}.`} />
       ) : null}

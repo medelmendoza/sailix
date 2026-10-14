@@ -11,6 +11,7 @@ export { ErrorState } from './ErrorState';
 export { FormError } from './FormError';
 export { FormScreen } from './FormScreen';
 export { LinkButton } from './LinkButton';
+export { NavRow } from './NavRow';
 export { Notice } from './Notice';
 export { OfflineBanner } from './OfflineBanner';
 export { ProgressBar } from './ProgressBar';

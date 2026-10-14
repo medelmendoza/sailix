@@ -6,7 +6,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
 import { AppText, FormError, GlyphIcon, TabIcon } from '@/components';
-import { colors, spacing } from '@/constants/theme';
+import { colors, gradients, minTouchTarget, spacing } from '@/constants/theme';
 import { HomeAnnouncements } from '@/features/announcements/HomeAnnouncements';
 import { useDocuments } from '@/features/files/api';
 import { useNextTodos } from '@/features/todos/api';
@@ -78,7 +78,7 @@ export function HomeScreen({ navigation }: Props) {
       <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
         <View style={{ flex: 1 }}>
           <AppText variant="body" style={styles.welcome}>
-            Welcome back,
+            Welcome,
           </AppText>
           <AppText variant="title" accessibilityRole="header" style={styles.name}>
             {name}
@@ -94,7 +94,7 @@ export function HomeScreen({ navigation }: Props) {
           hitSlop={8}
           style={styles.account}
         >
-          <GlyphIcon name="person" color={colors.primary} size={24} />
+          <GlyphIcon name="person" color={colors.onPrimary} size={26} />
         </Pressable>
       </View>
 
@@ -134,23 +134,22 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.lg,
-    backgroundColor: colors.background,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    backgroundColor: colors.primary,
+    experimental_backgroundImage: gradients.header,
   },
-  welcome: { color: colors.textMuted },
-  name: { color: colors.text, fontSize: 34, lineHeight: 42 },
-  org: { color: colors.primary },
+  welcome: { color: colors.onPrimary },
+  name: { color: colors.onPrimary },
+  org: { color: colors.onPrimary, opacity: 0.9 },
   account: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    minWidth: minTouchTarget,
+    minHeight: minTouchTarget,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
   },
-  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.sm, gap: spacing.xl },
+  body: { padding: spacing.lg, gap: spacing.lg },
   tiles: { flexDirection: 'row', gap: spacing.md },
 });

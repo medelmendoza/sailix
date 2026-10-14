@@ -94,9 +94,11 @@ export function ModuleScreen({ route, navigation }: Props) {
   return (
     <Screen padded={false}>
       <ScrollView contentContainerStyle={[styles.wrap, { padding: spacing.lg }]}>
-        <AppText variant="title" accessibilityRole="header">
-          {module.label}
-        </AppText>
+        {module.code === 'tala' ? null : (
+          <AppText variant="title" accessibilityRole="header">
+            {module.label}
+          </AppText>
+        )}
         {statusCard}
         {canLink ? <TalaLinkForm relink={module.status === 'needs_relink'} /> : null}
       </ScrollView>

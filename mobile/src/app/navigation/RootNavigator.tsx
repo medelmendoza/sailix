@@ -76,7 +76,7 @@ const headerOptions = {
 const tabOptions = {
   tabBarActiveTintColor: colors.primary,
   tabBarInactiveTintColor: colors.textMuted,
-  tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 11 },
+  tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 12 },
   tabBarStyle: {
     backgroundColor: colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,

@@ -51,7 +51,7 @@ export function AstraMenuScreen({ navigation }: Props) {
       <AppText muted>Tools for clear thinking, focus and communication.</AppText>
       <Grid>
         {items.map((i) => (
-          <GridTile key={i.title} title={i.title} glyph={i.glyph} tone={i.tone} onPress={i.go} />
+          <GridTile key={i.title} title={i.title} glyph={i.glyph} onPress={i.go} />
         ))}
       </Grid>
     </ScrollView>
