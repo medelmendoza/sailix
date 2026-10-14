@@ -3,6 +3,7 @@ export { BrandMark } from './BrandMark';
 export { Button } from './Button';
 export { Card } from './Card';
 export { CourseImage } from './CourseImage';
+export { GlassBackground, GlassButton, GlassCard, useGlassHeader } from './Glass';
 export { GlyphIcon, type GlyphName } from './GlyphIcon';
 export { ComingSoon } from './ComingSoon';
 export { EmptyState } from './EmptyState';

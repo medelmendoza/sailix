@@ -6,7 +6,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
 import { AppText, FormError, GlyphIcon, TabIcon } from '@/components';
-import { colors, gradients, minTouchTarget, spacing } from '@/constants/theme';
+import { colors, spacing } from '@/constants/theme';
 import { HomeAnnouncements } from '@/features/announcements/HomeAnnouncements';
 import { useDocuments } from '@/features/files/api';
 import { useNextTodos } from '@/features/todos/api';
@@ -78,7 +78,7 @@ export function HomeScreen({ navigation }: Props) {
       <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
         <View style={{ flex: 1 }}>
           <AppText variant="body" style={styles.welcome}>
-            Welcome,
+            Welcome back,
           </AppText>
           <AppText variant="title" accessibilityRole="header" style={styles.name}>
             {name}
@@ -94,7 +94,7 @@ export function HomeScreen({ navigation }: Props) {
           hitSlop={8}
           style={styles.account}
         >
-          <GlyphIcon name="person" color={colors.onPrimary} size={26} />
+          <GlyphIcon name="person" color={colors.primary} size={24} />
         </Pressable>
       </View>
 
@@ -112,14 +112,14 @@ export function HomeScreen({ navigation }: Props) {
             title="To-do list"
             note={todoNote}
             noteColor={overdue > 0 ? colors.danger : colors.textMuted}
-            icon={<GlyphIcon name="check" color={colors.onPrimary} size={26} />}
+            icon={<GlyphIcon name="check" color={colors.primary} size={26} />}
             onPress={() => navigation.navigate('Todos')}
           />
           <Tile
             title="Documents"
             note={docNote}
             noteColor={counts?.expired ? colors.danger : colors.warning}
-            icon={<TabIcon name="folder" color={colors.onPrimary} />}
+            icon={<TabIcon name="folder" color={colors.primary} />}
             onPress={() => navigation.navigate('Files')}
           />
         </View>
@@ -134,22 +134,23 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    backgroundColor: colors.primary,
-    experimental_backgroundImage: gradients.header,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.lg,
+    backgroundColor: colors.background,
   },
-  welcome: { color: colors.onPrimary },
-  name: { color: colors.onPrimary },
-  org: { color: colors.onPrimary, opacity: 0.9 },
+  welcome: { color: colors.textMuted },
+  name: { color: colors.text, fontSize: 34, lineHeight: 42 },
+  org: { color: colors.primary },
   account: {
-    minWidth: minTouchTarget,
-    minHeight: minTouchTarget,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
   },
-  body: { padding: spacing.lg, gap: spacing.lg },
+  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.sm, gap: spacing.xl },
   tiles: { flexDirection: 'row', gap: spacing.md },
 });

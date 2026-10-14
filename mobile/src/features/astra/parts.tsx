@@ -53,9 +53,11 @@ export function GridTile({
   image,
   onPress,
   label,
+  glass,
 }: {
   title: string;
   glyph?: GlyphName;
+  glass?: boolean;
   tone?: 'primary' | 'teal' | 'coral';
   image?: ImageSourcePropType;
   onPress: () => void;
@@ -69,7 +71,7 @@ export function GridTile({
       onPress={onPress}
       style={({ pressed }) => [styles.gridCell, pressed && { opacity: 0.75 }]}
     >
-      <View style={[styles.gridTile, { backgroundColor: bg }]}>
+      <View style={[styles.gridTile, glass ? styles.glassTile : { backgroundColor: bg }]}>
         {image ? (
           <Image source={image} accessibilityElementsHidden style={styles.gridImage} />
         ) : glyph ? (
@@ -180,6 +182,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     padding: spacing.md,
     overflow: 'hidden',
+  },
+  glassTile: {
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+    boxShadow: '0 8px 24px rgba(10, 30, 70, 0.25)',
   },
   gridIcon: { height: 44, alignItems: 'center', justifyContent: 'center' },
   gridImage: { width: 64, height: 64, borderRadius: radius.md },

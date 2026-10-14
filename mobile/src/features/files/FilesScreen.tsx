@@ -45,7 +45,7 @@ export function FilesScreen({ navigation }: Props) {
         />
       }
     >
-      <AppText variant="title" accessibilityRole="header">
+      <AppText variant="title" accessibilityRole="header" style={{ fontSize: 34, lineHeight: 42 }}>
         Files
       </AppText>
       {warn.length > 0 ? (
@@ -63,7 +63,10 @@ export function FilesScreen({ navigation }: Props) {
               onPress={() => setView(v.value)}
               style={[styles.view, picked && styles.viewPicked]}
             >
-              <AppText variant="button" style={{ color: picked ? colors.onPrimary : colors.text }}>
+              <AppText
+                variant="button"
+                style={{ color: picked ? colors.primary : colors.textMuted }}
+              >
                 {v.label}
               </AppText>
             </Pressable>
@@ -98,17 +101,20 @@ export function FilesScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.lg },
-  views: { flexDirection: 'row', gap: spacing.sm },
+  content: { padding: spacing.xl, gap: spacing.xl },
+  views: {
+    flexDirection: 'row',
+    padding: 4,
+    gap: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceSunken,
+  },
   view: {
     flex: 1,
-    minHeight: minTouchTarget,
+    minHeight: minTouchTarget - 4,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
-  viewPicked: { backgroundColor: colors.primary, borderColor: colors.primary },
+  viewPicked: { backgroundColor: colors.surface, boxShadow: '0 1px 4px rgba(18, 36, 61, 0.15)' },
 });

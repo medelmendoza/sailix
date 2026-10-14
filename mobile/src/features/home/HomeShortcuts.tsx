@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText, Card, GlyphIcon, TabIcon } from '@/components';
-import { colors, minTouchTarget, radius, shadows, spacing } from '@/constants/theme';
+import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 
 /** A round blue button with an icon, used by the shortcuts and the two tiles. */
 export function Circle({ children }: { children: React.ReactNode }) {
@@ -22,24 +22,24 @@ export function ShortcutsCard({
       label: 'Upload documents',
       icon: (
         <View style={{ transform: [{ rotate: '180deg' }] }}>
-          <GlyphIcon name="download" color={colors.onPrimary} size={26} />
+          <GlyphIcon name="download" color={colors.primary} size={26} />
         </View>
       ),
       onPress: onUpload,
     },
     {
       label: 'View finances',
-      icon: <TabIcon name="coins" color={colors.onPrimary} />,
+      icon: <TabIcon name="coins" color={colors.primary} />,
       onPress: onFinance,
     },
     {
       label: 'Services',
-      icon: <TabIcon name="grid" color={colors.onPrimary} />,
+      icon: <TabIcon name="grid" color={colors.primary} />,
       onPress: onServices,
     },
   ];
   return (
-    <Card style={styles.card}>
+    <Card variant="flat" style={styles.card}>
       <View style={styles.row}>
         {items.map((i) => (
           <Pressable
@@ -81,7 +81,7 @@ export function Tile({
       onPress={onPress}
       style={({ pressed }) => [styles.tile, pressed && { opacity: 0.75 }]}
     >
-      <Card style={styles.tileCard}>
+      <Card variant="flat" style={styles.tileCard}>
         <Circle>{icon}</Circle>
         <AppText variant="heading" style={styles.label}>
           {title}
@@ -100,19 +100,24 @@ export function Tile({
 }
 
 const styles = StyleSheet.create({
-  card: { padding: spacing.lg },
+  card: { padding: spacing.xl, borderRadius: 28 },
   row: { flexDirection: 'row', justifyContent: 'space-around', gap: spacing.sm },
   item: { flex: 1, alignItems: 'center', gap: spacing.sm, minHeight: minTouchTarget },
   circle: {
     width: 56,
     height: 56,
     borderRadius: radius.pill,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.infoBg,
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: shadows.raisedSm,
   },
   label: { textAlign: 'center' },
   tile: { flex: 1, minHeight: minTouchTarget },
-  tileCard: { alignItems: 'center', gap: spacing.sm, padding: spacing.lg, flex: 1 },
+  tileCard: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.lg,
+    flex: 1,
+    borderRadius: 28,
+  },
 });
