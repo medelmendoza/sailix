@@ -29,6 +29,8 @@ const envSchema = z
     privacyUrl: z.url(),
     /** Build-time switch for the scripted sample-data demo; ignored (always false) in production builds. */
     demo: z.boolean().default(false),
+    /** Demo only: the scripted tour that opens screen after screen by itself (a screenshot aid, off unless asked for). */
+    demoTour: z.boolean().default(false),
   })
   // Credentials and tokens must never travel over plain HTTP in a shipped build (SR-04).
   .refine((v) => v.appEnv === 'development' || v.apiBaseUrl.startsWith('https://'), {
@@ -44,7 +46,8 @@ export type Env = z.infer<typeof envSchema>;
 
 export function parseEnv(extra: unknown): Env {
   const parsed = envSchema.parse(extra);
-  return { ...parsed, demo: parsed.appEnv === 'production' ? false : parsed.demo };
+  const demo = parsed.appEnv === 'production' ? false : parsed.demo;
+  return { ...parsed, demo, demoTour: demo && parsed.demoTour };
 }
 
 /** Validated at startup so a bad build profile fails loudly instead of at the first request. */

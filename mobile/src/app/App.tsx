@@ -33,7 +33,7 @@ export default function App() {
       <AppProviders>
         <NavigationContainer ref={navigationRef} theme={navigationTheme}>
           <RootNavigator />
-          {env.demo ? <DemoTour /> : null}
+          {env.demo && env.demoTour ? <DemoTour /> : null}
           <StatusBar style="auto" />
         </NavigationContainer>
       </AppProviders>

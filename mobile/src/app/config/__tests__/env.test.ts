@@ -58,5 +58,16 @@ describe('env', () => {
     it('can never be on in a production build, whatever the flag says', () => {
       expect(parseEnv({ ...base, appEnv: 'production', demo: true }).demo).toBe(false);
     });
+
+    it('the scripted tour is off unless asked for, and only ever runs in demo mode', () => {
+      expect(parseEnv({ ...base, appEnv: 'development', demo: true }).demoTour).toBe(false);
+      expect(
+        parseEnv({ ...base, appEnv: 'development', demo: true, demoTour: true }).demoTour,
+      ).toBe(true);
+      expect(parseEnv({ ...base, appEnv: 'development', demoTour: true }).demoTour).toBe(false); // no demo, no tour
+      expect(parseEnv({ ...base, appEnv: 'production', demo: true, demoTour: true }).demoTour).toBe(
+        false,
+      );
+    });
   });
 });
