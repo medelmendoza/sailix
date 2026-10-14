@@ -124,7 +124,11 @@ describe('writing a report', () => {
     await fireEvent.press(await screen.findByRole('button', { name: 'Create a new report' }));
     return api;
   }
-  const pick = (name: string) => fireEvent.press(screen.getByRole('radio', { name }));
+  const yesNo = (name: string) => fireEvent.press(screen.getByRole('radio', { name }));
+  const pick = async (field: string, name: string) => {
+    await fireEvent.press(screen.getByRole('button', { name: new RegExp(`^${field}:`) }));
+    await fireEvent.press(await screen.findByRole('radio', { name }));
+  };
 
   it('will not send an incomplete report and says what is missing, but still saves a draft', async () => {
     const api = await openForm({
@@ -147,10 +151,10 @@ describe('writing a report', () => {
   it('asks for the other location and for how you intervened only when they apply', async () => {
     await openForm();
     expect(screen.queryByLabelText('Where, exactly?')).toBeNull();
-    await pick('Others');
+    await pick('Location', 'Others');
     expect(await screen.findByLabelText('Where, exactly?')).toBeTruthy();
     expect(screen.queryByLabelText('How you intervened')).toBeNull();
-    await pick('Yes');
+    await yesNo('Yes');
     expect(await screen.findByLabelText('How you intervened')).toBeTruthy();
   });
 
@@ -163,15 +167,15 @@ describe('writing a report', () => {
         },
       }),
     });
-    await pick('Unsafe acts');
-    await pick('People');
-    await pick('Main deck');
+    await pick('Classification', 'Unsafe acts');
+    await pick('Sub-classification', 'People');
+    await pick('Location', 'Main deck');
     await fireEvent.changeText(screen.getByLabelText('Vessel'), 'MV Test');
     await fireEvent.changeText(
       screen.getByLabelText('Details of the incident'),
       'Saw a loose rail',
     );
-    await pick('No');
+    await yesNo('No');
     await fireEvent.press(screen.getByRole('button', { name: 'Send report' }));
 
     expect(await screen.findByText('Does this incident require official reporting?')).toBeTruthy();
@@ -191,15 +195,15 @@ describe('writing a report', () => {
 
   it('shows the server message when sending fails, and keeps what was written', async () => {
     await openForm({ 'POST /callit/reports': problem(429, 'throttled') });
-    await pick('Unsafe acts');
-    await pick('People');
-    await pick('Main deck');
+    await pick('Classification', 'Unsafe acts');
+    await pick('Sub-classification', 'People');
+    await pick('Location', 'Main deck');
     await fireEvent.changeText(screen.getByLabelText('Vessel'), 'MV Test');
     await fireEvent.changeText(
       screen.getByLabelText('Details of the incident'),
       'Saw a loose rail',
     );
-    await pick('No');
+    await yesNo('No');
     await fireEvent.press(screen.getByRole('button', { name: 'Save as draft' }));
     expect(await screen.findByText('Too many attempts. Try again shortly.')).toBeTruthy();
     expect(screen.getByLabelText('Vessel').props.value).toBe('MV Test');

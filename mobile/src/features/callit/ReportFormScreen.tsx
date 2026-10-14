@@ -321,6 +321,7 @@ function Line({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** A dropdown, as in the original: a field showing the choice; tapping it opens a sheet of the options. */
 function Choice({
   label,
   options,
@@ -334,35 +335,64 @@ function Choice({
   onPick: (v: string) => void;
   error?: string;
 }) {
+  const [open, setOpen] = useState(false);
+  const chosen = options.find((o) => o.value === value)?.label;
   return (
-    <View style={{ gap: spacing.sm }}>
+    <View style={{ gap: spacing.xs }}>
       <AppText variant="caption" style={styles.label}>
         {label}
       </AppText>
-      <View style={styles.chips} accessibilityRole="radiogroup">
-        {options.map((o) => {
-          const picked = value === o.value;
-          return (
-            <Pressable
-              key={o.value}
-              accessibilityRole="radio"
-              accessibilityLabel={o.label}
-              accessibilityState={{ checked: picked }}
-              onPress={() => onPick(o.value)}
-              style={[styles.chip, picked && styles.chipPicked]}
-            >
-              <AppText variant="caption" style={{ color: picked ? colors.onPrimary : colors.text }}>
-                {o.label}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${chosen ?? 'not chosen'}`}
+        onPress={() => setOpen(true)}
+        style={[styles.input, styles.select, error ? { borderColor: colors.danger } : null]}
+      >
+        <AppText style={{ flex: 1, color: chosen ? colors.text : colors.textMuted }}>
+          {chosen ?? 'Choose'}
+        </AppText>
+        <AppText muted>▾</AppText>
+      </Pressable>
       {error ? (
         <AppText variant="caption" style={styles.err}>
           {error}
         </AppText>
       ) : null}
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+          style={styles.scrim}
+          onPress={() => setOpen(false)}
+        />
+        <View style={styles.optionSheet}>
+          <AppText variant="heading" accessibilityRole="header">
+            {label}
+          </AppText>
+          <ScrollView contentContainerStyle={{ gap: spacing.xs }}>
+            {options.map((o) => {
+              const picked = value === o.value;
+              return (
+                <Pressable
+                  key={o.value}
+                  accessibilityRole="radio"
+                  accessibilityLabel={o.label}
+                  accessibilityState={{ checked: picked }}
+                  onPress={() => {
+                    onPick(o.value);
+                    setOpen(false);
+                  }}
+                  style={[styles.option, picked && styles.optionPicked]}
+                >
+                  <AppText style={{ color: picked ? colors.onPrimary : colors.text }}>
+                    {o.label}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -495,6 +525,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   err: { color: colors.danger },
+  select: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  scrim: { flex: 1, backgroundColor: 'rgba(18, 36, 61, 0.45)' },
+  optionSheet: {
+    maxHeight: '70%',
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    padding: spacing.xl,
+    gap: spacing.md,
+  },
+  option: {
+    minHeight: minTouchTarget,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
+  },
+  optionPicked: { backgroundColor: colors.primary },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
