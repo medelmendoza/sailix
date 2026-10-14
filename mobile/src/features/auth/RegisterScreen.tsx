@@ -2,10 +2,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { z } from 'zod';
 import type { AuthStackParamList } from '@/app/navigation/types';
-import { AppText, Button, FormError, FormScreen, LinkButton, TextField } from '@/components';
+import { AppText, AuthLayout, Button, FormError, LinkButton, TextField } from '@/components';
+import { spacing } from '@/constants/theme';
 import { api, PUBLIC_CALL } from '@/services/api/client';
 import { applyServerErrors } from './serverErrors';
 
@@ -99,11 +100,16 @@ export function RegisterScreen({ navigation }: Props) {
   }
 
   return (
-    <FormScreen>
-      <View style={{ gap: 4 }}>
-        <AppText variant="title">Create an account</AppText>
-        <AppText muted>Your organization approves new accounts before you can sign in.</AppText>
-      </View>
+    <AuthLayout
+      title="Create an account"
+      subtitle="Your organization approves new accounts before you can sign in."
+      footer={
+        <View style={styles.footer}>
+          <AppText muted>Already registered?</AppText>
+          <LinkButton title="I already have an account" onPress={() => navigation.popToTop()} />
+        </View>
+      }
+    >
       <FormError message={formError} />
       <TextField
         control={control}
@@ -159,7 +165,10 @@ export function RegisterScreen({ navigation }: Props) {
         autoComplete="new-password"
       />
       <Button title="Create account" loading={isSubmitting} onPress={handleSubmit(onSubmit)} />
-      <LinkButton title="I already have an account" onPress={() => navigation.popToTop()} />
-    </FormScreen>
+    </AuthLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  footer: { alignItems: 'center', gap: spacing.xs },
+});

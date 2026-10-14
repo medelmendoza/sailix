@@ -1,8 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { View } from 'react-native';
 import type { AuthStackParamList } from '@/app/navigation/types';
-import { AppText, Button, FormError, FormScreen } from '@/components';
+import { AuthLayout, Button, FormError } from '@/components';
 import { api, PUBLIC_CALL } from '@/services/api/client';
 import { describeError, toApiError } from '@/services/api/errors';
 import type { Envelope, TokenGrant } from '@/services/api/types';
@@ -45,11 +44,10 @@ export function SelectOrganizationScreen({ route, navigation }: Props) {
   }
 
   return (
-    <FormScreen>
-      <View style={{ gap: 4 }}>
-        <AppText variant="title">Choose an organization</AppText>
-        <AppText muted>Your account belongs to more than one organization.</AppText>
-      </View>
+    <AuthLayout
+      title="Choose an organization"
+      subtitle="Your account belongs to more than one organization."
+    >
       <FormError message={error} />
       {memberships.map((m) => (
         <Button
@@ -62,6 +60,6 @@ export function SelectOrganizationScreen({ route, navigation }: Props) {
           onPress={() => void choose(m.id)}
         />
       ))}
-    </FormScreen>
+    </AuthLayout>
   );
 }
