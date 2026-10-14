@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import {
   AppText,
   Button,
@@ -7,9 +7,10 @@ import {
   EmptyState,
   ErrorState,
   FormError,
+  Segmented,
   SkeletonList,
 } from '@/components';
-import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
+import { spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { useSetTodoDone, useTodos } from './api';
 import { TodoRow } from './TodoRow';
@@ -46,25 +47,7 @@ export function TodosScreen() {
         />
       }
     >
-      <View style={styles.filters} accessibilityRole="radiogroup">
-        {FILTERS.map((f) => {
-          const picked = filter === f.value;
-          return (
-            <Pressable
-              key={f.value}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: picked }}
-              accessibilityLabel={f.label}
-              onPress={() => setFilter(f.value)}
-              style={[styles.filter, picked && styles.filterPicked]}
-            >
-              <AppText variant="button" style={{ color: picked ? colors.onPrimary : colors.text }}>
-                {f.label}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </View>
+      <Segmented options={FILTERS} value={filter} onChange={setFilter} />
       {overdue > 0 && filter === 'open' ? (
         <AppText variant="caption" accessibilityRole="alert">
           {overdue === 1 ? '1 task is overdue.' : `${overdue} tasks are overdue.`}
@@ -107,17 +90,5 @@ export function TodosScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
-  filters: { flexDirection: 'row', gap: spacing.sm },
-  filter: {
-    flex: 1,
-    minHeight: minTouchTarget,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  filterPicked: { backgroundColor: colors.primary, borderColor: colors.primary },
   card: { gap: spacing.sm },
 });

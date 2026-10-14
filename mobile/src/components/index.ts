@@ -15,6 +15,7 @@ export { Notice } from './Notice';
 export { OfflineBanner } from './OfflineBanner';
 export { ProgressBar } from './ProgressBar';
 export { Screen } from './Screen';
+export { Segmented } from './Segmented';
 export { SkeletonList } from './Skeleton';
 export { TabIcon } from './TabIcon';
 export { TextField } from './TextField';

@@ -2,10 +2,18 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
-import { AppText, Button, EmptyState, ErrorState, Notice, SkeletonList } from '@/components';
-import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
+import {
+  AppText,
+  Button,
+  EmptyState,
+  ErrorState,
+  Notice,
+  Segmented,
+  SkeletonList,
+} from '@/components';
+import { spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { DocumentCard } from './DocumentCard';
 import { useDocuments, type DocumentView } from './api';
@@ -51,28 +59,7 @@ export function FilesScreen({ navigation }: Props) {
       {warn.length > 0 ? (
         <Notice tone="warning" message={`Check your documents: ${warn.join(', ')}.`} />
       ) : null}
-      <View style={styles.views} accessibilityRole="radiogroup">
-        {VIEWS.map((v) => {
-          const picked = view === v.value;
-          return (
-            <Pressable
-              key={v.value}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: picked }}
-              accessibilityLabel={v.label}
-              onPress={() => setView(v.value)}
-              style={[styles.view, picked && styles.viewPicked]}
-            >
-              <AppText
-                variant="button"
-                style={{ color: picked ? colors.primary : colors.textMuted }}
-              >
-                {v.label}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </View>
+      <Segmented options={VIEWS} value={view} onChange={setView} />
       <Button title="Add a document" onPress={() => navigation.navigate('DocumentForm', {})} />
       {docs.isPending ? (
         <SkeletonList />
@@ -102,19 +89,4 @@ export function FilesScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   content: { padding: spacing.xl, gap: spacing.xl },
-  views: {
-    flexDirection: 'row',
-    padding: 4,
-    gap: 4,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceSunken,
-  },
-  view: {
-    flex: 1,
-    minHeight: minTouchTarget - 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.pill,
-  },
-  viewPicked: { backgroundColor: colors.surface, boxShadow: '0 1px 4px rgba(18, 36, 61, 0.15)' },
 });
