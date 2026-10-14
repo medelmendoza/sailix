@@ -15,6 +15,7 @@ const STOPS: (() => void)[] = [
   () => navigationRef.navigate('Payslip', { id: 'p1' }),
   () => navigationRef.navigate('Loans'),
   () => navigationRef.navigate('MainTabs', { screen: 'Services' }),
+  () => navigationRef.navigate('Scanner'),
   () => navigationRef.navigate('CallIt'),
   () => navigationRef.navigate('CallItReports'),
   () => navigationRef.navigate('CallItForm', { id: 'c1' }),
