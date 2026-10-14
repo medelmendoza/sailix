@@ -1,5 +1,6 @@
 import { StyleSheet, View, type ViewStyle } from 'react-native';
-import { colors } from '@/constants/theme';
+import { colors, fonts } from '@/constants/theme';
+import { AppText } from './AppText';
 
 const W = 2.2; // stroke of the outlined icons
 
@@ -13,7 +14,7 @@ export function TabIcon({
   color,
   filled = true,
 }: {
-  name: 'home' | 'person' | 'bell' | 'folder' | 'coins' | 'grid';
+  name: 'home' | 'person' | 'announce' | 'folder' | 'money' | 'case';
   color: string;
   filled?: boolean;
 }) {
@@ -48,74 +49,57 @@ export function TabIcon({
             style={[styles.abs, shape({ top: 8, left: 2, width: 22, height: 15, borderRadius: 4 })]}
           />
         </>
-      ) : name === 'coins' ? (
+      ) : name === 'money' ? (
         <>
           <View
             style={[
               styles.abs,
-              { top: 2, right: 2, width: 15, height: 15, borderRadius: 8 },
-              { borderColor: color, borderWidth: W },
+              shape({ top: 2, left: 2, width: 22, height: 22, borderRadius: 11 }),
+            ]}
+          />
+          <View style={[styles.abs, styles.centered]}>
+            <AppText
+              style={{
+                fontFamily: fonts.heading,
+                fontSize: 15,
+                lineHeight: 20,
+                color: filled ? colors.infoBg : color,
+              }}
+            >
+              $
+            </AppText>
+          </View>
+        </>
+      ) : name === 'case' ? (
+        <>
+          <View
+            style={[
+              styles.abs,
+              {
+                top: 3,
+                left: 8,
+                width: 10,
+                height: 7,
+                borderTopLeftRadius: 3.5,
+                borderTopRightRadius: 3.5,
+                borderWidth: W,
+                borderBottomWidth: 0,
+                borderColor: color,
+              },
             ]}
           />
           <View
-            style={[
-              styles.abs,
-              shape({
-                bottom: 2,
-                left: 2,
-                width: 15,
-                height: 15,
-                borderRadius: 8,
-                ...(filled ? {} : { backgroundColor: colors.surface }),
-              }),
-            ]}
-          />
-        </>
-      ) : name === 'grid' ? (
-        <>
-          {[0, 1, 2, 3].map((i) => (
-            <View
-              key={i}
-              style={[
-                styles.abs,
-                shape({
-                  width: 10,
-                  height: 10,
-                  borderRadius: 3.5,
-                  left: 2 + (i % 2) * 12,
-                  top: 2 + Math.floor(i / 2) * 12,
-                }),
-              ]}
-            />
-          ))}
-        </>
-      ) : name === 'bell' ? (
-        <>
-          <View
-            style={[
-              styles.abs,
-              shape({
-                top: 2,
-                left: 4,
-                width: 18,
-                height: 15,
-                borderTopLeftRadius: 9,
-                borderTopRightRadius: 9,
-                borderBottomLeftRadius: 3,
-                borderBottomRightRadius: 3,
-              }),
-            ]}
+            style={[styles.abs, shape({ top: 7, left: 2, width: 22, height: 16, borderRadius: 4 })]}
           />
           <View
             style={[
               styles.abs,
               {
-                top: 17,
+                top: 14,
                 left: 2,
                 width: 22,
-                height: W + 0.8,
-                borderRadius: 2,
-                backgroundColor: color,
+                height: W,
+                backgroundColor: filled ? colors.infoBg : color,
               },
             ]}
           />
@@ -123,13 +107,65 @@ export function TabIcon({
             style={[
               styles.abs,
               {
-                top: 21,
-                left: 9,
-                width: 8,
+                top: 12.5,
+                left: 11,
+                width: 4,
                 height: 4,
-                borderBottomLeftRadius: 4,
-                borderBottomRightRadius: 4,
-                backgroundColor: color,
+                borderRadius: 1,
+                backgroundColor: filled ? colors.infoBg : color,
+              },
+            ]}
+          />
+        </>
+      ) : name === 'announce' ? (
+        <>
+          <View
+            style={[styles.abs, shape({ top: 2, left: 2, width: 22, height: 17, borderRadius: 6 })]}
+          />
+          <View
+            style={[
+              styles.abs,
+              {
+                top: 15,
+                left: 6.5,
+                width: 7,
+                height: 7,
+                borderRadius: 1.5,
+                transform: [{ rotate: '45deg' }],
+                ...(filled
+                  ? { backgroundColor: color }
+                  : {
+                      backgroundColor: colors.surface,
+                      borderColor: color,
+                      borderRightWidth: W,
+                      borderBottomWidth: W,
+                    }),
+              },
+            ]}
+          />
+          <View
+            style={[
+              styles.abs,
+              {
+                top: 6.2,
+                left: 11.3,
+                width: 2.4,
+                height: 6,
+                borderRadius: 1.2,
+                backgroundColor: filled ? colors.infoBg : color,
+              },
+            ]}
+          />
+          <View
+            style={[
+              styles.abs,
+              {
+                top: 13.6,
+                left: 11.3,
+                width: 2.4,
+                height: 2.4,
+                borderRadius: 1.2,
+                backgroundColor: filled ? colors.infoBg : color,
               },
             ]}
           />
@@ -208,4 +244,12 @@ export function TabIcon({
 const styles = StyleSheet.create({
   box: { width: 26, height: 26 },
   abs: { position: 'absolute' },
+  centered: {
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

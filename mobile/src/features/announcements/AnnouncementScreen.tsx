@@ -38,7 +38,7 @@ export function AnnouncementScreen({ route }: Props) {
       <Card variant="flat" style={styles.card}>
         <View style={styles.meta}>
           <View style={styles.bell}>
-            <TabIcon name="bell" color={colors.primary} />
+            <TabIcon name="announce" color={colors.primary} />
           </View>
           <AppText variant="caption" muted>
             Announcement · {ageLabel(one.data.created_at)}

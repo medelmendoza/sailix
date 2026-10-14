@@ -29,12 +29,12 @@ export function ShortcutsCard({
     },
     {
       label: 'View finances',
-      icon: <TabIcon name="coins" color={colors.primary} />,
+      icon: <TabIcon name="money" color={colors.primary} />,
       onPress: onFinance,
     },
     {
       label: 'Services',
-      icon: <TabIcon name="grid" color={colors.primary} />,
+      icon: <TabIcon name="case" color={colors.primary} />,
       onPress: onServices,
     },
   ];

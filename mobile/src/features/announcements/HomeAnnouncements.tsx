@@ -38,7 +38,7 @@ export function HomeAnnouncements({ onOpenAll }: { onOpenAll: () => void }) {
           hitSlop={8}
           style={styles.bell}
         >
-          <TabIcon name="bell" color={colors.primary} />
+          <TabIcon name="announce" color={colors.primary} />
         </Pressable>
       </View>
       <View style={styles.rule} />

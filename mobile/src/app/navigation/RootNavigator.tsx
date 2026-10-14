@@ -186,7 +186,7 @@ function MainTabs() {
           tabBarAccessibilityLabel: 'Announcements',
           tabBarIcon: ({ color, focused }) => (
             <TabPill focused={focused}>
-              <TabIcon name="bell" color={color} filled={focused} />
+              <TabIcon name="announce" color={color} filled={focused} />
             </TabPill>
           ),
           tabBarBadge: unread.data && unread.data > 0 ? unread.data : undefined,
@@ -198,7 +198,7 @@ function MainTabs() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <TabPill focused={focused}>
-              <TabIcon name="coins" color={color} filled={focused} />
+              <TabIcon name="money" color={color} filled={focused} />
             </TabPill>
           ),
         }}
@@ -209,7 +209,7 @@ function MainTabs() {
         options={{
           tabBarIcon: ({ color, focused }) => (
             <TabPill focused={focused}>
-              <TabIcon name="grid" color={color} filled={focused} />
+              <TabIcon name="case" color={color} filled={focused} />
             </TabPill>
           ),
         }}
