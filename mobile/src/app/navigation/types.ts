@@ -37,6 +37,8 @@ export type AppStackParamList = {
     assignId: string;
     materialId: string;
     canComplete: boolean;
+    /** Already completed (or waiting to be sent): nothing left to do on the video page. */
+    completed: boolean;
   };
   Account: undefined;
   Todos: undefined;

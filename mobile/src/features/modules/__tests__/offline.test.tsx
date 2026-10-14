@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { useEventListener } from 'expo';
 import * as FileSystem from 'expo-file-system';
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import { queryClient } from '@/services/queryClient';
 import { useSessionStore } from '@/store/sessionStore';
 import { makeMe, TALA } from '@/test-utils/fixtures';
@@ -50,11 +51,11 @@ const mat = (id: string, type: string, status: string | null = null) => ({
   progress: null,
   status,
 });
-const detail = (submission = true) => ({
+const detail = (submission = true, more: ReturnType<typeof mat>[] = []) => ({
   ...course,
   hidden_materials: 0,
   progress_submission: submission,
-  materials: [mat('v1', 'video'), mat('p1', 'pdf', 'COMPLETED')],
+  materials: [mat('v1', 'video'), mat('p1', 'pdf', 'COMPLETED'), ...more],
 });
 const material = (id: string) => ({
   data: {
@@ -329,10 +330,14 @@ async function giveFeedback(stars = 4, half = false, comment = '') {
 }
 
 describe('marking completed', () => {
-  async function openCourse(submission: boolean, extra: Record<string, unknown> = {}) {
+  async function openCourse(
+    submission: boolean,
+    extra: Record<string, unknown> = {},
+    more: ReturnType<typeof mat>[] = [],
+  ) {
     const api = mockApi({
       'GET /modules/tala/courses': { data: { data: [course] } },
-      'GET /modules/tala/courses/A1': { data: { data: detail(submission) } },
+      'GET /modules/tala/courses/A1': { data: { data: detail(submission, more) } },
       ...extra,
     } as never);
     signedInAs(makeMe({ modules: [TALA('linked')] }));
@@ -349,37 +354,47 @@ describe('marking completed', () => {
     expect(screen.getByText(/recording progress is not available/)).toBeTruthy();
   });
 
-  it('sends the completion right away when online, naming only the material', async () => {
-    const api = await openCourse(true, {
-      'POST /modules/tala/courses/A1/progress': {
-        data: { data: { progress: '2/2', status: 'COMPLETED', completed: ['v1'] } },
+  it('a video cannot be marked as completed: it has to be downloaded, watched and rated', async () => {
+    await openCourse(true);
+    expect(screen.queryByRole('button', { name: 'Mark as completed' })).toBeNull(); // the PDF is already completed
+    expect(screen.getByRole('button', { name: /^Download to watch: Item v1/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Watch: Item v1/ })).toBeNull();
+  });
+
+  it('sends a PDF completion right away when online, naming only the material', async () => {
+    const api = await openCourse(
+      true,
+      {
+        'POST /modules/tala/courses/A1/progress': {
+          data: { data: { progress: '2/2', status: 'COMPLETED', completed: ['p2'] } },
+        },
       },
-    });
-    expect(screen.getAllByRole('button', { name: 'Mark as completed' })).toHaveLength(1); // the PDF is already completed
+      [mat('p2', 'pdf')],
+    );
+    expect(screen.getAllByRole('button', { name: 'Mark as completed' })).toHaveLength(1); // only the open PDF
 
     await fireEvent.press(screen.getByRole('button', { name: 'Mark as completed' }));
-    await giveFeedback(4, true, 'Clear and useful');
 
     await waitFor(() =>
       expect(api.callsTo('POST /modules/tala/courses/A1/progress')).toHaveLength(1),
     );
     expect(api.callsTo('POST /modules/tala/courses/A1/progress')[0]?.body).toEqual({
-      completed: ['v1'],
-      feedback: { v1: { rating: 3.5, comment: 'Clear and useful' } },
+      completed: ['p2'],
     });
     await waitFor(() => expect(screen.queryByText(/waiting to be sent/)).toBeNull());
   });
 
   it('while offline it is kept, shown as waiting, and sent from "Send now" once back online', async () => {
-    const api = await openCourse(true, {
-      'POST /modules/tala/courses/A1/progress': { data: { data: {} } },
-    });
+    const api = await openCourse(
+      true,
+      { 'POST /modules/tala/courses/A1/progress': { data: { data: {} } } },
+      [mat('p2', 'pdf')],
+    );
     offline(true);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Mark as completed' }));
-    await giveFeedback(5);
     expect(await screen.findByText(/1 completion waiting to be sent/)).toBeTruthy();
-    expect(screen.getByText(/Completed, waiting to send/)).toBeTruthy();
+    expect(screen.getAllByText(/Completed, waiting to send/).length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: 'Mark as completed' })).toBeNull();
     expect(api.callsTo('POST /modules/tala/courses/A1/progress')).toHaveLength(0);
 
@@ -394,15 +409,18 @@ describe('marking completed', () => {
     await waitFor(() => expect(screen.queryByText(/waiting to be sent/)).toBeNull());
   });
 
-  it('downloads an item for offline use and then offers the offline copy and its removal', async () => {
+  it('a video is downloaded first (never opened in the phone browser), then offered to watch and to remove', async () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined as never);
     await openCourse(false, { 'GET /modules/tala/courses/A1/materials/v1': material('v1') });
-    await fireEvent.press(screen.getAllByRole('button', { name: 'Download for offline' })[0]!);
+    await fireEvent.press(screen.getByRole('button', { name: /^Download to watch: Item v1/ }));
 
-    expect(await screen.findByRole('button', { name: /^Watch offline copy/ })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /^Watch: Item v1/ })).toBeTruthy();
     expect(screen.getByText(/Saved on this device/)).toBeTruthy();
+    expect(openURL).not.toHaveBeenCalled();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Remove download' }));
     await waitFor(() => expect(screen.queryByText(/Saved on this device/)).toBeNull());
+    expect(screen.getByRole('button', { name: /^Download to watch: Item v1/ })).toBeTruthy();
   });
 
   it('an unsent completion is not lost when the stored outbox is replaced by a restart', async () => {
@@ -418,22 +436,47 @@ describe('marking completed', () => {
 });
 
 describe('video feedback', () => {
+  /** Downloads the video from the course page and opens it from the device, as the app now requires. */
   async function openVideo() {
     const api = mockApi({
       'GET /modules/tala/courses': { data: { data: [course] } },
       'GET /modules/tala/courses/A1': { data: { data: detail(true) } },
+      'GET /modules/tala/courses/A1/materials/v1': material('v1'),
       'POST /modules/tala/courses/A1/progress': { data: { data: {} } },
     });
     signedInAs(makeMe({ modules: [TALA('linked')] }));
     await renderApp();
     await openTala();
     await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
-    await fireEvent.press(await screen.findByRole('button', { name: 'Mark as completed' }));
+    await fireEvent.press(
+      await screen.findByRole('button', { name: /^Download to watch: Item v1/ }),
+    );
+    await fireEvent.press(await screen.findByRole('button', { name: /^Watch: Item v1/ }));
     return api;
   }
 
+  /** The player reaching the end of the video (the player itself is a stand-in in tests). */
+  async function videoEnds() {
+    const call = [...jest.mocked(useEventListener).mock.calls]
+      .reverse()
+      .find((c) => (c as unknown[])[1] === 'playToEnd');
+    await act(async () => (call![2] as () => void)());
+  }
+
+  it('the rating is locked until the video has finished, then it is asked for', async () => {
+    await openVideo();
+    const rate = screen.getByRole('button', { name: 'Rate this video' });
+    expect(rate.props.accessibilityState?.disabled).toBe(true);
+    expect(screen.queryByText('How was this video?')).toBeNull();
+
+    await videoEnds();
+
+    expect(await screen.findByText('How was this video?')).toBeTruthy();
+  });
+
   it('needs a rating before it can be submitted; one star cannot be a half star', async () => {
     await openVideo();
+    await videoEnds();
     const submit = () =>
       screen.getByRole('button', { name: 'Submit feedback' }).props.accessibilityState?.disabled;
     expect(await screen.findByText('Choose a rating from 1 to 5')).toBeTruthy();
@@ -451,8 +494,9 @@ describe('video feedback', () => {
     expect(await screen.findByText('Your rating: 2.5 of 5')).toBeTruthy();
   });
 
-  it('the comment is optional and is trimmed', async () => {
+  it('completes the video with the rating; the comment is optional and is trimmed', async () => {
     const api = await openVideo();
+    await videoEnds();
     await giveFeedback(5);
     await waitFor(() =>
       expect(api.callsTo('POST /modules/tala/courses/A1/progress')).toHaveLength(1),
@@ -461,20 +505,25 @@ describe('video feedback', () => {
       completed: ['v1'],
       feedback: { v1: { rating: 5, comment: '' } },
     });
+    expect(await screen.findByText(/Your rating: 5 of 5/)).toBeTruthy(); // the page now says it is completed
   });
 
-  it('"Maybe later" leaves the video incomplete and sends nothing', async () => {
+  it('"Maybe later" leaves the video incomplete, sends nothing, and keeps the rating button', async () => {
     const api = await openVideo();
-    await fireEvent.press(screen.getByRole('button', { name: 'Maybe later' }));
+    await videoEnds();
+    await fireEvent.press(await screen.findByRole('button', { name: 'Maybe later' }));
 
     expect(screen.queryByText('How was this video?')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Mark as completed' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Rate this video' }).props.accessibilityState?.disabled,
+    ).toBeFalsy(); // watched, so it can still be rated
     expect(api.callsTo('POST /modules/tala/courses/A1/progress')).toHaveLength(0);
     expect(await pendingCompletions()).toEqual([]);
   });
 
   it('feedback survives being offline: it waits in the queue with the completion', async () => {
     await openVideo();
+    await videoEnds();
     offline(true);
     await giveFeedback(4, false, 'Nice');
     const [item] = await pendingCompletions();

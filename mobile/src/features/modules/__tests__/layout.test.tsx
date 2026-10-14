@@ -111,12 +111,12 @@ describe('course detail', () => {
       ['Safety symbols', 'Flashcards'],
     ]) {
       expect(screen.getByText(name!)).toBeTruthy();
-      expect(screen.getAllByText(`Type : ${type}`).length).toBe(1);
+      expect(screen.getAllByText(type!).length).toBe(1);
     }
-    expect(screen.getAllByText('Status : Not started').length).toBe(4);
+    expect(screen.getAllByText('Not started').length).toBe(4);
     for (const open of [
-      /^Watch: Intro video/,
-      /^Open: Manual/,
+      /^Download to watch: Intro video/,
+      /^Download to open: Manual/,
       /^Take quiz: Final quiz/,
       /^Study flashcards: Safety symbols/,
     ]) {
@@ -124,9 +124,9 @@ describe('course detail', () => {
     }
   });
 
-  it('only video and PDF rows have a download icon; quizzes and flashcards open in the app', async () => {
+  it('only video and PDF rows have to be downloaded first; quizzes and flashcards open in the app', async () => {
     await detailScreen();
-    expect(screen.getAllByRole('button', { name: 'Download for offline' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /^Download to / })).toHaveLength(2);
   });
 
   it('opens a flashcard set by tapping its row', async () => {
@@ -143,8 +143,7 @@ describe('course detail', () => {
       }),
     );
     expect(screen.getByText(/Quizzes are not available in this version/)).toBeTruthy();
-    const row = screen.getByRole('button', { name: /Final quiz, not available/ });
-    expect(row.props.accessibilityState.disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: /Final quiz/ })).toBeNull(); // nothing to press
   });
 
   it('shows the placeholder initial for a course without a picture', async () => {

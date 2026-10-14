@@ -3,7 +3,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, Button, Card, ErrorState, FormError, Notice, SkeletonList } from '@/components';
+import {
+  AppText,
+  Button,
+  Card,
+  ErrorState,
+  FormError,
+  Notice,
+  ProgressBar,
+  SkeletonList,
+} from '@/components';
 import { colors, fonts, minTouchTarget, radius, shadows, spacing } from '@/constants/theme';
 import { describeError, toApiError } from '@/services/api/errors';
 import type { TalaQuiz, TalaQuizResult } from '@/services/api/types';
@@ -120,52 +129,98 @@ export function TalaQuizScreen({ route, navigation }: Props) {
     );
   }
 
+  const answeredCount = questions.filter((q) => answered(q, values[q.ref])).length;
+
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <AppText variant="title" accessibilityRole="header">
         {quiz.name}
       </AppText>
       {quiz.description ? <AppText muted>{quiz.description}</AppText> : null}
+      <Card variant="flat" style={styles.progress}>
+        <AppText variant="caption" muted>
+          {`Answered ${answeredCount} of ${questions.length}`}
+        </AppText>
+        <ProgressBar
+          percent={questions.length === 0 ? 0 : (answeredCount / questions.length) * 100}
+          label={`${answeredCount} of ${questions.length} questions answered`}
+        />
+      </Card>
       <FormError message={error} />
       {quiz.sections.map((s) => (
         <View key={s.id} style={{ gap: spacing.md }}>
           {s.title ? <AppText variant="heading">{s.title}</AppText> : null}
           {s.description ? <AppText muted>{s.description}</AppText> : null}
-          {s.questions.map((q, i) => (
-            <Card key={q.ref} style={{ gap: spacing.sm }}>
-              <AppText accessibilityRole="header">{`${i + 1}. ${q.text}`}</AppText>
-              {q.type === 'text' ? (
-                <TextInput
-                  accessibilityLabel={`Answer to question ${i + 1}`}
-                  style={styles.input}
-                  value={(values[q.ref] as string | undefined) ?? ''}
-                  onChangeText={(t) => setValues((cur) => ({ ...cur, [q.ref]: t }))}
-                  autoCapitalize="none"
-                  maxLength={1000}
-                />
-              ) : (
-                q.choices.map((c, ci) => {
-                  const picked =
-                    q.type === 'single'
-                      ? values[q.ref] === String(ci)
-                      : Array.isArray(values[q.ref]) &&
-                        (values[q.ref] as string[]).includes(String(ci));
-                  return (
-                    <Pressable
-                      key={ci}
-                      accessibilityRole={q.type === 'single' ? 'radio' : 'checkbox'}
-                      accessibilityState={{ checked: picked }}
-                      accessibilityLabel={c}
-                      onPress={() => choose(q, String(ci))}
-                      style={[styles.option, picked && styles.optionPicked]}
-                    >
-                      <AppText>{c}</AppText>
-                    </Pressable>
-                  );
-                })
-              )}
-            </Card>
-          ))}
+          {s.questions.map((q, i) => {
+            return (
+              <Card key={q.ref} variant="flat" style={styles.question}>
+                <AppText accessibilityRole="header" style={styles.questionText}>
+                  {`${i + 1}. ${q.text}`}
+                </AppText>
+                {q.type === 'multiple' ? (
+                  <AppText variant="caption" muted>
+                    Choose all that apply.
+                  </AppText>
+                ) : null}
+                {q.type === 'text' ? (
+                  <TextInput
+                    accessibilityLabel={`Answer to question ${i + 1}`}
+                    style={styles.input}
+                    value={(values[q.ref] as string | undefined) ?? ''}
+                    onChangeText={(t) => setValues((cur) => ({ ...cur, [q.ref]: t }))}
+                    autoCapitalize="none"
+                    maxLength={1000}
+                  />
+                ) : (
+                  q.choices.map((c, ci) => {
+                    const picked =
+                      q.type === 'single'
+                        ? values[q.ref] === String(ci)
+                        : Array.isArray(values[q.ref]) &&
+                          (values[q.ref] as string[]).includes(String(ci));
+                    const single = q.type === 'single';
+                    return (
+                      <Pressable
+                        key={ci}
+                        accessibilityRole={single ? 'radio' : 'checkbox'}
+                        accessibilityState={{ checked: picked }}
+                        accessibilityLabel={c}
+                        onPress={() => choose(q, String(ci))}
+                        style={({ pressed }) => [
+                          styles.option,
+                          picked && styles.optionPicked,
+                          pressed && { opacity: 0.8 },
+                        ]}
+                      >
+                        <View style={[styles.letter, picked && styles.letterPicked]}>
+                          <AppText
+                            variant="caption"
+                            style={{ color: picked ? colors.onPrimary : colors.primary }}
+                          >
+                            {String.fromCharCode(65 + (ci % 26))}
+                          </AppText>
+                        </View>
+                        <AppText style={styles.choice}>{c}</AppText>
+                        <View
+                          style={[
+                            styles.mark,
+                            single ? styles.markRound : styles.markSquare,
+                            picked && styles.markPicked,
+                          ]}
+                        >
+                          {picked ? (
+                            <AppText variant="caption" style={{ color: colors.onPrimary }}>
+                              ✓
+                            </AppText>
+                          ) : null}
+                        </View>
+                      </Pressable>
+                    );
+                  })
+                )}
+              </Card>
+            );
+          })}
         </View>
       ))}
       <Button
@@ -185,18 +240,44 @@ export function TalaQuizScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
+  progress: { gap: spacing.sm, padding: spacing.lg },
+  question: { gap: spacing.md, padding: spacing.lg },
+  questionText: { fontFamily: fonts.heading, fontSize: 18, lineHeight: 25, color: colors.text },
   option: {
-    minHeight: minTouchTarget,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    minHeight: minTouchTarget + spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderRadius: radius.md,
     borderWidth: 1.5,
-    borderColor: 'transparent',
+    borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
-    boxShadow: shadows.raisedSm,
   },
-  // a chosen option sinks into the surface and takes the brand outline
-  optionPicked: { borderColor: colors.primary, boxShadow: shadows.insetSm },
+  // a chosen answer takes the brand outline and a light-blue fill
+  optionPicked: { borderColor: colors.primary, backgroundColor: colors.infoBg },
+  letter: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.infoBg,
+  },
+  letterPicked: { backgroundColor: colors.primary },
+  choice: { flex: 1 },
+  mark: {
+    width: 26,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  markRound: { borderRadius: 13 },
+  markSquare: { borderRadius: 7 },
+  markPicked: { backgroundColor: colors.primary, borderColor: colors.primary },
   input: {
     minHeight: minTouchTarget,
     borderWidth: 1.5,

@@ -5,7 +5,7 @@ import type {
 } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
 import {
   AppText,
@@ -21,16 +21,14 @@ import { colors, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import type { TalaMaterialSummary } from '@/services/api/types';
 import { scopedKey } from '@/store/scopedKey';
-import { fetchTalaMaterial, useTalaCourse } from './api';
+import { useTalaCourse } from './api';
 import { deleteDownload, downloadMaterial, listDownloads } from './offline/downloads';
 import { pendingCompletions, queueCompletion, syncOutbox } from './offline/outbox';
 import { savedCopyText } from './TalaCourseList';
 import { TalaCourseProgress } from './TalaCourseProgress';
-import { TalaFeedbackModal } from './TalaFeedbackModal';
 import { isDone } from './materials';
 import { TalaMaterialRow } from './TalaMaterialRow';
 import { dueInfo } from './stats';
-import type { Feedback } from './offline/outbox';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'TalaCourse'>;
 
@@ -45,7 +43,6 @@ export function TalaCourseScreen({ route }: Props) {
   const outbox = useQuery({ queryKey: scopedKey('tala', 'outbox'), queryFn: pendingCompletions });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [feedbackFor, setFeedbackFor] = useState<TalaMaterialSummary | null>(null);
 
   const refreshLocal = () =>
     Promise.all([
@@ -65,13 +62,6 @@ export function TalaCourseScreen({ route }: Props) {
     }
   }
 
-  const openOnline = (m: TalaMaterialSummary) =>
-    guarded(m.id, async () => {
-      const detail = await fetchTalaMaterial(assignId, m.id);
-      if (!detail.file_url) throw new Error('This item has no file to open.');
-      await Linking.openURL(detail.file_url);
-    });
-
   const download = (m: TalaMaterialSummary) =>
     guarded(m.id, async () => {
       await downloadMaterial(assignId, { id: m.id, type: m.type as 'video' | 'pdf', name: m.name });
@@ -84,19 +74,13 @@ export function TalaCourseScreen({ route }: Props) {
       await refreshLocal();
     });
 
-  const completeWith = (m: TalaMaterialSummary, feedback?: Feedback) =>
+  const completeWith = (m: TalaMaterialSummary) =>
     guarded(m.id, async () => {
-      await queueCompletion(assignId, m.id, feedback);
+      await queueCompletion(assignId, m.id);
       await refreshLocal();
       await syncOutbox(); // delivers now when online, otherwise stays queued
       await refreshLocal();
     });
-
-  // A video needs feedback (rating + comment) to count as completed, as in the Tala app; a PDF does not.
-  const markCompleted = (m: TalaMaterialSummary) => {
-    if (m.type === 'video') setFeedbackFor(m);
-    else void completeWith(m);
-  };
 
   const syncNow = () =>
     guarded('sync', async () => {
@@ -131,11 +115,13 @@ export function TalaCourseScreen({ route }: Props) {
         uri: rec.uri,
         assignId,
         materialId: m.id,
-        canComplete: c.progress_submission && !isDone(m),
+        canComplete: c.progress_submission && !isDone(m) && !pending.has(m.id),
+        completed: isDone(m) || pending.has(m.id),
       });
     }
   }
 
+  /** Quizzes and flashcards open directly; a video or a PDF must be downloaded first (it is then played from the device). */
   function openMaterial(m: TalaMaterialSummary) {
     if (m.type === 'flashcards') {
       navigation.navigate('TalaFlashcards', { assignId, cardId: m.id, name: m.name });
@@ -144,7 +130,7 @@ export function TalaCourseScreen({ route }: Props) {
     } else if (downloaded[m.id]) {
       openOffline(m);
     } else {
-      void openOnline(m);
+      void download(m);
     }
   }
 
@@ -181,7 +167,7 @@ export function TalaCourseScreen({ route }: Props) {
         <Notice
           message={
             c.progress_submission
-              ? 'Videos and documents are marked completed by you and are not checked. Quiz scores and flashcard results are recorded in Tala.'
+              ? 'Download a video or a document to open it. A video is completed when you have watched it and sent your feedback; a document is marked completed by you. Quiz scores and flashcard results are recorded in Tala.'
               : 'You can view your courses here. Taking quizzes and recording progress is not available in this version of the app.'
           }
         />
@@ -214,14 +200,14 @@ export function TalaCourseScreen({ route }: Props) {
                 busy={busy === m.id}
                 canMarkCompleted={
                   c.progress_submission &&
-                  (m.type === 'video' || m.type === 'pdf') &&
+                  m.type === 'pdf' &&
                   m.viewable &&
                   !(isDone(m) || pending.has(m.id))
                 }
                 onOpen={() => openMaterial(m)}
                 onDownload={() => void download(m)}
                 onRemove={() => void remove(m)}
-                onMarkCompleted={() => markCompleted(m)}
+                onMarkCompleted={() => void completeWith(m)}
               />
             </View>
           ))}
@@ -233,17 +219,6 @@ export function TalaCourseScreen({ route }: Props) {
           ) : null}
         </Card>
       </View>
-
-      <TalaFeedbackModal
-        visible={feedbackFor !== null}
-        title={feedbackFor?.name ?? ''}
-        onCancel={() => setFeedbackFor(null)}
-        onSubmit={(feedback) => {
-          const m = feedbackFor;
-          setFeedbackFor(null);
-          if (m) void completeWith(m, feedback);
-        }}
-      />
     </ScrollView>
   );
 }

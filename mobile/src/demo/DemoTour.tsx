@@ -37,6 +37,15 @@ const STOPS: (() => void)[] = [
   () => navigationRef.navigate('TalaStats'),
   () => navigationRef.navigate('TalaCourse', { assignId: 'A1', name: 'Fire Safety at Sea' }),
   () =>
+    navigationRef.navigate('TalaVideo', {
+      name: 'Introduction to fire safety',
+      uri: 'file:///demo.mp4',
+      assignId: 'A1',
+      materialId: 'v1',
+      canComplete: true,
+      completed: false,
+    }),
+  () =>
     navigationRef.navigate('TalaQuiz', { assignId: 'A1', quizId: 'q1', name: 'Fire safety quiz' }),
   () =>
     navigationRef.navigate('TalaFlashcards', {

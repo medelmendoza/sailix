@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { AppText, Button, CourseImage, GlyphIcon, type GlyphName } from '@/components';
+import { AppText, Button, Card, CourseImage, GlyphIcon, type GlyphName } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import type { TalaMaterialSummary } from '@/services/api/types';
 import type { DownloadRecord } from './offline/store';
@@ -12,9 +12,25 @@ const ICON: Record<string, GlyphName> = {
   flashcards: 'cards',
 };
 
+/** A soft colour for each kind of material: the badge behind its icon. */
+const TINT: Record<string, { bg: string; ink: string }> = {
+  video: { bg: colors.infoBg, ink: colors.primary },
+  pdf: { bg: colors.warningBg, ink: colors.warning },
+  quiz: { bg: colors.successBg, ink: colors.success },
+  flashcards: { bg: colors.dangerBg, ink: colors.danger },
+};
+
+type Tone = 'done' | 'waiting' | 'progress' | 'idle';
+const CHIP: Record<Tone, { bg: string; ink: string }> = {
+  done: { bg: colors.successBg, ink: colors.success },
+  waiting: { bg: colors.warningBg, ink: colors.warning },
+  progress: { bg: colors.infoBg, ink: colors.primary },
+  idle: { bg: colors.surfaceSunken, ink: colors.textMuted },
+};
+
 /**
- * One material, laid out as in the original Tala app: a small picture on the left, the name with "Type" and "Status"
- * lines, and the download / delete icon on the right. Tapping the row opens it.
+ * One material as a card: a coloured badge for its kind (or its picture), the name, a status chip, what the learner
+ * achieved, and one clear action. A video or a PDF has to be downloaded before it can be opened, as in the Tala app.
  */
 export function TalaMaterialRow({
   m,
@@ -38,130 +54,135 @@ export function TalaMaterialRow({
   onMarkCompleted: () => void;
 }) {
   const stats = materialStatsLine(m);
-  const hasFile = m.viewable && (m.type === 'video' || m.type === 'pdf');
+  const isFile = m.type === 'video' || m.type === 'pdf';
+  const known = statusWord(m.status);
+  const tone: Tone = waiting ? 'waiting' : isDone(m) ? 'done' : known ? 'progress' : 'idle';
   const status = waiting
     ? 'Completed, waiting to send'
-    : (statusWord(m.status) ?? (isDone(m) ? 'Completed' : 'Not started'));
+    : (known ?? (isDone(m) ? 'Completed' : 'Not started'));
   const typeLabel = TYPE_LABEL[m.type] ?? m.type;
-  const action =
-    m.type === 'quiz'
-      ? isDone(m)
-        ? 'Retake quiz'
-        : 'Take quiz'
+  const tint = TINT[m.type] ?? TINT.pdf!;
+
+  // the one action, and what it does
+  const action: { text: string; run: () => void; primary: boolean } | null = !m.viewable
+    ? null
+    : m.type === 'quiz'
+      ? { text: isDone(m) ? 'Retake quiz' : 'Take quiz', run: onOpen, primary: true }
       : m.type === 'flashcards'
-        ? isDone(m)
-          ? 'Practice flashcards'
-          : 'Study flashcards'
+        ? {
+            text: isDone(m) ? 'Practice flashcards' : 'Study flashcards',
+            run: onOpen,
+            primary: true,
+          }
         : saved
-          ? m.type === 'video'
-            ? 'Watch offline copy'
-            : 'Open offline copy'
-          : m.type === 'video'
-            ? 'Watch'
-            : 'Open';
+          ? { text: m.type === 'video' ? 'Watch' : 'Open', run: onOpen, primary: true }
+          : {
+              text: m.type === 'video' ? 'Download to watch' : 'Download to open',
+              run: onDownload,
+              primary: false,
+            };
 
   return (
-    <View style={styles.row}>
-      <View style={styles.main}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={
-            m.viewable ? `${action}: ${m.name}` : `${m.name}, not available in this version`
-          }
-          accessibilityState={{ disabled: !m.viewable }}
-          disabled={!m.viewable}
-          onPress={onOpen}
-          style={({ pressed }) => [
-            styles.tap,
-            pressed && styles.pressed,
-            !m.viewable && styles.dim,
-          ]}
-        >
-          <CourseImage
-            uri={m.thumbnail_url}
-            title={m.name}
-            style={styles.thumb}
-            fallback={<GlyphIcon name={ICON[m.type] ?? 'pdf'} size={26} />}
-          />
-          <View style={styles.text}>
-            <AppText style={styles.name}>{m.name}</AppText>
-            <AppText variant="caption" muted>
-              Type : {typeLabel}
+    <Card variant="flat" style={styles.card}>
+      <View
+        style={styles.head}
+        accessible
+        accessibilityLabel={`${m.name}. ${typeLabel}. ${status}.`}
+      >
+        <CourseImage
+          uri={m.thumbnail_url}
+          title={m.name}
+          style={{ ...styles.thumb, backgroundColor: tint.bg }}
+          fallback={<GlyphIcon name={ICON[m.type] ?? 'pdf'} size={26} color={tint.ink} />}
+        />
+        <View style={styles.text}>
+          <AppText variant="caption" style={{ color: tint.ink }}>
+            {typeLabel}
+          </AppText>
+          <AppText style={styles.name}>{m.name}</AppText>
+          <View style={[styles.chip, { backgroundColor: CHIP[tone].bg }]}>
+            <AppText variant="caption" style={{ color: CHIP[tone].ink }}>
+              {status}
             </AppText>
-            <AppText variant="caption" muted>
-              Status : {status}
-            </AppText>
-            {stats ? (
-              <AppText variant="caption" style={{ color: colors.primary }}>
-                {stats}
-              </AppText>
-            ) : null}
-            {saved ? (
-              <AppText variant="caption" muted>
-                Saved on this device ({Math.max(1, Math.round(saved.bytes / 1024))} KB)
-              </AppText>
-            ) : null}
-            {!m.viewable ? (
-              <AppText variant="caption" muted>
-                {m.type === 'flashcards' ? 'Flashcards' : 'Quizzes'} are not available in this
-                version.
-              </AppText>
-            ) : null}
           </View>
-        </Pressable>
-
-        {canMarkCompleted ? (
-          <Button
-            title="Mark as completed"
-            variant="secondary"
-            onPress={onMarkCompleted}
-            style={styles.mark}
-          />
-        ) : null}
+        </View>
       </View>
 
-      {hasFile ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={saved ? 'Remove download' : 'Download for offline'}
-          accessibilityState={{ busy }}
-          disabled={busy}
-          onPress={saved ? onRemove : onDownload}
-          style={({ pressed }) => [styles.icon, pressed && styles.pressed, busy && styles.dim]}
-        >
-          <GlyphIcon name={saved ? 'trash' : 'download'} />
-        </Pressable>
-      ) : m.viewable ? (
-        <View
-          style={styles.icon}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          <AppText muted>›</AppText>
+      {stats ? (
+        <AppText variant="caption" style={{ color: colors.primary }}>
+          {stats}
+        </AppText>
+      ) : null}
+      {saved ? (
+        <AppText variant="caption" muted>
+          Saved on this device ({Math.max(1, Math.round(saved.bytes / 1024))} KB)
+        </AppText>
+      ) : null}
+      {!m.viewable ? (
+        <AppText variant="caption" muted>
+          {m.type === 'flashcards' ? 'Flashcards' : 'Quizzes'} are not available in this version.
+        </AppText>
+      ) : null}
+
+      {action || canMarkCompleted ? (
+        <View style={styles.actions}>
+          {action ? (
+            <Button
+              title={busy && isFile && !saved ? 'Downloading…' : action.text}
+              accessibilityLabel={`${action.text}: ${m.name}`}
+              variant={action.primary ? 'primary' : 'secondary'}
+              loading={false}
+              disabled={busy}
+              onPress={action.run}
+              style={styles.action}
+            />
+          ) : null}
+          {isFile && saved ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Remove download"
+              accessibilityState={{ busy }}
+              disabled={busy}
+              onPress={onRemove}
+              style={({ pressed }) => [
+                styles.remove,
+                pressed && styles.pressed,
+                busy && styles.dim,
+              ]}
+            >
+              <GlyphIcon name="trash" color={colors.textMuted} />
+            </Pressable>
+          ) : null}
         </View>
       ) : null}
-    </View>
+      {canMarkCompleted ? (
+        <Button
+          title="Mark as completed"
+          variant="secondary"
+          onPress={onMarkCompleted}
+          style={styles.mark}
+        />
+      ) : null}
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-  },
-  main: { flex: 1, gap: spacing.sm },
-  tap: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    alignItems: 'center',
-    minHeight: minTouchTarget + spacing.md,
-  },
-  thumb: { width: 56, height: 56, borderRadius: radius.md },
+  card: { gap: spacing.md, padding: spacing.lg, borderRadius: radius.lg },
+  head: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },
+  thumb: { width: 60, height: 60, borderRadius: radius.md },
   text: { flex: 1, gap: 2 },
   name: { fontFamily: 'Quicksand_700Bold', fontSize: 16, lineHeight: 22, color: colors.text },
-  icon: {
+  chip: {
+    alignSelf: 'flex-start',
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 2,
+    marginTop: 2,
+  },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  action: { flex: 1 },
+  remove: {
     width: minTouchTarget,
     height: minTouchTarget,
     alignItems: 'center',

@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
 import { Alert, Linking } from 'react-native';
 import { queryClient } from '@/services/queryClient';
 import { makeMe, TALA } from '@/test-utils/fixtures';
@@ -187,16 +187,16 @@ describe('course detail', () => {
     mockApi(routes());
     await openCourse();
     expect(await screen.findByText('Intro video')).toBeTruthy();
-    expect(screen.getAllByText('Type : Video').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Status : done').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Video').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('done').length).toBeGreaterThan(0);
     expect(screen.getByText('Final quiz')).toBeTruthy();
     expect(screen.getByText(/Quizzes are not available in this version/)).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: /^(Watch|Open): / })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /^Download to (watch|open): / })).toHaveLength(2);
     expect(screen.getByText(/2 item\(s\) in this course are not supported/)).toBeTruthy();
     expect(screen.getByText(/Taking quizzes and recording progress is not available/)).toBeTruthy();
   });
 
-  it('opens a video through the gateway-provided https address', async () => {
+  it('downloads a video from the gateway-provided https address and never opens it in the phone browser', async () => {
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
     mockApi({
       ...routes(),
@@ -214,8 +214,9 @@ describe('course detail', () => {
       },
     });
     await openCourse();
-    await fireEvent.press(await screen.findByRole('button', { name: /^Watch: / }));
-    await waitFor(() => expect(open).toHaveBeenCalledWith('https://files.example.com/v.mp4'));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Download to watch: / }));
+    expect(await screen.findByRole('button', { name: /^Watch: / })).toBeTruthy(); // saved, now it can be watched
+    expect(open).not.toHaveBeenCalled();
   });
 
   it('explains a material without a file or a failing request', async () => {
@@ -224,7 +225,7 @@ describe('course detail', () => {
       'GET /modules/tala/courses/A1/materials/v1': problem(503, 'module_unavailable'),
     });
     await openCourse();
-    await fireEvent.press(await screen.findByRole('button', { name: /^Watch: / }));
+    await fireEvent.press(await screen.findByRole('button', { name: /^Download to watch: / }));
     expect(await screen.findByText(/not reachable right now/)).toBeTruthy();
   });
 });
