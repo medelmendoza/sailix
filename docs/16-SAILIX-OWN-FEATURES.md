@@ -9,7 +9,7 @@ On 2026-10-13 the product owner said "go with Sailix functionality, leave Tala f
 | D2 Announcements | **Built** (this document) |
 | To-dos (D4) | **Built** (below). Written but NOT yet run through the checks |
 | Documents / Files (D3) | **Built on mock data** (below). Real file storage is still a decision |
-| Finance (D5) | **Built on mock data** (below). Where real payslip/loan data comes from (G-02) is still open: nothing in the product can enter it yet |
+| Finance (D5) | **Built on mock data** (below). Real data now comes in through the admin **Payroll import** (CSV, below); a direct feed from a payroll system is still open (G-02) |
 | Dashboard | **Built**: the four old shortcuts (Upload a document, Finance, To-do list, My documents), a "Documents need attention" card (expired and expiring-soon documents, which the old app counted but never showed), the to-do card, the latest announcements and the Tala learning summary |
 | Tabs: Dashboard, Files, Announcements, Finance, Services | **In place** (docs/07 §7.6). Services lists Tala and shows SRT, Call-it, Astra as coming soon |
 
@@ -100,3 +100,16 @@ The first version put Tala content on the Dashboard (a learning summary and a co
 - **Removed from the Dashboard:** the Tala "My learning" card (progress and due dates) and the separate to-do list and document alert cards. Tala's progress and due dates are on its own My stats screen (Services > Tala > My stats).
 - **Left out on purpose:** the iOS tracking prompt (the app has no ad or analytics SDK) and the disabled onboarding tips.
 - **State:** checks run (see PROJECT-STATUS); the demo build was compared on the simulator and matches the old layout.
+
+## Payroll import (how real payslips and cash advances get in)
+
+The Finance screens read payslips and cash advances, but until now only the demo seeder could create them. Where the data really comes from (G-02) was never answered, so this is the smallest thing that works with ANY payroll system: an organization administrator uploads a CSV exported from it. **The CSV format is my design: please confirm it matches what your payroll system can export, or tell me the real format.**
+
+- **Where:** web portal, **Payroll import** (ability `finance.manage`, administrators only). Two sections: **Payslips** and **Cash advances**, each with a template download.
+- **How it works:** choose a CSV (at most 2000 rows and 2 MB), **Check the file** (nothing is written; it says how many rows are new or would be updated, or lists every problem with its line number), then **Load**. All or nothing: one wrong row means nothing is loaded. Re-loading the same file updates the same records: a payslip is its member, kind, pay date and period label; a loan is its member and loan code. For payslips, the file's deductions replace the stored ones.
+- **Members** are named by `username` and must belong to the administrator's own organization (another organization's username is refused like an unknown one).
+- **Payslip columns:** required `username, kind (regular|special|final), pay_date, period_label, vessel_name, net_amount`; optional `full_vessel_name, position, address, payee_name, bank_code, account_number, depart_date, payroll_date, is_dollar, exchange_rate, pay_usd, pay_peso, adjustment, adjustment_detail, signon_adjustment, union_dues, bank_charges, withholding_tax, mpfee, sss_total, employee_sss, employee_philhealth, employee_pagibig, deductions_total, deductions ("Description=amount|Description=amount"), is_hold, allotment_type`. **Loan columns:** required `username, code, description, loan_amount, paid_amount, balance`; optional `deduct_amount, loan_date, start_of_deduction, is_dollar, is_stopped, is_scholar, is_cadet, is_inactive, remarks`. Dates are `YYYY-MM-DD`, amounts have at most two decimals, yes/no columns accept yes/no/true/false/1/0. An unknown or missing column stops the file (so a typo never silently drops data).
+- **Money is never worked out:** amounts are stored exactly as the file gives them (spec BR-48), including net amount, loan balance and paid amount, which must come from the payroll system. `is_hold` payslips are stored but stay hidden from the member.
+- **Security:** administrators only; the bank account number is encrypted at rest and masked in every response; the audit trail records the kind and the row counts, never contents; limited to 30 uploads an hour; the template and upload are `nosniff`.
+- **Not built:** a direct feed or API from a payroll system, scheduled imports, an import history screen, deleting payslips or loans through the portal, and an Excel (.xlsx) reader (export as CSV).
+- **State:** written and typechecked only; tests exist for backend and web, none run (no checks until asked).

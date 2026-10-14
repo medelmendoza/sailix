@@ -42,6 +42,7 @@ export const ADMIN_ABILITIES = [
   'todos.manage',
   'documents.manage',
   'callit.manage',
+  'finance.manage',
   'module.tala.use',
   'module.tala.manage',
 ];

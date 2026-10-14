@@ -66,6 +66,7 @@ describe('route guards', () => {
     const nav = await screen.findByRole('navigation', { name: 'Main' });
     for (const label of [
       'Dashboard',
+      'Payroll import',
       'Call-it reports',
       'Documents',
       'Document types',
@@ -101,6 +102,7 @@ describe('route guards', () => {
     expect(within(nav).queryByRole('link', { name: 'To-dos' })).not.toBeInTheDocument();
     expect(within(nav).queryByRole('link', { name: 'Documents' })).not.toBeInTheDocument();
     expect(within(nav).queryByRole('link', { name: 'Call-it reports' })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole('link', { name: 'Payroll import' })).not.toBeInTheDocument();
   });
 
   it.each([

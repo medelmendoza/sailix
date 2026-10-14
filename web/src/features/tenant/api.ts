@@ -12,6 +12,7 @@ import type {
   DeletionRequest,
   Envelope,
   Feedback,
+  FinanceImportResult,
   ListParams,
   Membership,
   Page,
@@ -234,6 +235,34 @@ export async function openCallItFile(id: string): Promise<void> {
   const url = URL.createObjectURL(res.data);
   window.open(url, '_blank', 'noopener');
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+export type ImportKind = 'payslips' | 'loans';
+
+/** Checks (`commit` false) or loads (`commit` true) a CSV. The same file is sent for both: nothing is kept on the server between them. */
+export function useFinanceImport(kind: ImportKind) {
+  return useMutation({
+    mutationFn: async ({ file, commit }: { file: File; commit: boolean }) => {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('commit', commit ? '1' : '0');
+      return (
+        await api.post<Envelope<FinanceImportResult>>(`/tenant/finance/imports/${kind}`, form)
+      ).data.data;
+    },
+  });
+}
+
+export async function downloadImportTemplate(kind: ImportKind): Promise<void> {
+  const res = await api.get<Blob>(`/tenant/finance/imports/${kind}/template`, {
+    responseType: 'blob',
+  });
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${kind}-template.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 export function useDocumentTypes() {

@@ -488,6 +488,96 @@ describe('settings and account', () => {
     expect(screen.getByText(/Nothing is deleted automatically/)).toBeInTheDocument();
   });
 
+  describe('payroll import', () => {
+    const csv = () =>
+      new File(['username,kind\ncrew1,regular\n'], 'payroll.csv', { type: 'text/csv' });
+    const ok = { rows: 2, created: 1, updated: 1, errors: [], imported: false };
+
+    it('checks the file, shows what would happen, and loads it only after the check', async () => {
+      asTenantAdmin();
+      const commits: string[] = [];
+      server.use(
+        http.post(`${V1}/tenant/finance/imports/payslips`, async ({ request }) => {
+          const form = await request.clone().formData();
+          commits.push(String(form.get('commit')));
+          return HttpResponse.json({
+            data: commits.at(-1) === '1' ? { ...ok, imported: true } : ok,
+          });
+        }),
+      );
+      const { user } = renderApp('/app/payroll-import');
+      const section = within(
+        (await screen.findByRole('heading', { name: 'Payslips' })).closest('section')!,
+      );
+      await user.upload(section.getByLabelText('Payslips CSV file'), csv());
+      await user.click(section.getByRole('button', { name: 'Check the file' }));
+
+      expect(
+        await section.findByText(/The file is correct: 2 row\(s\), 1 new and 1 to update/),
+      ).toBeInTheDocument();
+      expect(commits).toEqual(['0']); // nothing loaded by the check
+      await user.click(section.getByRole('button', { name: 'Load 2 row(s)' }));
+      await waitFor(() => expect(commits).toEqual(['0', '1']));
+    });
+
+    it('lists every problem with its line and offers no load button', async () => {
+      asTenantAdmin();
+      server.use(
+        http.post(`${V1}/tenant/finance/imports/loans`, () =>
+          HttpResponse.json({
+            data: {
+              rows: 3,
+              created: 0,
+              updated: 0,
+              imported: false,
+              errors: [
+                { line: 3, message: 'The balance format is invalid.' },
+                { line: 5, message: 'No member of your organization has the username "ghost".' },
+              ],
+            },
+          }),
+        ),
+      );
+      const { user } = renderApp('/app/payroll-import');
+      const section = within(
+        (await screen.findByRole('heading', { name: 'Cash advances' })).closest('section')!,
+      );
+      await user.upload(section.getByLabelText('Cash advances CSV file'), csv());
+      await user.click(section.getByRole('button', { name: 'Check the file' }));
+
+      expect(
+        await section.findByText(/2 problem\(s\) found. Nothing was loaded/),
+      ).toBeInTheDocument();
+      expect(section.getByText('The balance format is invalid.')).toBeInTheDocument();
+      expect(section.getByText(/ghost/)).toBeInTheDocument();
+      expect(section.queryByRole('button', { name: /^Load/ })).toBeNull();
+    });
+
+    it('asks for a file before checking', async () => {
+      asTenantAdmin();
+      const calls = capture();
+      server.use(
+        http.post(
+          `${V1}/tenant/finance/imports/payslips`,
+          async ({ request }) => (await calls.record(request), HttpResponse.json({ data: ok })),
+        ),
+      );
+      const { user } = renderApp('/app/payroll-import');
+      const section = within(
+        (await screen.findByRole('heading', { name: 'Payslips' })).closest('section')!,
+      );
+      await user.click(section.getByRole('button', { name: 'Check the file' }));
+      expect(await section.findByText('Choose a CSV file first.')).toBeInTheDocument();
+      expect(calls.calls).toHaveLength(0);
+    });
+
+    it('is blocked for someone without the ability', async () => {
+      asTenantAdmin(makeMe({ abilities: ['tenant.view', 'users.view'] }));
+      renderApp('/app/payroll-import');
+      expect(await screen.findByText('You do not have access to this page')).toBeInTheDocument();
+    });
+  });
+
   describe('call-it reports', () => {
     const report = (over: Record<string, unknown> = {}) => ({
       id: 'r1',

@@ -1380,6 +1380,60 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+  /tenant/finance/imports/{kind}/template:
+    get:
+      tags: [tenant]
+      operationId: getFinanceImportTemplate
+      summary: A CSV template (the header and one example row) for the payslip or loan import
+      description: Requires `finance.manage`.
+      parameters:
+        - { name: kind, in: path, required: true, schema: { type: string, enum: [payslips, loans] } }
+      responses:
+        '200':
+          description: The CSV.
+          content:
+            text/csv: { schema: { type: string } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /tenant/finance/imports/{kind}:
+    post:
+      tags: [tenant]
+      operationId: importFinanceCsv
+      summary: Check, or load, a CSV of payslips or cash advances for the caller's own members
+      description: >
+        Requires `finance.manage`. Multipart. The members are named by `username` and must belong to the caller's organization.
+        The file is checked as a WHOLE: with `commit` false (the default) nothing is written and the answer says what would
+        happen; with `commit` true it is loaded only if every row is valid (all or nothing). Re-loading the same file updates
+        the same records (a payslip is its member, kind, pay date and period label; a loan is its member and code). Amounts are
+        stored exactly as given. At most 2000 rows and 2 MB. Limited to 30 per hour. The audit trail records counts only.
+      parameters:
+        - { name: kind, in: path, required: true, schema: { type: string, enum: [payslips, loans] } }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary, description: 'A .csv or .txt file.' }
+                commit: { type: boolean, default: false }
+      responses:
+        '200':
+          description: The result of the check or the load.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/FinanceImportResult' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
   /tenant:
     get:
       tags: [tenant]
@@ -2537,6 +2591,23 @@ components:
             data:
               type: array
               items: { $ref: '#/components/schemas/DeletionRequest' }
+    FinanceImportResult:
+      type: object
+      required: [rows, created, updated, errors, imported]
+      properties:
+        rows: { type: integer, minimum: 0 }
+        created: { type: integer, minimum: 0, description: 'New records (or that would be new, in a check).' }
+        updated: { type: integer, minimum: 0 }
+        errors:
+          type: array
+          description: At most 50. Line 1 is the header. Any error means nothing was loaded.
+          items:
+            type: object
+            required: [line, message]
+            properties:
+              line: { type: integer }
+              message: { type: string }
+        imported: { type: boolean, description: 'True only when the file was loaded.' }
     CallItStats:
       type: object
       required: [reports_made, badges, next_badge]

@@ -59,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('feedback', fn (Request $r) => Limit::perDay(10)->by('feedback:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
         RateLimiter::for('document-upload', fn (Request $r) => Limit::perHour(30)->by('docup:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
         RateLimiter::for('callit-write', fn (Request $r) => Limit::perHour(60)->by('callit:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
+        RateLimiter::for('finance-import', fn (Request $r) => Limit::perHour(30)->by('finimport:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
         // Unlocking the payslips re-checks the password: keep guessing expensive.
         RateLimiter::for('finance-unlock', fn (Request $r) => Limit::perMinute(5)->by('finunlock:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
         // A course code is a shared secret: keep guessing expensive.

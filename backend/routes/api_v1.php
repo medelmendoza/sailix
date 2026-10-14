@@ -75,6 +75,8 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::get('audit-logs', [Tenant\AuditLogController::class, 'index']);
         Route::get('deletion-requests', [Tenant\DeletionRequestController::class, 'index']);
         Route::get('feedback', [Tenant\FeedbackController::class, 'index']);
+        Route::get('finance/imports/{kind}/template', [Tenant\FinanceImportController::class, 'template']);
+        Route::post('finance/imports/{kind}', [Tenant\FinanceImportController::class, 'import'])->middleware('throttle:finance-import');
         Route::get('callit/reports', [Tenant\CallItController::class, 'index']);
         Route::get('callit/reports/{report}/file', [Tenant\CallItController::class, 'file']);
         Route::post('callit/reports/{report}/review', [Tenant\CallItController::class, 'review']);
