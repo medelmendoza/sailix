@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, Card, SkeletonList, TabIcon } from '@/components';
+import { AppText, Card, LinkButton, SkeletonList, TabIcon } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { AnnouncementCard } from './AnnouncementCard';
 import { useAnnouncements } from './api';
@@ -47,14 +47,17 @@ export function HomeAnnouncements({ onOpenAll }: { onOpenAll: () => void }) {
       ) : latest.length === 0 ? (
         <AppText muted>No announcements yet.</AppText>
       ) : (
-        latest.map((a) => (
-          <AnnouncementCard
-            key={a.id}
-            announcement={a}
-            flat
-            onPress={() => navigation.navigate('Announcement', { id: a.id })}
-          />
-        ))
+        <>
+          {latest.map((a) => (
+            <AnnouncementCard
+              key={a.id}
+              announcement={a}
+              flat
+              onPress={() => navigation.navigate('Announcement', { id: a.id })}
+            />
+          ))}
+          <LinkButton title="See all announcements" onPress={onOpenAll} />
+        </>
       )}
     </Card>
   );

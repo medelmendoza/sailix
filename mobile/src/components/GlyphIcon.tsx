@@ -20,7 +20,8 @@ export type GlyphName =
   | 'chart'
   | 'medal'
   | 'eye'
-  | 'eyeoff';
+  | 'eyeoff'
+  | 'camera';
 
 /**
  * A tiny icon set drawn from plain shapes: no icon font and no emoji (both rendered unreliably in this app's runtimes),
@@ -316,6 +317,25 @@ export function GlyphIcon({
               />
             </>
           ) : null}
+        </>
+      )}
+      {name === 'camera' && (
+        <>
+          <View style={[fill, abs(8 * u, 3.5 * u, 8 * u, 4 * u), { borderRadius: 1.5 * u }]} />
+          <View
+            style={[
+              line,
+              abs(2 * u, 6 * u, 20 * u, 15 * u),
+              { borderWidth: 2.2 * u, borderRadius: 4 * u },
+            ]}
+          />
+          <View
+            style={[
+              line,
+              abs(8 * u, 10.5 * u, 8 * u, 8 * u),
+              { borderWidth: 2.2 * u, borderRadius: 4 * u },
+            ]}
+          />
         </>
       )}
       {name === 'check' && (

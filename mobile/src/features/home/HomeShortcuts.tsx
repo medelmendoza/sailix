@@ -1,19 +1,18 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText, Card, GlyphIcon, TabIcon } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
+import { ServiceLogo, hasLogo } from '@/features/services/ServiceLogo';
+import type { MyModule } from '@/services/api/types';
 
-/** A round blue button with an icon, used by the shortcuts and the two tiles. */
-export function Circle({ children }: { children: React.ReactNode }) {
-  return <View style={styles.circle}>{children}</View>;
-}
-
-/** The first card of the old Sailix dashboard: three round shortcuts. */
-export function ShortcutsCard({
+/** The four round shortcuts under the Today card. */
+export function QuickActions({
   onUpload,
+  onScan,
   onFinance,
   onServices,
 }: {
   onUpload: () => void;
+  onScan: () => void;
   onFinance: () => void;
   onServices: () => void;
 }) {
@@ -28,6 +27,11 @@ export function ShortcutsCard({
       onPress: onUpload,
     },
     {
+      label: 'Scan a document',
+      icon: <GlyphIcon name="camera" color={colors.primary} size={26} />,
+      onPress: onScan,
+    },
+    {
       label: 'View finances',
       icon: <TabIcon name="money" color={colors.primary} />,
       onPress: onFinance,
@@ -39,19 +43,70 @@ export function ShortcutsCard({
     },
   ];
   return (
-    <Card variant="flat" style={styles.card}>
-      <View style={styles.row}>
-        {items.map((i) => (
+    <Card variant="flat" style={styles.quick}>
+      {items.map((i) => (
+        <Pressable
+          key={i.label}
+          accessibilityRole="button"
+          accessibilityLabel={i.label}
+          onPress={i.onPress}
+          style={({ pressed }) => [styles.quickItem, pressed && { opacity: 0.75 }]}
+        >
+          <View style={styles.circle}>{i.icon}</View>
+          <AppText variant="caption" style={styles.center}>
+            {i.label}
+          </AppText>
+        </Pressable>
+      ))}
+    </Card>
+  );
+}
+
+type Counter = {
+  title: string;
+  /** What a screen reader says after the title (the same words the tiles used). */
+  note: string | null;
+  big: string;
+  line: string;
+  ink: string;
+  onPress: () => void;
+};
+
+/**
+ * "Today": three live counters on one card that overlaps the header: what is open on the to-do list, which documents
+ * need attention, and how many announcements are new.
+ */
+export function TodayCard({ counters }: { counters: Counter[] }) {
+  return (
+    <Card variant="flat" style={styles.today}>
+      <AppText variant="caption" muted accessibilityRole="header">
+        Today
+      </AppText>
+      <View style={styles.counters}>
+        {counters.map((c, i) => (
           <Pressable
-            key={i.label}
+            key={c.title}
             accessibilityRole="button"
-            accessibilityLabel={i.label}
-            onPress={i.onPress}
-            style={({ pressed }) => [styles.item, pressed && { opacity: 0.75 }]}
+            accessibilityLabel={c.note ? `${c.title}, ${c.note}` : c.title}
+            onPress={c.onPress}
+            style={({ pressed }) => [
+              styles.counter,
+              i > 0 && styles.counterDivider,
+              pressed && { opacity: 0.75 },
+            ]}
           >
-            <Circle>{i.icon}</Circle>
-            <AppText variant="caption" style={styles.label}>
-              {i.label}
+            <AppText style={[styles.big, { color: c.ink }]} accessibilityElementsHidden>
+              {c.big}
+            </AppText>
+            <AppText variant="button" style={styles.center} accessibilityElementsHidden>
+              {c.title}
+            </AppText>
+            <AppText
+              variant="caption"
+              style={[styles.center, { color: c.ink }]}
+              accessibilityElementsHidden
+            >
+              {c.line}
             </AppText>
           </Pressable>
         ))}
@@ -60,64 +115,73 @@ export function ShortcutsCard({
   );
 }
 
-/** One of the two tiles under it (To-do list, Documents): a round icon, the title, and a short live note. */
-export function Tile({
-  title,
-  note,
-  noteColor,
-  icon,
-  onPress,
+/** The services the organization has turned on, as small logo cards that open them. */
+export function ServicesRow({
+  modules,
+  onOpen,
 }: {
-  title: string;
-  note?: string | null;
-  noteColor?: string;
-  icon: React.ReactNode;
-  onPress: () => void;
+  modules: readonly MyModule[];
+  onOpen: (m: MyModule) => void;
 }) {
+  const shown = modules.filter((m) => m.status !== 'disabled');
+  if (shown.length === 0) return null;
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={note ? `${title}, ${note}` : title}
-      onPress={onPress}
-      style={({ pressed }) => [styles.tile, pressed && { opacity: 0.75 }]}
-    >
-      <Card variant="flat" style={styles.tileCard}>
-        <Circle>{icon}</Circle>
-        <AppText variant="heading" style={styles.label}>
-          {title}
-        </AppText>
-        {note ? (
-          <AppText
-            variant="caption"
-            style={[styles.label, { color: noteColor ?? colors.textMuted }]}
+    <View style={styles.services}>
+      <AppText variant="heading" accessibilityRole="header">
+        Your services
+      </AppText>
+      <View style={styles.serviceRow}>
+        {shown.map((m) => (
+          <Pressable
+            key={m.code}
+            accessibilityRole="button"
+            accessibilityLabel={`${m.label} service`}
+            onPress={() => onOpen(m)}
+            style={({ pressed }) => [styles.service, pressed && { opacity: 0.75 }]}
           >
-            {note}
-          </AppText>
-        ) : null}
-      </Card>
-    </Pressable>
+            <Card variant="flat" style={styles.serviceCard}>
+              {hasLogo(m.code) ? <ServiceLogo code={m.code} size={48} /> : null}
+              <AppText variant="caption" style={styles.center} numberOfLines={1}>
+                {m.label}
+              </AppText>
+            </Card>
+          </Pressable>
+        ))}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { padding: spacing.xl, borderRadius: 28 },
-  row: { flexDirection: 'row', justifyContent: 'space-around', gap: spacing.sm },
-  item: { flex: 1, alignItems: 'center', gap: spacing.sm, minHeight: minTouchTarget },
+  center: { textAlign: 'center' },
+  quick: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+  },
+  quickItem: { flex: 1, alignItems: 'center', gap: spacing.sm, minHeight: minTouchTarget },
   circle: {
     width: 56,
     height: 56,
     borderRadius: radius.pill,
-    backgroundColor: colors.infoBg,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.infoBg,
   },
-  label: { textAlign: 'center' },
-  tile: { flex: 1, minHeight: minTouchTarget },
-  tileCard: {
+  today: { gap: spacing.md, padding: spacing.lg, borderRadius: radius.lg },
+  counters: { flexDirection: 'row' },
+  counter: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: spacing.xs },
+  counterDivider: { borderLeftWidth: 1, borderLeftColor: colors.borderSoft },
+  big: { fontFamily: 'Quicksand_700Bold', fontSize: 34, lineHeight: 40 },
+  services: { gap: spacing.md },
+  serviceRow: { flexDirection: 'row', gap: spacing.md },
+  service: { flex: 1 },
+  serviceCard: {
     alignItems: 'center',
     gap: spacing.sm,
-    padding: spacing.lg,
-    flex: 1,
-    borderRadius: 28,
+    padding: spacing.md,
+    borderRadius: radius.lg,
   },
 });

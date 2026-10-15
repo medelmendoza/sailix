@@ -21,27 +21,34 @@ async function openHome(
 describe('the dashboard, as in the original Sailix', () => {
   it('welcomes you by first name above the organization, in its own header', async () => {
     await openHome();
-    expect(screen.getByText('Welcome,')).toBeTruthy();
+    expect(screen.getByText(/^Good (morning|afternoon|evening),$/)).toBeTruthy(); // by the phone's clock
     expect(screen.getByRole('header', { name: 'Maria' })).toBeTruthy();
     expect(screen.getByText('Southfield Agencies')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Account' })).toBeTruthy(); // the Account button lives in the header
   });
 
-  it('has three round shortcuts and the To-do list and Documents tiles', async () => {
+  it('has four round shortcuts, and the To-do list and Documents counters on the Today card', async () => {
     await openHome();
-    for (const name of ['Upload documents', 'View finances', 'Services'])
+    for (const name of ['Upload documents', 'Scan a document', 'View finances', 'Services'])
       expect(screen.getByRole('button', { name })).toBeTruthy();
     expect(screen.getByRole('button', { name: /^To-do list/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: /^Documents/ })).toBeTruthy();
   });
 
-  it('has nothing from a service on it, even when Tala is linked', async () => {
+  it('shows a service only as a card that opens it, never its content, even when Tala is linked', async () => {
     const api = await openHome({ 'GET /modules/tala/courses': { data: { data: [] } } }, [
       TALA('linked'),
     ]);
     expect(screen.queryByText('My learning')).toBeNull();
     expect(screen.queryByText('My courses')).toBeNull();
     expect(api.callsTo('GET /modules/tala/courses')).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Tala service' })).toBeTruthy(); // the way in, nothing more
+  });
+
+  it('shows your initials in the Account badge', async () => {
+    await openHome();
+    expect(screen.getByRole('button', { name: 'Account' })).toBeTruthy();
+    expect(screen.getByText('MS', { includeHiddenElements: true })).toBeTruthy(); // Maria Santos; the label "Account" speaks for it
   });
 });
 
@@ -82,6 +89,38 @@ describe('where each shortcut goes', () => {
     await openHome();
     await fireEvent.press(screen.getByRole('button', { name: 'Account' }));
     expect(await screen.findByText('Maria Santos')).toBeTruthy();
+  });
+});
+
+describe('the Today card', () => {
+  it('counts the new announcements and opens them', async () => {
+    await openHome({
+      'GET /announcements': {
+        data: {
+          data: [],
+          links: {},
+          meta: { current_page: 1, per_page: 20, total: 0, last_page: 1 },
+          unread_count: 2,
+        },
+      },
+    });
+    expect(await screen.findByRole('button', { name: 'Notices, 2 new' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Notices, 2 new' }));
+    expect(await screen.findByText('Announcements')).toBeTruthy();
+  });
+});
+
+describe('the services and the scanner shortcuts', () => {
+  it('Scan a document opens the scanner', async () => {
+    await openHome();
+    await fireEvent.press(screen.getByRole('button', { name: 'Scan a document' }));
+    expect(await screen.findByRole('button', { name: 'Make a PDF of the pages' })).toBeTruthy();
+  });
+
+  it('a service card opens that service', async () => {
+    await openHome({ 'GET /modules/tala/courses': { data: { data: [] } } }, [TALA('linked')]);
+    await fireEvent.press(screen.getByRole('button', { name: 'Tala service' }));
+    expect(await screen.findByText('My stats')).toBeTruthy();
   });
 });
 
