@@ -37,7 +37,7 @@ export function initials(first?: string | null, last?: string | null, fallback =
 
 /**
  * The Sailix dashboard: the blue-to-teal header (greeting, your name, the organization and your initials), a Today card
- * that overlaps it with live counters, four round shortcuts, and the latest announcements.
+ * that overlaps it with live counters, three round shortcuts, and the latest announcements.
  * Nothing here belongs to a service such as Tala: services live under the Services tab.
  */
 export function HomeScreen({ navigation }: Props) {
@@ -202,7 +202,6 @@ export function HomeScreen({ navigation }: Props) {
         />
         <QuickActions
           onUpload={() => navigation.navigate('DocumentForm', {})}
-          onScan={() => navigation.navigate('Scanner')}
           onFinance={() => navigation.navigate('Finance')}
           onServices={() => navigation.navigate('Services')}
         />

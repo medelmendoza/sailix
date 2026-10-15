@@ -27,9 +27,9 @@ describe('the dashboard, as in the original Sailix', () => {
     expect(screen.getByRole('button', { name: 'Account' })).toBeTruthy(); // the Account button lives in the header
   });
 
-  it('has four round shortcuts, and the To-do list and Documents counters on the Today card', async () => {
+  it('has three round shortcuts, and the To-do list and Documents counters', async () => {
     await openHome();
-    for (const name of ['Upload documents', 'Scan a document', 'View finances', 'Services'])
+    for (const name of ['Upload documents', 'View finances', 'Services'])
       expect(screen.getByRole('button', { name })).toBeTruthy();
     expect(screen.getByRole('button', { name: /^To-do list/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: /^Documents/ })).toBeTruthy();
@@ -107,14 +107,6 @@ describe('the Today card', () => {
     expect(await screen.findByRole('button', { name: 'Notices, 2 new' })).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Notices, 2 new' }));
     expect(await screen.findByText('Announcements')).toBeTruthy();
-  });
-});
-
-describe('the scanner shortcut', () => {
-  it('Scan a document opens the scanner', async () => {
-    await openHome();
-    await fireEvent.press(screen.getByRole('button', { name: 'Scan a document' }));
-    expect(await screen.findByRole('button', { name: 'Make a PDF of the pages' })).toBeTruthy();
   });
 });
 

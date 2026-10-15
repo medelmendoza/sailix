@@ -2,15 +2,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText, Card, GlyphIcon, TabIcon } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 
-/** The four round shortcuts under the Today card. */
+/** The three round shortcuts under the counters. */
 export function QuickActions({
   onUpload,
-  onScan,
   onFinance,
   onServices,
 }: {
   onUpload: () => void;
-  onScan: () => void;
   onFinance: () => void;
   onServices: () => void;
 }) {
@@ -23,11 +21,6 @@ export function QuickActions({
         </View>
       ),
       onPress: onUpload,
-    },
-    {
-      label: 'Scan a document',
-      icon: <GlyphIcon name="camera" color={colors.primary} size={26} />,
-      onPress: onScan,
     },
     {
       label: 'View finances',
