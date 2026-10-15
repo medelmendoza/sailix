@@ -6,7 +6,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { onTabScroll } from '@/app/navigation/tabBarCollapse';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
-import { AppText, FormError } from '@/components';
+import { AppText, FormError, GlyphIcon, TabIcon } from '@/components';
 import { colors, gradients, minTouchTarget, spacing } from '@/constants/theme';
 import { HomeAnnouncements } from '@/features/announcements/HomeAnnouncements';
 import { useUnreadCount } from '@/features/announcements/api';
@@ -147,6 +147,14 @@ export function HomeScreen({ navigation }: Props) {
                   : open === 0
                     ? colors.success
                     : colors.primary,
+              bg: !todos.data
+                ? colors.surfaceSunken
+                : overdue > 0
+                  ? colors.dangerBg
+                  : open === 0
+                    ? colors.successBg
+                    : colors.infoBg,
+              icon: <GlyphIcon name="check" color={colors.primary} size={22} />,
               onPress: () => navigation.navigate('Todos'),
             },
             {
@@ -170,6 +178,14 @@ export function HomeScreen({ navigation }: Props) {
                   : expiring > 0
                     ? colors.warning
                     : colors.success,
+              bg: !counts
+                ? colors.surfaceSunken
+                : expired > 0
+                  ? colors.dangerBg
+                  : expiring > 0
+                    ? colors.warningBg
+                    : colors.successBg,
+              icon: <GlyphIcon name="pdf" color={colors.primary} size={22} />,
               onPress: () => navigation.navigate('Files'),
             },
             {
@@ -178,6 +194,8 @@ export function HomeScreen({ navigation }: Props) {
               big: unread.data === undefined ? '–' : String(newCount),
               line: unread.data === undefined ? '' : newCount > 0 ? 'new' : 'All read',
               ink: newCount > 0 ? colors.primary : colors.textMuted,
+              bg: newCount > 0 ? colors.infoBg : colors.surfaceSunken,
+              icon: <TabIcon name="announce" color={colors.primary} />,
               onPress: () => navigation.navigate('Announcements'),
             },
           ]}

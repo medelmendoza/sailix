@@ -66,50 +66,55 @@ type Counter = {
   note: string | null;
   big: string;
   line: string;
+  /** The text colour, and the soft background that goes with it. */
   ink: string;
+  bg: string;
+  icon: React.ReactNode;
   onPress: () => void;
 };
 
 /**
- * "Today": three live counters on one card that overlaps the header: what is open on the to-do list, which documents
- * need attention, and how many announcements are new.
+ * Three separate tiles that overlap the header: what is open on the to-do list, which documents need attention, and how
+ * many announcements are new. Each takes a soft colour from how it is doing (green, amber, red, blue, or grey).
  */
 export function TodayCard({ counters }: { counters: Counter[] }) {
   return (
-    <Card variant="flat" style={styles.today}>
-      <AppText variant="caption" muted accessibilityRole="header">
-        Today
-      </AppText>
-      <View style={styles.counters}>
-        {counters.map((c, i) => (
-          <Pressable
-            key={c.title}
-            accessibilityRole="button"
-            accessibilityLabel={c.note ? `${c.title}, ${c.note}` : c.title}
-            onPress={c.onPress}
-            style={({ pressed }) => [
-              styles.counter,
-              i > 0 && styles.counterDivider,
-              pressed && { opacity: 0.75 },
-            ]}
+    <View style={styles.counters}>
+      {counters.map((c) => (
+        <Pressable
+          key={c.title}
+          accessibilityRole="button"
+          accessibilityLabel={c.note ? `${c.title}, ${c.note}` : c.title}
+          onPress={c.onPress}
+          style={({ pressed }) => [
+            styles.counter,
+            { backgroundColor: c.bg },
+            pressed && { opacity: 0.8 },
+          ]}
+        >
+          <View style={styles.counterIcon} accessibilityElementsHidden>
+            {c.icon}
+          </View>
+          <AppText style={[styles.big, { color: c.ink }]} accessibilityElementsHidden>
+            {c.big}
+          </AppText>
+          <AppText
+            variant="button"
+            style={[styles.center, { color: c.ink }]}
+            accessibilityElementsHidden
           >
-            <AppText style={[styles.big, { color: c.ink }]} accessibilityElementsHidden>
-              {c.big}
-            </AppText>
-            <AppText variant="button" style={styles.center} accessibilityElementsHidden>
-              {c.title}
-            </AppText>
-            <AppText
-              variant="caption"
-              style={[styles.center, { color: c.ink }]}
-              accessibilityElementsHidden
-            >
-              {c.line}
-            </AppText>
-          </Pressable>
-        ))}
-      </View>
-    </Card>
+            {c.title}
+          </AppText>
+          <AppText
+            variant="caption"
+            style={[styles.center, { color: c.ink }]}
+            accessibilityElementsHidden
+          >
+            {c.line}
+          </AppText>
+        </Pressable>
+      ))}
+    </View>
   );
 }
 
@@ -131,9 +136,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.infoBg,
   },
-  today: { gap: spacing.md, padding: spacing.lg, borderRadius: radius.lg },
-  counters: { flexDirection: 'row' },
-  counter: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: spacing.xs },
-  counterDivider: { borderLeftWidth: 1, borderLeftColor: colors.borderSoft },
+  counters: { flexDirection: 'row', gap: spacing.sm },
+  counter: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+    padding: spacing.md,
+    paddingTop: spacing.lg,
+    borderRadius: radius.lg,
+    boxShadow: '0 4px 14px rgba(18, 36, 61, 0.14)',
+  },
+  counterIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+    backgroundColor: 'rgba(255,255,255,0.75)',
+  },
   big: { fontFamily: 'Quicksand_700Bold', fontSize: 34, lineHeight: 40 },
 });
