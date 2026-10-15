@@ -295,13 +295,13 @@ export function GlyphIcon({
           <View
             style={[
               line,
-              abs(3.5 * u, 3.5 * u, 17 * u, 17 * u),
+              abs(3.2 * u, 3.2 * u, 17.6 * u, 17.6 * u),
               {
-                borderWidth: 1.6 * u,
-                borderTopLeftRadius: 17 * u,
-                borderBottomRightRadius: 17 * u,
-                borderTopRightRadius: 0,
-                borderBottomLeftRadius: 0,
+                borderWidth: 1.8 * u,
+                borderTopLeftRadius: 17.6 * u,
+                borderBottomRightRadius: 17.6 * u,
+                borderTopRightRadius: 4.5 * u,
+                borderBottomLeftRadius: 4.5 * u,
                 transform: [{ rotate: '45deg' }],
               },
             ]}
@@ -310,7 +310,7 @@ export function GlyphIcon({
             style={[
               line,
               abs(8 * u, 8 * u, 8 * u, 8 * u),
-              { borderWidth: 1.6 * u, borderRadius: 4 * u },
+              { borderWidth: 1.8 * u, borderRadius: 4 * u },
             ]}
           />
           {name === 'eyeoff' ? (
@@ -324,7 +324,7 @@ export function GlyphIcon({
               <View
                 style={[
                   fill,
-                  abs(1.5 * u, 11.2 * u, 21 * u, 1.6 * u),
+                  abs(1.5 * u, 11.1 * u, 21 * u, 1.8 * u),
                   { borderRadius: u, transform: [{ rotate: '-40deg' }] },
                 ]}
               />
