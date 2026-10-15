@@ -24,7 +24,7 @@ const ICON: Record<string, GlyphName> = {
 const megabytes = (bytes: number) =>
   bytes >= 1024 * 1024
     ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
-    : `${Math.round(bytes / 1024)} KB`;
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
 const TINT: Record<string, { bg: string; ink: string }> = {
   video: { bg: colors.infoBg, ink: colors.primary },
@@ -136,7 +136,7 @@ export function TalaMaterialRow({
       ) : null}
       {saved ? (
         <AppText variant="caption" muted>
-          Saved on this device ({Math.max(1, Math.round(saved.bytes / 1024))} KB)
+          Saved on this device ({megabytes(saved.bytes)})
         </AppText>
       ) : null}
       {!m.viewable ? (
