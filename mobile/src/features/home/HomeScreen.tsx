@@ -162,11 +162,14 @@ export function HomeScreen({ navigation }: Props) {
               big: counts ? String(expired + expiring) : '–',
               line: !counts
                 ? ''
-                : expired > 0
-                  ? `${expired} expired`
-                  : expiring > 0
-                    ? `${expiring} expiring soon`
-                    : 'All valid',
+                : expired + expiring === 0
+                  ? 'All valid'
+                  : [
+                      expired > 0 ? `${expired} expired` : null,
+                      expiring > 0 ? `${expiring} expiring` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · '),
               ink: !counts
                 ? colors.textMuted
                 : expired > 0
