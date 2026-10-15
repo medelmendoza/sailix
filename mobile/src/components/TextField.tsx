@@ -54,7 +54,7 @@ export function TextField<T extends FieldValues>({
             onPress={() => setRevealed((v) => !v)}
             style={styles.toggle}
           >
-            <GlyphIcon name={revealed ? 'eyeoff' : 'eye'} color={colors.textMuted} size={26} />
+            <GlyphIcon name={revealed ? 'eyeoff' : 'eye'} color={colors.border} size={26} />
           </Pressable>
         ) : null}
       </View>
