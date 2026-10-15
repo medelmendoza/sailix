@@ -18,7 +18,9 @@ export type GlyphName =
   | 'mail'
   | 'target'
   | 'chart'
-  | 'medal';
+  | 'medal'
+  | 'eye'
+  | 'eyeoff';
 
 /**
  * A tiny icon set drawn from plain shapes: no icon font and no emoji (both rendered unreliably in this app's runtimes),
@@ -285,6 +287,35 @@ export function GlyphIcon({
               { borderWidth: 1.8 * u, borderRadius: 3.5 * u, borderColor: colors.surface },
             ]}
           />
+        </>
+      )}
+      {(name === 'eye' || name === 'eyeoff') && (
+        <>
+          <View
+            style={[
+              line,
+              abs(1 * u, 5 * u, 22 * u, 14 * u),
+              { borderWidth: 2.2 * u, borderRadius: 7 * u },
+            ]}
+          />
+          <View style={[fill, abs(8.5 * u, 8.5 * u, 7 * u, 7 * u), { borderRadius: 3.5 * u }]} />
+          {name === 'eyeoff' ? (
+            <>
+              <View
+                style={[
+                  abs(1 * u, 10.4 * u, 22 * u, 4.6 * u),
+                  { backgroundColor: colors.surface, transform: [{ rotate: '-38deg' }] },
+                ]}
+              />
+              <View
+                style={[
+                  fill,
+                  abs(1 * u, 11.2 * u, 22 * u, 2.4 * u),
+                  { borderRadius: u, transform: [{ rotate: '-38deg' }] },
+                ]}
+              />
+            </>
+          ) : null}
         </>
       )}
       {name === 'check' && (

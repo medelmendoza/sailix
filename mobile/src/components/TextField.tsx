@@ -3,6 +3,7 @@ import { useController, type Control, type FieldValues, type Path } from 'react-
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import { colors, fonts, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { AppText } from './AppText';
+import { GlyphIcon } from './GlyphIcon';
 
 type Props<T extends FieldValues> = Omit<
   TextInputProps,
@@ -53,9 +54,7 @@ export function TextField<T extends FieldValues>({
             onPress={() => setRevealed((v) => !v)}
             style={styles.toggle}
           >
-            <AppText variant="caption" style={{ color: colors.accent }}>
-              {revealed ? 'Hide' : 'Show'}
-            </AppText>
+            <GlyphIcon name={revealed ? 'eyeoff' : 'eye'} color={colors.textMuted} size={26} />
           </Pressable>
         ) : null}
       </View>
