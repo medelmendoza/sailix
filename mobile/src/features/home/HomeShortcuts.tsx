@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText, Card, GlyphIcon, TabIcon } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 
-/** The three round shortcuts under the counters. */
+/** The three round shortcuts of the dashboard. */
 export function QuickActions({
   onUpload,
   onFinance,
@@ -53,61 +53,42 @@ export function QuickActions({
   );
 }
 
-type Counter = {
+/** One of the two tiles under the shortcuts (To-do list, Documents): a round icon, the title and a short live note. */
+export function Tile({
+  title,
+  note,
+  noteColor,
+  icon,
+  onPress,
+}: {
   title: string;
-  /** What a screen reader says after the title (the same words the tiles used). */
-  note: string | null;
-  big: string;
-  line: string;
-  /** The text colour, and the soft background that goes with it. */
-  ink: string;
-  bg: string;
+  note?: string | null;
+  noteColor?: string;
   icon: React.ReactNode;
   onPress: () => void;
-};
-
-/**
- * Three separate tiles that overlap the header: what is open on the to-do list, which documents need attention, and how
- * many announcements are new. Each takes a soft colour from how it is doing (green, amber, red, blue, or grey).
- */
-export function TodayCard({ counters }: { counters: Counter[] }) {
+}) {
   return (
-    <View style={styles.counters}>
-      {counters.map((c) => (
-        <Pressable
-          key={c.title}
-          accessibilityRole="button"
-          accessibilityLabel={c.note ? `${c.title}, ${c.note}` : c.title}
-          onPress={c.onPress}
-          style={({ pressed }) => [
-            styles.counter,
-            { backgroundColor: c.bg },
-            pressed && { opacity: 0.8 },
-          ]}
-        >
-          <View style={styles.counterIcon} accessibilityElementsHidden>
-            {c.icon}
-          </View>
-          <AppText style={[styles.big, { color: c.ink }]} accessibilityElementsHidden>
-            {c.big}
-          </AppText>
-          <AppText
-            variant="button"
-            style={[styles.center, { color: c.ink }]}
-            accessibilityElementsHidden
-          >
-            {c.title}
-          </AppText>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={note ? `${title}, ${note}` : title}
+      onPress={onPress}
+      style={({ pressed }) => [styles.tile, pressed && { opacity: 0.75 }]}
+    >
+      <Card variant="flat" style={styles.tileCard}>
+        <View style={styles.circle}>{icon}</View>
+        <AppText variant="heading" style={styles.center}>
+          {title}
+        </AppText>
+        {note ? (
           <AppText
             variant="caption"
-            style={[styles.center, { color: c.ink }]}
-            accessibilityElementsHidden
+            style={[styles.center, { color: noteColor ?? colors.textMuted }]}
           >
-            {c.line}
+            {note}
           </AppText>
-        </Pressable>
-      ))}
-    </View>
+        ) : null}
+      </Card>
+    </Pressable>
   );
 }
 
@@ -115,8 +96,8 @@ const styles = StyleSheet.create({
   center: { textAlign: 'center' },
   quick: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.xs,
+    justifyContent: 'space-around',
+    gap: spacing.sm,
     padding: spacing.lg,
     borderRadius: radius.lg,
   },
@@ -129,24 +110,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.infoBg,
   },
-  counters: { flexDirection: 'row', gap: spacing.sm },
-  counter: {
+  tile: { flex: 1, minHeight: minTouchTarget },
+  tileCard: {
     flex: 1,
     alignItems: 'center',
-    gap: 2,
-    padding: spacing.md,
-    paddingTop: spacing.lg,
+    gap: spacing.sm,
+    padding: spacing.lg,
     borderRadius: radius.lg,
-    boxShadow: '0 4px 14px rgba(18, 36, 61, 0.14)',
   },
-  counterIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xs,
-    backgroundColor: 'rgba(255,255,255,0.75)',
-  },
-  big: { fontFamily: 'Quicksand_700Bold', fontSize: 34, lineHeight: 40 },
 });

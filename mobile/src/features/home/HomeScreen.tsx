@@ -9,12 +9,11 @@ import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types
 import { AppText, FormError, GlyphIcon, TabIcon } from '@/components';
 import { colors, gradients, minTouchTarget, spacing } from '@/constants/theme';
 import { HomeAnnouncements } from '@/features/announcements/HomeAnnouncements';
-import { useUnreadCount } from '@/features/announcements/api';
 import { useDocuments } from '@/features/files/api';
 import { useNextTodos } from '@/features/todos/api';
 import { describeError } from '@/services/api/errors';
 import { useSessionStore } from '@/store/sessionStore';
-import { QuickActions, TodayCard } from './HomeShortcuts';
+import { QuickActions, Tile } from './HomeShortcuts';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Home'>,
@@ -36,8 +35,8 @@ export function initials(first?: string | null, last?: string | null, fallback =
 }
 
 /**
- * The Sailix dashboard: the blue-to-teal header (greeting, your name, the organization and your initials), a Today card
- * that overlaps it with live counters, three round shortcuts, and the latest announcements.
+ * The Sailix dashboard: the blue-to-teal header (greeting, your name, the organization and your initials),
+ * the three round shortcuts, the To-do list and Documents tiles, and the latest announcements.
  * Nothing here belongs to a service such as Tala: services live under the Services tab.
  */
 export function HomeScreen({ navigation }: Props) {
@@ -49,7 +48,6 @@ export function HomeScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const todos = useNextTodos();
   const docs = useDocuments('approved');
-  const unread = useUnreadCount(true);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -88,7 +86,6 @@ export function HomeScreen({ navigation }: Props) {
           .filter(Boolean)
           .join(', ')
       : null;
-  const newCount = unread.data ?? 0;
 
   return (
     <ScrollView
@@ -127,84 +124,27 @@ export function HomeScreen({ navigation }: Props) {
         <FormError
           message={error ?? (switchError ? `Could not switch organization. ${switchError}` : null)}
         />
-        <TodayCard
-          counters={[
-            {
-              title: 'To-do list',
-              note: todoNote,
-              big: todos.data ? String(open) : '–',
-              line: !todos.data
-                ? ''
-                : overdue > 0
-                  ? `${overdue} overdue`
-                  : open === 0
-                    ? 'All done'
-                    : 'On track',
-              ink: !todos.data
-                ? colors.textMuted
-                : overdue > 0
-                  ? colors.danger
-                  : open === 0
-                    ? colors.success
-                    : colors.primary,
-              bg: !todos.data
-                ? colors.surfaceSunken
-                : overdue > 0
-                  ? colors.dangerBg
-                  : open === 0
-                    ? colors.successBg
-                    : colors.infoBg,
-              icon: <GlyphIcon name="check" color={colors.primary} size={22} />,
-              onPress: () => navigation.navigate('Todos'),
-            },
-            {
-              title: 'Documents',
-              note: docNote,
-              big: counts ? String(expired + expiring) : '–',
-              line: !counts
-                ? ''
-                : expired + expiring === 0
-                  ? 'All valid'
-                  : [
-                      expired > 0 ? `${expired} expired` : null,
-                      expiring > 0 ? `${expiring} expiring` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · '),
-              ink: !counts
-                ? colors.textMuted
-                : expired > 0
-                  ? colors.danger
-                  : expiring > 0
-                    ? colors.warning
-                    : colors.success,
-              bg: !counts
-                ? colors.surfaceSunken
-                : expired > 0
-                  ? colors.dangerBg
-                  : expiring > 0
-                    ? colors.warningBg
-                    : colors.successBg,
-              icon: <GlyphIcon name="pdf" color={colors.primary} size={22} />,
-              onPress: () => navigation.navigate('Files'),
-            },
-            {
-              title: 'Notices',
-              note: newCount > 0 ? `${newCount} new` : null,
-              big: unread.data === undefined ? '–' : String(newCount),
-              line: unread.data === undefined ? '' : newCount > 0 ? 'new' : 'All read',
-              ink: newCount > 0 ? colors.primary : colors.textMuted,
-              bg: newCount > 0 ? colors.infoBg : colors.surfaceSunken,
-              icon: <TabIcon name="announce" color={colors.primary} />,
-              onPress: () => navigation.navigate('Announcements'),
-            },
-          ]}
-        />
         <QuickActions
           onUpload={() => navigation.navigate('DocumentForm', {})}
           onFinance={() => navigation.navigate('Finance')}
           onServices={() => navigation.navigate('Services')}
         />
+        <View style={styles.tiles}>
+          <Tile
+            title="To-do list"
+            note={todoNote}
+            noteColor={overdue > 0 ? colors.danger : colors.textMuted}
+            icon={<GlyphIcon name="check" color={colors.primary} size={26} />}
+            onPress={() => navigation.navigate('Todos')}
+          />
+          <Tile
+            title="Documents"
+            note={docNote}
+            noteColor={expired > 0 ? colors.danger : colors.warning}
+            icon={<TabIcon name="folder" color={colors.primary} />}
+            onPress={() => navigation.navigate('Files')}
+          />
+        </View>
         <HomeAnnouncements onOpenAll={() => navigation.navigate('Announcements')} />
       </View>
     </ScrollView>
@@ -217,7 +157,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxxl + spacing.lg,
+    paddingBottom: spacing.xl,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     backgroundColor: colors.primary,
@@ -237,5 +177,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.55)',
   },
   initials: { color: colors.onPrimary, fontFamily: 'Quicksand_700Bold', fontSize: 17 },
-  body: { padding: spacing.lg, gap: spacing.lg, marginTop: -spacing.xxxl },
+  body: { padding: spacing.lg, gap: spacing.lg },
+  tiles: { flexDirection: 'row', gap: spacing.md },
 });

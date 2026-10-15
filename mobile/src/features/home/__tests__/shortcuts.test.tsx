@@ -27,7 +27,7 @@ describe('the dashboard, as in the original Sailix', () => {
     expect(screen.getByRole('button', { name: 'Account' })).toBeTruthy(); // the Account button lives in the header
   });
 
-  it('has three round shortcuts, and the To-do list and Documents counters', async () => {
+  it('has three round shortcuts and the To-do list and Documents tiles', async () => {
     await openHome();
     for (const name of ['Upload documents', 'View finances', 'Services'])
       expect(screen.getByRole('button', { name })).toBeTruthy();
@@ -89,24 +89,6 @@ describe('where each shortcut goes', () => {
     await openHome();
     await fireEvent.press(screen.getByRole('button', { name: 'Account' }));
     expect(await screen.findByText('Maria Santos')).toBeTruthy();
-  });
-});
-
-describe('the Today card', () => {
-  it('counts the new announcements and opens them', async () => {
-    await openHome({
-      'GET /announcements': {
-        data: {
-          data: [],
-          links: {},
-          meta: { current_page: 1, per_page: 20, total: 0, last_page: 1 },
-          unread_count: 2,
-        },
-      },
-    });
-    expect(await screen.findByRole('button', { name: 'Notices, 2 new' })).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Notices, 2 new' }));
-    expect(await screen.findByText('Announcements')).toBeTruthy();
   });
 });
 
