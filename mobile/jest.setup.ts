@@ -89,7 +89,10 @@ jest.mock('expo-file-system', () => {
       for (const d of [...dirs]) if (d.startsWith(this.uri + '/')) dirs.delete(d);
     }
   }
-  const state = { failNextDownload: false };
+  const state: { failNextDownload: boolean; hold: Promise<void> | null } = {
+    failNextDownload: false,
+    hold: null,
+  };
   class File {
     uri: string;
     constructor(...parts: unknown[]) {
@@ -103,6 +106,38 @@ jest.mock('expo-file-system', () => {
     }
     delete() {
       files.delete(this.uri);
+    }
+    static createDownloadTask(
+      url: string,
+      dest: Directory,
+      options: {
+        onProgress?: (p: { bytesWritten: number; totalBytes: number }) => void;
+        signal?: AbortSignal;
+      } = {},
+    ) {
+      return {
+        downloadAsync: async () => {
+          if (state.failNextDownload) {
+            state.failNextDownload = false;
+            throw new Error('network down');
+          }
+          options.onProgress?.({ bytesWritten: 617, totalBytes: 1234 });
+          if (state.hold) {
+            await Promise.race([
+              state.hold,
+              new Promise((_, reject) =>
+                options.signal?.addEventListener('abort', () =>
+                  reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })),
+                ),
+              ),
+            ]);
+          }
+          const name = url.split('/').pop() || 'file';
+          const f = new File(dest, name);
+          files.set(f.uri, { size: 1234 });
+          return f;
+        },
+      };
     }
     static async downloadFileAsync(url: string, dest: Directory) {
       if (state.failNextDownload) {

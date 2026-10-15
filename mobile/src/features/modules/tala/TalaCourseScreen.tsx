@@ -4,7 +4,7 @@ import type {
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText, Button, Card, CourseImage, ErrorState, FormError, Notice } from '@/components';
@@ -35,6 +35,10 @@ export function TalaCourseScreen({ route }: Props) {
   const outbox = useQuery({ queryKey: scopedKey('tala', 'outbox'), queryFn: pendingCompletions });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ id: string; written: number; total: number } | null>(
+    null,
+  );
+  const abort = useRef<AbortController | null>(null);
 
   const refreshLocal = () =>
     Promise.all([
@@ -54,11 +58,36 @@ export function TalaCourseScreen({ route }: Props) {
     }
   }
 
-  const download = (m: TalaMaterialSummary) =>
-    guarded(m.id, async () => {
-      await downloadMaterial(assignId, { id: m.id, type: m.type as 'video' | 'pdf', name: m.name });
-      await refreshLocal();
+  const download = (m: TalaMaterialSummary) => {
+    const controller = new AbortController();
+    abort.current = controller;
+    let lastPercent = -1;
+    setProgress({ id: m.id, written: 0, total: -1 });
+    return guarded(m.id, async () => {
+      try {
+        await downloadMaterial(
+          assignId,
+          { id: m.id, type: m.type as 'video' | 'pdf', name: m.name },
+          {
+            signal: controller.signal,
+            onProgress: ({ bytesWritten, totalBytes }) => {
+              // repaint only when the percentage moves (or once, when the size is unknown)
+              const percent = totalBytes > 0 ? Math.floor((bytesWritten / totalBytes) * 100) : -1;
+              if (percent === lastPercent && percent !== -1) return;
+              lastPercent = percent;
+              setProgress({ id: m.id, written: bytesWritten, total: totalBytes });
+            },
+          },
+        );
+        await refreshLocal();
+      } catch (e) {
+        if (!controller.signal.aborted) throw e; // a cancel is not an error
+      } finally {
+        abort.current = null;
+        setProgress(null);
+      }
     });
+  };
 
   const remove = (m: TalaMaterialSummary) =>
     guarded(m.id, async () => {
@@ -192,6 +221,8 @@ export function TalaCourseScreen({ route }: Props) {
                 saved={downloaded[m.id]}
                 waiting={pending.has(m.id)}
                 busy={busy === m.id}
+                progress={progress?.id === m.id ? progress : null}
+                onCancel={() => abort.current?.abort()}
                 canMarkCompleted={
                   c.progress_submission &&
                   m.type === 'pdf' &&

@@ -7,9 +7,17 @@ import { getDownloads, putDownload, removeDownloadRecord, type DownloadRecord } 
  * Downloads a video or PDF for offline use. The address comes from the Sailix gateway (https only); each material gets
  * its own folder so file names from the server can never collide or escape the app's directory.
  */
+export type DownloadOptions = {
+  /** Bytes written so far and the total (`-1` when the server does not say). */
+  onProgress?: (p: { bytesWritten: number; totalBytes: number }) => void;
+  /** Aborting stops the transfer; nothing is kept. */
+  signal?: AbortSignal;
+};
+
 export async function downloadMaterial(
   assignId: string,
   material: { id: string; type: 'video' | 'pdf'; name: string },
+  options: DownloadOptions = {},
 ): Promise<DownloadRecord> {
   const scope = currentScope();
   const id = assertSafeSegment(material.id);
@@ -23,7 +31,13 @@ export async function downloadMaterial(
 
   let file: File;
   try {
-    file = await File.downloadFileAsync(detail.file_url, target);
+    const task = File.createDownloadTask(detail.file_url, target, {
+      onProgress: options.onProgress,
+      signal: options.signal,
+    });
+    const done = await task.downloadAsync();
+    if (!done) throw new Error('The download did not finish.');
+    file = done;
   } catch (e) {
     if (target.exists) target.delete(); // never keep a half-written download
     throw e;

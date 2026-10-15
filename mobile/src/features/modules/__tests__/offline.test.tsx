@@ -19,7 +19,11 @@ import { openTala } from '@/test-utils/steps';
 
 const fs = (
   FileSystem as unknown as {
-    __fs: { files: Map<string, unknown>; dirs: Set<string>; state: { failNextDownload: boolean } };
+    __fs: {
+      files: Map<string, unknown>;
+      dirs: Set<string>;
+      state: { failNextDownload: boolean; hold: Promise<void> | null };
+    };
   }
 ).__fs;
 /** A PDF saved on the device, as if it had been downloaded (and, if `opened`, opened at least once). */
@@ -455,6 +459,22 @@ describe('marking completed', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Remove download' }));
     await waitFor(() => expect(screen.queryByText(/Saved on this device/)).toBeNull());
     expect(screen.getByRole('button', { name: /^Download to watch: Item v1/ })).toBeTruthy();
+  });
+
+  it('shows how far a download has got, and Cancel stops it without an error or a saved file', async () => {
+    await openCourse(false, { 'GET /modules/tala/courses/A1/materials/v1': material('v1') });
+    fs.state.hold = new Promise(() => {}); // the transfer stays in flight
+    await fireEvent.press(screen.getByRole('button', { name: /^Download to watch: Item v1/ }));
+
+    expect(await screen.findByRole('progressbar', { name: /^Downloading Item v1/ })).toBeTruthy();
+    expect(screen.getByText(/Downloading… 50%/)).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: /^Cancel download: Item v1/ }));
+    expect(await screen.findByRole('button', { name: /^Download to watch: Item v1/ })).toBeTruthy();
+    expect(screen.queryByRole('progressbar', { name: /^Downloading/ })).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(await listDownloads()).toEqual({});
+    fs.state.hold = null;
   });
 
   it('an unsent completion is not lost when the stored outbox is replaced by a restart', async () => {

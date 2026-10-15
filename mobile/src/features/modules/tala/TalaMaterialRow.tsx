@@ -1,5 +1,13 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { AppText, Button, Card, CourseImage, GlyphIcon, type GlyphName } from '@/components';
+import {
+  AppText,
+  Button,
+  Card,
+  CourseImage,
+  GlyphIcon,
+  type GlyphName,
+  ProgressBar,
+} from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import type { TalaMaterialSummary } from '@/services/api/types';
 import type { DownloadRecord } from './offline/store';
@@ -13,6 +21,11 @@ const ICON: Record<string, GlyphName> = {
 };
 
 /** A soft colour for each kind of material: the badge behind its icon. */
+const megabytes = (bytes: number) =>
+  bytes >= 1024 * 1024
+    ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
+    : `${Math.round(bytes / 1024)} KB`;
+
 const TINT: Record<string, { bg: string; ink: string }> = {
   video: { bg: colors.infoBg, ink: colors.primary },
   pdf: { bg: colors.warningBg, ink: colors.warning },
@@ -37,6 +50,8 @@ export function TalaMaterialRow({
   saved,
   waiting,
   busy,
+  progress,
+  onCancel,
   canMarkCompleted,
   completeHint,
   onOpen,
@@ -48,6 +63,9 @@ export function TalaMaterialRow({
   saved: DownloadRecord | undefined;
   waiting: boolean;
   busy: boolean;
+  /** How far a download has got; `total` is -1 when the size is not known. */
+  progress?: { written: number; total: number } | null;
+  onCancel?: () => void;
   canMarkCompleted: boolean;
   /** Why a document cannot be marked completed yet. */
   completeHint?: string | null;
@@ -127,7 +145,28 @@ export function TalaMaterialRow({
         </AppText>
       ) : null}
 
-      {action || canMarkCompleted ? (
+      {progress ? (
+        <View style={styles.progress}>
+          <ProgressBar
+            percent={progress.total > 0 ? (progress.written / progress.total) * 100 : 0}
+            label={`Downloading ${m.name}`}
+          />
+          <View style={styles.progressRow}>
+            <AppText variant="caption" muted style={{ flex: 1 }}>
+              {progress.total > 0
+                ? `Downloading… ${Math.floor((progress.written / progress.total) * 100)}% (${megabytes(progress.written)} of ${megabytes(progress.total)})`
+                : `Downloading… ${megabytes(progress.written)}`}
+            </AppText>
+            <Button
+              title="Cancel"
+              accessibilityLabel={`Cancel download: ${m.name}`}
+              variant="secondary"
+              onPress={onCancel ?? (() => {})}
+              style={styles.cancel}
+            />
+          </View>
+        </View>
+      ) : action || canMarkCompleted ? (
         <View style={styles.actions}>
           {action ? (
             <Button
@@ -188,6 +227,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     marginTop: 2,
   },
+  progress: { gap: spacing.sm },
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  cancel: { minHeight: 36, paddingHorizontal: spacing.lg },
   actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   action: { flex: 1 },
   remove: {

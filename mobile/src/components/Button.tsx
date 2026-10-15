@@ -38,6 +38,9 @@ export function Button({
   const primary = variant === 'primary';
   return (
     <Pressable
+      // A new key when the look changes rebuilds the view: Android crashes when a gradient is added to a view that is
+      // already on screen (for example a secondary button that becomes primary).
+      key={primary ? 'primary' : 'secondary'}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
       accessibilityState={{ disabled: !!inactive, busy: !!loading }}
