@@ -295,24 +295,31 @@ export function GlyphIcon({
           <View
             style={[
               line,
-              abs(1 * u, 5 * u, 22 * u, 14 * u),
-              { borderWidth: 2.2 * u, borderRadius: 7 * u },
+              abs(3.5 * u, 3.5 * u, 17 * u, 17 * u),
+              {
+                borderWidth: 2 * u,
+                borderTopLeftRadius: 17 * u,
+                borderBottomRightRadius: 17 * u,
+                borderTopRightRadius: 0,
+                borderBottomLeftRadius: 0,
+                transform: [{ rotate: '45deg' }],
+              },
             ]}
           />
-          <View style={[fill, abs(8.5 * u, 8.5 * u, 7 * u, 7 * u), { borderRadius: 3.5 * u }]} />
+          <View style={[fill, abs(9 * u, 9 * u, 6 * u, 6 * u), { borderRadius: 3 * u }]} />
           {name === 'eyeoff' ? (
             <>
               <View
                 style={[
-                  abs(1 * u, 10.4 * u, 22 * u, 4.6 * u),
-                  { backgroundColor: colors.surface, transform: [{ rotate: '-38deg' }] },
+                  abs(0, 10 * u, 24 * u, 5.6 * u),
+                  { backgroundColor: colors.surface, transform: [{ rotate: '-40deg' }] },
                 ]}
               />
               <View
                 style={[
                   fill,
-                  abs(1 * u, 11.2 * u, 22 * u, 2.4 * u),
-                  { borderRadius: u, transform: [{ rotate: '-38deg' }] },
+                  abs(1.5 * u, 11 * u, 21 * u, 2 * u),
+                  { borderRadius: u, transform: [{ rotate: '-40deg' }] },
                 ]}
               />
             </>
