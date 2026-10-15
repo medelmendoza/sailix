@@ -1,8 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText, Card, GlyphIcon, TabIcon } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
-import { ServiceLogo, hasLogo } from '@/features/services/ServiceLogo';
-import type { MyModule } from '@/services/api/types';
 
 /** The four round shortcuts under the Today card. */
 export function QuickActions({
@@ -115,43 +113,6 @@ export function TodayCard({ counters }: { counters: Counter[] }) {
   );
 }
 
-/** The services the organization has turned on, as small logo cards that open them. */
-export function ServicesRow({
-  modules,
-  onOpen,
-}: {
-  modules: readonly MyModule[];
-  onOpen: (m: MyModule) => void;
-}) {
-  const shown = modules.filter((m) => m.status !== 'disabled');
-  if (shown.length === 0) return null;
-  return (
-    <View style={styles.services}>
-      <AppText variant="heading" accessibilityRole="header">
-        Your services
-      </AppText>
-      <View style={styles.serviceRow}>
-        {shown.map((m) => (
-          <Pressable
-            key={m.code}
-            accessibilityRole="button"
-            accessibilityLabel={`${m.label} service`}
-            onPress={() => onOpen(m)}
-            style={({ pressed }) => [styles.service, pressed && { opacity: 0.75 }]}
-          >
-            <Card variant="flat" style={styles.serviceCard}>
-              {hasLogo(m.code) ? <ServiceLogo code={m.code} size={48} /> : null}
-              <AppText variant="caption" style={styles.center} numberOfLines={1}>
-                {m.label}
-              </AppText>
-            </Card>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   center: { textAlign: 'center' },
   quick: {
@@ -175,13 +136,4 @@ const styles = StyleSheet.create({
   counter: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: spacing.xs },
   counterDivider: { borderLeftWidth: 1, borderLeftColor: colors.borderSoft },
   big: { fontFamily: 'Quicksand_700Bold', fontSize: 34, lineHeight: 40 },
-  services: { gap: spacing.md },
-  serviceRow: { flexDirection: 'row', gap: spacing.md },
-  service: { flex: 1 },
-  serviceCard: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderRadius: radius.lg,
-  },
 });

@@ -35,14 +35,14 @@ describe('the dashboard, as in the original Sailix', () => {
     expect(screen.getByRole('button', { name: /^Documents/ })).toBeTruthy();
   });
 
-  it('shows a service only as a card that opens it, never its content, even when Tala is linked', async () => {
+  it('has nothing from a service on it, even when Tala is linked', async () => {
     const api = await openHome({ 'GET /modules/tala/courses': { data: { data: [] } } }, [
       TALA('linked'),
     ]);
     expect(screen.queryByText('My learning')).toBeNull();
     expect(screen.queryByText('My courses')).toBeNull();
     expect(api.callsTo('GET /modules/tala/courses')).toHaveLength(0);
-    expect(screen.getByRole('button', { name: 'Tala service' })).toBeTruthy(); // the way in, nothing more
+    expect(screen.queryByRole('button', { name: 'Tala service' })).toBeNull(); // services live under the Services tab
   });
 
   it('shows your initials in the Account badge', async () => {
@@ -110,17 +110,11 @@ describe('the Today card', () => {
   });
 });
 
-describe('the services and the scanner shortcuts', () => {
+describe('the scanner shortcut', () => {
   it('Scan a document opens the scanner', async () => {
     await openHome();
     await fireEvent.press(screen.getByRole('button', { name: 'Scan a document' }));
     expect(await screen.findByRole('button', { name: 'Make a PDF of the pages' })).toBeTruthy();
-  });
-
-  it('a service card opens that service', async () => {
-    await openHome({ 'GET /modules/tala/courses': { data: { data: [] } } }, [TALA('linked')]);
-    await fireEvent.press(screen.getByRole('button', { name: 'Tala service' }));
-    expect(await screen.findByText('My stats')).toBeTruthy();
   });
 });
 

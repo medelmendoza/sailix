@@ -13,9 +13,8 @@ import { useUnreadCount } from '@/features/announcements/api';
 import { useDocuments } from '@/features/files/api';
 import { useNextTodos } from '@/features/todos/api';
 import { describeError } from '@/services/api/errors';
-import type { MyModule } from '@/services/api/types';
 import { useSessionStore } from '@/store/sessionStore';
-import { QuickActions, ServicesRow, TodayCard } from './HomeShortcuts';
+import { QuickActions, TodayCard } from './HomeShortcuts';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Home'>,
@@ -38,8 +37,8 @@ export function initials(first?: string | null, last?: string | null, fallback =
 
 /**
  * The Sailix dashboard: the blue-to-teal header (greeting, your name, the organization and your initials), a Today card
- * that overlaps it with live counters, four round shortcuts, the services you can open, and the latest announcements.
- * Nothing here belongs to a service such as Tala: those only appear as shortcuts to open them.
+ * that overlaps it with live counters, four round shortcuts, and the latest announcements.
+ * Nothing here belongs to a service such as Tala: services live under the Services tab.
  */
 export function HomeScreen({ navigation }: Props) {
   const me = useSessionStore((s) => s.me);
@@ -90,12 +89,6 @@ export function HomeScreen({ navigation }: Props) {
           .join(', ')
       : null;
   const newCount = unread.data ?? 0;
-
-  function openService(m: MyModule) {
-    if (m.code === 'astra') navigation.navigate('AstraMenu');
-    else if (m.code === 'callit') navigation.navigate('CallIt');
-    else navigation.navigate('Module', { code: m.code });
-  }
 
   return (
     <ScrollView
@@ -195,7 +188,6 @@ export function HomeScreen({ navigation }: Props) {
           onFinance={() => navigation.navigate('Finance')}
           onServices={() => navigation.navigate('Services')}
         />
-        <ServicesRow modules={me.modules} onOpen={openService} />
         <HomeAnnouncements onOpenAll={() => navigation.navigate('Announcements')} />
       </View>
     </ScrollView>
