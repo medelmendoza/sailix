@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { AppText, Card, CourseImage, GlyphIcon } from '@/components';
+import { AppText, Button, Card, CourseImage, GlyphIcon } from '@/components';
 import { colors, radius, spacing } from '@/constants/theme';
 import type { TalaCourseDetail } from '@/services/api/types';
 import { TalaCourseProgress } from './TalaCourseProgress';
@@ -20,7 +20,18 @@ const LONG_DESCRIPTION = 180;
  * The top of a course page: the picture with the summary card overlapping it (state, title, creator, progress and
  * three counters), then the course description, which folds when it is long.
  */
-export function TalaCourseHeader({ c, saved }: { c: TalaCourseDetail; saved: number }) {
+export function TalaCourseHeader({
+  c,
+  saved,
+  next,
+  onContinue,
+}: {
+  c: TalaCourseDetail;
+  saved: number;
+  /** Name of the material to do next, if any, and what the Continue button does. */
+  next?: string | null;
+  onContinue?: () => void;
+}) {
   const due = dueInfo(c);
   const [open, setOpen] = useState(false);
   const long = (c.description?.length ?? 0) > LONG_DESCRIPTION;
@@ -75,6 +86,13 @@ export function TalaCourseHeader({ c, saved }: { c: TalaCourseDetail; saved: num
                 bg={colors.warningBg}
               />
             </View>
+            {next && onContinue ? (
+              <Button
+                title={`Continue: ${next}`}
+                accessibilityLabel={`Continue with ${next}`}
+                onPress={onContinue}
+              />
+            ) : null}
           </Card>
         </View>
       </View>

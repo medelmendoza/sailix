@@ -51,6 +51,7 @@ export function TalaMaterialRow({
   waiting,
   busy,
   lockedBy,
+  upNext,
   progress,
   onCancel,
   canMarkCompleted,
@@ -66,6 +67,8 @@ export function TalaMaterialRow({
   busy: boolean;
   /** Name of the earlier material that must be completed first (an ordered course), or null. */
   lockedBy?: string | null;
+  /** The material to do next: marked so the learner sees where to go on. */
+  upNext?: boolean;
   /** How far a download has got; `total` is -1 when the size is not known. */
   progress?: { written: number; total: number } | null;
   onCancel?: () => void;
@@ -118,7 +121,14 @@ export function TalaMaterialRow({
               };
 
   return (
-    <Card variant="flat" style={{ ...styles.card, ...(lockedBy ? styles.lockedCard : null) }}>
+    <Card
+      variant="flat"
+      style={{
+        ...styles.card,
+        ...(lockedBy ? styles.lockedCard : null),
+        ...(upNext ? styles.upNextCard : null),
+      }}
+    >
       <View
         style={styles.head}
         accessible
@@ -140,9 +150,18 @@ export function TalaMaterialRow({
           ) : null}
         </View>
         <View style={styles.text}>
-          <AppText variant="caption" style={{ color: tint.ink }}>
-            {typeLabel}
-          </AppText>
+          <View style={styles.typeRow}>
+            <AppText variant="caption" style={{ color: tint.ink }}>
+              {typeLabel}
+            </AppText>
+            {upNext ? (
+              <View style={styles.upNextPill}>
+                <AppText variant="caption" style={{ color: colors.onPrimary }}>
+                  Up next
+                </AppText>
+              </View>
+            ) : null}
+          </View>
           <AppText style={styles.name}>{m.name}</AppText>
           <View
             style={[styles.chip, { backgroundColor: lockedBy ? colors.surface : CHIP[tone].bg }]}
@@ -275,6 +294,14 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     marginTop: 2,
   },
+  typeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  upNextPill: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 1,
+  },
+  upNextCard: { borderWidth: 2, borderColor: colors.primary },
   lockedCard: { backgroundColor: colors.surfaceSunken },
   lockVeil: {
     position: 'absolute',

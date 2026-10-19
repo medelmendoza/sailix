@@ -102,6 +102,19 @@ describe('course detail', () => {
     expect(order.indexOf('About this course')).toBeLessThan(order.indexOf('Materials'));
   });
 
+  it('offers a Continue button for the next material and marks that material as up next', async () => {
+    await detailScreen();
+    expect(screen.getByRole('button', { name: 'Continue with Intro video' })).toBeTruthy();
+    expect(screen.getAllByText('Up next')).toHaveLength(1);
+  });
+
+  it('keeps the rules of the course one tap away instead of a wall of text', async () => {
+    await detailScreen();
+    expect(screen.queryByText(/Download a video or a document to open it/)).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'How this course works' }));
+    expect(screen.getByText(/Download a video or a document to open it/)).toBeTruthy();
+  });
+
   it('lists every kind of material with its type, status and an open action', async () => {
     await detailScreen();
     for (const [name, type] of [

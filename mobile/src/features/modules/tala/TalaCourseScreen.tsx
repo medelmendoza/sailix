@@ -17,6 +17,7 @@ import { deleteDownload, downloadMaterial, listDownloads, markOpened } from './o
 import { pendingCompletions, queueCompletion, syncOutbox } from './offline/outbox';
 import { savedCopyText } from './TalaCourseList';
 import { TalaCourseHeader } from './TalaCourseHeader';
+import { TalaHowItWorks } from './TalaHowItWorks';
 import { isDone } from './materials';
 import { TalaMaterialRow } from './TalaMaterialRow';
 import { CourseDetailSkeleton } from './TalaSkeletons';
@@ -38,6 +39,8 @@ export function TalaCourseScreen({ route }: Props) {
     null,
   );
   const abort = useRef<AbortController | null>(null);
+  const scroller = useRef<ScrollView>(null);
+  const offsets = useRef({ content: 0, list: 0, items: {} as Record<string, number> });
 
   const refreshLocal = () =>
     Promise.all([
@@ -134,6 +137,19 @@ export function TalaCourseScreen({ route }: Props) {
     }
   }
 
+  // the next material to do: the first one that is open and not yet completed
+  const next = c.materials.find(
+    (m) => m.viewable && !lockedBy.has(m.id) && !(isDone(m) || pending.has(m.id)),
+  );
+  const goToNext = () => {
+    if (!next) return;
+    const o = offsets.current;
+    scroller.current?.scrollTo({
+      y: Math.max(0, o.content + o.list + (o.items[next.id] ?? 0) - spacing.lg),
+      animated: true,
+    });
+  };
+
   function openOffline(m: TalaMaterialSummary) {
     const rec = downloaded[m.id];
     if (!rec) return;
@@ -167,18 +183,24 @@ export function TalaCourseScreen({ route }: Props) {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll}>
-      <TalaCourseHeader c={c} saved={c.materials.filter((m) => Boolean(downloaded[m.id])).length} />
+    <ScrollView ref={scroller} contentContainerStyle={styles.scroll}>
+      <TalaCourseHeader
+        c={c}
+        saved={c.materials.filter((m) => Boolean(downloaded[m.id])).length}
+        next={next?.name ?? null}
+        onContinue={goToNext}
+      />
 
-      <View style={styles.content}>
+      <View
+        style={styles.content}
+        onLayout={(e) => (offsets.current.content = e.nativeEvent.layout.y)}
+      >
         {course.data.fromCache ? <Notice message={savedCopyText(course.data.fetchedAt)} /> : null}
-        <Notice
-          message={
-            c.progress_submission
-              ? 'Download a video or a document to open it. A video is completed after you watch it and send your feedback. Quiz scores and flashcard results are recorded in Tala.'
-              : 'You can view your courses here. Taking quizzes and recording progress is not available in this version of the app.'
-          }
-        />
+        {c.progress_submission ? (
+          <TalaHowItWorks message="Download a video or a document to open it. A video is completed after you watch it and send your feedback. Quiz scores and flashcard results are recorded in Tala." />
+        ) : (
+          <Notice message="You can view your courses here. Taking quizzes and recording progress is not available in this version of the app." />
+        )}
         {pending.size > 0 ? (
           <Card style={{ gap: spacing.sm }}>
             <AppText>
@@ -194,7 +216,10 @@ export function TalaCourseScreen({ route }: Props) {
         ) : null}
         <FormError message={error} />
 
-        <View style={{ gap: spacing.md }}>
+        <View
+          style={{ gap: spacing.md }}
+          onLayout={(e) => (offsets.current.list = e.nativeEvent.layout.y)}
+        >
           <View style={styles.materialsHead}>
             <AppText variant="heading" accessibilityRole="header">
               Materials
@@ -208,8 +233,12 @@ export function TalaCourseScreen({ route }: Props) {
           </View>
           {c.materials.length === 0 ? <AppText muted>No materials yet.</AppText> : null}
           {c.materials.map((m) => (
-            <View key={m.id}>
+            <View
+              key={m.id}
+              onLayout={(e) => (offsets.current.items[m.id] = e.nativeEvent.layout.y)}
+            >
               <TalaMaterialRow
+                upNext={next?.id === m.id}
                 m={m}
                 saved={downloaded[m.id]}
                 waiting={pending.has(m.id)}
