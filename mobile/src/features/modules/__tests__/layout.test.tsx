@@ -94,12 +94,12 @@ describe('course detail', () => {
 
   it('is laid out as picture, info, description, then materials', async () => {
     await detailScreen();
-    expect(screen.getByText('Creator : Capt. Reyes')).toBeTruthy();
-    expect(screen.getByText(/^Due : /)).toBeTruthy();
-    expect(screen.getByText('Description')).toBeTruthy();
+    expect(screen.getByText('Capt. Reyes')).toBeTruthy();
+    expect(screen.getByText(/ · due |days? left|Due |Overdue|Starts /)).toBeTruthy();
+    expect(screen.getByText('About this course')).toBeTruthy();
     expect(screen.getByText('Learn the essentials.')).toBeTruthy();
     const order = screen.getAllByRole('header').map((h) => h.props.children);
-    expect(order.indexOf('Description')).toBeLessThan(order.indexOf('Materials'));
+    expect(order.indexOf('About this course')).toBeLessThan(order.indexOf('Materials'));
   });
 
   it('lists every kind of material with its type, status and an open action', async () => {

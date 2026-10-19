@@ -49,15 +49,22 @@ export function CourseDetailSkeleton() {
   return (
     <Loading>
       <ShimmerBlock style={styles.hero} />
+      <View style={styles.summaryWrap}>
+        <Card variant="flat" style={styles.info}>
+          <ShimmerBlock style={[styles.pill, { width: 150 }]} />
+          <ShimmerBlock style={[styles.line, { width: '60%', height: 24 }]} />
+          <ShimmerBlock style={[styles.line, { width: '45%', height: 36 }]} />
+          <ShimmerBlock style={styles.bar} />
+          <View style={styles.facts}>
+            {[0, 1, 2].map((i) => (
+              <ShimmerBlock key={i} style={[styles.tile, { flex: 1 }]} />
+            ))}
+          </View>
+        </Card>
+      </View>
       <View style={styles.page}>
         <Card variant="flat" style={styles.info}>
-          <ShimmerBlock style={[styles.line, { width: '60%', height: 24 }]} />
-          <ShimmerBlock style={[styles.line, { width: '40%', height: 14 }]} />
-          <ShimmerBlock style={[styles.line, { width: '55%', height: 14 }]} />
-          <ShimmerBlock style={styles.bar} />
-        </Card>
-        <Card variant="flat" style={styles.info}>
-          <ShimmerBlock style={[styles.line, { width: '35%', height: 20 }]} />
+          <ShimmerBlock style={[styles.line, { width: '45%', height: 20 }]} />
           <ShimmerBlock style={[styles.line, { width: '90%', height: 14 }]} />
         </Card>
         {[0, 1, 2].map((i) => (
@@ -87,7 +94,14 @@ const styles = StyleSheet.create({
   line: { borderRadius: radius.sm },
   pill: { height: 24, borderRadius: radius.pill },
   bar: { height: 12, borderRadius: radius.pill, width: '100%' },
-  hero: { height: 260, width: '100%' },
+  hero: {
+    height: 230,
+    width: '100%',
+    borderBottomLeftRadius: radius.lg,
+    borderBottomRightRadius: radius.lg,
+  },
+  summaryWrap: { marginTop: -56, paddingHorizontal: spacing.lg },
+  tile: { height: 64, borderRadius: radius.md },
   page: { padding: spacing.lg, gap: spacing.lg },
   info: { gap: spacing.md, padding: spacing.lg },
   materialHead: { flexDirection: 'row', gap: spacing.md, alignItems: 'center' },

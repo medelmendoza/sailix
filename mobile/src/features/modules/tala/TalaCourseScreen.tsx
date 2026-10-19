@@ -7,8 +7,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, Button, Card, CourseImage, ErrorState, FormError, Notice } from '@/components';
-import { spacing } from '@/constants/theme';
+import { AppText, Button, Card, ErrorState, FormError, Notice } from '@/components';
+import { colors, radius, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import type { TalaMaterialSummary } from '@/services/api/types';
 import { scopedKey } from '@/store/scopedKey';
@@ -16,11 +16,10 @@ import { useTalaCourse } from './api';
 import { deleteDownload, downloadMaterial, listDownloads, markOpened } from './offline/downloads';
 import { pendingCompletions, queueCompletion, syncOutbox } from './offline/outbox';
 import { savedCopyText } from './TalaCourseList';
-import { TalaCourseProgress } from './TalaCourseProgress';
+import { TalaCourseHeader } from './TalaCourseHeader';
 import { isDone } from './materials';
 import { TalaMaterialRow } from './TalaMaterialRow';
 import { CourseDetailSkeleton } from './TalaSkeletons';
-import { dueInfo } from './stats';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'TalaCourse'>;
 
@@ -167,35 +166,11 @@ export function TalaCourseScreen({ route }: Props) {
     }
   }
 
-  const due = dueInfo(c);
-
   return (
     <ScrollView contentContainerStyle={styles.scroll}>
-      {/* the course picture, full width, as in the original app */}
-      <CourseImage uri={c.thumbnail_url} title={c.name} style={styles.hero} />
+      <TalaCourseHeader c={c} saved={c.materials.filter((m) => Boolean(downloaded[m.id])).length} />
 
       <View style={styles.content}>
-        <Card style={{ gap: spacing.sm }}>
-          <AppText variant="title" accessibilityRole="header" style={styles.courseName}>
-            {c.name}
-          </AppText>
-          <AppText>Creator : {c.creator ?? 'Unknown'}</AppText>
-          {due ? (
-            <AppText>
-              Due : {due.text}
-              {due.tone !== 'done' && c.date_to ? ` (${c.date_to})` : ''}
-            </AppText>
-          ) : null}
-          <TalaCourseProgress course={c} showDue={false} />
-        </Card>
-
-        <Card style={{ gap: spacing.sm }}>
-          <AppText variant="heading" accessibilityRole="header">
-            Description
-          </AppText>
-          <AppText muted={!c.description}>{c.description ?? 'No description.'}</AppText>
-        </Card>
-
         {course.data.fromCache ? <Notice message={savedCopyText(course.data.fetchedAt)} /> : null}
         <Notice
           message={
@@ -220,9 +195,17 @@ export function TalaCourseScreen({ route }: Props) {
         <FormError message={error} />
 
         <View style={{ gap: spacing.md }}>
-          <AppText variant="heading" accessibilityRole="header">
-            Materials
-          </AppText>
+          <View style={styles.materialsHead}>
+            <AppText variant="heading" accessibilityRole="header">
+              Materials
+            </AppText>
+            <View style={styles.count}>
+              <AppText variant="caption" style={{ color: colors.primary }}>
+                {c.materials.filter((m) => isDone(m) || pending.has(m.id)).length} of{' '}
+                {c.materials.length} done
+              </AppText>
+            </View>
+          </View>
           {c.materials.length === 0 ? <AppText muted>No materials yet.</AppText> : null}
           {c.materials.map((m) => (
             <View key={m.id}>
@@ -273,7 +256,12 @@ export function TalaCourseScreen({ route }: Props) {
 
 const styles = StyleSheet.create({
   scroll: { paddingBottom: spacing.xxxl },
-  hero: { width: '100%', height: 260 },
   content: { padding: spacing.lg, gap: spacing.lg },
-  courseName: { fontSize: 22, lineHeight: 28 },
+  materialsHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  count: {
+    backgroundColor: colors.infoBg,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 3,
+  },
 });
