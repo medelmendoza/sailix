@@ -366,7 +366,7 @@ describe('marking completed', () => {
     await renderApp();
     await openTala();
     await fireEvent.press(await screen.findByRole('button', { name: /Safety at sea/ }));
-    await screen.findByText('Item v1');
+    await screen.findAllByText('Item v1');
     return api;
   }
 
@@ -468,7 +468,8 @@ describe('marking completed', () => {
     });
     expect(screen.getByRole('button', { name: /^Download to watch: Item v1/ })).toBeTruthy();
     expect(screen.getByText('Locked')).toBeTruthy();
-    expect(screen.getByText(/Complete “Item v1” first/)).toBeTruthy();
+    expect(screen.getByLabelText('Locked. Complete Item v1 first to unlock this.')).toBeTruthy();
+    expect(screen.getByText('Unlocks when you complete')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /: Item p1/ })).toBeNull(); // nothing to press on it
     expect(screen.queryByRole('button', { name: 'Mark as completed' })).toBeNull();
   });

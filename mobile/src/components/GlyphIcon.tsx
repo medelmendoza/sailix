@@ -21,7 +21,8 @@ export type GlyphName =
   | 'medal'
   | 'eye'
   | 'eyeoff'
-  | 'camera';
+  | 'camera'
+  | 'lock';
 
 /**
  * A tiny icon set drawn from plain shapes: no icon font and no emoji (both rendered unreliably in this app's runtimes),
@@ -58,6 +59,29 @@ export function GlyphIcon({
                 borderBottomLeftRadius: 2 * u,
                 borderBottomRightRadius: 2 * u,
               },
+            ]}
+          />
+        </>
+      )}
+      {name === 'lock' && (
+        <>
+          <View
+            style={[
+              line,
+              abs(6 * u, 2 * u, 12 * u, 13 * u),
+              {
+                borderWidth: 2.2 * u,
+                borderTopLeftRadius: 6 * u,
+                borderTopRightRadius: 6 * u,
+                borderBottomWidth: 0,
+              },
+            ]}
+          />
+          <View style={[fill, abs(4 * u, 10 * u, 16 * u, 12 * u), { borderRadius: 3.5 * u }]} />
+          <View
+            style={[
+              abs(10.8 * u, 14 * u, 2.4 * u, 4.5 * u),
+              { backgroundColor: colors.surface, borderRadius: 1.2 * u },
             ]}
           />
         </>

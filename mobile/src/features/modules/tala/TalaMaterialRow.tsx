@@ -118,24 +118,36 @@ export function TalaMaterialRow({
               };
 
   return (
-    <Card variant="flat" style={styles.card}>
+    <Card variant="flat" style={{ ...styles.card, ...(lockedBy ? styles.lockedCard : null) }}>
       <View
         style={styles.head}
         accessible
         accessibilityLabel={`${m.name}. ${typeLabel}. ${status}.`}
       >
-        <CourseImage
-          uri={m.thumbnail_url}
-          title={m.name}
-          style={{ ...styles.thumb, backgroundColor: tint.bg }}
-          fallback={<GlyphIcon name={ICON[m.type] ?? 'pdf'} size={26} color={tint.ink} />}
-        />
+        <View>
+          <CourseImage
+            uri={m.thumbnail_url}
+            title={m.name}
+            style={{ ...styles.thumb, backgroundColor: tint.bg }}
+            fallback={<GlyphIcon name={ICON[m.type] ?? 'pdf'} size={26} color={tint.ink} />}
+          />
+          {lockedBy ? (
+            <View style={styles.lockVeil}>
+              <View style={styles.lockBadge}>
+                <GlyphIcon name="lock" size={18} color={colors.onPrimary} />
+              </View>
+            </View>
+          ) : null}
+        </View>
         <View style={styles.text}>
           <AppText variant="caption" style={{ color: tint.ink }}>
             {typeLabel}
           </AppText>
           <AppText style={styles.name}>{m.name}</AppText>
-          <View style={[styles.chip, { backgroundColor: CHIP[tone].bg }]}>
+          <View
+            style={[styles.chip, { backgroundColor: lockedBy ? colors.surface : CHIP[tone].bg }]}
+          >
+            {lockedBy ? <GlyphIcon name="lock" size={13} color={CHIP[tone].ink} /> : null}
             <AppText variant="caption" style={{ color: CHIP[tone].ink }}>
               {status}
             </AppText>
@@ -154,9 +166,23 @@ export function TalaMaterialRow({
         </AppText>
       ) : null}
       {lockedBy ? (
-        <AppText variant="caption" muted>
-          {`Complete “${lockedBy}” first to unlock this.`}
-        </AppText>
+        <View
+          accessible
+          accessibilityLabel={`Locked. Complete ${lockedBy} first to unlock this.`}
+          style={styles.lockNote}
+        >
+          <View style={styles.lockNoteIcon}>
+            <GlyphIcon name="lock" size={16} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <AppText variant="caption" muted>
+              Unlocks when you complete
+            </AppText>
+            <AppText style={styles.lockNoteName} numberOfLines={2}>
+              {lockedBy}
+            </AppText>
+          </View>
+        </View>
       ) : null}
       {!m.viewable ? (
         <AppText variant="caption" muted>
@@ -240,11 +266,59 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 2 },
   name: { fontFamily: 'Quicksand_700Bold', fontSize: 16, lineHeight: 22, color: colors.text },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     alignSelf: 'flex-start',
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: 2,
     marginTop: 2,
+  },
+  lockedCard: { backgroundColor: colors.surfaceSunken },
+  lockVeil: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(18, 36, 61, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lockBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(18, 36, 61, 0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lockNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+  },
+  lockNoteIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.infoBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lockNoteName: {
+    fontFamily: 'Quicksand_700Bold',
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.text,
   },
   progress: { gap: spacing.sm },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
