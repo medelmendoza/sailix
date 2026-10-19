@@ -22,7 +22,9 @@ export type GlyphName =
   | 'eye'
   | 'eyeoff'
   | 'camera'
-  | 'lock';
+  | 'lock'
+  | 'list'
+  | 'grid';
 
 /**
  * A tiny icon set drawn from plain shapes: no icon font and no emoji (both rendered unreliably in this app's runtimes),
@@ -61,6 +63,34 @@ export function GlyphIcon({
               },
             ]}
           />
+        </>
+      )}
+      {name === 'list' && (
+        <>
+          {[4, 10.5, 17].map((y) => (
+            <View key={y} style={[fill, abs(3 * u, y * u, 3 * u, 3 * u), { borderRadius: u }]} />
+          ))}
+          {[4, 10.5, 17].map((y) => (
+            <View
+              key={`b${y}`}
+              style={[fill, abs(8.5 * u, (y + 0.5) * u, 12.5 * u, 2 * u), { borderRadius: u }]}
+            />
+          ))}
+        </>
+      )}
+      {name === 'grid' && (
+        <>
+          {[
+            [3, 3],
+            [13.5, 3],
+            [3, 13.5],
+            [13.5, 13.5],
+          ].map(([x, y]) => (
+            <View
+              key={`${x}-${y}`}
+              style={[fill, abs(x! * u, y! * u, 7.5 * u, 7.5 * u), { borderRadius: 2 * u }]}
+            />
+          ))}
         </>
       )}
       {name === 'lock' && (

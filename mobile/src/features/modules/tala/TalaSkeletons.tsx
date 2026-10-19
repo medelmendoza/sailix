@@ -34,7 +34,39 @@ function CourseCardSkeleton() {
   );
 }
 
-export function CourseListSkeleton({ count = 3 }: { count?: number }) {
+/** One course tile of the two-column view. */
+function CourseTileSkeleton() {
+  return (
+    <Card variant="flat" style={styles.tileCard}>
+      <ShimmerBlock style={styles.tilePicture} />
+      <View style={styles.tileBody}>
+        <ShimmerBlock style={[styles.line, { width: '85%', height: 16 }]} />
+        <ShimmerBlock style={[styles.line, { width: '60%', height: 16 }]} />
+        <ShimmerBlock style={styles.bar} />
+        <ShimmerBlock style={[styles.line, { width: '50%', height: 12 }]} />
+      </View>
+    </Card>
+  );
+}
+
+export function CourseListSkeleton({
+  count = 3,
+  grid = false,
+}: {
+  count?: number;
+  grid?: boolean;
+}) {
+  if (grid) {
+    return (
+      <Loading>
+        <View style={styles.tileGrid}>
+          {Array.from({ length: 4 }, (_, i) => (
+            <CourseTileSkeleton key={i} />
+          ))}
+        </View>
+      </Loading>
+    );
+  }
   return (
     <Loading>
       {Array.from({ length: count }, (_, i) => (
@@ -91,6 +123,15 @@ const styles = StyleSheet.create({
   picture: { height: 150, width: '100%' },
   body: { padding: spacing.lg, gap: spacing.md },
   facts: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  tileGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: spacing.md,
+  },
+  tileCard: { width: '48.5%', padding: 0, borderRadius: radius.lg, overflow: 'hidden' },
+  tilePicture: { height: 104, width: '100%' },
+  tileBody: { padding: spacing.md, gap: spacing.sm },
   line: { borderRadius: radius.sm },
   pill: { height: 24, borderRadius: radius.pill },
   bar: { height: 12, borderRadius: radius.pill, width: '100%' },

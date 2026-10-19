@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { makeMe, TALA } from '@/test-utils/fixtures';
 import { mockApi } from '@/test-utils/mockApi';
@@ -69,6 +70,25 @@ async function open(list: unknown[], d: unknown = detail()) {
 }
 
 describe('course list', () => {
+  it('can be switched between list and grid, and remembers the choice', async () => {
+    await open([course(), course({ id: 'A2', name: 'First Aid', creator: null })]);
+    await screen.findByText('Fire Safety at Sea');
+    expect(screen.getByRole('radio', { name: 'List view', checked: true })).toBeTruthy();
+    expect(screen.getByText('Capt. Reyes')).toBeTruthy(); // the list card names the creator
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Grid view' }));
+    expect(screen.getByRole('radio', { name: 'Grid view', checked: true })).toBeTruthy();
+    expect(screen.getByText('Fire Safety at Sea')).toBeTruthy();
+    expect(screen.getByText('First Aid')).toBeTruthy();
+    expect(screen.queryByText('Capt. Reyes')).toBeNull(); // a tile is compact: no creator line
+    expect(screen.getAllByText('1 of 4 done')).toHaveLength(2);
+    expect(await AsyncStorage.getItem('sailix:tala:course-view')).toBe('grid');
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'List view' }));
+    expect(screen.getByText('Capt. Reyes')).toBeTruthy();
+    expect(await AsyncStorage.getItem('sailix:tala:course-view')).toBe('list');
+  });
+
   it('shows each course as a card with its title, creator and time left', async () => {
     await open([course(), course({ id: 'A2', name: 'First Aid', creator: null, date_to: null })]);
     expect(await screen.findByText('Fire Safety at Sea')).toBeTruthy();
