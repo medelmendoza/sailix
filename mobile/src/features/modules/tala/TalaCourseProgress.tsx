@@ -28,14 +28,29 @@ export function TalaCourseProgress({
   course,
   showState = true,
   showDue = true,
+  showPercent = false,
 }: {
   course: CourseProgressData;
   showState?: boolean;
   showDue?: boolean;
+  /** A "Progress  27%" line above the bar. */
+  showPercent?: boolean;
 }) {
   const due = dueInfo(course);
   return (
     <View style={{ gap: spacing.xs }}>
+      {showPercent ? (
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}
+        >
+          <AppText variant="caption" muted>
+            Progress
+          </AppText>
+          <AppText style={{ fontFamily: 'Quicksand_700Bold', color: colors.primary }}>
+            {course.percent}%
+          </AppText>
+        </View>
+      ) : null}
       <ProgressBar percent={course.percent} label={`${course.name} progress`} />
       <AppText variant="caption" muted>
         {course.completed} of {course.total} items completed

@@ -35,9 +35,14 @@ export function TalaCourseGridCard({
             {course.name}
           </AppText>
           <ProgressBar percent={course.percent} label={`${course.name} progress`} />
-          <AppText variant="caption" muted>
-            {course.completed} of {course.total} done
-          </AppText>
+          <View style={styles.progressRow}>
+            <AppText variant="caption" muted>
+              {course.completed} of {course.total} done
+            </AppText>
+            <AppText variant="caption" style={styles.percent}>
+              {course.percent}%
+            </AppText>
+          </View>
           {due ? (
             <AppText variant="caption" numberOfLines={1} style={{ color: INK[due.tone] }}>
               {due.text}
@@ -61,5 +66,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     minHeight: 40,
   },
+  progressRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  percent: { fontFamily: 'Quicksand_700Bold', color: colors.primary },
   pressed: { opacity: 0.8 },
 });

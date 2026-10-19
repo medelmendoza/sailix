@@ -47,7 +47,7 @@ export function TalaCourseCard({ course, onPress }: { course: TalaCourse; onPres
               </AppText>
             </View>
           </View>
-          <TalaCourseProgress course={course} showDue={false} />
+          <TalaCourseProgress course={course} showDue={false} showPercent />
         </View>
       </Card>
     </Pressable>
