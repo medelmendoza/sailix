@@ -70,6 +70,28 @@ async function open(list: unknown[], d: unknown = detail()) {
 }
 
 describe('course list', () => {
+  it('shows how far along each course is on its picture, and can be filtered by that', async () => {
+    await open([
+      course({ percent: 25 }),
+      course({ id: 'A2', name: 'First Aid', state: 'not_started', completed: 0, percent: 0 }),
+      course({ id: 'A3', name: 'Rigging', state: 'completed', completed: 4, percent: 100 }),
+    ]);
+    await screen.findByText('Fire Safety at Sea');
+    expect(screen.getByText('25%', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getAllByText('Not started', { includeHiddenElements: true })).toHaveLength(2); // the filter chip and the badge
+    expect(screen.getByText('Done', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'All, 3', checked: true })).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Not started, 1' }));
+    expect(screen.getByText('First Aid')).toBeTruthy();
+    expect(screen.queryByText('Fire Safety at Sea')).toBeNull();
+    expect(screen.queryByText('Rigging')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'In progress, 1' }));
+    expect(screen.getByText('Fire Safety at Sea')).toBeTruthy();
+    expect(screen.queryByText('First Aid')).toBeNull();
+  });
+
   it('can be switched between list and grid, and remembers the choice', async () => {
     await open([course(), course({ id: 'A2', name: 'First Aid', creator: null })]);
     await screen.findByText('Fire Safety at Sea');

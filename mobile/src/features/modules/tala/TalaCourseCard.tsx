@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText, Card, CourseImage, GlyphIcon } from '@/components';
 import { colors, radius, spacing } from '@/constants/theme';
 import type { TalaCourse } from '@/services/api/types';
+import { TalaCourseBadge } from './TalaCourseBadge';
 import { TalaCourseProgress } from './TalaCourseProgress';
 import { dueInfo, type Due } from './stats';
 
@@ -28,7 +29,10 @@ export function TalaCourseCard({ course, onPress }: { course: TalaCourse; onPres
       style={({ pressed }) => (pressed ? styles.pressed : undefined)}
     >
       <Card variant="flat" style={styles.card}>
-        <CourseImage uri={course.thumbnail_url} title={course.name} style={styles.picture} />
+        <View>
+          <CourseImage uri={course.thumbnail_url} title={course.name} style={styles.picture} />
+          <TalaCourseBadge course={course} />
+        </View>
         <View style={styles.body}>
           <AppText numberOfLines={2} style={styles.title}>
             {course.name}

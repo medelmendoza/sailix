@@ -15,6 +15,7 @@ import {
 } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
+import type { TalaCourse } from '@/services/api/types';
 import { useTalaCourses } from './api';
 import { TalaCourseCard } from './TalaCourseCard';
 import { TalaCourseGridCard } from './TalaCourseGridCard';
@@ -27,6 +28,14 @@ export function savedCopyText(fetchedAt: string | null): string {
   const when = fetchedAt ? new Date(fetchedAt).toLocaleString() : 'earlier';
   return `You are viewing the copy saved on this device (${when}). It updates when you are back online.`;
 }
+
+type StateFilter = 'all' | TalaCourse['state'];
+const FILTERS: readonly { value: StateFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'in_progress', label: 'In progress' },
+  { value: 'not_started', label: 'Not started' },
+  { value: 'completed', label: 'Finished' },
+];
 
 type CourseView = 'list' | 'grid';
 const VIEW_KEY = 'sailix:tala:course-view';
@@ -70,6 +79,7 @@ export function TalaCourseList({
   const [query, setQuery] = useState('');
   const [shown, setShown] = useState(PAGE_SIZE);
   const [view, setView] = useCourseView();
+  const [filter, setFilter] = useState<StateFilter>('all');
 
   async function refresh() {
     setRefreshing(true);
@@ -84,7 +94,10 @@ export function TalaCourseList({
 
   const all = courses.data?.data ?? [];
   const needle = plain(query.trim());
-  const matches = needle === '' ? all : all.filter((c) => plain(c.name).includes(needle));
+  const inFilter = filter === 'all' ? all : all.filter((c) => c.state === filter);
+  const matches = needle === '' ? inFilter : inFilter.filter((c) => plain(c.name).includes(needle));
+  const countOf = (f: StateFilter) =>
+    f === 'all' ? all.length : all.filter((c) => c.state === f).length;
   const visible = matches.slice(0, shown);
   const left = matches.length - visible.length;
 
@@ -139,10 +152,50 @@ export function TalaCourseList({
                 label="Search courses"
                 placeholder="Search courses"
               />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.chips}
+                accessibilityRole="radiogroup"
+              >
+                {FILTERS.map((f) => {
+                  const on = filter === f.value;
+                  return (
+                    <Pressable
+                      key={f.value}
+                      accessibilityRole="radio"
+                      accessibilityLabel={`${f.label}, ${countOf(f.value)}`}
+                      accessibilityState={{ checked: on }}
+                      onPress={() => {
+                        setFilter(f.value);
+                        setShown(PAGE_SIZE);
+                      }}
+                      style={[styles.chip, on && styles.chipOn]}
+                    >
+                      <AppText
+                        variant="button"
+                        style={{ color: on ? colors.onPrimary : colors.text }}
+                      >
+                        {f.label}
+                      </AppText>
+                      <AppText
+                        variant="caption"
+                        style={{ color: on ? colors.onPrimary : colors.textMuted }}
+                      >
+                        {countOf(f.value)}
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
               {matches.length === 0 ? (
                 <EmptyState
                   title="No courses match"
-                  description={`Nothing matches \u201c${query.trim()}\u201d.`}
+                  description={
+                    needle !== ''
+                      ? `Nothing matches \u201c${query.trim()}\u201d.`
+                      : 'There are no courses in this group yet.'
+                  }
                 />
               ) : view === 'grid' ? (
                 <View style={styles.grid}>
@@ -193,6 +246,19 @@ export function TalaCourseList({
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
+  chips: { gap: spacing.sm, paddingVertical: 2 },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 40,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   toggle: {
     flexDirection: 'row',
