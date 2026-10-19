@@ -31,7 +31,7 @@ trait FakesTala
     }
 
     /** @param array<string, mixed> $overrides url-pattern => response */
-    private function fakeTala(array $overrides = []): void
+    private function fakeTala(array $overrides = [], array $courseExtra = []): void
     {
         $assignment = [
             'assignId' => 'A1', 'courseId' => 'C1', 'dateFrom' => '2026-01-01', 'dateTo' => '2026-12-31', 'status' => 'NOT YET COMPLETED', 'progress' => '2/5',
@@ -44,7 +44,7 @@ trait FakesTala
                     ['materialId' => 'e1', 'materialType' => 'epub', 'materialName' => 'Book'],
                     ['materialId' => 'l1', 'materialType' => 'quiz', 'materialName' => 'Legacy quiz'],
                 ],
-            ],
+            ] + $courseExtra,
         ];
         // Each call REPLACES the previous fakes (Http::fake alone appends, and the first matching stub wins).
         Http::swap(new Factory);

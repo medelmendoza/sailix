@@ -125,6 +125,15 @@ export function TalaCourseScreen({ route }: Props) {
     (outbox.data ?? []).filter((p) => p.assignId === assignId).map((p) => p.materialId),
   );
   const downloaded = downloads.data ?? {};
+  // an ordered course: a material opens only when every one before it is completed (or waiting to be sent)
+  const lockedBy = new Map<string, string>();
+  if (c.sequential) {
+    let blocker: string | null = null;
+    for (const m of c.materials) {
+      if (blocker) lockedBy.set(m.id, blocker);
+      else if (m.viewable && !(isDone(m) || pending.has(m.id))) blocker = m.name;
+    }
+  }
 
   function openOffline(m: TalaMaterialSummary) {
     const rec = downloaded[m.id];
@@ -146,6 +155,7 @@ export function TalaCourseScreen({ route }: Props) {
 
   /** Quizzes and flashcards open directly; a video or a PDF must be downloaded first (it is then played from the device). */
   function openMaterial(m: TalaMaterialSummary) {
+    if (lockedBy.has(m.id)) return;
     if (m.type === 'flashcards') {
       navigation.navigate('TalaFlashcards', { assignId, cardId: m.id, name: m.name });
     } else if (m.type === 'quiz') {
@@ -221,9 +231,11 @@ export function TalaCourseScreen({ route }: Props) {
                 saved={downloaded[m.id]}
                 waiting={pending.has(m.id)}
                 busy={busy === m.id}
+                lockedBy={lockedBy.get(m.id) ?? null}
                 progress={progress?.id === m.id ? progress : null}
                 onCancel={() => abort.current?.abort()}
                 canMarkCompleted={
+                  !lockedBy.has(m.id) &&
                   c.progress_submission &&
                   m.type === 'pdf' &&
                   m.viewable &&
@@ -231,6 +243,7 @@ export function TalaCourseScreen({ route }: Props) {
                   !(isDone(m) || pending.has(m.id))
                 }
                 completeHint={
+                  !lockedBy.has(m.id) &&
                   c.progress_submission &&
                   m.type === 'pdf' &&
                   m.viewable &&

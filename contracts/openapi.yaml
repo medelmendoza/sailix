@@ -2989,6 +2989,12 @@ components:
             progress_submission:
               type: boolean
               description: Whether this deployment lets the app submit completion to Tala.
+            sequential:
+              type: boolean
+              description: >
+                Tala marks the course as ordered: each material is meant to be done after the ones before it, in the
+                order listed. Informational for the app, which keeps later materials locked until the earlier ones are
+                completed.
             materials:
               type: array
               items: { $ref: '#/components/schemas/TalaMaterialSummary' }

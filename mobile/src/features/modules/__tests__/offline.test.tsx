@@ -461,6 +461,31 @@ describe('marking completed', () => {
     expect(screen.getByRole('button', { name: /^Download to watch: Item v1/ })).toBeTruthy();
   });
 
+  it('in an ordered course a material stays locked until the ones before it are completed', async () => {
+    // v1 (a video, not done) comes first, so the completed PDF after it is locked until v1 is done
+    await openCourse(true, {
+      'GET /modules/tala/courses/A1': { data: { data: { ...detail(true), sequential: true } } },
+    });
+    expect(screen.getByRole('button', { name: /^Download to watch: Item v1/ })).toBeTruthy();
+    expect(screen.getByText('Locked')).toBeTruthy();
+    expect(screen.getByText(/Complete “Item v1” first/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /: Item p1/ })).toBeNull(); // nothing to press on it
+    expect(screen.queryByRole('button', { name: 'Mark as completed' })).toBeNull();
+  });
+
+  it('an ordered course opens the next material once the earlier one is completed', async () => {
+    const done = { ...detail(true), sequential: true };
+    done.materials = [mat('v1', 'video', 'COMPLETED'), mat('p1', 'pdf')];
+    await openCourse(true, { 'GET /modules/tala/courses/A1': { data: { data: done } } });
+    expect(screen.queryByText('Locked')).toBeNull();
+    expect(screen.getByRole('button', { name: /^Download to open: Item p1/ })).toBeTruthy();
+  });
+
+  it('a course that is not ordered locks nothing', async () => {
+    await openCourse(true);
+    expect(screen.queryByText('Locked')).toBeNull();
+  });
+
   it('shows how far a download has got, and Cancel stops it without an error or a saved file', async () => {
     await openCourse(false, { 'GET /modules/tala/courses/A1/materials/v1': material('v1') });
     fs.state.hold = new Promise(() => {}); // the transfer stays in flight

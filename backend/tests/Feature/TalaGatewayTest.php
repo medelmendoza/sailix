@@ -136,6 +136,17 @@ class TalaGatewayTest extends TestCase
         $this->assertStringNotContainsString('refresh', $r->getContent());
     }
 
+    public function test_a_course_tala_marks_sequential_is_flagged_as_ordered(): void
+    {
+        foreach (['Yes' => true, 'yes' => true, 'No' => false, '' => false] as $value => $expected) {
+            $this->fakeTala([], ['sequential' => $value]);
+            $h = $this->as('crew1');
+            $this->link($h);
+
+            $this->assertSame($expected, $this->getJson('/api/v1/modules/tala/courses/A1', $h)->assertOk()->json('data.sequential'), "sequential = '$value'");
+        }
+    }
+
     public function test_course_detail_merges_progress_hides_unsupported_kinds_and_never_offers_quizzes(): void
     {
         $this->fakeTala();
@@ -145,6 +156,7 @@ class TalaGatewayTest extends TestCase
         $d = $this->getJson('/api/v1/modules/tala/courses/A1', $h)->assertOk()->json('data');
 
         $this->assertSame(2, $d['hidden_materials']); // epub + legacy quiz (D-T6)
+        $this->assertFalse($d['sequential']); // Tala did not mark this course as ordered
         $byId = collect($d['materials'])->keyBy('id');
         $this->assertSame(['v1', 'p1', 'q1'], $byId->keys()->all());
         $this->assertSame('100', $byId['v1']['progress']);

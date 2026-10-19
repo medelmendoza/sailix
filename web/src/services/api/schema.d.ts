@@ -1992,6 +1992,8 @@ export interface components {
         TalaCourseDetail: components["schemas"]["TalaCourse"] & {
             /** @description Whether this deployment lets the app submit completion to Tala. */
             progress_submission: boolean;
+            /** @description Tala marks the course as ordered: each material is meant to be done after the ones before it, in the order listed. Informational for the app, which keeps later materials locked until the earlier ones are completed. */
+            sequential?: boolean;
             materials: components["schemas"]["TalaMaterialSummary"][];
             /** @description Materials of kinds not supported in the MVP (EPUB, legacy quiz, unknown) that were left out. */
             hidden_materials: number;

@@ -153,6 +153,8 @@ final class TalaGateway
                 ], $visible),
                 'hidden_materials' => $hidden,
                 'progress_submission' => $this->progressWritesEnabled(),
+                // Tala's "sequential" course: the materials are meant to be done in order (`materialNum`)
+                'sequential' => in_array(strtolower(trim((string) ($assignment['course']['sequential'] ?? ''))), ['yes', 'true', '1', 'y'], true),
             ];
         });
     }

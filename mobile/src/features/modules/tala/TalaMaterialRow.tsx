@@ -50,6 +50,7 @@ export function TalaMaterialRow({
   saved,
   waiting,
   busy,
+  lockedBy,
   progress,
   onCancel,
   canMarkCompleted,
@@ -63,6 +64,8 @@ export function TalaMaterialRow({
   saved: DownloadRecord | undefined;
   waiting: boolean;
   busy: boolean;
+  /** Name of the earlier material that must be completed first (an ordered course), or null. */
+  lockedBy?: string | null;
   /** How far a download has got; `total` is -1 when the size is not known. */
   progress?: { written: number; total: number } | null;
   onCancel?: () => void;
@@ -74,34 +77,45 @@ export function TalaMaterialRow({
   onRemove: () => void;
   onMarkCompleted: () => void;
 }) {
-  const stats = materialStatsLine(m);
+  const stats = lockedBy ? null : materialStatsLine(m);
   const isFile = m.type === 'video' || m.type === 'pdf';
   const known = statusWord(m.status);
-  const tone: Tone = waiting ? 'waiting' : isDone(m) ? 'done' : known ? 'progress' : 'idle';
-  const status = waiting
-    ? 'Completed, waiting to send'
-    : (known ?? (isDone(m) ? 'Completed' : 'Not started'));
+  const tone: Tone = lockedBy
+    ? 'idle'
+    : waiting
+      ? 'waiting'
+      : isDone(m)
+        ? 'done'
+        : known
+          ? 'progress'
+          : 'idle';
+  const status = lockedBy
+    ? 'Locked'
+    : waiting
+      ? 'Completed, waiting to send'
+      : (known ?? (isDone(m) ? 'Completed' : 'Not started'));
   const typeLabel = TYPE_LABEL[m.type] ?? m.type;
   const tint = TINT[m.type] ?? TINT.pdf!;
 
   // the one action, and what it does
-  const action: { text: string; run: () => void; primary: boolean } | null = !m.viewable
-    ? null
-    : m.type === 'quiz'
-      ? { text: isDone(m) ? 'Retake quiz' : 'Take quiz', run: onOpen, primary: true }
-      : m.type === 'flashcards'
-        ? {
-            text: isDone(m) ? 'Practice flashcards' : 'Study flashcards',
-            run: onOpen,
-            primary: true,
-          }
-        : saved
-          ? { text: m.type === 'video' ? 'Watch' : 'Open', run: onOpen, primary: true }
-          : {
-              text: m.type === 'video' ? 'Download to watch' : 'Download to open',
-              run: onDownload,
-              primary: false,
-            };
+  const action: { text: string; run: () => void; primary: boolean } | null =
+    lockedBy || !m.viewable
+      ? null
+      : m.type === 'quiz'
+        ? { text: isDone(m) ? 'Retake quiz' : 'Take quiz', run: onOpen, primary: true }
+        : m.type === 'flashcards'
+          ? {
+              text: isDone(m) ? 'Practice flashcards' : 'Study flashcards',
+              run: onOpen,
+              primary: true,
+            }
+          : saved
+            ? { text: m.type === 'video' ? 'Watch' : 'Open', run: onOpen, primary: true }
+            : {
+                text: m.type === 'video' ? 'Download to watch' : 'Download to open',
+                run: onDownload,
+                primary: false,
+              };
 
   return (
     <Card variant="flat" style={styles.card}>
@@ -137,6 +151,11 @@ export function TalaMaterialRow({
       {saved ? (
         <AppText variant="caption" muted>
           Saved on this device ({megabytes(saved.bytes)})
+        </AppText>
+      ) : null}
+      {lockedBy ? (
+        <AppText variant="caption" muted>
+          {`Complete “${lockedBy}” first to unlock this.`}
         </AppText>
       ) : null}
       {!m.viewable ? (
