@@ -58,6 +58,14 @@ secondary colour, logo, favicon, and a `version` that changes with every edit. T
 - **Who edits:** an organization's administrators (`tenant.manage`) on *Branding* and *Domains*; the superadmin on the organization page of the console (*Address and domains*, *Branding*, with a reset to the Sailix look), and
   can choose the address name when creating an organization.
 
+### Mobile
+The app has no address, so the look comes with the sign-in: `GET /me` carries `tenant.look` (the same fields as the public look). The
+app keeps it in a small store that follows the signed-in organization and forgets it on sign-out. The brand surfaces draw with it
+(`useBrand()`): primary buttons and progress bars, links, selected states, default icon colour, the tab bar's open pill and header
+tint, and the Dashboard, Call-it and Astra headers (primary into the secondary, or into a darker primary); the Dashboard also
+shows the logo. With no colours set, the Sailix tokens are used exactly. Some screens still draw parts of themselves with the
+fixed Sailix blue (for example inside the Tala pages and the announcements card); they are changed to `useBrand()` as they are touched.
+
 ## 3. Shared-address demos
 
 `https://<host>/login?tenant=<slug>` stores the slug in the browser, removes it from the address and sends it as `X-Tenant-Slug`.
@@ -71,4 +79,4 @@ secondary colour, logo, favicon, and a `version` that changes with every edit. T
 - DNS verification runs from the API host and needs outbound DNS.
 
 ## 5. Not covered
-Plans and limits, groups of organizations, per-organization colours in the mobile app (it shows no look yet), and choosing a primary domain for emailed links (they use `SAILIX_RESET_URL`).
+Plans and limits, groups of organizations, and choosing a primary domain for emailed links (they use `SAILIX_RESET_URL`).
