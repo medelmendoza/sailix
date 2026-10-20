@@ -22,6 +22,7 @@ import {
 import { describeError } from '../../services/api/errors';
 import type { Crew, Todo } from '../../services/api/types';
 import { applyServerErrors } from '../authentication/forms';
+import { CrewDocumentsSection } from './CrewDocumentsSection';
 import {
   useAssignTodo,
   useCrewMember,
@@ -184,6 +185,8 @@ function Profile({ crew }: { crew: Crew }) {
           </div>
         </form>
       </Card>
+
+      <CrewDocumentsSection crew={crew} />
 
       <CrewTodos crew={crew} />
 

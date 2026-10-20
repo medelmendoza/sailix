@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Badge,
   Button,
@@ -35,7 +36,15 @@ const EXPIRY: Record<string, string> = {
 export function DocumentsPage() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('pending');
-  const list = useDocuments({ page, per_page: 20, ...(status ? { status } : {}) });
+  // `?member=<id>` narrows the list to one crew member (the crew profile links here)
+  const [search] = useSearchParams();
+  const member = search.get('member');
+  const list = useDocuments({
+    page,
+    per_page: 20,
+    ...(status ? { status } : {}),
+    ...(member ? { membership_id: member } : {}),
+  });
   const review = useReviewDocument();
   const toast = useToast();
   const [approving, setApproving] = useState<CrewDocument | null>(null);
@@ -55,6 +64,14 @@ export function DocumentsPage() {
         title="Documents"
         description="Documents your members submitted. Check the file, then approve it or send it back with a reason."
       />
+      {member ? (
+        <p className="mb-4 text-sm">
+          Showing one member's documents.{' '}
+          <Link to="/app/documents" className="text-brand underline-offset-2 hover:underline">
+            Show everyone
+          </Link>
+        </p>
+      ) : null}
       <div className="mb-4 max-w-xs">
         <SelectField
           label="Show"

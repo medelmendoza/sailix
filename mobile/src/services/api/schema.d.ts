@@ -1068,6 +1068,50 @@ export interface paths {
         patch: operations["updateCrew"];
         trace?: never;
     };
+    "/tenant/crew/{membership}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One row per kind of document, with what this member has on file
+         * @description Requires `documents.manage`. Every active document type of the organization, in name order. `state` is computed on the server: `missing` (nothing submitted), `pending` (waiting for review), `rejected` (sent back), or for an approved document `none` (no expiry date), `valid`, `expiring` (within 90 days) or `expired`. When a member has several approved documents of a kind, the one that stays valid longest counts. `requested` tells whether the agency has asked this member for that kind and they have not answered yet.
+         */
+        get: operations["listCrewDocuments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/crew/{membership}/document-requests/{documentType}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Ask the member to submit or renew a kind of document
+         * @description Requires `documents.manage`. Idempotent: asking again for a kind already asked for answers 200. `409 not_active` unless the member is active. The request closes by itself when the member submits a document of that kind.
+         */
+        put: operations["requestCrewDocument"];
+        post?: never;
+        /**
+         * Take the request back
+         * @description Requires `documents.manage`. Answers 204 whether or not there was an open request.
+         */
+        delete: operations["withdrawCrewDocumentRequest"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenant/crew/{membership}/password-reset": {
         parameters: {
             query?: never;
@@ -2253,6 +2297,29 @@ export interface components {
              * @description Only in the single-member view.
              */
             birthday?: string | null;
+        };
+        CrewDocumentRow: {
+            type: {
+                id: string;
+                name: string;
+                short_name?: string | null;
+            };
+            document: {
+                id: string;
+                number?: string | null;
+                /** Format: date */
+                expires_on?: string | null;
+                /** @enum {string} */
+                review_status: "pending" | "approved" | "rejected";
+            } | null;
+            /** @enum {string} */
+            state: "missing" | "pending" | "rejected" | "none" | "valid" | "expiring" | "expired";
+            requested: boolean;
+        };
+        CrewDocumentRequested: {
+            data: {
+                requested: boolean;
+            };
         };
         CrewUpdate: {
             first_name?: string;
@@ -4322,6 +4389,93 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    listCrewDocuments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                membership: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The rows. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CrewDocumentRow"][];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    requestCrewDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                membership: string;
+                documentType: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Already requested. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrewDocumentRequested"];
+                };
+            };
+            /** @description Requested. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrewDocumentRequested"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    withdrawCrewDocumentRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                membership: string;
+                documentType: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Withdrawn. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     sendCrewPasswordReset: {

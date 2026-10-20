@@ -17,6 +17,7 @@ export type Announcement = Schemas['Announcement'];
 export type Todo = Schemas['Todo'];
 export type Crew = Schemas['Crew'];
 export type CrewUpdate = Schemas['CrewUpdate'];
+export type CrewDocumentRow = Schemas['CrewDocumentRow'];
 export type DocumentType = Schemas['DocumentType'];
 export type CallItReport = Schemas['CallItReport'];
 export type FinanceImportResult = Schemas['FinanceImportResult'];

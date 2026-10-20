@@ -75,6 +75,9 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::get('crew', [Tenant\CrewController::class, 'index'])->name('crew.index');
         Route::get('crew/{membership}', [Tenant\CrewController::class, 'show'])->name('crew.show');
         Route::patch('crew/{membership}', [Tenant\CrewController::class, 'update'])->name('crew.update');
+        Route::get('crew/{membership}/documents', [Tenant\CrewDocumentController::class, 'index']);
+        Route::put('crew/{membership}/document-requests/{documentType}', [Tenant\CrewDocumentController::class, 'request']);
+        Route::delete('crew/{membership}/document-requests/{documentType}', [Tenant\CrewDocumentController::class, 'withdraw']);
         Route::post('crew/{membership}/password-reset', [Tenant\CrewController::class, 'passwordReset'])->middleware('throttle:crew-reset');
         Route::get('audit-logs', [Tenant\AuditLogController::class, 'index']);
         Route::get('deletion-requests', [Tenant\DeletionRequestController::class, 'index']);

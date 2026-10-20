@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Me\DocumentRequest;
 use App\Http\Resources\DocumentResource;
 use App\Models\CrewDocument;
+use App\Models\DocumentAssignment;
 use App\Models\DocumentType;
 use App\Support\ApiProblem;
 use App\Support\Audit;
@@ -74,6 +75,7 @@ class DocumentController extends Controller
             'submitted_at' => now(),
         ] + $this->fields($request) + $file);
         $document->save(); // tenant_id is stamped from the context
+        DocumentAssignment::fulfil((string) $context->membershipId(), $type->id); // answers an agency request for this kind
         Audit::record('document.submitted', $context->tenantId(), $document);
 
         return (new DocumentResource($document->load('type')))->response()->setStatusCode(201);
@@ -106,6 +108,7 @@ class DocumentController extends Controller
         if ($oldFile) {
             DocumentFiles::delete($oldFile);
         }
+        DocumentAssignment::fulfil((string) $context->membershipId(), $found->document_type_id);
         Audit::record('document.resubmitted', $context->tenantId(), $found);
 
         return (new DocumentResource($found->load('type')))->response();

@@ -9,6 +9,7 @@ import type {
   CallItReport,
   Crew,
   CrewDocument,
+  CrewDocumentRow,
   CrewUpdate,
   DocumentType,
   DeletionRequest,
@@ -91,6 +92,32 @@ export function useUpdateCrew(id: string) {
       void qc.invalidateQueries({ queryKey: ['members'] });
       void qc.invalidateQueries({ queryKey: ['audit'] });
     },
+  });
+}
+
+export function useCrewDocuments(id: string) {
+  return useQuery({
+    queryKey: ['crew-documents', id],
+    queryFn: async () =>
+      (await api.get<Envelope<CrewDocumentRow[]>>(`/tenant/crew/${id}/documents`)).data.data,
+  });
+}
+
+/** Tick or untick "ask this member for that kind of document". */
+export function useSetDocumentRequest(id: string) {
+  const qc = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: async ({ typeId, requested }: { typeId: string; requested: boolean }) => {
+      const url = `/tenant/crew/${id}/document-requests/${typeId}`;
+      if (requested) await api.put(url);
+      else await api.delete(url);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['crew-documents', id] });
+      void qc.invalidateQueries({ queryKey: ['audit'] });
+    },
+    onError: (e) => toast.error(describeError(e)),
   });
 }
 

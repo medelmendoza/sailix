@@ -1604,6 +1604,73 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /tenant/crew/{membership}/documents:
+    get:
+      tags: [tenant]
+      operationId: listCrewDocuments
+      summary: One row per kind of document, with what this member has on file
+      description: >
+        Requires `documents.manage`. Every active document type of the organization, in name order. `state` is computed on
+        the server: `missing` (nothing submitted), `pending` (waiting for review), `rejected` (sent back), or for an approved
+        document `none` (no expiry date), `valid`, `expiring` (within 90 days) or `expired`. When a member has several approved
+        documents of a kind, the one that stays valid longest counts. `requested` tells whether the agency has asked this member
+        for that kind and they have not answered yet.
+      parameters:
+        - { name: membership, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The rows.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/CrewDocumentRow' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /tenant/crew/{membership}/document-requests/{documentType}:
+    put:
+      tags: [tenant]
+      operationId: requestCrewDocument
+      summary: Ask the member to submit or renew a kind of document
+      description: >
+        Requires `documents.manage`. Idempotent: asking again for a kind already asked for answers 200. `409 not_active` unless
+        the member is active. The request closes by itself when the member submits a document of that kind.
+      parameters:
+        - { name: membership, in: path, required: true, schema: { type: string } }
+        - { name: documentType, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Already requested.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CrewDocumentRequested' }
+        '201':
+          description: Requested.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CrewDocumentRequested' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [tenant]
+      operationId: withdrawCrewDocumentRequest
+      summary: Take the request back
+      description: Requires `documents.manage`. Answers 204 whether or not there was an open request.
+      parameters:
+        - { name: membership, in: path, required: true, schema: { type: string } }
+        - { name: documentType, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Withdrawn. }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /tenant/crew/{membership}/password-reset:
     post:
       tags: [tenant]
@@ -3325,6 +3392,38 @@ components:
         date_arrive: { type: [string, 'null'], format: date }
         date_depart: { type: [string, 'null'], format: date }
         birthday: { type: [string, 'null'], format: date, description: 'Only in the single-member view.' }
+    CrewDocumentRow:
+      type: object
+      required: [type, document, state, requested]
+      properties:
+        type:
+          type: object
+          required: [id, name]
+          properties:
+            id: { type: string }
+            name: { type: string }
+            short_name: { type: [string, 'null'] }
+        document:
+          oneOf:
+            - type: object
+              required: [id, review_status]
+              properties:
+                id: { type: string }
+                number: { type: [string, 'null'] }
+                expires_on: { type: [string, 'null'], format: date }
+                review_status: { type: string, enum: [pending, approved, rejected] }
+            - { type: 'null' }
+        state: { type: string, enum: [missing, pending, rejected, none, valid, expiring, expired] }
+        requested: { type: boolean }
+    CrewDocumentRequested:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [requested]
+          properties:
+            requested: { type: boolean }
     CrewUpdate:
       type: object
       properties:

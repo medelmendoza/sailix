@@ -104,11 +104,34 @@ describe('Crew profile', () => {
     assignee: { id: 'c1', user: { id: 'u1', username: 'user-c1', email: 'c1@example.test' } },
   };
 
+  const DOC_ROWS = [
+    {
+      type: { id: 'dt1', name: "Seaman's Book", short_name: null },
+      document: { id: 'd1', number: 'SB-1', expires_on: '2026-12-01', review_status: 'approved' },
+      state: 'expiring',
+      requested: true,
+    },
+    {
+      type: { id: 'dt2', name: 'US Visa', short_name: null },
+      document: { id: 'd2', number: 'V-9', expires_on: '2031-01-01', review_status: 'approved' },
+      state: 'valid',
+      requested: false,
+    },
+    {
+      type: { id: 'dt3', name: 'Panama Booklet', short_name: null },
+      document: null,
+      state: 'missing',
+      requested: false,
+    },
+  ];
+
   function profileApi(extra: Parameters<typeof server.use> = []) {
     server.use(
       ...extra,
       http.get(`${V1}/tenant/crew/c1`, () => HttpResponse.json({ data: JAYCOB })),
       http.get(`${V1}/tenant/todos`, () => HttpResponse.json(pageOf([task]))),
+      http.get(`${V1}/tenant/crew/c1/documents`, () => HttpResponse.json({ data: DOC_ROWS })),
+      http.get(`${V1}/tenant/documents`, () => HttpResponse.json(pageOf([]))),
     );
   }
 
@@ -278,6 +301,123 @@ describe('Crew profile', () => {
     await waitFor(() => expect(removed.calls).toHaveLength(1));
   });
 
+  it('lists the kinds of documents with their state, and the checklist of what was asked for', async () => {
+    asTenantAdmin();
+    profileApi();
+    renderApp('/app/crew/c1');
+
+    const table = within(await screen.findByRole('table', { name: 'Documents to assign' }));
+    expect(table.getByText('Expiring')).toBeInTheDocument();
+    expect(table.getByText('Valid')).toBeInTheDocument();
+    expect(table.getByText('Not submitted')).toBeInTheDocument();
+    expect(table.getByText('SB-1')).toBeInTheDocument();
+    const checklist = within(screen.getByLabelText('Document checklist'));
+    expect(checklist.getByText("Seaman's Book")).toBeInTheDocument();
+    expect(checklist.queryByText('US Visa')).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: "Ask for Seaman's Book" })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Ask for US Visa' })).not.toBeChecked();
+  });
+
+  it('filters the documents by name and by status', async () => {
+    asTenantAdmin();
+    profileApi();
+    const { user } = renderApp('/app/crew/c1');
+    await screen.findByRole('table', { name: 'Documents to assign' });
+
+    await user.type(screen.getByLabelText('Document name'), 'visa');
+    expect(screen.queryByText("Seaman's Book", { selector: 'td' })).not.toBeInTheDocument();
+    expect(screen.getByText('US Visa', { selector: 'td' })).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText('Document name'));
+    await user.selectOptions(screen.getByLabelText('Status'), 'missing');
+    expect(screen.getByText('Panama Booklet', { selector: 'td' })).toBeInTheDocument();
+    expect(screen.queryByText('US Visa', { selector: 'td' })).not.toBeInTheDocument();
+  });
+
+  it('asks for a document when ticked and takes the request back when unticked', async () => {
+    asTenantAdmin();
+    const asked = capture<unknown>();
+    const withdrawn = capture<unknown>();
+    profileApi([
+      http.put(
+        `${V1}/tenant/crew/c1/document-requests/dt2`,
+        async ({ request }) => (
+          await asked.record(request),
+          HttpResponse.json({ data: { requested: true } }, { status: 201 })
+        ),
+      ),
+      http.delete(
+        `${V1}/tenant/crew/c1/document-requests/dt1`,
+        async ({ request }) => (
+          await withdrawn.record(request),
+          new HttpResponse(null, { status: 204 })
+        ),
+      ),
+    ]);
+    const { user } = renderApp('/app/crew/c1');
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Ask for US Visa' }));
+    await waitFor(() => expect(asked.calls).toHaveLength(1));
+    await user.click(screen.getByRole('checkbox', { name: "Ask for Seaman's Book" }));
+    await waitFor(() => expect(withdrawn.calls).toHaveLength(1));
+  });
+
+  it('cannot ask a member who is not active', async () => {
+    asTenantAdmin();
+    profileApi([
+      http.get(`${V1}/tenant/crew/c1`, () =>
+        HttpResponse.json({ data: { ...JAYCOB, status: 'suspended' } }),
+      ),
+    ]);
+    renderApp('/app/crew/c1');
+    expect(await screen.findByRole('checkbox', { name: 'Ask for US Visa' })).toBeDisabled();
+  });
+
+  it('shows the uploads waiting for review with a count and a link to review them', async () => {
+    asTenantAdmin();
+    const urls: URL[] = [];
+    const pending = {
+      id: 'd7',
+      status: 'pending',
+      type: { id: 'dt1', name: "Seaman's Book", short_name: null },
+      number: 'SB-2',
+      grade: null,
+      location: null,
+      school: null,
+      issued_on: null,
+      expires_on: null,
+      expiry_status: 'none',
+      rejection_reason: null,
+      file: { name: 'a.pdf', type: 'application/pdf', size: 1 },
+      submitted_at: '2026-10-19T08:00:00+00:00',
+      reviewed_at: null,
+      owner: { id: 'c1', user: { id: 'u1', username: 'user-c1', email: 'c1@example.test' } },
+    };
+    profileApi([
+      http.get(
+        `${V1}/tenant/documents`,
+        ({ request }) => (urls.push(new URL(request.url)), HttpResponse.json(pageOf([pending]))),
+      ),
+    ]);
+    renderApp('/app/crew/c1');
+
+    const heading = await screen.findByRole('heading', { name: /Document upload requests/ });
+    expect(await within(heading).findByText('1')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: "Review Seaman's Book" })).toHaveAttribute(
+      'href',
+      '/app/documents?member=c1',
+    );
+    expect(urls[0]?.searchParams.get('membership_id')).toBe('c1');
+    expect(urls[0]?.searchParams.get('status')).toBe('pending');
+  });
+
+  it('says so when nothing is waiting for review', async () => {
+    asTenantAdmin();
+    profileApi();
+    renderApp('/app/crew/c1');
+    expect(await screen.findByText('Nothing waiting for review')).toBeInTheDocument();
+  });
+
   it('says plainly when the member cannot be found', async () => {
     asTenantAdmin();
     server.use(
@@ -285,5 +425,26 @@ describe('Crew profile', () => {
     );
     renderApp('/app/crew/c9');
     expect(await screen.findByText('That item no longer exists.')).toBeInTheDocument();
+  });
+});
+
+describe('Documents page for one member', () => {
+  it('narrows the list to the member named in the address', async () => {
+    asTenantAdmin();
+    const urls: URL[] = [];
+    server.use(
+      http.get(
+        `${V1}/tenant/documents`,
+        ({ request }) => (urls.push(new URL(request.url)), HttpResponse.json(pageOf([]))),
+      ),
+    );
+    renderApp('/app/documents?member=c1');
+
+    expect(await screen.findByText(/Showing one member/)).toBeInTheDocument();
+    expect(urls[0]?.searchParams.get('membership_id')).toBe('c1');
+    expect(screen.getByRole('link', { name: 'Show everyone' })).toHaveAttribute(
+      'href',
+      '/app/documents',
+    );
   });
 });
