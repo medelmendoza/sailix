@@ -91,7 +91,7 @@ function Sidebar() {
                   className={({ isActive }) =>
                     cn(
                       'group flex min-h-10 items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-sm font-medium transition',
-                      isActive ? 'bg-brand-50 text-brand-800' : 'hover:bg-line/50',
+                      isActive ? 'bg-accent-100 text-brand-800' : 'hover:bg-line/50',
                     )
                   }
                 >
