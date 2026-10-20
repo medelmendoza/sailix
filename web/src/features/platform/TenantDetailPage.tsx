@@ -10,7 +10,6 @@ import {
   ErrorState,
   FormDialog,
   FormError,
-  PageHeader,
   SelectField,
   Spinner,
   StatusBadge,
@@ -24,6 +23,7 @@ import { BrandingEditor } from '../tenant/BrandingPage';
 import { DomainsEditor } from '../tenant/DomainsPage';
 import type { PlatformTenantModule, Tenant, TenantStatus } from '../../services/api/types';
 import { applyServerErrors } from '../authentication/forms';
+import { formatDateTime } from '../shared/AuditTable';
 import {
   describeError,
   useInviteAdmin,
@@ -394,10 +394,28 @@ export function TenantDetailPage() {
   const t = tenant.data;
   return (
     <>
-      <PageHeader
-        title={t.name}
-        description={t.default_address ? `Code ${t.code} · ${t.default_address}` : `Code ${t.code}`}
-        actions={
+      <Link
+        to="/platform/tenants"
+        className="mb-3 inline-block text-sm text-accent-600 hover:underline"
+      >
+        ← Organizations
+      </Link>
+      <header className="mb-4 rounded-xl border border-line bg-surface p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <span
+              aria-hidden="true"
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent-600 to-brand-800 text-xl font-semibold text-white shadow-sm"
+            >
+              {t.name.charAt(0).toUpperCase()}
+            </span>
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-semibold">{t.name}</h1>
+              <p className="mt-0.5 text-sm text-muted">
+                {t.default_address ? `Code ${t.code} · ${t.default_address}` : `Code ${t.code}`}
+              </p>
+            </div>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={t.status} />
             {ACTIONS[t.status].map((a) => (
@@ -410,8 +428,43 @@ export function TenantDetailPage() {
               </Button>
             ))}
           </div>
-        }
-      />
+        </div>
+        <dl className="mt-4 grid gap-3 border-t border-line pt-4 text-sm sm:grid-cols-3">
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Created</dt>
+            <dd>{formatDateTime(t.created_at)}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Activated</dt>
+            <dd>{t.activated_at ? formatDateTime(t.activated_at) : 'Not yet'}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+              Administrators
+            </dt>
+            <dd>{admins.isSuccess ? admins.data.data.length : '…'}</dd>
+          </div>
+        </dl>
+        <nav
+          aria-label="On this page"
+          className="-mb-1 mt-4 flex gap-1 overflow-x-auto border-t border-line pt-3 text-sm"
+        >
+          {[
+            ['#addr-h', 'Address and domains'],
+            ['#look-h', 'Branding'],
+            ['#admins-h', 'Administrators'],
+            ['#modules-h', 'Modules'],
+          ].map(([href, label]) => (
+            <a
+              key={href}
+              href={href}
+              className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-muted hover:bg-line/50 hover:text-brand-800"
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
+      </header>
 
       <div className="flex flex-col gap-6">
         <section aria-labelledby="addr-h" className="flex flex-col gap-3">
@@ -426,6 +479,7 @@ export function TenantDetailPage() {
           </h2>
           <BrandingEditor scope={platformScope(t.id)} />
         </section>
+        <span id="admins-h" className="-mb-4" />
         <Card
           title="Administrators"
           actions={

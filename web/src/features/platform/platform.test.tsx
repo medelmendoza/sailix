@@ -192,9 +192,7 @@ describe('organization detail: lifecycle', () => {
     renderApp('/platform/tenants/t-1');
 
     await screen.findByRole('heading', { name: 'Southfield Agencies' });
-    const header = screen
-      .getByRole('heading', { name: 'Southfield Agencies' })
-      .closest('div')!.parentElement!;
+    const header = screen.getByRole('heading', { name: 'Southfield Agencies' }).closest('header')!;
     for (const label of ['Activate', 'Suspend', 'Reactivate', 'Deactivate', 'Archive']) {
       const found = within(header).queryByRole('button', { name: label });
       if (labels.includes(label as never)) expect(found, label).toBeInTheDocument();
