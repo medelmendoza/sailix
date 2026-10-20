@@ -299,6 +299,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/announcements/{announcementId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open the file attached to an announcement
+         * @description Only for a member the announcement is addressed to (everyone, or their fleet); anyone else, and an announcement without a file, answers 404. The file is PDF, JPEG or PNG; show it, never run it.
+         */
+        get: operations["getAnnouncementFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/announcements/{announcementId}/read": {
         parameters: {
             query?: never;
@@ -362,6 +382,50 @@ export interface paths {
          * @description Requires `announcements.manage`.
          */
         patch: operations["updateAnnouncement"];
+        trace?: never;
+    };
+    "/tenant/announcements/{announcementId}/attachment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Attach a file to an announcement (replaces any earlier one)
+         * @description Requires `announcements.manage`. PDF, JPEG or PNG, judged by the file's content; the size limit is the organization's upload limit. The earlier file, if any, is deleted.
+         */
+        post: operations["setAnnouncementAttachment"];
+        /**
+         * Remove the attached file
+         * @description Requires `announcements.manage`. Answers 204 whether or not there was a file.
+         */
+        delete: operations["removeAnnouncementAttachment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/announcements/{announcementId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open the file attached to an announcement (administrators)
+         * @description Requires `announcements.manage`.
+         */
+        get: operations["getTenantAnnouncementFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/todos": {
@@ -1056,6 +1120,26 @@ export interface paths {
          * @description Requires `users.view`. Members with the crew role only (administrators are managed under users), sorted by last then first name. The search filters are partial, case-insensitive matches; `%` and `_` are plain text. The birthday is not part of the list.
          */
         get: operations["listCrew"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/crew/fleets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The fleets in use among the crew
+         * @description Requires `users.view`. For choosing who an announcement is for.
+         */
+        get: operations["listCrewFleets"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2043,6 +2127,14 @@ export interface components {
             updated_at: string;
             /** @description Present on the member's own views only. */
             is_read?: boolean;
+            /** @description The attached file, if any. Open it with the file endpoint. */
+            attachment?: {
+                name: string;
+                type: string;
+                size: number;
+            } | null;
+            /** @description The fleets it is addressed to; empty means everyone. Present on the administrators' list only. */
+            fleets?: string[];
             /** @description Who wrote it. Present on the administrators' list only. */
             author?: {
                 name: string;
@@ -2058,6 +2150,8 @@ export interface components {
              * @description Must be in the future.
              */
             expires_at?: string | null;
+            /** @description Who it is for. Leave out, or send an empty list, for everyone; otherwise only members whose crew record names one of these fleets (not case-sensitive). On an edit, leaving it out keeps the audience as it is. */
+            fleets?: string[] | null;
         };
         AnnouncementPage: components["schemas"]["PageEnvelope"] & {
             data?: components["schemas"]["Announcement"][];
@@ -2975,6 +3069,32 @@ export interface operations {
             404: components["responses"]["Problem"];
         };
     };
+    getAnnouncementFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                announcementId: components["parameters"]["AnnouncementId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                    "image/jpeg": string;
+                    "image/png": string;
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
     markAnnouncementRead: {
         parameters: {
             query?: never;
@@ -3109,6 +3229,91 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    setAnnouncementAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                announcementId: components["parameters"]["AnnouncementId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The announcement with its attachment. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Announcement"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    removeAnnouncementAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                announcementId: components["parameters"]["AnnouncementId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getTenantAnnouncementFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                announcementId: components["parameters"]["AnnouncementId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The file. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                    "image/jpeg": string;
+                    "image/png": string;
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     listMyTodos: {
@@ -4392,6 +4597,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CrewPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    listCrewFleets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fleet names, in order. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: string[];
+                    };
                 };
             };
             401: components["responses"]["Problem"];

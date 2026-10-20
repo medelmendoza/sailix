@@ -23,7 +23,17 @@ import { describeError } from '../../services/api/errors';
 import type { Announcement } from '../../services/api/types';
 import { applyServerErrors } from '../authentication/forms';
 import { formatDateTime } from '../shared/AuditTable';
-import { useAnnouncements, useDeleteAnnouncement, useSaveAnnouncement } from './api';
+import { AnnouncementDetails, audienceText } from './AnnouncementDetails';
+import { useMe } from '../authentication/session';
+import {
+  attachAnnouncementFile,
+  removeAnnouncementFile,
+  useAnnouncements,
+  useCrewFleets,
+  useDeleteAnnouncement,
+  useSaveAnnouncement,
+} from './api';
+import { useQueryClient } from '@tanstack/react-query';
 
 const schema = z.object({
   title: z.string().trim().min(1, 'Enter a title.').max(150, 'At most 150 characters.'),
@@ -54,6 +64,7 @@ export function AnnouncementsPage() {
   const toast = useToast();
   const [editing, setEditing] = useState<Announcement | 'new' | null>(null);
   const [deleting, setDeleting] = useState<Announcement | null>(null);
+  const [viewing, setViewing] = useState<Announcement | null>(null);
 
   function toggle(a: Announcement) {
     save.mutate(
@@ -70,12 +81,12 @@ export function AnnouncementsPage() {
     <>
       <PageHeader
         title="Announcements"
-        description="Messages every member of your organization sees in the mobile app."
+        description="Messages your members see in the mobile app: everyone, or only chosen fleets."
         actions={<Button onClick={() => setEditing('new')}>New announcement</Button>}
       />
       <Card className="mb-4 text-sm text-muted">
-        Everyone in your organization can read an announcement. It is plain text; attachments are
-        not supported yet.
+        An announcement is plain text and can carry one PDF or image. Choose Everyone, or tick the
+        fleets it is for; a member sees it when their crew record names one of those fleets.
       </Card>
       {list.isPending ? (
         <Spinner />
@@ -87,7 +98,7 @@ export function AnnouncementsPage() {
         <>
           <Table
             caption="Announcements"
-            headers={['Title', 'Status', 'Shown until', 'Written', '']}
+            headers={['Title', 'Recipients', 'Status', 'Shown until', 'Written', '']}
           >
             {list.data.data.map((a) => {
               const s = status(a);
@@ -96,7 +107,11 @@ export function AnnouncementsPage() {
                   <td className="px-4 py-3">
                     <p className="font-medium">{a.title}</p>
                     <p className="line-clamp-2 whitespace-pre-wrap text-xs text-muted">{a.body}</p>
+                    {a.attachment ? (
+                      <p className="mt-1 text-xs text-muted">Attachment: {a.attachment.name}</p>
+                    ) : null}
                   </td>
+                  <td className="px-4 py-3">{audienceText(a)}</td>
                   <td className="px-4 py-3">
                     <Badge tone={s.tone}>{s.label}</Badge>
                   </td>
@@ -106,6 +121,13 @@ export function AnnouncementsPage() {
                   <td className="whitespace-nowrap px-4 py-3">{formatDateTime(a.created_at)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        onClick={() => setViewing(a)}
+                        aria-label={`View ${a.title}`}
+                      >
+                        View
+                      </Button>
                       <Button
                         variant="ghost"
                         onClick={() => setEditing(a)}
@@ -145,6 +167,10 @@ export function AnnouncementsPage() {
         />
       ) : null}
 
+      {viewing ? (
+        <AnnouncementDetails announcement={viewing} onClose={() => setViewing(null)} />
+      ) : null}
+
       <ConfirmDialog
         open={deleting !== null}
         title="Delete this announcement?"
@@ -170,7 +196,20 @@ function AnnouncementForm({
 }) {
   const save = useSaveAnnouncement();
   const toast = useToast();
+  const qc = useQueryClient();
+  const me = useMe();
+  const fleets = useCrewFleets();
   const [formError, setFormError] = useState<string | null>(null);
+  const [chosen, setChosen] = useState<Set<string>>(new Set(announcement?.fleets ?? []));
+  const [file, setFile] = useState<File | null>(null);
+  const [dropFile, setDropFile] = useState(false);
+  const author =
+    announcement?.author?.name ??
+    ([me.profile?.first_name, me.profile?.last_name].filter(Boolean).join(' ') || me.user.username);
+  const known = new Set(fleets.data ?? []);
+  const options = [...known, ...[...chosen].filter((f) => !known.has(f))].sort((x, y) =>
+    x.localeCompare(y),
+  );
   const {
     register,
     handleSubmit,
@@ -185,34 +224,84 @@ function AnnouncementForm({
     },
   });
 
+  function toggleFleet(f: string) {
+    setChosen((cur) => {
+      const next = new Set(cur);
+      if (next.has(f)) next.delete(f);
+      else next.add(f);
+      return next;
+    });
+  }
+
   async function onSubmit(v: Values) {
     setFormError(null);
+    let saved: Announcement;
     try {
-      await save.mutateAsync({
+      saved = await save.mutateAsync({
         id: announcement?.id,
         input: {
           title: v.title,
           body: v.body,
           // the end of the chosen day, in the administrator's own time zone
           expires_at: v.show_until ? new Date(`${v.show_until}T23:59:59`).toISOString() : null,
+          fleets: [...chosen],
         },
       });
-      toast.success(announcement ? 'Announcement saved.' : 'Announcement published.');
-      onClose();
     } catch (e) {
-      setFormError(applyServerErrors(e, setError, ['title', 'body']));
+      return setFormError(applyServerErrors(e, setError, ['title', 'body']));
     }
+    // the file goes up after the text is saved; if that fails the announcement still exists and can be edited
+    try {
+      if (file) await attachAnnouncementFile(saved.id, file);
+      else if (dropFile) await removeAnnouncementFile(saved.id);
+      void qc.invalidateQueries({ queryKey: ['announcements'] });
+    } catch (e) {
+      void qc.invalidateQueries({ queryKey: ['announcements'] });
+      return setFormError(
+        `The announcement was saved, but its file was not: ${describeError(e)} Edit it to try again.`,
+      );
+    }
+    toast.success(announcement ? 'Announcement saved.' : 'Announcement published.');
+    onClose();
   }
 
   return (
     <FormDialog
       open
-      title={announcement ? 'Edit announcement' : 'New announcement'}
-      description="Every active member of your organization can read it."
+      title={announcement ? 'Edit announcement' : 'Create new announcement'}
+      description="Choose who it is for, then write it."
       onClose={onClose}
     >
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
         <FormError message={formError} />
+        <fieldset className="flex flex-col gap-2">
+          <legend className="text-sm font-medium">Recipients</legend>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="audience"
+              checked={chosen.size === 0}
+              onChange={() => setChosen(new Set())}
+            />
+            Everyone
+          </label>
+          {fleets.isPending ? null : options.length === 0 ? (
+            <p className="text-xs text-muted">
+              No fleets are recorded yet. Set a fleet on a crew profile to address announcements to
+              it.
+            </p>
+          ) : (
+            <div className="max-h-40 overflow-auto rounded-md border border-line p-2">
+              {options.map((f) => (
+                <label key={f} className="flex items-center gap-2 py-1 text-sm">
+                  <input type="checkbox" checked={chosen.has(f)} onChange={() => toggleFleet(f)} />
+                  {f}
+                </label>
+              ))}
+            </div>
+          )}
+        </fieldset>
+        <TextField label="Author" value={author} readOnly disabled />
         <TextField
           label="Title"
           maxLength={150}
@@ -232,12 +321,41 @@ function AnnouncementForm({
           error={errors.show_until?.message}
           {...register('show_until')}
         />
+        <div className="flex flex-col gap-1">
+          <label htmlFor="announcement-file" className="text-sm font-medium">
+            Attached file (optional)
+          </label>
+          {announcement?.attachment && !file ? (
+            <p className="text-xs text-muted">
+              {dropFile
+                ? 'The current file will be removed.'
+                : `Current file: ${announcement.attachment.name}.`}{' '}
+              <button
+                type="button"
+                className="text-brand-700 underline"
+                onClick={() => setDropFile((v) => !v)}
+              >
+                {dropFile ? 'Keep it' : 'Remove it'}
+              </button>
+            </p>
+          ) : null}
+          <input
+            id="announcement-file"
+            type="file"
+            accept="application/pdf,image/jpeg,image/png"
+            className="text-sm"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          />
+          <p className="text-xs text-muted">
+            A PDF, JPEG or PNG. Choosing a file replaces the current one.
+          </p>
+        </div>
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           <Button type="submit" loading={isSubmitting}>
-            {announcement ? 'Save' : 'Publish'}
+            {announcement ? 'Save' : 'Send'}
           </Button>
         </div>
       </form>

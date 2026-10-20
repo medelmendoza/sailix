@@ -22,6 +22,9 @@ class AnnouncementRequest extends FormRequest
             'body' => [$required, 'string', 'min:1', 'max:5000'],
             'is_active' => ['sometimes', 'boolean'],
             'expires_at' => ['sometimes', 'nullable', 'date', 'after:now'],
+            // who it is for: leave out or send an empty list for everyone; otherwise only members of these fleets
+            'fleets' => ['sometimes', 'nullable', 'array', 'max:30'],
+            'fleets.*' => ['string', 'min:1', 'max:100', 'distinct:ignore_case'],
         ];
     }
 }

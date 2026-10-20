@@ -467,6 +467,25 @@ paths:
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+  /announcements/{announcementId}/file:
+    get:
+      tags: [announcements]
+      operationId: getAnnouncementFile
+      summary: Open the file attached to an announcement
+      description: >
+        Only for a member the announcement is addressed to (everyone, or their fleet); anyone else, and an announcement
+        without a file, answers 404. The file is PDF, JPEG or PNG; show it, never run it.
+      parameters:
+        - { $ref: '#/components/parameters/AnnouncementId' }
+      responses:
+        '200':
+          description: The file.
+          content:
+            application/pdf: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+            image/png: { schema: { type: string, format: binary } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /announcements/{announcementId}/read:
     put:
       tags: [announcements]
@@ -565,6 +584,69 @@ paths:
         - { $ref: '#/components/parameters/AnnouncementId' }
       responses:
         '204': { description: Deleted. }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /tenant/announcements/{announcementId}/attachment:
+    post:
+      tags: [tenant]
+      operationId: setAnnouncementAttachment
+      summary: Attach a file to an announcement (replaces any earlier one)
+      description: >
+        Requires `announcements.manage`. PDF, JPEG or PNG, judged by the file's content; the size limit is the
+        organization's upload limit. The earlier file, if any, is deleted.
+      parameters:
+        - { $ref: '#/components/parameters/AnnouncementId' }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '200':
+          description: The announcement with its attachment.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Announcement' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [tenant]
+      operationId: removeAnnouncementAttachment
+      summary: Remove the attached file
+      description: Requires `announcements.manage`. Answers 204 whether or not there was a file.
+      parameters:
+        - { $ref: '#/components/parameters/AnnouncementId' }
+      responses:
+        '204': { description: Removed. }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /tenant/announcements/{announcementId}/file:
+    get:
+      tags: [tenant]
+      operationId: getTenantAnnouncementFile
+      summary: Open the file attached to an announcement (administrators)
+      description: Requires `announcements.manage`.
+      parameters:
+        - { $ref: '#/components/parameters/AnnouncementId' }
+      responses:
+        '200':
+          description: The file.
+          content:
+            application/pdf: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+            image/png: { schema: { type: string, format: binary } }
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
@@ -1575,6 +1657,26 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/CrewPage' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /tenant/crew/fleets:
+    get:
+      tags: [tenant]
+      operationId: listCrewFleets
+      summary: The fleets in use among the crew
+      description: Requires `users.view`. For choosing who an announcement is for.
+      responses:
+        '200':
+          description: Fleet names, in order.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { type: string }
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
   /tenant/crew/{membership}:
@@ -3103,6 +3205,20 @@ components:
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
         is_read: { type: boolean, description: "Present on the member's own views only." }
+        attachment:
+          description: The attached file, if any. Open it with the file endpoint.
+          oneOf:
+            - type: object
+              required: [name, type, size]
+              properties:
+                name: { type: string }
+                type: { type: string }
+                size: { type: integer }
+            - { type: 'null' }
+        fleets:
+          type: array
+          items: { type: string }
+          description: "The fleets it is addressed to; empty means everyone. Present on the administrators' list only."
         author:
           description: "Who wrote it. Present on the administrators' list only."
           oneOf:
@@ -3119,6 +3235,13 @@ components:
         body: { type: string, minLength: 1, maxLength: 5000 }
         is_active: { type: boolean }
         expires_at: { type: [string, 'null'], format: date-time, description: 'Must be in the future.' }
+        fleets:
+          type: [array, 'null']
+          maxItems: 30
+          items: { type: string, minLength: 1, maxLength: 100 }
+          description: >
+            Who it is for. Leave out, or send an empty list, for everyone; otherwise only members whose crew record names
+            one of these fleets (not case-sensitive). On an edit, leaving it out keeps the audience as it is.
     AnnouncementPage:
       allOf:
         - $ref: '#/components/schemas/PageEnvelope'

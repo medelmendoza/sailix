@@ -34,6 +34,7 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
     Route::post('me/deletion-request', [Me\DeletionRequestController::class, 'store'])->middleware('throttle:deletion');
     Route::get('announcements', [Me\AnnouncementController::class, 'index']);
     Route::get('announcements/{announcement}', [Me\AnnouncementController::class, 'show']);
+    Route::get('announcements/{announcement}/file', [Me\AnnouncementController::class, 'file']);
     Route::put('announcements/{announcement}/read', [Me\AnnouncementController::class, 'read']);
     // Call-it: only for organizations that have the module on (and a role that may use it)
     Route::prefix('callit')->middleware('module:callit')->group(function () {
@@ -73,6 +74,7 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::patch('/', [Tenant\TenantController::class, 'update']);
         Route::get('users', [Tenant\UserController::class, 'index']);
         Route::patch('users/{membership}', [Tenant\UserController::class, 'update']);
+        Route::get('crew/fleets', [Tenant\CrewController::class, 'fleets']);
         Route::get('crew', [Tenant\CrewController::class, 'index'])->name('crew.index');
         Route::get('crew/{membership}', [Tenant\CrewController::class, 'show'])->name('crew.show');
         Route::patch('crew/{membership}', [Tenant\CrewController::class, 'update'])->name('crew.update');
@@ -104,6 +106,9 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::post('announcements', [Tenant\AnnouncementController::class, 'store']);
         Route::patch('announcements/{announcement}', [Tenant\AnnouncementController::class, 'update']);
         Route::delete('announcements/{announcement}', [Tenant\AnnouncementController::class, 'destroy']);
+        Route::post('announcements/{announcement}/attachment', [Tenant\AnnouncementController::class, 'attach'])->middleware('throttle:document-upload');
+        Route::delete('announcements/{announcement}/attachment', [Tenant\AnnouncementController::class, 'detach']);
+        Route::get('announcements/{announcement}/file', [Tenant\AnnouncementController::class, 'file']);
         Route::get('modules', [Tenant\ModuleController::class, 'index']);
         Route::put('modules/{module}', [Tenant\ModuleController::class, 'update']);
     });

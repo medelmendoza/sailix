@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Announcement;
 use App\Models\CallItReport;
 use App\Models\CrewDocument;
 use App\Support\Settings\SettingsRegistry;
@@ -51,14 +52,14 @@ final class DocumentFiles
         ];
     }
 
-    public static function delete(CrewDocument|CallItReport $document): void
+    public static function delete(CrewDocument|CallItReport|Announcement $document): void
     {
         if ($document->file_disk !== null && $document->file_path !== null) {
             Storage::disk($document->file_disk)->delete($document->file_path);
         }
     }
 
-    public static function stream(CrewDocument|CallItReport $document): StreamedResponse
+    public static function stream(CrewDocument|CallItReport|Announcement $document): StreamedResponse
     {
         abort_if($document->file_disk === null || $document->file_path === null || $document->file_mime === null, 404);
         $disk = Storage::disk($document->file_disk);

@@ -52,6 +52,15 @@ class CrewController extends Controller
         return CrewResource::collection($q->paginate(min((int) $request->input('per_page', 20), 100)));
     }
 
+    /** The fleets in use, for choosing who an announcement is for. */
+    public function fleets(): JsonResponse
+    {
+        Gate::authorize('viewAny', Membership::class);
+
+        return response()->json(['data' => CrewProfile::query()->whereNotNull('fleet')->where('fleet', '!=', '')
+            ->distinct()->orderBy('fleet')->pluck('fleet')->values()]);
+    }
+
     public function show(Membership $membership): CrewResource
     {
         Gate::authorize('viewAny', Membership::class);

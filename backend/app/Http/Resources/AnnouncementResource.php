@@ -24,6 +24,10 @@ class AnnouncementResource extends JsonResource
             'expires_at' => $this->expires_at?->toIso8601String(),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
+            'attachment' => $this->file_path !== null
+                ? ['name' => $this->file_original_name, 'type' => $this->file_mime, 'size' => $this->file_size] : null,
+            // who it is for: an empty list means everyone (the administrators' list only)
+            'fleets' => $this->whenLoaded('fleets', fn () => $this->fleets->pluck('fleet')->sort()->values()->all()),
             // who wrote it: only where the query loaded it (the administrators' list), never in the members' view
             'author' => $this->whenLoaded('creator', fn () => $this->creator ? [
                 'name' => trim(($this->creator->profile?->first_name ?? '').' '.($this->creator->profile?->last_name ?? '')) ?: $this->creator->user->username,

@@ -2,7 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
-import { AppText, Card, ErrorState, SkeletonList, TabIcon } from '@/components';
+import { AppText, Button, Card, ErrorState, SkeletonList, TabIcon } from '@/components';
 import { colors, spacing } from '@/constants/theme';
 import { describeError, toApiError } from '@/services/api/errors';
 import { ageLabel } from './age';
@@ -11,7 +11,7 @@ import { useAnnouncement, useMarkRead } from './api';
 type Props = NativeStackScreenProps<AppStackParamList, 'Announcement'>;
 
 /** Opening an unread announcement marks it read. The text is shown as plain text, never interpreted. */
-export function AnnouncementScreen({ route }: Props) {
+export function AnnouncementScreen({ route, navigation }: Props) {
   const { id } = route.params;
   const one = useAnnouncement(id);
   const markRead = useMarkRead();
@@ -51,6 +51,19 @@ export function AnnouncementScreen({ route }: Props) {
         <AppText selectable style={styles.body}>
           {one.data.body}
         </AppText>
+        {one.data.attachment ? (
+          <Button
+            title={`Open ${one.data.attachment.name}`}
+            variant="secondary"
+            onPress={() =>
+              navigation.navigate('DocumentViewer', {
+                id,
+                name: one.data?.attachment?.name ?? 'Attachment',
+                source: 'announcement',
+              })
+            }
+          />
+        ) : null}
       </Card>
     </ScrollView>
   );

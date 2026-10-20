@@ -114,6 +114,33 @@ describe('announcement detail', () => {
     expect(api.callsTo('PUT /announcements/a1/read')).toHaveLength(0);
   });
 
+  it('offers the attached file, and nothing when there is none', async () => {
+    const withFile = ann('a1', 'Allotment', {
+      is_read: true,
+      attachment: { name: 'allotment.pdf', type: 'application/pdf', size: 2048 },
+    });
+    await openTab({
+      'GET /announcements': page([withFile], 0),
+      'GET /announcements/a1': { data: { data: withFile } },
+    });
+    await goToTab('Announcements');
+    await fireEvent.press(await screen.findByRole('button', { name: /^Allotment/ }));
+    expect(await screen.findByRole('button', { name: 'Open allotment.pdf' })).toBeTruthy();
+  });
+
+  it('shows no file button for an announcement without one', async () => {
+    await openTab({
+      'GET /announcements': page([ann('a1', 'Plain', { is_read: true, attachment: null })], 0),
+      'GET /announcements/a1': {
+        data: { data: ann('a1', 'Plain', { is_read: true, attachment: null }) },
+      },
+    });
+    await goToTab('Announcements');
+    await fireEvent.press(await screen.findByRole('button', { name: /^Plain/ }));
+    await screen.findByText('Body of Plain');
+    expect(screen.queryByRole('button', { name: /^Open / })).toBeNull();
+  });
+
   it('says plainly when it is no longer available, with no retry loop', async () => {
     await openTab({
       'GET /announcements': page([ann('a1', 'Gone soon')]),

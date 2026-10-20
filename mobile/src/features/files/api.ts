@@ -105,7 +105,7 @@ export function useSaveDocument(id?: string) {
  */
 export async function downloadToCache(
   id: string,
-  source: 'document' | 'callit' = 'document',
+  source: 'document' | 'callit' | 'announcement' = 'document',
 ): Promise<File> {
   const token = useSessionStore.getState().credential?.token;
   const base = api.defaults.baseURL ?? '';
@@ -114,10 +114,10 @@ export async function downloadToCache(
   const target = new Directory(dir, id.replace(/[^A-Za-z0-9-]/g, ''));
   if (target.exists) target.delete();
   target.create();
-  const path =
-    source === 'callit'
-      ? `/callit/reports/${encodeURIComponent(id)}/file`
-      : `/documents/${encodeURIComponent(id)}/file`;
+  const folder = { document: 'documents', callit: 'callit/reports', announcement: 'announcements' }[
+    source
+  ];
+  const path = `/${folder}/${encodeURIComponent(id)}/file`;
   return File.downloadFileAsync(`${base}${path}`, target, {
     headers: token ? { Authorization: `Bearer ${token}`, Accept: '*/*' } : {},
   });

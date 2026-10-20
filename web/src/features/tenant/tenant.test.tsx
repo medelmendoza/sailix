@@ -989,6 +989,7 @@ describe('settings and account', () => {
       const created = capture<Record<string, unknown>>();
       server.use(
         http.get(`${V1}/tenant/announcements`, () => HttpResponse.json(pageOf([]))),
+        http.get(`${V1}/tenant/crew/fleets`, () => HttpResponse.json({ data: [] })),
         http.post(`${V1}/tenant/announcements`, async ({ request }) => {
           await created.record(request);
           return HttpResponse.json({ data: live }, { status: 201 });
@@ -999,13 +1000,14 @@ describe('settings and account', () => {
       const dialog = await screen.findByRole('dialog');
       await user.type(within(dialog).getByLabelText('Title'), 'Hello crew');
       await user.type(within(dialog).getByLabelText('Message'), 'Welcome aboard.');
-      await user.click(within(dialog).getByRole('button', { name: 'Publish' }));
+      await user.click(within(dialog).getByRole('button', { name: 'Send' }));
 
       await waitFor(() => expect(created.calls).toHaveLength(1));
       expect(created.calls[0]!.body).toEqual({
         title: 'Hello crew',
         body: 'Welcome aboard.',
         expires_at: null,
+        fleets: [], // everyone
       });
     });
 
@@ -1014,6 +1016,7 @@ describe('settings and account', () => {
       const created = capture();
       server.use(
         http.get(`${V1}/tenant/announcements`, () => HttpResponse.json(pageOf([]))),
+        http.get(`${V1}/tenant/crew/fleets`, () => HttpResponse.json({ data: [] })),
         http.post(`${V1}/tenant/announcements`, async ({ request }) => {
           await created.record(request);
           return HttpResponse.json({ data: live }, { status: 201 });
@@ -1022,7 +1025,7 @@ describe('settings and account', () => {
       const { user } = renderApp('/app/announcements');
       await user.click(await screen.findByRole('button', { name: 'New announcement' }));
       await user.click(
-        within(await screen.findByRole('dialog')).getByRole('button', { name: 'Publish' }),
+        within(await screen.findByRole('dialog')).getByRole('button', { name: 'Send' }),
       );
 
       expect(await screen.findByText('Enter a title.')).toBeInTheDocument();

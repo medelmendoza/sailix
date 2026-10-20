@@ -174,6 +174,32 @@ export function useSaveAnnouncement() {
   });
 }
 
+/** The fleets in use among the crew, for choosing who an announcement is for. */
+export function useCrewFleets() {
+  return useQuery({
+    queryKey: ['crew-fleets'],
+    queryFn: async () => (await api.get<Envelope<string[]>>('/tenant/crew/fleets')).data.data,
+  });
+}
+
+/** Attach (or replace) the file of an announcement. */
+export async function attachAnnouncementFile(id: string, file: File): Promise<void> {
+  const body = new FormData();
+  body.append('file', file);
+  await api.post(`/tenant/announcements/${id}/attachment`, body);
+}
+
+export async function removeAnnouncementFile(id: string): Promise<void> {
+  await api.delete(`/tenant/announcements/${id}/attachment`);
+}
+
+export async function openAnnouncementFile(id: string): Promise<void> {
+  const res = await api.get<Blob>(`/tenant/announcements/${id}/file`, { responseType: 'blob' });
+  const url = URL.createObjectURL(res.data);
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 export function useDeleteAnnouncement() {
   const qc = useQueryClient();
   const toast = useToast();

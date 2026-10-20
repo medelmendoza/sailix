@@ -11,7 +11,9 @@ import {
   TextField,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
+import type { Announcement } from '../../services/api/types';
 import { formatDateTime } from '../shared/AuditTable';
+import { AnnouncementDetails } from './AnnouncementDetails';
 import { useAnnouncements, useCrewList, useDocuments } from './api';
 
 const PER_PANEL = 5;
@@ -205,6 +207,7 @@ export function DocumentApprovalPanel() {
 /** The latest announcements, newest first. */
 export function AnnouncementsPanel() {
   const [page, setPage] = useState(1);
+  const [viewing, setViewing] = useState<Announcement | null>(null);
   const list = useAnnouncements({ page, per_page: PER_PANEL });
 
   return (
@@ -227,7 +230,7 @@ export function AnnouncementsPanel() {
           <Table
             compact
             caption="Latest announcements"
-            headers={['Title', 'Date', 'Author', 'Status']}
+            headers={['Title', 'Date', 'Author', 'Status', '']}
           >
             {list.data.data.map((a) => (
               <tr key={a.id}>
@@ -240,12 +243,25 @@ export function AnnouncementsPanel() {
                     {a.is_active ? 'Showing' : 'Hidden'}
                   </Badge>
                 </td>
+                <td className="px-4 py-3 text-right">
+                  <button
+                    type="button"
+                    aria-label={`View ${a.title}`}
+                    onClick={() => setViewing(a)}
+                    className="text-brand-700 underline-offset-2 hover:underline"
+                  >
+                    View
+                  </button>
+                </td>
               </tr>
             ))}
           </Table>
           <Pagination meta={list.data.meta} onPage={setPage} />
         </>
       )}
+      {viewing ? (
+        <AnnouncementDetails announcement={viewing} onClose={() => setViewing(null)} />
+      ) : null}
     </Panel>
   );
 }
