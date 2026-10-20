@@ -1024,6 +1024,70 @@ export interface paths {
         patch: operations["updateTenantUser"];
         trace?: never;
     };
+    "/tenant/crew": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the organization's crew
+         * @description Requires `users.view`. Members with the crew role only (administrators are managed under users), sorted by last then first name. The search filters are partial, case-insensitive matches; `%` and `_` are plain text. The birthday is not part of the list.
+         */
+        get: operations["listCrew"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/crew/{membership}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One crew member, with the birthday
+         * @description Requires `users.view`. A member of another organization, or an administrator, answers 404.
+         */
+        get: operations["getCrew"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Edit a crew member's record
+         * @description Requires `users.manage`. Only the fields below are accepted; an empty string clears an optional field. The crew number is unique within the organization (`422` when taken). The audit trail records which fields changed, never their values.
+         */
+        patch: operations["updateCrew"];
+        trace?: never;
+    };
+    "/tenant/crew/{membership}/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Email the member a password reset link
+         * @description Requires `users.manage`. Sends the normal reset-by-email link to the member's address. The administrator never sees or sets a password. `409 not_active` unless the member is active; `429` when a link was just sent.
+         */
+        post: operations["sendCrewPasswordReset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenant/audit-logs": {
         parameters: {
             query?: never;
@@ -2162,6 +2226,54 @@ export interface components {
             profile?: components["schemas"]["Profile"] | null;
             /** Format: date-time */
             created_at: string;
+        };
+        Crew: {
+            /** @description The membership id. */
+            id: string;
+            /** @enum {string} */
+            status: "invited" | "pending" | "active" | "suspended";
+            username: string;
+            email: string;
+            first_name: string | null;
+            middle_name?: string | null;
+            last_name: string | null;
+            suffix?: string | null;
+            mobile?: string | null;
+            crew_number?: string | null;
+            rank?: string | null;
+            fleet?: string | null;
+            vessel?: string | null;
+            employment_status?: string | null;
+            /** Format: date */
+            date_arrive?: string | null;
+            /** Format: date */
+            date_depart?: string | null;
+            /**
+             * Format: date
+             * @description Only in the single-member view.
+             */
+            birthday?: string | null;
+        };
+        CrewUpdate: {
+            first_name?: string;
+            middle_name?: string | null;
+            last_name?: string;
+            suffix?: string | null;
+            mobile?: string | null;
+            crew_number?: string | null;
+            rank?: string | null;
+            fleet?: string | null;
+            vessel?: string | null;
+            employment_status?: string | null;
+            /** Format: date */
+            date_arrive?: string | null;
+            /** Format: date */
+            date_depart?: string | null;
+            /** Format: date */
+            birthday?: string | null;
+        };
+        CrewPage: components["schemas"]["PageEnvelope"] & {
+            data?: components["schemas"]["Crew"][];
         };
         MembershipPage: components["schemas"]["PageEnvelope"] & {
             data?: components["schemas"]["Membership"][];
@@ -4123,6 +4235,125 @@ export interface operations {
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    listCrew: {
+        parameters: {
+            query?: {
+                "filter[last_name]"?: string;
+                "filter[first_name]"?: string;
+                "filter[crew_number]"?: string;
+                page?: number;
+                per_page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page of crew. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrewPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getCrew: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                membership: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The crew member. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Crew"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updateCrew: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                membership: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CrewUpdate"];
+            };
+        };
+        responses: {
+            /** @description The updated crew member. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Crew"];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    sendCrewPasswordReset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                membership: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The link was sent. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            /** @enum {string} */
+                            status: "sent";
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
         };
     };
     listTenantAuditLogs: {

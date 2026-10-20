@@ -1531,6 +1531,108 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /tenant/crew:
+    get:
+      tags: [tenant]
+      operationId: listCrew
+      summary: List the organization's crew
+      description: >
+        Requires `users.view`. Members with the crew role only (administrators are managed under users), sorted by last
+        then first name. The search filters are partial, case-insensitive matches; `%` and `_` are plain text. The
+        birthday is not part of the list.
+      parameters:
+        - { name: 'filter[last_name]', in: query, schema: { type: string } }
+        - { name: 'filter[first_name]', in: query, schema: { type: string } }
+        - { name: 'filter[crew_number]', in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200':
+          description: Page of crew.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CrewPage' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /tenant/crew/{membership}:
+    get:
+      tags: [tenant]
+      operationId: getCrew
+      summary: One crew member, with the birthday
+      description: Requires `users.view`. A member of another organization, or an administrator, answers 404.
+      parameters:
+        - { name: membership, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The crew member.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Crew' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [tenant]
+      operationId: updateCrew
+      summary: Edit a crew member's record
+      description: >
+        Requires `users.manage`. Only the fields below are accepted; an empty string clears an optional field. The crew
+        number is unique within the organization (`422` when taken). The audit trail records which fields changed, never
+        their values.
+      parameters:
+        - { name: membership, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CrewUpdate' }
+      responses:
+        '200':
+          description: The updated crew member.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Crew' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /tenant/crew/{membership}/password-reset:
+    post:
+      tags: [tenant]
+      operationId: sendCrewPasswordReset
+      summary: Email the member a password reset link
+      description: >
+        Requires `users.manage`. Sends the normal reset-by-email link to the member's address. The administrator never sees
+        or sets a password. `409 not_active` unless the member is active; `429` when a link was just sent.
+      parameters:
+        - { name: membership, in: path, required: true, schema: { type: string } }
+      responses:
+        '202':
+          description: The link was sent.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [status]
+                    properties:
+                      status: { type: string, enum: [sent] }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
   /tenant/audit-logs:
     get:
       tags: [tenant]
@@ -3202,6 +3304,51 @@ components:
             - { $ref: '#/components/schemas/Profile' }
             - { type: 'null' }
         created_at: { type: string, format: date-time }
+    Crew:
+      type: object
+      required: [id, status, username, email, first_name, last_name]
+      properties:
+        id: { type: string, description: 'The membership id.' }
+        status: { type: string, enum: [invited, pending, active, suspended] }
+        username: { type: string }
+        email: { type: string }
+        first_name: { type: [string, 'null'] }
+        middle_name: { type: [string, 'null'] }
+        last_name: { type: [string, 'null'] }
+        suffix: { type: [string, 'null'] }
+        mobile: { type: [string, 'null'] }
+        crew_number: { type: [string, 'null'] }
+        rank: { type: [string, 'null'] }
+        fleet: { type: [string, 'null'] }
+        vessel: { type: [string, 'null'] }
+        employment_status: { type: [string, 'null'] }
+        date_arrive: { type: [string, 'null'], format: date }
+        date_depart: { type: [string, 'null'], format: date }
+        birthday: { type: [string, 'null'], format: date, description: 'Only in the single-member view.' }
+    CrewUpdate:
+      type: object
+      properties:
+        first_name: { type: string, maxLength: 100 }
+        middle_name: { type: [string, 'null'], maxLength: 100 }
+        last_name: { type: string, maxLength: 100 }
+        suffix: { type: [string, 'null'], maxLength: 20 }
+        mobile: { type: [string, 'null'], maxLength: 20 }
+        crew_number: { type: [string, 'null'], maxLength: 30 }
+        rank: { type: [string, 'null'], maxLength: 60 }
+        fleet: { type: [string, 'null'], maxLength: 100 }
+        vessel: { type: [string, 'null'], maxLength: 100 }
+        employment_status: { type: [string, 'null'], maxLength: 60 }
+        date_arrive: { type: [string, 'null'], format: date }
+        date_depart: { type: [string, 'null'], format: date }
+        birthday: { type: [string, 'null'], format: date }
+    CrewPage:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/Crew' }
     MembershipPage:
       allOf:
         - $ref: '#/components/schemas/PageEnvelope'

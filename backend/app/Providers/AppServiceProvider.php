@@ -71,6 +71,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('module-write', fn (Request $r) => Limit::perMinute(30)->by('mwrite:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
         // A quiz can be retaken, but not used as an oracle for its answers.
         RateLimiter::for('quiz-attempt', fn (Request $r) => Limit::perHour(10)->by('quiz:'.($r->user()?->getAuthIdentifier() ?? $r->ip()).'|'.$r->route('quizId')));
+        RateLimiter::for('crew-reset', fn (Request $r) => Limit::perHour(30)->by('crewreset:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
         RateLimiter::for('invitation', fn (Request $r) => Limit::perHour(10)->by('invite:'.$r->ip()));
         RateLimiter::for('api', fn (Request $r) => Limit::perMinute(120)->by('api:'.($r->user()?->getAuthIdentifier() ?? $r->ip())));
     }

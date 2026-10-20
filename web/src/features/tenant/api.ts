@@ -7,7 +7,9 @@ import type {
   AnnouncementInput,
   AuditEntry,
   CallItReport,
+  Crew,
   CrewDocument,
+  CrewUpdate,
   DocumentType,
   DeletionRequest,
   Envelope,
@@ -59,6 +61,46 @@ export function useUpdateMember() {
       void qc.invalidateQueries({ queryKey: ['member-count'] });
       void qc.invalidateQueries({ queryKey: ['audit'] });
     },
+    onError: (e) => toast.error(describeError(e)),
+  });
+}
+
+export function useCrewList(params: ListParams) {
+  return useQuery({
+    queryKey: ['crew', params],
+    queryFn: async () => (await api.get<Page<Crew>>('/tenant/crew', { params })).data,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useCrewMember(id: string) {
+  return useQuery({
+    queryKey: ['crew-member', id],
+    queryFn: async () => (await api.get<Envelope<Crew>>(`/tenant/crew/${id}`)).data.data,
+  });
+}
+
+export function useUpdateCrew(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (patch: CrewUpdate) =>
+      (await api.patch<Envelope<Crew>>(`/tenant/crew/${id}`, patch)).data.data,
+    onSuccess: (crew) => {
+      qc.setQueryData(['crew-member', id], crew);
+      void qc.invalidateQueries({ queryKey: ['crew'] });
+      void qc.invalidateQueries({ queryKey: ['members'] });
+      void qc.invalidateQueries({ queryKey: ['audit'] });
+    },
+  });
+}
+
+export function useSendCrewPasswordReset(id: string) {
+  const toast = useToast();
+  return useMutation({
+    mutationFn: async () => {
+      await api.post(`/tenant/crew/${id}/password-reset`);
+    },
+    onSuccess: () => toast.success('A password reset link was emailed to the member.'),
     onError: (e) => toast.error(describeError(e)),
   });
 }

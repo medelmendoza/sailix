@@ -19,6 +19,8 @@ import { TodosPage } from '../../features/tenant/TodosPage';
 import { AnnouncementsPage } from '../../features/tenant/AnnouncementsPage';
 import { DeletionRequestsPage } from '../../features/tenant/DeletionRequestsPage';
 import { FeedbackPage } from '../../features/tenant/FeedbackPage';
+import { CrewListPage } from '../../features/tenant/CrewListPage';
+import { CrewProfilePage } from '../../features/tenant/CrewProfilePage';
 import { MembersPage } from '../../features/tenant/MembersPage';
 import { ModulesPage } from '../../features/tenant/ModulesPage';
 import { SettingsPage } from '../../features/tenant/SettingsPage';
@@ -59,6 +61,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'members', element: guard('users.view', <MembersPage />) },
+      { path: 'crew', element: guard('users.view', <CrewListPage />) },
+      { path: 'crew/:id', element: guard('users.view', <CrewProfilePage />) },
       { path: 'deletion-requests', element: guard('users.manage', <DeletionRequestsPage />) },
       { path: 'payroll-import', element: guard('finance.manage', <PayrollImportPage />) },
       { path: 'callit', element: guard('callit.manage', <CallItPage />) },
