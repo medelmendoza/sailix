@@ -21,6 +21,7 @@ class UpdateFeaturesRequest extends FormRequest
         ];
     }
 
+    /** @return list<\Closure> */
     public function after(): array
     {
         return [function ($validator) {
