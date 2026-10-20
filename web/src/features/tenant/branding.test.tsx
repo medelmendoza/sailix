@@ -1,0 +1,296 @@
+import { screen, waitFor, within } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
+import { describe, expect, it } from 'vitest';
+import { asTenantAdmin, capture, makeMe, problem, renderApp, V1 } from '../../../tests/helpers';
+import { server } from '../../../tests/server';
+import { contrastWithWhite } from './BrandingPage';
+
+const branding = (over: Record<string, unknown> = {}) => ({
+  slug: 'aaa',
+  name: 'Southfield Agencies',
+  tagline: null,
+  logo_url: null,
+  favicon_url: null,
+  primary_color: null,
+  secondary_color: null,
+  version: 1,
+  ...over,
+});
+
+const api = (data = branding(), extra: Parameters<typeof server.use> = []) =>
+  server.use(
+    ...extra,
+    http.get(`${V1}/tenant/branding`, () => HttpResponse.json({ data })),
+  );
+
+describe('Branding page', () => {
+  it('checks contrast the same way the server does', () => {
+    expect(contrastWithWhite('#000000')).toBeCloseTo(21, 0);
+    expect(contrastWithWhite('#FFFFFF')).toBeCloseTo(1, 1);
+    expect(contrastWithWhite('#355DAD')).toBeGreaterThan(4.5);
+    expect(contrastWithWhite('#FFFF00')).toBeLessThan(4.5);
+  });
+
+  it('shows what is set and saves only what the form owns', async () => {
+    asTenantAdmin();
+    const saved = capture<Record<string, unknown>>();
+    api(branding({ tagline: 'Sailing since 1990', primary_color: '#355DAD', version: 4 }), [
+      http.patch(
+        `${V1}/tenant/branding`,
+        async ({ request }) => (
+          await saved.record(request),
+          HttpResponse.json({ data: branding({ version: 5 }) })
+        ),
+      ),
+    ]);
+    const { user } = renderApp('/app/branding');
+
+    const tagline = await screen.findByLabelText('Tagline');
+    expect(tagline).toHaveValue('Sailing since 1990');
+    expect(screen.getByLabelText('Primary colour')).toHaveValue('#355DAD');
+    await user.clear(tagline);
+    await user.type(tagline, 'Fair winds');
+    await user.type(screen.getByLabelText('Secondary colour'), '#1F6B4A');
+    await user.click(screen.getByRole('button', { name: 'Save branding' }));
+
+    await waitFor(() => expect(saved.calls).toHaveLength(1));
+    expect(saved.calls[0]!.body).toEqual({
+      tagline: 'Fair winds',
+      primary_color: '#355DAD',
+      secondary_color: '#1F6B4A',
+    });
+  });
+
+  it('clears a field by sending null when it is emptied', async () => {
+    asTenantAdmin();
+    const saved = capture<Record<string, unknown>>();
+    api(branding({ tagline: 'Old', primary_color: '#355DAD' }), [
+      http.patch(
+        `${V1}/tenant/branding`,
+        async ({ request }) => (
+          await saved.record(request),
+          HttpResponse.json({ data: branding() })
+        ),
+      ),
+    ]);
+    const { user } = renderApp('/app/branding');
+    await user.clear(await screen.findByLabelText('Tagline'));
+    await user.clear(screen.getByLabelText('Primary colour'));
+    await user.click(screen.getByRole('button', { name: 'Save branding' }));
+
+    await waitFor(() => expect(saved.calls).toHaveLength(1));
+    expect(saved.calls[0]!.body).toEqual({
+      tagline: null,
+      primary_color: null,
+      secondary_color: null,
+    });
+  });
+
+  it('refuses a colour that is not a colour or too light for white text, before sending anything', async () => {
+    asTenantAdmin();
+    const saved = capture<Record<string, unknown>>();
+    api(branding(), [
+      http.patch(
+        `${V1}/tenant/branding`,
+        async ({ request }) => (
+          await saved.record(request),
+          HttpResponse.json({ data: branding() })
+        ),
+      ),
+    ]);
+    const { user } = renderApp('/app/branding');
+
+    await user.type(await screen.findByLabelText('Primary colour'), 'red');
+    expect(screen.getByText('Use a colour like #355DAD.')).toBeInTheDocument();
+    await user.clear(screen.getByLabelText('Primary colour'));
+    await user.type(screen.getByLabelText('Primary colour'), '#FFFF00');
+    expect(screen.getByText(/Too light for white button text/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Save branding' }));
+
+    expect(await screen.findByText('Fix the colours first.')).toBeInTheDocument();
+    expect(saved.calls).toHaveLength(0);
+  });
+
+  it("shows the server's complaint when it refuses the tagline", async () => {
+    asTenantAdmin();
+    api(branding(), [
+      http.patch(`${V1}/tenant/branding`, () =>
+        problem(422, 'validation', 'The tagline field format is invalid.'),
+      ),
+    ]);
+    const { user } = renderApp('/app/branding');
+    await user.type(await screen.findByLabelText('Tagline'), 'Hello');
+    await user.click(screen.getByRole('button', { name: 'Save branding' }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+  });
+
+  it('uploads a logo and removes one', async () => {
+    asTenantAdmin();
+    const uploaded = capture<unknown>();
+    const removed = capture<unknown>();
+    api(branding({ logo_url: 'http://x/logo.png' }), [
+      http.post(
+        `${V1}/tenant/branding/favicon`,
+        async ({ request }) => (
+          await uploaded.record(request),
+          HttpResponse.json({ data: branding({ version: 2 }) })
+        ),
+      ),
+      http.delete(
+        `${V1}/tenant/branding/logo`,
+        async ({ request }) => (
+          await removed.record(request),
+          HttpResponse.json({ data: branding({ version: 3 }) })
+        ),
+      ),
+    ]);
+    const { user } = renderApp('/app/branding');
+
+    await user.upload(
+      await screen.findByLabelText('Favicon'),
+      new File(['x'], 'fav.png', { type: 'image/png' }),
+    );
+    await waitFor(() => expect(uploaded.calls).toHaveLength(1));
+
+    expect(screen.getByAltText('Logo preview')).toHaveAttribute('src', 'http://x/logo.png');
+    await user.click(screen.getByRole('button', { name: 'Remove logo' }));
+    await waitFor(() => expect(removed.calls).toHaveLength(1));
+  });
+
+  it('is for administrators who may manage the organization', async () => {
+    asTenantAdmin(makeMe({ abilities: ['tenant.view', 'users.view'] }));
+    renderApp('/app/branding');
+    expect(await screen.findByText('You do not have access to this page')).toBeInTheDocument();
+  });
+});
+
+describe('Domains page', () => {
+  const domains = (list: unknown[]) =>
+    http.get(`${V1}/tenant/domains`, () =>
+      HttpResponse.json({
+        data: { default_address: 'aaa.sailix.test', slug: 'aaa', domains: list },
+      }),
+    );
+  const row = (over: Record<string, unknown> = {}) => ({
+    id: 'd1',
+    domain: 'school.example.com',
+    verified: false,
+    verified_at: null,
+    txt_name: '_sailix-challenge.school.example.com',
+    txt_value: 'sx-abc123',
+    cname_target: 'aaa.sailix.test',
+    ...over,
+  });
+
+  it('shows the default address and says what to publish for a domain that is not proved yet', async () => {
+    asTenantAdmin();
+    server.use(domains([row()]));
+    renderApp('/app/domains');
+
+    expect(await screen.findByText('aaa.sailix.test')).toBeInTheDocument();
+    expect(screen.getByText('school.example.com')).toBeInTheDocument();
+    expect(screen.getByText('Waiting for DNS')).toBeInTheDocument();
+    expect(screen.getByText('_sailix-challenge.school.example.com')).toBeInTheDocument();
+    expect(screen.getByText('sx-abc123')).toBeInTheDocument();
+  });
+
+  it('says where to point a verified domain, and no longer shows the token', async () => {
+    asTenantAdmin();
+    server.use(domains([row({ verified: true, txt_value: null })]));
+    renderApp('/app/domains');
+
+    expect(await screen.findByText('Verified')).toBeInTheDocument();
+    expect(
+      screen.getByText(/aaa\.sailix\.test/, { selector: 'span.font-mono' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('sx-abc123')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Verify/ })).not.toBeInTheDocument();
+  });
+
+  it('adds a domain', async () => {
+    asTenantAdmin();
+    const added = capture<Record<string, unknown>>();
+    server.use(
+      domains([]),
+      http.post(
+        `${V1}/tenant/domains`,
+        async ({ request }) => (
+          await added.record(request),
+          HttpResponse.json({ data: row() }, { status: 201 })
+        ),
+      ),
+    );
+    const { user } = renderApp('/app/domains');
+
+    await user.type(await screen.findByLabelText('Domain'), 'school.example.com');
+    await user.click(screen.getByRole('button', { name: 'Add domain' }));
+    await waitFor(() => expect(added.calls).toHaveLength(1));
+    expect(added.calls[0]!.body).toEqual({ domain: 'school.example.com' });
+  });
+
+  it("does not send an empty domain, and shows the server's reason when it refuses one", async () => {
+    asTenantAdmin();
+    server.use(
+      domains([]),
+      http.post(`${V1}/tenant/domains`, () =>
+        problem(409, 'domain_taken', 'That domain already belongs to an organization.'),
+      ),
+    );
+    const { user } = renderApp('/app/domains');
+
+    await user.click(await screen.findByRole('button', { name: 'Add domain' }));
+    expect(await screen.findByText('Enter a domain.')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Domain'), 'taken.example.com');
+    await user.click(screen.getByRole('button', { name: 'Add domain' }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+  });
+
+  it('verifies, and says why when the record is not there yet', async () => {
+    asTenantAdmin();
+    let calls = 0;
+    server.use(
+      domains([row()]),
+      http.post(`${V1}/tenant/domains/d1/verify`, () =>
+        ++calls === 1
+          ? problem(422, 'verification_failed', 'We could not find the record yet.')
+          : HttpResponse.json({ data: row({ verified: true, txt_value: null }) }),
+      ),
+    );
+    const { user } = renderApp('/app/domains');
+
+    await user.click(await screen.findByRole('button', { name: 'Verify school.example.com' }));
+    const message = await screen.findByRole('alert');
+    expect(message).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Verify school.example.com' }));
+    await waitFor(() => expect(calls).toBe(2));
+  });
+
+  it('removes a domain only after confirming', async () => {
+    asTenantAdmin();
+    const removed = capture<unknown>();
+    server.use(
+      domains([row()]),
+      http.delete(
+        `${V1}/tenant/domains/d1`,
+        async ({ request }) => (
+          await removed.record(request),
+          new HttpResponse(null, { status: 204 })
+        ),
+      ),
+    );
+    const { user } = renderApp('/app/domains');
+
+    await user.click(await screen.findByRole('button', { name: 'Remove school.example.com' }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(removed.calls).toHaveLength(0);
+    await user.click(within(dialog).getByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(removed.calls).toHaveLength(1));
+  });
+
+  it('is for administrators who may manage the organization', async () => {
+    asTenantAdmin(makeMe({ abilities: ['tenant.view'] }));
+    renderApp('/app/domains');
+    expect(await screen.findByText('You do not have access to this page')).toBeInTheDocument();
+  });
+});

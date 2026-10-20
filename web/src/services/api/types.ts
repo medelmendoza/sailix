@@ -25,6 +25,9 @@ export type CrewDocument = Schemas['CrewDocument'];
 export type AnnouncementInput = Schemas['AnnouncementInput'];
 export type PlatformAdmin = Schemas['PlatformAdminWithAbilities'];
 export type MyModule = Schemas['MyModule'];
+export type PublicTenant = Schemas['PublicTenant'];
+export type BrandingInput = Schemas['BrandingInput'];
+export type TenantDomain = Schemas['TenantDomain'];
 
 export interface Envelope<T> {
   data: T;

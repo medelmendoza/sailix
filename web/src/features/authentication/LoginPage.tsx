@@ -8,6 +8,7 @@ import { Button, FormError, TextField } from '../../components/ui';
 import { api, ensureCsrf } from '../../services/api/client';
 import { describeError } from '../../services/api/errors';
 import { applyServerErrors } from './forms';
+import { useTenantLook } from '../tenant-look/TenantLookProvider';
 import { PublicLayout } from './PublicLayout';
 
 const schema = z.object({
@@ -26,6 +27,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const look = useTenantLook(); // on an organization's own address the address names it: no agency code to type
   const [formError, setFormError] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -49,7 +51,7 @@ export function LoginPage() {
       await ensureCsrf();
       const res = await api.post('/auth/session', {
         ...values,
-        agency_code: values.agency_code || undefined,
+        agency_code: look ? undefined : values.agency_code || undefined,
       });
       if (res.data.data.requires_tenant_selection) {
         setSelection({ ticket: res.data.data.ticket, memberships: res.data.data.memberships });
@@ -127,13 +129,15 @@ export function LoginPage() {
           error={errors.password?.message}
           {...register('password')}
         />
-        <TextField
-          label="Agency code (optional)"
-          autoComplete="organization"
-          hint="Only needed if you belong to several organizations."
-          error={errors.agency_code?.message}
-          {...register('agency_code')}
-        />
+        {look ? null : (
+          <TextField
+            label="Agency code (optional)"
+            autoComplete="organization"
+            hint="Only needed if you belong to several organizations."
+            error={errors.agency_code?.message}
+            {...register('agency_code')}
+          />
+        )}
         <Button type="submit" loading={isSubmitting}>
           Sign in
         </Button>

@@ -1,0 +1,85 @@
+import type { PublicTenant } from '../../services/api/types';
+
+const LOOK_CACHE = 'sailix.look:';
+
+/** Mixes two #RRGGBB colours: t = 0 gives `a`, t = 1 gives `b`. */
+export function mix(a: string, b: string, t: number): string {
+  const ch = (hex: string, i: number) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+  const out = [0, 1, 2].map((i) => Math.round(ch(a, i) + (ch(b, i) - ch(a, i)) * t));
+  return `#${out.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+const HEX = /^#[0-9A-Fa-f]{6}$/;
+
+/** The colour variables the whole portal is drawn with, derived from the organization's two colours. */
+export function palette(
+  look: Pick<PublicTenant, 'primary_color' | 'secondary_color'>,
+): Record<string, string> {
+  const primary = look.primary_color && HEX.test(look.primary_color) ? look.primary_color : null;
+  const secondary =
+    look.secondary_color && HEX.test(look.secondary_color) ? look.secondary_color : null;
+  const vars: Record<string, string> = {};
+  if (primary) {
+    vars['--color-brand-700'] = primary;
+    vars['--color-brand-800'] = mix(primary, '#000000', 0.25);
+    vars['--color-brand-900'] = mix(primary, '#000000', 0.5);
+    vars['--color-accent-600'] = primary;
+    vars['--color-accent-100'] = mix(primary, '#ffffff', 0.88);
+    vars['--color-accent-500'] = secondary ?? mix(primary, '#ffffff', 0.15);
+  } else if (secondary) {
+    vars['--color-accent-500'] = secondary;
+  }
+  return vars;
+}
+
+const VARS = [
+  '--color-brand-700',
+  '--color-brand-800',
+  '--color-brand-900',
+  '--color-accent-600',
+  '--color-accent-500',
+  '--color-accent-100',
+];
+
+/** Puts the look on the page: colours, tab title and icon. With no look it puts the platform look back. */
+export function applyLook(look: PublicTenant | null): void {
+  const root = document.documentElement;
+  VARS.forEach((v) => root.style.removeProperty(v));
+  if (!look) {
+    document.title = 'Sailix Portal';
+    return;
+  }
+  Object.entries(palette(look)).forEach(([k, v]) => root.style.setProperty(k, v));
+  document.title = `${look.name} · Sailix Portal`;
+  if (look.favicon_url) {
+    let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = look.favicon_url;
+  }
+}
+
+const cacheKey = (slug: string | null) => `${LOOK_CACHE}${window.location.hostname}:${slug ?? ''}`;
+
+/** The last look seen on this address, only to avoid a flash of the wrong colours on the next load. Never trusted for anything else. */
+export function cachedLook(slug: string | null): PublicTenant | null {
+  try {
+    const raw = localStorage.getItem(cacheKey(slug));
+    const parsed = raw ? (JSON.parse(raw) as PublicTenant) : null;
+    return parsed && typeof parsed.name === 'string' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function cacheLook(slug: string | null, look: PublicTenant | null): void {
+  try {
+    if (look) localStorage.setItem(cacheKey(slug), JSON.stringify(look));
+    else localStorage.removeItem(cacheKey(slug));
+  } catch {
+    /* storage blocked: nothing lost */
+  }
+}

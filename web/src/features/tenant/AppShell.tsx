@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { Button, cn } from '../../components/ui';
 import { can, useLogout, useMe } from '../authentication/session';
+import { useTenantLook } from '../tenant-look/TenantLookProvider';
 
 interface NavItem {
   to: string;
@@ -24,12 +25,15 @@ const NAV: NavItem[] = [
   { to: '/app/feedback', label: 'Feedback', ability: 'users.manage' },
   { to: '/app/modules', label: 'Modules', ability: 'tenant.view' },
   { to: '/app/settings', label: 'Settings', ability: 'tenant.manage' },
+  { to: '/app/branding', label: 'Branding', ability: 'tenant.manage' },
+  { to: '/app/domains', label: 'Domains', ability: 'tenant.manage' },
   { to: '/app/audit', label: 'Audit log', ability: 'audit.view' },
   { to: '/app/account', label: 'My account' },
 ];
 
 export function AppShell() {
   const me = useMe();
+  const look = useTenantLook();
   const logout = useLogout('tenant');
   const items = NAV.filter((i) => !i.ability || can(me, i.ability));
 
@@ -37,9 +41,15 @@ export function AppShell() {
     <div className="min-h-screen md:grid md:grid-cols-[15rem_1fr]">
       <aside className="bg-brand-800 text-white md:min-h-screen">
         <div className="px-5 py-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-accent-100">Sailix</p>
-          <p className="mt-1 truncate text-sm font-medium" title={me.tenant.name}>
-            {me.tenant.name}
+          {look?.logo_url ? (
+            <img src={look.logo_url} alt="" className="mb-2 h-10 max-w-full object-contain" />
+          ) : (
+            <p className="text-xs font-semibold uppercase tracking-widest text-accent-100">
+              Sailix
+            </p>
+          )}
+          <p className="mt-1 truncate text-sm font-medium" title={look?.name ?? me.tenant.name}>
+            {look?.name ?? me.tenant.name}
           </p>
         </div>
         <nav aria-label="Main" className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:pb-0">

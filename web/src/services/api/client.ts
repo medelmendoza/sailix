@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { env } from '../../app/config/env';
+import { tenantHeaders } from '../../features/tenant-look/address';
 import { toApiError } from './errors';
 
 const base = env().apiBaseUrl;
@@ -18,6 +19,12 @@ const root = axios.create({ baseURL: base, withCredentials: true });
 export async function ensureCsrf(): Promise<void> {
   await root.get('/sanctum/csrf-cookie');
 }
+
+// Tell the API which address this page is on (routing only: the credential still decides what a caller may do).
+api.interceptors.request.use((config) => {
+  for (const [name, value] of Object.entries(tenantHeaders())) config.headers.set(name, value);
+  return config;
+});
 
 let onUnauthorized: (() => void) | undefined;
 

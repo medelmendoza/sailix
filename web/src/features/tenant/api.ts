@@ -19,7 +19,10 @@ import type {
   ListParams,
   Membership,
   Page,
+  PublicTenant,
   TenantDetail,
+  TenantDomain,
+  BrandingInput,
   Todo,
   TenantModule,
 } from '../../services/api/types';
@@ -131,6 +134,79 @@ export function useSendCrewPasswordReset(id: string) {
     },
     onSuccess: () => toast.success('A password reset link was emailed to the member.'),
     onError: (e) => toast.error(describeError(e)),
+  });
+}
+
+export function useBranding() {
+  return useQuery({
+    queryKey: ['branding'],
+    queryFn: async () => (await api.get<Envelope<PublicTenant>>('/tenant/branding')).data.data,
+  });
+}
+
+function useBrandingMutation<T>(run: (arg: T) => Promise<unknown>) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: run,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['branding'] });
+      void qc.invalidateQueries({ queryKey: ['tenant-look'] }); // the whole portal re-themes
+      void qc.invalidateQueries({ queryKey: ['audit'] });
+    },
+  });
+}
+
+export const useSaveBranding = () =>
+  useBrandingMutation(async (input: BrandingInput) => api.patch('/tenant/branding', input));
+
+export const useUploadBrandingImage = () =>
+  useBrandingMutation(async ({ kind, file }: { kind: 'logo' | 'favicon'; file: File }) => {
+    const body = new FormData();
+    body.append('file', file);
+    return api.post(`/tenant/branding/${kind}`, body);
+  });
+
+export const useRemoveBrandingImage = () =>
+  useBrandingMutation(async (kind: 'logo' | 'favicon') => api.delete(`/tenant/branding/${kind}`));
+
+export interface DomainList {
+  default_address: string;
+  slug: string;
+  domains: TenantDomain[];
+}
+
+export function useDomains() {
+  return useQuery({
+    queryKey: ['domains'],
+    queryFn: async () => (await api.get<Envelope<DomainList>>('/tenant/domains')).data.data,
+  });
+}
+
+export function useAddDomain() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (domain: string) =>
+      (await api.post<Envelope<TenantDomain>>('/tenant/domains', { domain })).data.data,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['domains'] }),
+  });
+}
+
+export function useVerifyDomain() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) =>
+      (await api.post<Envelope<TenantDomain>>(`/tenant/domains/${id}/verify`)).data.data,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['domains'] }),
+  });
+}
+
+export function useRemoveDomain() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/tenant/domains/${id}`);
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['domains'] }),
   });
 }
 

@@ -21,6 +21,9 @@ import { DeletionRequestsPage } from '../../features/tenant/DeletionRequestsPage
 import { FeedbackPage } from '../../features/tenant/FeedbackPage';
 import { CrewListPage } from '../../features/tenant/CrewListPage';
 import { CrewProfilePage } from '../../features/tenant/CrewProfilePage';
+import { BrandingPage } from '../../features/tenant/BrandingPage';
+import { DomainsPage } from '../../features/tenant/DomainsPage';
+import { TenantLookLayout } from '../../features/tenant-look/TenantLookProvider';
 import { MembersPage } from '../../features/tenant/MembersPage';
 import { ModulesPage } from '../../features/tenant/ModulesPage';
 import { SettingsPage } from '../../features/tenant/SettingsPage';
@@ -46,35 +49,43 @@ const platformPage = <K extends string>(
 
 export const routes: RouteObject[] = [
   { path: '/', element: <Navigate to="/app" replace /> },
-  { path: '/login', element: <LoginPage /> },
-  { path: '/forgot-password', element: <ForgotPasswordPage /> },
-  { path: '/reset-password', element: <TokenPasswordPage kind="reset" /> },
-  { path: '/accept-invitation', element: <TokenPasswordPage kind="invitation" /> },
   { path: '/platform/login', element: <PlatformLoginPage /> },
+  // Everything an organization's people see: the address says whose it is, and its name and look are put on the page.
   {
-    path: '/app',
-    element: (
-      <RequireTenant>
-        <AppShell />
-      </RequireTenant>
-    ),
+    element: <TenantLookLayout />,
     children: [
-      { index: true, element: <DashboardPage /> },
-      { path: 'members', element: guard('users.view', <MembersPage />) },
-      { path: 'crew', element: guard('users.view', <CrewListPage />) },
-      { path: 'crew/:id', element: guard('users.view', <CrewProfilePage />) },
-      { path: 'deletion-requests', element: guard('users.manage', <DeletionRequestsPage />) },
-      { path: 'payroll-import', element: guard('finance.manage', <PayrollImportPage />) },
-      { path: 'callit', element: guard('callit.manage', <CallItPage />) },
-      { path: 'documents', element: guard('documents.manage', <DocumentsPage />) },
-      { path: 'document-types', element: guard('documents.manage', <DocumentTypesPage />) },
-      { path: 'todos', element: guard('todos.manage', <TodosPage />) },
-      { path: 'announcements', element: guard('announcements.manage', <AnnouncementsPage />) },
-      { path: 'feedback', element: guard('users.manage', <FeedbackPage />) },
-      { path: 'modules', element: guard('tenant.view', <ModulesPage />) },
-      { path: 'settings', element: guard('tenant.manage', <SettingsPage />) },
-      { path: 'audit', element: guard('audit.view', <AuditPage />) },
-      { path: 'account', element: <AccountPage /> },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password', element: <TokenPasswordPage kind="reset" /> },
+      { path: '/accept-invitation', element: <TokenPasswordPage kind="invitation" /> },
+      {
+        path: '/app',
+        element: (
+          <RequireTenant>
+            <AppShell />
+          </RequireTenant>
+        ),
+        children: [
+          { index: true, element: <DashboardPage /> },
+          { path: 'members', element: guard('users.view', <MembersPage />) },
+          { path: 'crew', element: guard('users.view', <CrewListPage />) },
+          { path: 'crew/:id', element: guard('users.view', <CrewProfilePage />) },
+          { path: 'deletion-requests', element: guard('users.manage', <DeletionRequestsPage />) },
+          { path: 'payroll-import', element: guard('finance.manage', <PayrollImportPage />) },
+          { path: 'callit', element: guard('callit.manage', <CallItPage />) },
+          { path: 'documents', element: guard('documents.manage', <DocumentsPage />) },
+          { path: 'document-types', element: guard('documents.manage', <DocumentTypesPage />) },
+          { path: 'todos', element: guard('todos.manage', <TodosPage />) },
+          { path: 'announcements', element: guard('announcements.manage', <AnnouncementsPage />) },
+          { path: 'feedback', element: guard('users.manage', <FeedbackPage />) },
+          { path: 'modules', element: guard('tenant.view', <ModulesPage />) },
+          { path: 'settings', element: guard('tenant.manage', <SettingsPage />) },
+          { path: 'branding', element: guard('tenant.manage', <BrandingPage />) },
+          { path: 'domains', element: guard('tenant.manage', <DomainsPage />) },
+          { path: 'audit', element: guard('audit.view', <AuditPage />) },
+          { path: 'account', element: <AccountPage /> },
+        ],
+      },
     ],
   },
   {
