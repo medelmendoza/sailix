@@ -49,8 +49,14 @@ const ICONS = {
 };
 
 /** Sections of the sidebar, in the order the schoolhub platform console uses them. */
-const SECTIONS: { title: string; items: { to: string; label: string; icon: ReactNode; end?: boolean }[] }[] = [
-  { title: 'Overview', items: [{ to: '/platform', label: 'Dashboard', icon: ICONS.dashboard, end: true }] },
+const SECTIONS: {
+  title: string;
+  items: { to: string; label: string; icon: ReactNode; end?: boolean }[];
+}[] = [
+  {
+    title: 'Overview',
+    items: [{ to: '/platform', label: 'Dashboard', icon: ICONS.dashboard, end: true }],
+  },
   {
     title: 'Platform',
     items: [
@@ -151,7 +157,15 @@ export function PlatformShell() {
             aria-label="Open navigation menu"
             onClick={() => setOpen(true)}
           >
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
               <path d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>

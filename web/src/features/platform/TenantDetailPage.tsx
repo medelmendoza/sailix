@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import {
   Button,
@@ -363,11 +363,20 @@ function ModuleCard({ tenantId, module }: { tenantId: string; module: PlatformTe
   );
 }
 
+const TABS = [
+  { key: 'admins', label: 'Administrators' },
+  { key: 'address', label: 'Address and domains' },
+  { key: 'branding', label: 'Branding' },
+  { key: 'modules', label: 'Modules' },
+] as const;
+
 export function TenantDetailPage() {
   const { id = '' } = useParams();
   const tenant = useTenantById(id);
   const admins = useTenantAdmins(id);
   const modules = usePlatformModules(id);
+  const [params, setParams] = useSearchParams();
+  const tab = TABS.some((x) => x.key === params.get('tab')) ? params.get('tab')! : 'admins';
   const [action, setAction] = useState<LifecycleAction | null>(null);
   const [inviting, setInviting] = useState(false);
   const [devToken, setDevToken] = useState<string | null>(null);
@@ -445,107 +454,127 @@ export function TenantDetailPage() {
             <dd>{admins.isSuccess ? admins.data.data.length : '…'}</dd>
           </div>
         </dl>
-        <nav
-          aria-label="On this page"
+        <div
+          role="tablist"
+          aria-label="Organization"
           className="-mb-1 mt-4 flex gap-1 overflow-x-auto border-t border-line pt-3 text-sm"
         >
-          {[
-            ['#addr-h', 'Address and domains'],
-            ['#look-h', 'Branding'],
-            ['#admins-h', 'Administrators'],
-            ['#modules-h', 'Modules'],
-          ].map(([href, label]) => (
-            <a
-              key={href}
-              href={href}
-              className="whitespace-nowrap rounded-lg px-3 py-1.5 font-medium text-muted hover:bg-line/50 hover:text-brand-800"
+          {TABS.map((x) => (
+            <button
+              key={x.key}
+              type="button"
+              role="tab"
+              id={`tab-${x.key}`}
+              aria-selected={tab === x.key}
+              aria-controls={`panel-${x.key}`}
+              onClick={() => setParams({ tab: x.key }, { replace: true })}
+              className={`whitespace-nowrap rounded-lg px-3 py-1.5 font-medium ${
+                tab === x.key
+                  ? 'bg-accent-100 text-brand-800'
+                  : 'text-muted hover:bg-line/50 hover:text-brand-800'
+              }`}
             >
-              {label}
-            </a>
+              {x.label}
+            </button>
           ))}
-        </nav>
+        </div>
       </header>
 
-      <div className="flex flex-col gap-6">
-        <section aria-labelledby="addr-h" className="flex flex-col gap-3">
-          <h2 id="addr-h" className="text-base font-semibold">
-            Address and domains
-          </h2>
-          <DomainsEditor scope={platformScope(t.id)} />
-        </section>
-        <section aria-labelledby="look-h" className="flex flex-col gap-3">
-          <h2 id="look-h" className="text-base font-semibold">
-            Branding
-          </h2>
-          <BrandingEditor scope={platformScope(t.id)} />
-        </section>
-        <span id="admins-h" className="-mb-4" />
-        <Card
-          title="Administrators"
-          actions={
-            t.status === 'deactivated' || t.status === 'archived' ? undefined : (
-              <Button onClick={() => setInviting(true)}>Invite administrator</Button>
-            )
-          }
-        >
-          {devToken && (
-            <p role="status" className="mb-3 rounded-md bg-warn-bg px-3 py-2 text-xs text-warn-fg">
-              Development only: this server returned the invitation token instead of relying on
-              email: <code className="break-all">{devToken}</code>
-            </p>
-          )}
-          {admins.isPending ? (
-            <Spinner />
-          ) : admins.isError ? (
-            <ErrorState
-              message={describeError(admins.error)}
-              onRetry={() => void admins.refetch()}
-            />
-          ) : admins.data.data.length === 0 ? (
-            <EmptyState
-              title="No administrators yet"
-              description="Invite one, then activate the organization once they have accepted."
-            />
-          ) : (
-            <Table caption="Administrators" headers={['Account', 'Email', 'Status']}>
-              {admins.data.data.map((m) => (
-                <tr key={m.id}>
-                  <td className="px-4 py-3 font-medium">
-                    {m.user?.display_name ?? m.user?.username}
-                  </td>
-                  <td className="px-4 py-3">{m.user?.email}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={m.status} />
-                  </td>
-                </tr>
-              ))}
-            </Table>
-          )}
-        </Card>
+      <div
+        className="flex flex-col gap-6"
+        role="tabpanel"
+        id={`panel-${tab}`}
+        aria-labelledby={`tab-${tab}`}
+      >
+        {tab === 'address' && (
+          <section aria-labelledby="addr-h" className="flex flex-col gap-3">
+            <h2 id="addr-h" className="text-base font-semibold">
+              Address and domains
+            </h2>
+            <DomainsEditor scope={platformScope(t.id)} />
+          </section>
+        )}
+        {tab === 'branding' && (
+          <section aria-labelledby="look-h" className="flex flex-col gap-3">
+            <h2 id="look-h" className="text-base font-semibold">
+              Branding
+            </h2>
+            <BrandingEditor scope={platformScope(t.id)} />
+          </section>
+        )}
+        {tab === 'admins' && (
+          <Card
+            title="Administrators"
+            actions={
+              t.status === 'deactivated' || t.status === 'archived' ? undefined : (
+                <Button onClick={() => setInviting(true)}>Invite administrator</Button>
+              )
+            }
+          >
+            {devToken && (
+              <p
+                role="status"
+                className="mb-3 rounded-md bg-warn-bg px-3 py-2 text-xs text-warn-fg"
+              >
+                Development only: this server returned the invitation token instead of relying on
+                email: <code className="break-all">{devToken}</code>
+              </p>
+            )}
+            {admins.isPending ? (
+              <Spinner />
+            ) : admins.isError ? (
+              <ErrorState
+                message={describeError(admins.error)}
+                onRetry={() => void admins.refetch()}
+              />
+            ) : admins.data.data.length === 0 ? (
+              <EmptyState
+                title="No administrators yet"
+                description="Invite one, then activate the organization once they have accepted."
+              />
+            ) : (
+              <Table caption="Administrators" headers={['Account', 'Email', 'Status']}>
+                {admins.data.data.map((m) => (
+                  <tr key={m.id}>
+                    <td className="px-4 py-3 font-medium">
+                      {m.user?.display_name ?? m.user?.username}
+                    </td>
+                    <td className="px-4 py-3">{m.user?.email}</td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={m.status} />
+                    </td>
+                  </tr>
+                ))}
+              </Table>
+            )}
+          </Card>
+        )}
 
-        <section aria-labelledby="modules-h">
-          <h2 id="modules-h" className="mb-3 text-base font-semibold">
-            Modules
-          </h2>
-          {modules.isPending ? (
-            <Spinner />
-          ) : modules.isError ? (
-            <ErrorState
-              message={describeError(modules.error)}
-              onRetry={() => void modules.refetch()}
-            />
-          ) : (
-            <div className="flex flex-col gap-4">
-              {modules.data.map((m) => (
-                <ModuleCard
-                  key={`${m.code}-${m.external_team_id}-${m.enabled}`}
-                  tenantId={t.id}
-                  module={m}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+        {tab === 'modules' && (
+          <section aria-labelledby="modules-h">
+            <h2 id="modules-h" className="mb-3 text-base font-semibold">
+              Modules
+            </h2>
+            {modules.isPending ? (
+              <Spinner />
+            ) : modules.isError ? (
+              <ErrorState
+                message={describeError(modules.error)}
+                onRetry={() => void modules.refetch()}
+              />
+            ) : (
+              <div className="flex flex-col gap-4">
+                {modules.data.map((m) => (
+                  <ModuleCard
+                    key={`${m.code}-${m.external_team_id}-${m.enabled}`}
+                    tenantId={t.id}
+                    module={m}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </div>
 
       <LifecycleDialog tenant={t} action={action} onClose={() => setAction(null)} />

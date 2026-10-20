@@ -360,7 +360,7 @@ describe('organization detail: administrators and modules', () => {
         ),
       ),
     );
-    const { user } = renderApp('/platform/tenants/t-1');
+    const { user } = renderApp('/platform/tenants/t-1?tab=modules');
 
     expect(await screen.findByText('4 linked account(s).')).toBeInTheDocument();
     expect(screen.getByLabelText('External team ID')).toHaveValue('TEAM-1');
@@ -377,7 +377,7 @@ describe('organization detail: administrators and modules', () => {
   ])('explains %s on provisioning', async (code, status, text) => {
     detailData(tenant({ status: 'active' }));
     server.use(http.put(`${V1}/platform/tenants/t-1/modules/tala`, () => problem(status, code)));
-    const { user } = renderApp('/platform/tenants/t-1');
+    const { user } = renderApp('/platform/tenants/t-1?tab=modules');
 
     await user.type(await screen.findByLabelText('External team ID'), 'TEAM-X');
     await user.click(screen.getByRole('button', { name: 'Provision' }));
@@ -387,7 +387,7 @@ describe('organization detail: administrators and modules', () => {
 
   it('validates the team id locally', async () => {
     detailData(tenant({ status: 'active' }));
-    const { user } = renderApp('/platform/tenants/t-1');
+    const { user } = renderApp('/platform/tenants/t-1?tab=modules');
 
     await user.type(await screen.findByLabelText('External team ID'), 'bad team!');
     await user.click(screen.getByRole('button', { name: 'Provision' }));
@@ -501,14 +501,14 @@ describe('organization detail: address and branding', () => {
 
   it('shows the default address in the header and under Address and domains', async () => {
     detailData(tenant({ default_address: 'sfai.sailix.test', slug: 'sfai' }));
-    renderApp('/platform/tenants/t-1');
+    renderApp('/platform/tenants/t-1?tab=address');
 
     expect(await screen.findByText(/Code SFAI · sfai.sailix.test/)).toBeInTheDocument();
     expect(
       await screen.findByText('sfai.sailix.test', { selector: 'span.font-medium' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Address and domains' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Branding' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Branding' })).toBeInTheDocument();
   });
 
   it('adds and verifies a domain for that organization, through the platform endpoints', async () => {
@@ -540,7 +540,7 @@ describe('organization detail: address and branding', () => {
         ),
       ),
     );
-    const { user } = renderApp('/platform/tenants/t-1');
+    const { user } = renderApp('/platform/tenants/t-1?tab=address');
 
     await user.type(await screen.findByLabelText('Domain'), 'school.example.com');
     await user.click(screen.getByRole('button', { name: 'Add domain' }));
@@ -560,7 +560,7 @@ describe('organization detail: address and branding', () => {
         ),
       ),
     );
-    const { user } = renderApp('/platform/tenants/t-1');
+    const { user } = renderApp('/platform/tenants/t-1?tab=branding');
 
     await user.type(await screen.findByLabelText('Tagline'), 'Set by the platform');
     await user.type(screen.getByLabelText('Primary colour'), '#355DAD');
@@ -582,7 +582,7 @@ describe('organization detail: address and branding', () => {
         async ({ request }) => (await reset.record(request), HttpResponse.json({ data: look() })),
       ),
     );
-    const { user } = renderApp('/platform/tenants/t-1');
+    const { user } = renderApp('/platform/tenants/t-1?tab=branding');
 
     await user.click(await screen.findByRole('button', { name: 'Reset to the Sailix look' }));
     await waitFor(() => expect(reset.calls).toHaveLength(1));
