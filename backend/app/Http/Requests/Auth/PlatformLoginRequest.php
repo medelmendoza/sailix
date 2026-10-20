@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Support\PlatformMfa;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PlatformLoginRequest extends FormRequest
@@ -17,7 +18,7 @@ class PlatformLoginRequest extends FormRequest
         return [
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'max:1024'],
-            'otp' => ['required', 'digits:6'],
+            'otp' => PlatformMfa::required() ? ['required', 'digits:6'] : ['nullable', 'digits:6'],
         ];
     }
 }

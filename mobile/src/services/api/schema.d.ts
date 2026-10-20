@@ -1538,6 +1538,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/platform/auth/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Whether superadmin sign-in asks for a one-time code here.
+         * @description Always `true` except on a development machine whose environment switches it off. Carries nothing secret, so the sign-in page can ask before showing its form.
+         */
+        get: operations["getPlatformLoginOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/platform/auth/session": {
         parameters: {
             query?: never;
@@ -1547,7 +1567,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Superadmin login with mandatory TOTP. */
+        /** Superadmin login with a TOTP (mandatory except on a development machine that switches it off). */
         post: operations["loginPlatform"];
         /** Logout platform */
         delete: operations["logoutPlatform"];
@@ -5337,6 +5357,31 @@ export interface operations {
             503: components["responses"]["Problem"];
         };
     };
+    getPlatformLoginOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The options. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            otp_required: boolean;
+                        };
+                    };
+                };
+            };
+            429: components["responses"]["Problem"];
+        };
+    };
     loginPlatform: {
         parameters: {
             query?: never;
@@ -5350,7 +5395,8 @@ export interface operations {
                     /** Format: email */
                     email: string;
                     password: string;
-                    otp: string;
+                    /** @description Required unless `otp_required` is false (see the options endpoint). */
+                    otp?: string;
                 };
             };
         };

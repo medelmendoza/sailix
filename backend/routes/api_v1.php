@@ -20,6 +20,7 @@ Route::middleware('throttle:login')->group(function () {
     Route::post('auth/token/select', [TokenController::class, 'select']);
     Route::post('auth/session', [SessionController::class, 'store']);
     Route::post('auth/session/select', [SessionController::class, 'select']);
+    Route::get('platform/auth/options', [Platform\AuthController::class, 'options'])->middleware('throttle:api');
     Route::post('platform/auth/session', [Platform\AuthController::class, 'store'])->middleware('throttle:platform-login');
 });
 Route::post('auth/invitations/accept', [InvitationController::class, 'accept'])->middleware('throttle:invitation');

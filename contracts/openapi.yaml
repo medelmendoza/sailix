@@ -2325,11 +2325,35 @@ paths:
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
         '503': { $ref: '#/components/responses/Problem' }
+  /platform/auth/options:
+    get:
+      tags: [platform]
+      operationId: getPlatformLoginOptions
+      summary: Whether superadmin sign-in asks for a one-time code here.
+      description: >
+        Always `true` except on a development machine whose environment switches it off. Carries nothing secret, so the
+        sign-in page can ask before showing its form.
+      security: []
+      responses:
+        '200':
+          description: The options.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [otp_required]
+                    properties:
+                      otp_required: { type: boolean }
+        '429': { $ref: '#/components/responses/Problem' }
   /platform/auth/session:
     post:
       tags: [platform]
       operationId: loginPlatform
-      summary: Superadmin login with mandatory TOTP.
+      summary: Superadmin login with a TOTP (mandatory except on a development machine that switches it off).
       security: []
       requestBody:
         required: true
@@ -2337,11 +2361,14 @@ paths:
           application/json:
             schema:
               type: object
-              required: [email, password, otp]
+              required: [email, password]
               properties:
                 email: { type: string, format: email }
                 password: { type: string }
-                otp: { type: string, pattern: '^[0-9]{6}$' }
+                otp:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+                  description: Required unless `otp_required` is false (see the options endpoint).
       responses:
         '200':
           description: Session started.

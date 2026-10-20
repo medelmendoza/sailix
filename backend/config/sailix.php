@@ -5,6 +5,9 @@ return [
     // storage decision is made (docs/16); nothing else changes.
     'documents' => ['disk' => env('SAILIX_DOCUMENTS_DISK', 'local')],
 
+    // Superadmin one-time code. Only a local or testing environment can switch it off (see App\Support\PlatformMfa).
+    'platform' => ['require_otp' => filter_var(env('SAILIX_PLATFORM_REQUIRE_OTP', true), FILTER_VALIDATE_BOOLEAN)],
+
     // How long a password re-entry unlocks the payslips (seconds). Applies when the organization's `payslip_step_up` is `password`.
     'finance_unlock_ttl' => (int) env('SAILIX_FINANCE_UNLOCK_TTL', 300),
 

@@ -172,7 +172,12 @@ describe('tenant sign in', () => {
 describe('platform sign in', () => {
   it('requires a 6-digit code and clears it after a failed attempt', async () => {
     asAnonymous();
-    server.use(http.post(`${V1}/platform/auth/session`, () => problem(401, 'invalid_credentials')));
+    server.use(
+      http.get(`${V1}/platform/auth/options`, () =>
+        HttpResponse.json({ data: { otp_required: true } }),
+      ),
+      http.post(`${V1}/platform/auth/session`, () => problem(401, 'invalid_credentials')),
+    );
     const { user } = renderApp('/platform/login');
 
     await user.type(await screen.findByLabelText('Email'), 'root@example.test');
@@ -192,6 +197,9 @@ describe('platform sign in', () => {
   it('signs in and opens the platform dashboard', async () => {
     let signedIn = false;
     server.use(
+      http.get(`${V1}/platform/auth/options`, () =>
+        HttpResponse.json({ data: { otp_required: true } }),
+      ),
       http.get(`${API}/sanctum/csrf-cookie`, () => new HttpResponse(null, { status: 204 })),
       http.get(`${V1}/me`, () => problem(401, 'unauthenticated')),
       http.get(`${V1}/platform/me`, () =>
@@ -221,6 +229,43 @@ describe('platform sign in', () => {
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
     expect(await screen.findByRole('heading', { name: 'Platform dashboard' })).toBeInTheDocument();
+  });
+});
+
+describe('platform sign in without the one-time code', () => {
+  it('does not ask for a code when this environment does not require one, and sends none', async () => {
+    const posted = capture<Record<string, unknown>>();
+    server.use(
+      http.get(`${V1}/platform/auth/options`, () =>
+        HttpResponse.json({ data: { otp_required: false } }),
+      ),
+      http.get(`${API}/sanctum/csrf-cookie`, () => new HttpResponse(null, { status: 204 })),
+      http.get(`${V1}/me`, () => problem(401, 'unauthenticated')),
+      http.get(`${V1}/platform/me`, () => problem(401, 'unauthenticated')),
+      http.post(
+        `${V1}/platform/auth/session`,
+        async ({ request }) => (await posted.record(request), problem(401, 'invalid_credentials')),
+      ),
+    );
+    const { user } = renderApp('/platform/login');
+
+    await user.type(await screen.findByLabelText('Email'), 'root@example.test');
+    expect(screen.queryByLabelText('Authenticator code')).not.toBeInTheDocument();
+    expect(screen.queryByText(/one-time code is required/)).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText('Password'), 'pw');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sign in' })).toBeEnabled()); // once the page knows
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    await waitFor(() => expect(posted.calls).toHaveLength(1));
+    expect(posted.calls[0]!.body).toEqual({ email: 'root@example.test', password: 'pw' });
+    expect(await screen.findByRole('alert')).toHaveTextContent('Incorrect credentials');
+  });
+
+  it('asks for the code when it cannot find out (the safe default)', async () => {
+    asAnonymous();
+    server.use(http.get(`${V1}/platform/auth/options`, () => problem(500, 'server_error')));
+    renderApp('/platform/login');
+    expect(await screen.findByLabelText('Authenticator code')).toBeInTheDocument();
   });
 });
 
