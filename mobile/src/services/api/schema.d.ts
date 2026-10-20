@@ -469,6 +469,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/document-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Documents the agency asked me to submit or renew
+         * @description The kinds of document an administrator asked the signed-in member for, not yet answered. A request closes when the member submits a document of that kind. Only the caller's own requests are ever returned.
+         */
+        get: operations["listMyDocumentRequests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents": {
         parameters: {
             query?: never;
@@ -2298,6 +2318,15 @@ export interface components {
              */
             birthday?: string | null;
         };
+        DocumentRequestItem: {
+            type: {
+                id: string;
+                name: string;
+                short_name?: string | null;
+            };
+            /** Format: date-time */
+            requested_at: string | null;
+        };
         CrewDocumentRow: {
             type: {
                 id: string;
@@ -3274,6 +3303,29 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+        };
+    };
+    listMyDocumentRequests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Open requests, oldest first. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DocumentRequestItem"][];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
         };
     };
     listMyDocuments: {

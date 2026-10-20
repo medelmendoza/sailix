@@ -56,7 +56,7 @@ export type AppStackParamList = {
   AstraEmailStep: { step: 'to-cc' | 'raid' | 'bluf' | 'next' };
   AstraDoc: { doc: 'bluf' | 'pmepe' | 'scaril' };
   Document: { id: string };
-  DocumentForm: { id?: string };
+  DocumentForm: { id?: string; typeId?: string };
   DocumentViewer: { id: string; name: string; source?: 'document' | 'callit' };
   Scanner: undefined;
   CallIt: undefined;

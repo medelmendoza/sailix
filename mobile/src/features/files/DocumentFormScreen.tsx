@@ -46,7 +46,9 @@ export function DocumentFormScreen({ route, navigation }: Props) {
   const types = useDocumentTypes();
   const existing = useDocument(id ?? '');
   const save = useSaveDocument(id);
-  const [v, setV] = useState<Values | null>(id ? null : EMPTY);
+  const [v, setV] = useState<Values | null>(
+    id ? null : { ...EMPTY, type: route.params.typeId ?? '' }, // arriving from "Requested by your agency" picks the kind
+  );
   const [file, setFile] = useState<PickedFile | null>(null);
   const takeScan = useScanStore((s) => s.take);
 

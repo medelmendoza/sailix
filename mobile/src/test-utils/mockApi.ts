@@ -22,6 +22,7 @@ let unhandled: string[] = [];
 
 const BACKGROUND: Record<string, Route> = {
   'GET /documents': { data: { data: [], counts: { expired: 0, expiring: 0 } } },
+  'GET /document-requests': { data: { data: [] } },
   'GET /todos': {
     data: {
       data: [],

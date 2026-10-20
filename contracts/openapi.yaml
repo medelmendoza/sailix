@@ -737,6 +737,27 @@ paths:
                     items: { $ref: '#/components/schemas/DocumentType' }
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
+  /document-requests:
+    get:
+      tags: [documents]
+      operationId: listMyDocumentRequests
+      summary: Documents the agency asked me to submit or renew
+      description: >
+        The kinds of document an administrator asked the signed-in member for, not yet answered. A request closes when the
+        member submits a document of that kind. Only the caller's own requests are ever returned.
+      responses:
+        '200':
+          description: Open requests, oldest first.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/DocumentRequestItem' }
+        '401': { $ref: '#/components/responses/Problem' }
   /documents:
     get:
       tags: [documents]
@@ -3392,6 +3413,18 @@ components:
         date_arrive: { type: [string, 'null'], format: date }
         date_depart: { type: [string, 'null'], format: date }
         birthday: { type: [string, 'null'], format: date, description: 'Only in the single-member view.' }
+    DocumentRequestItem:
+      type: object
+      required: [type, requested_at]
+      properties:
+        type:
+          type: object
+          required: [id, name]
+          properties:
+            id: { type: string }
+            name: { type: string }
+            short_name: { type: [string, 'null'] }
+        requested_at: { type: [string, 'null'], format: date-time }
     CrewDocumentRow:
       type: object
       required: [type, document, state, requested]

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/services/api/client';
 import type {
   CrewDocument,
+  DocumentRequestItem,
   DocumentType,
   Envelope,
   MemberDocumentList,
@@ -25,6 +26,15 @@ export function useDocument(id: string) {
     queryKey: scopedKey('documents', 'one', id),
     enabled: id !== '', // the add form has no document yet
     queryFn: async () => (await api.get<Envelope<CrewDocument>>(`/documents/${id}`)).data.data,
+  });
+}
+
+/** What the agency asked this member to submit or renew. It shrinks by itself once they send the document in. */
+export function useDocumentRequests() {
+  return useQuery({
+    queryKey: scopedKey('documents', 'requests'),
+    queryFn: async () =>
+      (await api.get<Envelope<DocumentRequestItem[]>>('/document-requests')).data.data,
   });
 }
 

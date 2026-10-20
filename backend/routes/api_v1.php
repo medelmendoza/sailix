@@ -48,6 +48,7 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::get('reports/{report}/file', [Me\CallItController::class, 'file']);
     });
     Route::get('document-types', [Me\DocumentController::class, 'types']);
+    Route::get('document-requests', [Me\DocumentController::class, 'requests']);
     Route::get('documents', [Me\DocumentController::class, 'index']);
     Route::post('documents', [Me\DocumentController::class, 'store'])->name('documents.store')->middleware('throttle:document-upload');
     Route::get('documents/{document}', [Me\DocumentController::class, 'show']);

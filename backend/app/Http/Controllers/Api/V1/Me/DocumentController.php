@@ -27,6 +27,19 @@ class DocumentController extends Controller
         return response()->json(['data' => DocumentType::where('is_active', true)->orderBy('name')->get(['id', 'name', 'short_name'])]);
     }
 
+    /** The kinds of document the agency asked this member to submit or renew and they have not answered yet. */
+    public function requests(TenantContext $context): JsonResponse
+    {
+        $rows = DocumentAssignment::with('type')->where('membership_id', $context->membershipId())->whereNull('fulfilled_at')
+            ->whereHas('type', fn ($q) => $q->where('is_active', true))->orderBy('created_at')->orderBy('id')->get()
+            ->map(fn (DocumentAssignment $r) => [
+                'type' => ['id' => $r->type->id, 'name' => $r->type->name, 'short_name' => $r->type->short_name],
+                'requested_at' => $r->updated_at?->toIso8601String(),
+            ])->values();
+
+        return response()->json(['data' => $rows]);
+    }
+
     public function index(Request $request, TenantContext $context): JsonResponse
     {
         $member = $context->membershipId();

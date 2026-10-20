@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\Tenancy\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
@@ -27,6 +28,12 @@ class DocumentAssignment extends Model
     protected function casts(): array
     {
         return ['fulfilled_at' => 'datetime'];
+    }
+
+    /** @return BelongsTo<DocumentType, $this> */
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(DocumentType::class, 'document_type_id');
     }
 
     /** The member just submitted a document of this kind: close any open request for it. */

@@ -92,6 +92,54 @@ describe('files list', () => {
   });
 });
 
+describe('documents requested by the agency', () => {
+  const requested = {
+    'GET /document-requests': {
+      data: {
+        data: [
+          {
+            type: { id: 't1', name: 'Passport', short_name: null },
+            requested_at: '2026-10-19T08:00:00+00:00',
+          },
+          {
+            type: { id: 't2', name: "Seaman's Book", short_name: null },
+            requested_at: '2026-10-19T09:00:00+00:00',
+          },
+        ],
+      },
+    },
+    'GET /document-types': {
+      data: {
+        data: [
+          { id: 't1', name: 'Passport', short_name: null },
+          { id: 't2', name: "Seaman's Book", short_name: null },
+        ],
+      },
+    },
+  };
+
+  it('lists what the agency asked for, above the documents', async () => {
+    await openFiles({ 'GET /documents': list([]), ...requested });
+    expect(await screen.findByText('Requested by your agency')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Submit Passport' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: "Submit Seaman's Book" })).toBeTruthy();
+  });
+
+  it('opens the form with that kind of document already chosen', async () => {
+    await openFiles({ 'GET /documents': list([]), ...requested });
+    await fireEvent.press(await screen.findByRole('button', { name: "Submit Seaman's Book" }));
+
+    expect(await screen.findByRole('radio', { name: "Seaman's Book", checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Passport', checked: false })).toBeTruthy();
+  });
+
+  it('shows nothing extra when nothing was asked for', async () => {
+    await openFiles({ 'GET /documents': list([]) });
+    await screen.findByText('No documents yet');
+    expect(screen.queryByText('Requested by your agency')).toBeNull();
+  });
+});
+
 describe('document detail', () => {
   async function openDoc(d: unknown) {
     const api = await openFiles({

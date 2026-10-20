@@ -145,6 +145,21 @@ class CrewDocumentRequestTest extends TestCase
         $this->assertFalse($this->rows()['Basic Training COP']['requested']);
     }
 
+    public function test_a_member_sees_only_their_own_open_requests(): void
+    {
+        $this->ask('cop')->assertCreated();
+        $this->ask('passport')->assertCreated();
+        $this->putJson('/api/v1/tenant/crew/'.$this->m['crewB'].'/document-requests/'.$this->t['other'], [], $this->as('adminB'))->assertCreated();
+
+        $mine = collect($this->getJson('/api/v1/document-requests', $this->as('crewA'))->assertOk()->json('data'));
+        $this->assertSame(['Basic Training COP', 'Passport'], $mine->pluck('type.name')->sort()->values()->all());
+        $this->assertNotNull($mine->first()['requested_at']);
+
+        $this->deleteJson('/api/v1/tenant/crew/'.$this->m['crewA'].'/document-requests/'.$this->t['cop'], [], $this->as('adminA'))->assertNoContent();
+        $this->assertSame(['Passport'], collect($this->getJson('/api/v1/document-requests', $this->as('crewA'))->json('data'))->pluck('type.name')->all());
+        $this->assertSame(['Passport'], collect($this->getJson('/api/v1/document-requests', $this->as('crewB'))->json('data'))->pluck('type.name')->all()); // its own organization's kind, not crewA's
+    }
+
     public function test_only_documents_managers_use_it_and_organizations_stay_apart(): void
     {
         $this->getJson('/api/v1/tenant/crew/'.$this->m['crewA'].'/documents', $this->as('crewA'))->assertForbidden();
