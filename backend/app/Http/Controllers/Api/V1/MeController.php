@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\Feature;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProfileResource;
 use App\Identity\MembershipDirectory;
@@ -39,6 +40,8 @@ class MeController extends Controller
             'profile' => $membership->profile ? (new ProfileResource($membership->profile))->resolve() : null,
             'abilities' => $context->role()->abilities(),
             'modules' => $modules->forMembership($membership),
+            // core features the platform switched on or off for this organization (clients hide what is off)
+            'feature_access' => collect(Feature::cases())->mapWithKeys(fn (Feature $f) => [$f->value => $membership->tenant->featureEnabled($f)])->all(),
             'memberships' => $directory->forUser($user)
                 ->filter(fn (Membership $m) => MembershipDirectory::isUsable($m))
                 ->map(fn (Membership $m) => [

@@ -28,9 +28,10 @@ export function useTodos(status?: 'open' | 'done') {
 }
 
 /** The next few open tasks, for the Dashboard card. */
-export function useNextTodos() {
+export function useNextTodos(enabled = true) {
   return useQuery({
     queryKey: scopedKey('todos', 'next'),
+    enabled,
     queryFn: async () =>
       (await api.get<MemberTodoPage>('/todos', { params: { status: 'open', per_page: 3 } })).data,
   });

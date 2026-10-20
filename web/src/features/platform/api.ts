@@ -8,6 +8,7 @@ import type {
   ListParams,
   Membership,
   Page,
+  PlatformTenantFeature,
   PlatformTenantModule,
   Tenant,
 } from '../../services/api/types';
@@ -139,3 +140,25 @@ export function usePlatformAudit(params: ListParams) {
 }
 
 export { describeError };
+
+export function usePlatformFeatures(id: string) {
+  return useQuery({
+    queryKey: ['platform', 'tenant', id, 'features'],
+    queryFn: async () =>
+      (await api.get<Envelope<PlatformTenantFeature[]>>(`/platform/tenants/${id}/features`)).data
+        .data,
+  });
+}
+
+export function useUpdateFeatures(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (features: Record<string, boolean>) =>
+      (
+        await api.patch<Envelope<PlatformTenantFeature[]>>(`/platform/tenants/${id}/features`, {
+          features,
+        })
+      ).data.data,
+    onSuccess: (data) => qc.setQueryData(['platform', 'tenant', id, 'features'], data),
+  });
+}

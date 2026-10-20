@@ -588,3 +588,47 @@ describe('organization detail: address and branding', () => {
     await waitFor(() => expect(reset.calls).toHaveLength(1));
   });
 });
+
+describe('organization detail: feature access', () => {
+  beforeEach(() => asPlatformAdmin());
+
+  const feature = (code: string, label: string, enabled = true) => ({
+    code,
+    label,
+    description: `${label} description`,
+    enabled,
+  });
+
+  it('lists the core features and switches one off for that organization only', async () => {
+    detailData(tenant());
+    server.use(
+      http.get(`${V1}/platform/tenants/t-1/features`, () =>
+        HttpResponse.json({ data: [feature('crew', 'Crew'), feature('documents', 'Documents')] }),
+      ),
+    );
+    const patched = capture<{ features: Record<string, boolean> }>();
+    server.use(
+      http.patch(`${V1}/platform/tenants/t-1/features`, async ({ request }) => {
+        await patched.record(request);
+        return HttpResponse.json({
+          data: [feature('crew', 'Crew', false), feature('documents', 'Documents')],
+        });
+      }),
+    );
+    const { user } = renderApp('/platform/tenants/t-1?tab=features');
+
+    const crew = await screen.findByRole('switch', { name: 'Crew access' });
+    expect(crew).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Documents access' })).toBeChecked();
+
+    await user.click(crew);
+
+    await waitFor(() =>
+      expect(patched.calls.map((c) => c.body)).toEqual([{ features: { crew: false } }]),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('switch', { name: 'Crew access' })).not.toBeChecked(),
+    );
+    expect(screen.getByRole('switch', { name: 'Documents access' })).toBeChecked();
+  });
+});

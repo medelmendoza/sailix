@@ -1992,6 +1992,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/platform/tenants/{tenant}/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        /** Core features of an organization and whether each is on */
+        get: operations["listPlatformTenantFeatures"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Switch core features on or off for an organization
+         * @description Features not named keep their state. A feature that is off is hidden in the web portal and the mobile app and refused by the API for that organization (403 `feature_disabled`).
+         */
+        patch: operations["updatePlatformTenantFeatures"];
+        trace?: never;
+    };
     "/platform/settings": {
         parameters: {
             query?: never;
@@ -2103,10 +2126,21 @@ export interface components {
             abilities: string[];
             /** @description Modules this organization is entitled to AND this role may use, with the caller's link state. */
             modules: components["schemas"]["MyModule"][];
+            /** @description Core features switched on (true) or off (false) for this organization by the platform. Clients hide what is off; the API refuses it (403 `feature_disabled`). */
+            feature_access?: {
+                [key: string]: boolean;
+            };
             /** @description Every organization the authenticated user can currently sign in to (active membership in an active organization), derived server-side from the credential. Used to offer organization switching via POST /auth/token/switch, which re-validates the choice. */
             memberships: (components["schemas"]["MembershipSummary"] & {
                 current: boolean;
             })[];
+        };
+        PlatformTenantFeature: {
+            /** @enum {string} */
+            code: "crew" | "documents" | "announcements" | "finance" | "feedback" | "todos" | "branding";
+            label: string;
+            description: string;
+            enabled: boolean;
         };
         /** @description Personal data held per organization (tenant-owned). Date of birth is deliberately not collected. */
         Profile: {
@@ -6602,6 +6636,68 @@ export interface operations {
             401: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listPlatformTenantFeatures: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every core feature, on by default. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlatformTenantFeature"][];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updatePlatformTenantFeatures: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Feature code to on (true) or off (false). */
+                    features: {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description The features after the change. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlatformTenantFeature"][];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };

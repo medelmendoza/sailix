@@ -27,11 +27,13 @@ import { formatDateTime } from '../shared/AuditTable';
 import {
   describeError,
   useInviteAdmin,
+  usePlatformFeatures,
   usePlatformModules,
   useProvisionModule,
   useTenantAdmins,
   useTenantById,
   useTransition,
+  useUpdateFeatures,
 } from './api';
 
 interface LifecycleAction {
@@ -367,8 +369,68 @@ const TABS = [
   { key: 'admins', label: 'Administrators' },
   { key: 'address', label: 'Address and domains' },
   { key: 'branding', label: 'Branding' },
+  { key: 'features', label: 'Feature access' },
   { key: 'modules', label: 'Modules' },
 ] as const;
+
+function FeatureAccess({ tenantId }: { tenantId: string }) {
+  const features = usePlatformFeatures(tenantId);
+  const update = useUpdateFeatures(tenantId);
+  const toast = useToast();
+
+  if (features.isPending) return <Spinner />;
+  if (features.isError) {
+    return (
+      <ErrorState message={describeError(features.error)} onRetry={() => void features.refetch()} />
+    );
+  }
+  return (
+    <section aria-labelledby="features-h" className="flex flex-col gap-3">
+      <div>
+        <h2 id="features-h" className="text-base font-semibold">
+          Feature access
+        </h2>
+        <p className="text-sm text-muted">
+          A feature that is off is hidden in the portal and the mobile app, and the server refuses
+          it. Astra, Call-it and Tala are switched under Modules.
+        </p>
+      </div>
+      <Card>
+        <ul className="divide-y divide-line">
+          {features.data.map((f) => (
+            <li key={f.code} className="flex items-center justify-between gap-4 py-3">
+              <div className="min-w-0">
+                <p className="font-medium">{f.label}</p>
+                <p className="text-sm text-muted">{f.description}</p>
+              </div>
+              <label className="flex shrink-0 items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  className="size-5 accent-[var(--color-accent-600)]"
+                  aria-label={`${f.label} access`}
+                  checked={f.enabled}
+                  disabled={update.isPending}
+                  onChange={(e) => {
+                    const on = e.target.checked; // read now: the box has moved by the time the server answers
+                    update.mutate(
+                      { [f.code]: on },
+                      {
+                        onSuccess: () => toast.success(`${f.label} ${on ? 'on' : 'off'}.`),
+                        onError: (err) => toast.error(describeError(err)),
+                      },
+                    );
+                  }}
+                />
+                {f.enabled ? 'On' : 'Off'}
+              </label>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </section>
+  );
+}
 
 export function TenantDetailPage() {
   const { id = '' } = useParams();
@@ -550,6 +612,7 @@ export function TenantDetailPage() {
           </Card>
         )}
 
+        {tab === 'features' && <FeatureAccess tenantId={t.id} />}
         {tab === 'modules' && (
           <section aria-labelledby="modules-h">
             <h2 id="modules-h" className="mb-3 text-base font-semibold">

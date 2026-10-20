@@ -3019,6 +3019,63 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /platform/tenants/{tenant}/features:
+    parameters:
+      - { name: tenant, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [platform]
+      operationId: listPlatformTenantFeatures
+      summary: Core features of an organization and whether each is on
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: Every core feature, on by default.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/PlatformTenantFeature' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [platform]
+      operationId: updatePlatformTenantFeatures
+      summary: Switch core features on or off for an organization
+      description: >
+        Features not named keep their state. A feature that is off is hidden in the web portal and the mobile app and
+        refused by the API for that organization (403 `feature_disabled`).
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [features]
+              properties:
+                features:
+                  type: object
+                  description: Feature code to on (true) or off (false).
+                  additionalProperties: { type: boolean }
+      responses:
+        '200':
+          description: The features after the change.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/PlatformTenantFeature' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /platform/settings:
     get:
       tags: [platform]
@@ -3243,6 +3300,12 @@ components:
           description: Modules this organization is entitled to AND this role may use, with the caller's link state.
           type: array
           items: { $ref: '#/components/schemas/MyModule' }
+        feature_access:
+          description: >-
+            Core features switched on (true) or off (false) for this organization by the platform. Clients hide what is
+            off; the API refuses it (403 `feature_disabled`).
+          type: object
+          additionalProperties: { type: boolean }
         memberships:
           description: >-
             Every organization the authenticated user can currently sign in to (active membership in an active
@@ -3256,6 +3319,14 @@ components:
                 required: [current]
                 properties:
                   current: { type: boolean }
+    PlatformTenantFeature:
+      type: object
+      required: [code, label, description, enabled]
+      properties:
+        code: { type: string, enum: [crew, documents, announcements, finance, feedback, todos, branding] }
+        label: { type: string }
+        description: { type: string }
+        enabled: { type: boolean }
     Profile:
       type: object
       description: Personal data held per organization (tenant-owned). Date of birth is deliberately not collected.

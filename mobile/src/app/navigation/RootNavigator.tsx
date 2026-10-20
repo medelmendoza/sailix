@@ -59,6 +59,7 @@ import { TalaCourseScreen } from '@/features/modules/tala/TalaCourseScreen';
 import { TalaFlashcardsScreen } from '@/features/modules/tala/TalaFlashcardsScreen';
 import { TalaQuizScreen } from '@/features/modules/tala/TalaQuizScreen';
 import { TalaPdfScreen, TalaVideoScreen } from '@/features/modules/tala/TalaViewers';
+import { useFeature } from '@/store/featureAccess';
 import { ModuleScreen } from '@/features/modules/ModuleScreen';
 import { useSessionStore } from '@/store/sessionStore';
 import type { AppStackParamList, AuthStackParamList, MainTabParamList } from './types';
@@ -151,7 +152,10 @@ function AccountButton() {
 
 function MainTabs() {
   const brand = useBrand();
-  const unread = useUnreadCount(true);
+  const hasDocuments = useFeature('documents');
+  const hasAnnouncements = useFeature('announcements');
+  const hasFinance = useFeature('finance');
+  const unread = useUnreadCount(hasAnnouncements);
   const insets = useSafeAreaInsets();
   const bottom = Math.max(insets.bottom, 8) + 8; // the bar floats this far above the bottom edge
   return (
@@ -183,43 +187,49 @@ function MainTabs() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="Files"
-        component={FilesScreen}
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <TabPill focused={focused}>
-              <TabIcon name="folder" color={color} filled={focused} />
-            </TabPill>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="Announcements"
-        component={AnnouncementsScreen}
-        options={{
-          // "Announcements" does not fit under a fifth of the screen: the tab says "Notices", the screen and VoiceOver say Announcements
-          tabBarLabel: 'Notices',
-          tabBarAccessibilityLabel: 'Announcements',
-          tabBarIcon: ({ color, focused }) => (
-            <TabPill focused={focused}>
-              <TabIcon name="announce" color={color} filled={focused} />
-            </TabPill>
-          ),
-          tabBarBadge: unread.data && unread.data > 0 ? unread.data : undefined,
-        }}
-      />
-      <Tabs.Screen
-        name="Finance"
-        component={FinanceScreen}
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <TabPill focused={focused}>
-              <TabIcon name="money" color={color} filled={focused} />
-            </TabPill>
-          ),
-        }}
-      />
+      {hasDocuments ? (
+        <Tabs.Screen
+          name="Files"
+          component={FilesScreen}
+          options={{
+            tabBarIcon: ({ color, focused }) => (
+              <TabPill focused={focused}>
+                <TabIcon name="folder" color={color} filled={focused} />
+              </TabPill>
+            ),
+          }}
+        />
+      ) : null}
+      {hasAnnouncements ? (
+        <Tabs.Screen
+          name="Announcements"
+          component={AnnouncementsScreen}
+          options={{
+            // "Announcements" does not fit under a fifth of the screen: the tab says "Notices", the screen and VoiceOver say Announcements
+            tabBarLabel: 'Notices',
+            tabBarAccessibilityLabel: 'Announcements',
+            tabBarIcon: ({ color, focused }) => (
+              <TabPill focused={focused}>
+                <TabIcon name="announce" color={color} filled={focused} />
+              </TabPill>
+            ),
+            tabBarBadge: unread.data && unread.data > 0 ? unread.data : undefined,
+          }}
+        />
+      ) : null}
+      {hasFinance ? (
+        <Tabs.Screen
+          name="Finance"
+          component={FinanceScreen}
+          options={{
+            tabBarIcon: ({ color, focused }) => (
+              <TabPill focused={focused}>
+                <TabIcon name="money" color={color} filled={focused} />
+              </TabPill>
+            ),
+          }}
+        />
+      ) : null}
       <Tabs.Screen
         name="Services"
         component={ServicesScreen}

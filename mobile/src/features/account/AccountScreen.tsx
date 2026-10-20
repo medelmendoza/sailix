@@ -8,6 +8,7 @@ import { AppText, Button, Card, FormError, Notice } from '@/components';
 import { spacing } from '@/constants/theme';
 import { api } from '@/services/api/client';
 import { describeError } from '@/services/api/errors';
+import { useFeature } from '@/store/featureAccess';
 import { useSessionStore } from '@/store/sessionStore';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Account'>;
@@ -25,6 +26,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 export function AccountScreen({ navigation }: Props) {
   const me = useSessionStore((s) => s.me);
+  const hasFeedback = useFeature('feedback');
   const signOut = useSessionStore((s) => s.signOut);
   const switchOrganization = useSessionStore((s) => s.switchOrganization);
   const [switching, setSwitching] = useState<string | null>(null);
@@ -129,11 +131,13 @@ export function AccountScreen({ navigation }: Props) {
         variant="secondary"
         onPress={() => navigation.navigate('ChangePassword')}
       />
-      <Button
-        title="Send feedback"
-        variant="secondary"
-        onPress={() => navigation.navigate('SendFeedback')}
-      />
+      {hasFeedback ? (
+        <Button
+          title="Send feedback"
+          variant="secondary"
+          onPress={() => navigation.navigate('SendFeedback')}
+        />
+      ) : null}
       <Button title="Privacy policy" variant="secondary" onPress={() => void openPrivacy()} />
       <Button
         title="Request account deletion"

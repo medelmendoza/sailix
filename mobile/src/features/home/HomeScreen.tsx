@@ -13,6 +13,7 @@ import { useDocuments } from '@/features/files/api';
 import { useNextTodos } from '@/features/todos/api';
 import { describeError } from '@/services/api/errors';
 import { useSessionStore } from '@/store/sessionStore';
+import { useFeature } from '@/store/featureAccess';
 import { QuickActions, Tile } from './HomeShortcuts';
 import { useBrand, useLogoUrl } from '@/theme/brand';
 
@@ -49,8 +50,12 @@ export function HomeScreen({ navigation }: Props) {
   const logo = useLogoUrl();
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const todos = useNextTodos();
-  const docs = useDocuments('approved');
+  const hasTodos = useFeature('todos');
+  const hasDocuments = useFeature('documents');
+  const hasFinance = useFeature('finance');
+  const hasAnnouncements = useFeature('announcements');
+  const todos = useNextTodos(hasTodos);
+  const docs = useDocuments('approved', hasDocuments);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -143,27 +148,37 @@ export function HomeScreen({ navigation }: Props) {
           message={error ?? (switchError ? `Could not switch organization. ${switchError}` : null)}
         />
         <QuickActions
+          showUpload={hasDocuments}
+          showFinance={hasFinance}
           onUpload={() => navigation.navigate('DocumentForm', {})}
           onFinance={() => navigation.navigate('Finance')}
           onServices={() => navigation.navigate('Services')}
         />
-        <View style={styles.tiles}>
-          <Tile
-            title="To-do list"
-            note={todoNote}
-            noteColor={overdue > 0 ? colors.danger : colors.textMuted}
-            icon={<GlyphIcon name="check" size={26} />}
-            onPress={() => navigation.navigate('Todos')}
-          />
-          <Tile
-            title="Documents"
-            note={docNote}
-            noteColor={expired > 0 ? colors.danger : colors.warning}
-            icon={<TabIcon name="folder" color={brand.primary} />}
-            onPress={() => navigation.navigate('Files')}
-          />
-        </View>
-        <HomeAnnouncements onOpenAll={() => navigation.navigate('Announcements')} />
+        {hasTodos || hasDocuments ? (
+          <View style={styles.tiles}>
+            {hasTodos ? (
+              <Tile
+                title="To-do list"
+                note={todoNote}
+                noteColor={overdue > 0 ? colors.danger : colors.textMuted}
+                icon={<GlyphIcon name="check" size={26} />}
+                onPress={() => navigation.navigate('Todos')}
+              />
+            ) : null}
+            {hasDocuments ? (
+              <Tile
+                title="Documents"
+                note={docNote}
+                noteColor={expired > 0 ? colors.danger : colors.warning}
+                icon={<TabIcon name="folder" color={brand.primary} />}
+                onPress={() => navigation.navigate('Files')}
+              />
+            ) : null}
+          </View>
+        ) : null}
+        {hasAnnouncements ? (
+          <HomeAnnouncements onOpenAll={() => navigation.navigate('Announcements')} />
+        ) : null}
       </View>
     </ScrollView>
   );

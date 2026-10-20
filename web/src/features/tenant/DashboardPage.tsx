@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ErrorState, PageHeader, Spinner } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import { AuditTable } from '../shared/AuditTable';
-import { can, useMe } from '../authentication/session';
+import { can, hasFeature, useMe } from '../authentication/session';
 import { useAuditLogs, useDeletionRequests } from './api';
 import { AnnouncementsPanel, DocumentApprovalPanel, UserApplicationPanel } from './DashboardPanels';
 
@@ -28,9 +28,9 @@ export function DashboardPage() {
         </p>
       ) : null}
       <div className="grid gap-4 xl:grid-cols-2">
-        {can(me, 'users.view') && <UserApplicationPanel />}
-        {can(me, 'documents.manage') && <DocumentApprovalPanel />}
-        {can(me, 'announcements.manage') && (
+        {can(me, 'users.view') && hasFeature(me, 'crew') && <UserApplicationPanel />}
+        {can(me, 'documents.manage') && hasFeature(me, 'documents') && <DocumentApprovalPanel />}
+        {can(me, 'announcements.manage') && hasFeature(me, 'announcements') && (
           <div className="xl:col-span-2">
             <AnnouncementsPanel />
           </div>

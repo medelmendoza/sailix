@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Feature;
 use App\Enums\TenantStatus;
 use App\Tenancy\TenantSlugs;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -17,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string $code
  * @property string $slug
  * @property string $name
+ * @property list<string>|null $disabled_features
  * @property TenantStatus $status
  * @property Carbon|null $activated_at
  * @property Carbon|null $archived_at
@@ -55,7 +57,13 @@ class Tenant extends Model
             'status' => TenantStatus::class,
             'activated_at' => 'datetime',
             'archived_at' => 'datetime',
+            'disabled_features' => 'array',
         ];
+    }
+
+    public function featureEnabled(Feature $feature): bool
+    {
+        return ! in_array($feature->value, $this->disabled_features ?? [], true);
     }
 
     public function isActive(): bool

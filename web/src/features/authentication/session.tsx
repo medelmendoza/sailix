@@ -51,6 +51,11 @@ export function usePlatformAdmin(): PlatformAdmin {
   return admin;
 }
 
+/** A core feature is on unless the platform switched it off for this organization (the API refuses it too). */
+export function hasFeature(me: Me, feature: string): boolean {
+  return me.feature_access?.[feature] !== false;
+}
+
 /** UI hint only: the API enforces every ability again on each request. */
 export function can(me: Me, ability: string): boolean {
   return me.abilities.includes(ability);

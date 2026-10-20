@@ -5,17 +5,23 @@ import { useBrand } from '@/theme/brand';
 
 /** The three round shortcuts of the dashboard. */
 export function QuickActions({
+  showUpload = true,
+  showFinance = true,
   onUpload,
   onFinance,
   onServices,
 }: {
+  /** Turned off by the platform for the organization: the shortcut is not offered. */
+  showUpload?: boolean;
+  showFinance?: boolean;
   onUpload: () => void;
   onFinance: () => void;
   onServices: () => void;
 }) {
   const brand = useBrand();
-  const items = [
+  const all = [
     {
+      show: showUpload,
       label: 'Upload documents',
       icon: (
         <View style={{ transform: [{ rotate: '180deg' }] }}>
@@ -25,16 +31,19 @@ export function QuickActions({
       onPress: onUpload,
     },
     {
+      show: showFinance,
       label: 'View finances',
       icon: <TabIcon name="money" color={brand.primary} />,
       onPress: onFinance,
     },
     {
+      show: true,
       label: 'Services',
       icon: <TabIcon name="case" color={brand.primary} />,
       onPress: onServices,
     },
   ];
+  const items = all.filter((i) => i.show);
   return (
     <Card variant="flat" style={styles.quick}>
       {items.map((i) => (

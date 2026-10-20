@@ -13,9 +13,10 @@ import { scopedKey } from '@/store/scopedKey';
 
 export type DocumentView = 'approved' | 'review';
 
-export function useDocuments(view: DocumentView) {
+export function useDocuments(view: DocumentView, enabled = true) {
   return useQuery({
     queryKey: scopedKey('documents', 'list', view),
+    enabled,
     queryFn: async () =>
       (await api.get<MemberDocumentList>('/documents', { params: { status: view } })).data,
   });

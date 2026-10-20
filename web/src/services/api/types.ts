@@ -10,6 +10,7 @@ export type TenantStatus = Schemas['TenantStatus'];
 export type TenantDetail = Schemas['TenantDetail'];
 export type TenantModule = Schemas['TenantModule'];
 export type PlatformTenantModule = Schemas['PlatformTenantModule'];
+export type PlatformTenantFeature = Schemas['PlatformTenantFeature'];
 export type AuditEntry = Schemas['AuditEntry'];
 export type DeletionRequest = Schemas['DeletionRequest'];
 export type Feedback = Schemas['Feedback'];

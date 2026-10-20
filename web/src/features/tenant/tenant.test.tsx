@@ -1134,3 +1134,27 @@ describe('settings and account', () => {
     );
   });
 });
+
+describe('feature access in the menu', () => {
+  it('hides the entries of a feature the platform switched off, and nothing else', async () => {
+    asTenantAdmin(makeMe({ feature_access: { crew: false, documents: false, branding: false } }));
+    renderApp('/app');
+
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
+    expect(within(nav).getByRole('link', { name: 'Announcements' })).toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: 'Members' })).toBeInTheDocument();
+    for (const gone of ['Crew', 'Documents', 'Document types', 'Branding', 'Domains']) {
+      expect(within(nav).queryByRole('link', { name: gone })).not.toBeInTheDocument();
+    }
+  });
+
+  it('shows everything when the organization has no switched-off features', async () => {
+    asTenantAdmin(makeMe());
+    renderApp('/app');
+
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
+    for (const label of ['Crew', 'Documents', 'Branding', 'Domains', 'Announcements']) {
+      expect(within(nav).getByRole('link', { name: label })).toBeInTheDocument();
+    }
+  });
+});

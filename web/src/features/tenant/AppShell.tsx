@@ -1,32 +1,49 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { Button, cn } from '../../components/ui';
-import { can, useLogout, useMe } from '../authentication/session';
+import { can, hasFeature, useLogout, useMe } from '../authentication/session';
 import { useTenantLook } from '../tenant-look/TenantLookProvider';
 
 interface NavItem {
   to: string;
   label: string;
   ability?: string;
+  /** Core feature the platform can switch off for the organization. */
+  feature?: string;
   end?: boolean;
 }
 
 // Menu entries follow the abilities returned by /me. This is cosmetic: the API re-checks every call.
 const NAV: NavItem[] = [
   { to: '/app', label: 'Dashboard', end: true },
-  { to: '/app/crew', label: 'Crew', ability: 'users.view' },
-  { to: '/app/payroll-import', label: 'Payroll import', ability: 'finance.manage' },
+  { to: '/app/crew', label: 'Crew', ability: 'users.view', feature: 'crew' },
+  {
+    to: '/app/payroll-import',
+    label: 'Payroll import',
+    ability: 'finance.manage',
+    feature: 'finance',
+  },
   { to: '/app/callit', label: 'Call-it reports', ability: 'callit.manage' },
-  { to: '/app/documents', label: 'Documents', ability: 'documents.manage' },
-  { to: '/app/document-types', label: 'Document types', ability: 'documents.manage' },
-  { to: '/app/todos', label: 'To-dos', ability: 'todos.manage' },
-  { to: '/app/announcements', label: 'Announcements', ability: 'announcements.manage' },
+  { to: '/app/documents', label: 'Documents', ability: 'documents.manage', feature: 'documents' },
+  {
+    to: '/app/document-types',
+    label: 'Document types',
+    ability: 'documents.manage',
+    feature: 'documents',
+  },
+  { to: '/app/todos', label: 'To-dos', ability: 'todos.manage', feature: 'todos' },
+  {
+    to: '/app/announcements',
+    label: 'Announcements',
+    ability: 'announcements.manage',
+    feature: 'announcements',
+  },
   { to: '/app/members', label: 'Members', ability: 'users.view' },
   { to: '/app/deletion-requests', label: 'Deletion requests', ability: 'users.manage' },
-  { to: '/app/feedback', label: 'Feedback', ability: 'users.manage' },
+  { to: '/app/feedback', label: 'Feedback', ability: 'users.manage', feature: 'feedback' },
   { to: '/app/modules', label: 'Modules', ability: 'tenant.view' },
   { to: '/app/settings', label: 'Settings', ability: 'tenant.manage' },
-  { to: '/app/branding', label: 'Branding', ability: 'tenant.manage' },
-  { to: '/app/domains', label: 'Domains', ability: 'tenant.manage' },
+  { to: '/app/branding', label: 'Branding', ability: 'tenant.manage', feature: 'branding' },
+  { to: '/app/domains', label: 'Domains', ability: 'tenant.manage', feature: 'branding' },
   { to: '/app/audit', label: 'Audit log', ability: 'audit.view' },
   { to: '/app/account', label: 'My account' },
 ];
@@ -35,7 +52,9 @@ export function AppShell() {
   const me = useMe();
   const look = useTenantLook();
   const logout = useLogout('tenant');
-  const items = NAV.filter((i) => !i.ability || can(me, i.ability));
+  const items = NAV.filter(
+    (i) => (!i.ability || can(me, i.ability)) && (!i.feature || hasFeature(me, i.feature)),
+  );
 
   return (
     <div className="min-h-screen md:grid md:grid-cols-[15rem_1fr]">
