@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Button, cn } from '../../components/ui';
 import { useLogout, usePlatformAdmin } from '../authentication/session';
@@ -125,10 +125,10 @@ export function PlatformShell() {
   const admin = usePlatformAdmin();
   const logout = useLogout('platform');
   const { pathname } = useLocation();
-  const [open, setOpen] = useState(false);
-
-  // a link tap in the drawer must not leave it open over the new page
-  useEffect(() => setOpen(false), [pathname]);
+  // the drawer is open for the page it was opened on, so a link tap closes it without an effect
+  const [openAt, setOpenAt] = useState<string | null>(null);
+  const open = openAt === pathname;
+  const setOpen = (v: boolean) => setOpenAt(v ? pathname : null);
 
   return (
     <div className="flex min-h-screen">
