@@ -6,6 +6,7 @@ use App\Support\Tenancy\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
@@ -43,6 +44,12 @@ class Announcement extends Model
     {
         return $query->where('is_active', true)
             ->where(fn (Builder $q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()));
+    }
+
+    /** @return BelongsTo<Membership, $this> */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(Membership::class, 'created_by_membership_id');
     }
 
     /** @return HasMany<AnnouncementRead, $this> */

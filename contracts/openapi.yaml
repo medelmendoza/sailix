@@ -1565,6 +1565,8 @@ paths:
         - { name: 'filter[last_name]', in: query, schema: { type: string } }
         - { name: 'filter[first_name]', in: query, schema: { type: string } }
         - { name: 'filter[crew_number]', in: query, schema: { type: string } }
+        - { name: 'filter[name]', in: query, description: 'One box for who: matches the first or last name, or both as typed, or the username.', schema: { type: string } }
+        - { name: 'filter[status]', in: query, description: 'An unknown value is ignored.', schema: { type: string, enum: [pending, active, suspended] } }
         - { name: page, in: query, schema: { type: integer, minimum: 1 } }
         - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
       responses:
@@ -2919,6 +2921,15 @@ components:
                 id: { type: string }
                 username: { type: string }
                 email: { type: string }
+            profile:
+              description: The owner's name and crew number, when they have a crew record.
+              oneOf:
+                - type: object
+                  properties:
+                    first_name: { type: [string, 'null'] }
+                    last_name: { type: [string, 'null'] }
+                    crew_number: { type: [string, 'null'] }
+                - { type: 'null' }
     MemberDocumentList:
       type: object
       required: [data, counts]
@@ -3092,6 +3103,14 @@ components:
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
         is_read: { type: boolean, description: "Present on the member's own views only." }
+        author:
+          description: "Who wrote it. Present on the administrators' list only."
+          oneOf:
+            - type: object
+              required: [name]
+              properties:
+                name: { type: string }
+            - { type: 'null' }
     AnnouncementInput:
       type: object
       description: All fields are required when creating; send only what changes when editing.

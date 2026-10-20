@@ -1,83 +1,40 @@
 import { Link } from 'react-router-dom';
-import { Card, ErrorState, PageHeader, Spinner, StatusBadge } from '../../components/ui';
+import { ErrorState, PageHeader, Spinner } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import { AuditTable } from '../shared/AuditTable';
 import { can, useMe } from '../authentication/session';
-import { useAuditLogs, useDeletionRequests, useMemberCount, useTenantModules } from './api';
-
-function Stat({
-  label,
-  value,
-  to,
-  hint,
-}: {
-  label: string;
-  value: string | number;
-  to?: string;
-  hint?: string;
-}) {
-  const body = (
-    <>
-      <p className="text-3xl font-semibold text-brand-800">{value}</p>
-      <p className="mt-1 text-sm font-medium">{label}</p>
-      {hint && <p className="text-xs text-muted">{hint}</p>}
-    </>
-  );
-  return (
-    <Card>
-      {to ? (
-        <Link to={to} className="block hover:underline">
-          {body}
-        </Link>
-      ) : (
-        body
-      )}
-    </Card>
-  );
-}
+import { useAuditLogs, useDeletionRequests } from './api';
+import { AnnouncementsPanel, DocumentApprovalPanel, UserApplicationPanel } from './DashboardPanels';
 
 export function DashboardPage() {
   const me = useMe();
-  const pending = useMemberCount('pending');
   const deletions = useDeletionRequests({ per_page: 1 });
-  const modules = useTenantModules();
   const audit = useAuditLogs({ per_page: 5 });
-  const tala = modules.data?.find((m) => m.code === 'tala');
+  const openDeletions = deletions.data?.meta.total ?? 0;
 
   return (
     <>
       <PageHeader title="Dashboard" description={`Overview of ${me.tenant.name}.`} />
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Stat
-          label="Pending registrations"
-          value={pending.isPending ? '…' : (pending.data ?? '—')}
-          to="/app/members?status=pending"
-          hint="Waiting for your approval"
-        />
-        <Stat
-          label="Deletion requests"
-          value={deletions.isPending ? '…' : (deletions.data?.meta.total ?? '—')}
-          to="/app/deletion-requests"
-          hint="Open requests from members"
-        />
-        <Card>
-          <p className="text-sm font-medium">Tala module</p>
-          <div className="mt-2">
-            {modules.isPending ? (
-              '…'
-            ) : (
-              <StatusBadge
-                status={!tala?.entitled ? 'not provisioned' : tala.enabled ? 'enabled' : 'disabled'}
-              />
-            )}
-          </div>
+      {can(me, 'users.manage') && openDeletions > 0 ? (
+        <p className="mb-4 rounded-md border border-line bg-surface px-4 py-3 text-sm">
+          {openDeletions} account deletion {openDeletions === 1 ? 'request is' : 'requests are'}{' '}
+          open.{' '}
           <Link
-            to="/app/modules"
-            className="mt-2 inline-block text-xs text-accent-600 hover:underline"
+            to="/app/deletion-requests"
+            className="text-brand-700 underline-offset-2 hover:underline"
           >
-            Manage modules
+            Review
           </Link>
-        </Card>
+        </p>
+      ) : null}
+      <div className="grid gap-4 xl:grid-cols-2">
+        {can(me, 'users.view') && <UserApplicationPanel />}
+        {can(me, 'documents.manage') && <DocumentApprovalPanel />}
+        {can(me, 'announcements.manage') && (
+          <div className="xl:col-span-2">
+            <AnnouncementsPanel />
+          </div>
+        )}
       </div>
       {can(me, 'audit.view') && (
         <section className="mt-8">

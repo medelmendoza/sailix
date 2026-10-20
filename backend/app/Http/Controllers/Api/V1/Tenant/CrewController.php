@@ -30,10 +30,18 @@ class CrewController extends Controller
         $last = $like('filter.last_name');
         $first = $like('filter.first_name');
         $number = $like('filter.crew_number');
+        $name = $like('filter.name');
+        $status = MembershipStatus::tryFrom((string) $request->input('filter.status'));
 
         $q = Membership::with(['user', 'profile'])
             ->where('role', Role::Crew)
             ->where('status', '!=', MembershipStatus::Invited)
+            ->when($status, fn ($b, $v) => $b->where('status', $v))
+            // one box for "who": matches the first or last name, or both together as typed ("maria santos")
+            ->when($name, fn ($b, $v) => $b->where(fn ($w) => $w
+                ->whereHas('profile', fn ($p) => $p->where(fn ($n) => $n->where('first_name', 'like', $v)->orWhere('last_name', 'like', $v)
+                    ->orWhereRaw("concat(first_name, ' ', last_name) like ?", [$v])))
+                ->orWhereHas('user', fn ($u) => $u->where('username', 'like', $v))))
             ->when($last, fn ($b, $v) => $b->whereHas('profile', fn ($p) => $p->where('last_name', 'like', $v)))
             ->when($first, fn ($b, $v) => $b->whereHas('profile', fn ($p) => $p->where('first_name', 'like', $v)))
             ->when($number, fn ($b, $v) => $b->whereHas('profile', fn ($p) => $p->where('crew_number', 'like', $v)))

@@ -1876,6 +1876,12 @@ export interface components {
                     username?: string;
                     email?: string;
                 };
+                /** @description The owner's name and crew number, when they have a crew record. */
+                profile?: {
+                    first_name?: string | null;
+                    last_name?: string | null;
+                    crew_number?: string | null;
+                } | null;
             };
         };
         MemberDocumentList: {
@@ -2037,6 +2043,10 @@ export interface components {
             updated_at: string;
             /** @description Present on the member's own views only. */
             is_read?: boolean;
+            /** @description Who wrote it. Present on the administrators' list only. */
+            author?: {
+                name: string;
+            } | null;
         };
         /** @description All fields are required when creating; send only what changes when editing. */
         AnnouncementInput: {
@@ -4362,6 +4372,10 @@ export interface operations {
                 "filter[last_name]"?: string;
                 "filter[first_name]"?: string;
                 "filter[crew_number]"?: string;
+                /** @description One box for who: matches the first or last name, or both as typed, or the username. */
+                "filter[name]"?: string;
+                /** @description An unknown value is ignored. */
+                "filter[status]"?: "pending" | "active" | "suspended";
                 page?: number;
                 per_page?: number;
             };

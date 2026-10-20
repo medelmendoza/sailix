@@ -59,6 +59,8 @@ export function useUpdateMember() {
     onSuccess: () => {
       toast.success('Member updated.');
       void qc.invalidateQueries({ queryKey: ['members'] });
+      void qc.invalidateQueries({ queryKey: ['crew'] });
+      void qc.invalidateQueries({ queryKey: ['crew-member'] });
       void qc.invalidateQueries({ queryKey: ['member-count'] });
       void qc.invalidateQueries({ queryKey: ['audit'] });
     },

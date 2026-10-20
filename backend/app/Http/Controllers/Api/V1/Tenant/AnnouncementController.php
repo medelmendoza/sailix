@@ -22,7 +22,7 @@ class AnnouncementController extends Controller
         Gate::authorize('announcements.manage');
 
         return AnnouncementResource::collection(
-            Announcement::orderByDesc('created_at')->orderBy('id')
+            Announcement::with(['creator.user', 'creator.profile'])->orderByDesc('created_at')->orderBy('id')
                 ->paginate(min((int) $request->input('per_page', 20), 100)),
         );
     }

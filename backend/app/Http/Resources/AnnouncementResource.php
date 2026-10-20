@@ -24,6 +24,10 @@ class AnnouncementResource extends JsonResource
             'expires_at' => $this->expires_at?->toIso8601String(),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
+            // who wrote it: only where the query loaded it (the administrators' list), never in the members' view
+            'author' => $this->whenLoaded('creator', fn () => $this->creator ? [
+                'name' => trim(($this->creator->profile?->first_name ?? '').' '.($this->creator->profile?->last_name ?? '')) ?: $this->creator->user->username,
+            ] : null),
             ...(array_key_exists('is_read', $this->resource->getAttributes()) ? ['is_read' => (bool) $this->resource->getAttribute('is_read')] : []),
         ];
     }

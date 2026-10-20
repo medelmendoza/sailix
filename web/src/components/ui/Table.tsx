@@ -6,14 +6,17 @@ export function Table({
   caption,
   headers,
   children,
+  compact = false,
 }: {
   caption: string;
   headers: string[];
   children: ReactNode;
+  /** For a table inside a narrow panel: no minimum width, so it fits instead of scrolling sideways. */
+  compact?: boolean;
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-line bg-surface">
-      <table className="w-full min-w-[40rem] text-left text-sm">
+      <table className={`w-full text-left text-sm ${compact ? '' : 'min-w-[40rem]'}`}>
         <caption className="sr-only">{caption}</caption>
         <thead className="border-b border-line bg-page text-xs uppercase tracking-wide text-muted">
           <tr>

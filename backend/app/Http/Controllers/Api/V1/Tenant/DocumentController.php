@@ -22,7 +22,7 @@ class DocumentController extends Controller
     {
         Gate::authorize('documents.manage');
 
-        $query = CrewDocument::with(['type', 'membership.user']);
+        $query = CrewDocument::with(['type', 'membership.user', 'membership.profile']);
         if (in_array($request->input('status'), [CrewDocument::PENDING, CrewDocument::APPROVED, CrewDocument::REJECTED], true)) {
             $query->where('status', $request->input('status'));
         }

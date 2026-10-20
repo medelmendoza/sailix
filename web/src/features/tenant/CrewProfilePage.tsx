@@ -28,6 +28,7 @@ import {
   useCrewMember,
   useDeleteTodo,
   useSendCrewPasswordReset,
+  useUpdateMember,
   useTodos,
   useUpdateCrew,
   useUpdateTodo,
@@ -115,6 +116,8 @@ export function CrewProfilePage() {
 function Profile({ crew }: { crew: Crew }) {
   const update = useUpdateCrew(crew.id);
   const reset = useSendCrewPasswordReset(crew.id);
+  const decide = useUpdateMember();
+  const [confirmReject, setConfirmReject] = useState(false);
   const toast = useToast();
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -147,13 +150,27 @@ function Profile({ crew }: { crew: Crew }) {
         title={name}
         description={`Username ${crew.username} · ${crew.email}`}
         actions={
-          <Button
-            variant="secondary"
-            disabled={crew.status !== 'active'}
-            onClick={() => setConfirmReset(true)}
-          >
-            Reset password
-          </Button>
+          crew.status === 'pending' ? (
+            <div className="flex gap-2">
+              <Button
+                loading={decide.isPending}
+                onClick={() => decide.mutate({ id: crew.id, patch: { status: 'active' } })}
+              >
+                Approve
+              </Button>
+              <Button variant="danger" onClick={() => setConfirmReject(true)}>
+                Reject
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="secondary"
+              disabled={crew.status !== 'active'}
+              onClick={() => setConfirmReset(true)}
+            >
+              Reset password
+            </Button>
+          )
         }
       />
       <p className="-mt-2 mb-4">
@@ -189,6 +206,22 @@ function Profile({ crew }: { crew: Crew }) {
       <CrewDocumentsSection crew={crew} />
 
       <CrewTodos crew={crew} />
+
+      <ConfirmDialog
+        open={confirmReject}
+        title={`Reject ${name}?`}
+        description="They will not be able to sign in. You can reactivate them later."
+        confirmLabel="Reject"
+        destructive
+        loading={decide.isPending}
+        onConfirm={() =>
+          decide.mutate(
+            { id: crew.id, patch: { status: 'suspended' } },
+            { onSettled: () => setConfirmReject(false) },
+          )
+        }
+        onCancel={() => setConfirmReject(false)}
+      />
 
       <ConfirmDialog
         open={confirmReset}

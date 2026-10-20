@@ -66,6 +66,22 @@ class CrewTest extends TestCase
         $this->assertSame(['Gatdula'], $names('filter[last_name]=gat&filter[first_name]=gian'));
     }
 
+    public function test_one_name_box_finds_first_or_last_name_or_both_and_the_status_filter_narrows_the_list(): void
+    {
+        $names = fn (string $query) => array_column($this->getJson("/api/v1/tenant/crew?$query", $this->as('adminA'))->assertOk()->json('data'), 'last_name');
+
+        $this->assertSame(['Gatdula'], $names('filter[name]=gian'));
+        $this->assertSame(['Mendoza'], $names('filter[name]=mendo'));
+        $this->assertSame(['Bustamante'], $names('filter[name]='.urlencode('jaycob bust')));
+        $this->assertSame(['Gatdula'], $names('filter[name]=gat&filter[status]=active'));
+        $this->assertSame([], $names('filter[name]='.urlencode('%')));
+
+        Membership::withoutTenantScope()->whereKey($this->m['mendoza'])->update(['status' => MembershipStatus::Pending]);
+        $this->assertSame(['Mendoza'], $names('filter[status]=pending'));
+        $this->assertSame(['Bustamante', 'Gatdula'], $names('filter[status]=active'));
+        $this->assertSame(['Bustamante', 'Gatdula', 'Mendoza'], $names('filter[status]=nonsense')); // an unknown status is ignored
+    }
+
     public function test_crew_cannot_use_it_and_an_organization_never_sees_anothers_crew(): void
     {
         $this->getJson('/api/v1/tenant/crew', $this->as('bustamante'))->assertForbidden();
