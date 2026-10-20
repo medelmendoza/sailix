@@ -29,6 +29,15 @@ const STATUS_OPTIONS = ['', 'provisioning', 'active', 'suspended', 'deactivated'
 const createSchema = z.object({
   code: z.string().regex(/^[A-Za-z0-9]{2,32}$/, 'Use 2–32 letters or digits.'),
   name: z.string().min(1, 'Enter the organization name.').max(255),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .refine(
+      (v) => v === '' || /^[a-z0-9](?:[a-z0-9]|-(?!-))*[a-z0-9]$/.test(v),
+      'Lowercase letters, digits and single hyphens (3–40), starting and ending with a letter or digit.',
+    )
+    .refine((v) => v === '' || (v.length >= 3 && v.length <= 40), 'Use 3 to 40 characters.'),
 });
 type CreateValues = z.infer<typeof createSchema>;
 
@@ -47,15 +56,18 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
 
   function submit(values: CreateValues) {
     setFormError(null);
-    create.mutate(values, {
-      onSuccess: (tenant) => {
-        toast.success(`Organization ${tenant.code} created.`);
-        reset();
-        onClose();
-        void navigate(`/platform/tenants/${tenant.id}`);
+    create.mutate(
+      { code: values.code, name: values.name, ...(values.slug ? { slug: values.slug } : {}) },
+      {
+        onSuccess: (tenant) => {
+          toast.success(`Organization ${tenant.code} created.`);
+          reset();
+          onClose();
+          void navigate(`/platform/tenants/${tenant.id}`);
+        },
+        onError: (e) => setFormError(applyServerErrors(e, setError, ['code', 'name', 'slug'])),
       },
-      onError: (e) => setFormError(applyServerErrors(e, setError, ['code', 'name'])),
-    });
+    );
   }
 
   return (
@@ -75,6 +87,12 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
           {...register('code')}
         />
         <TextField label="Name" error={errors.name?.message} {...register('name')} />
+        <TextField
+          label="Address name (optional)"
+          hint="Its default address is <name>.<Sailix domain>. Empty: the agency code in lowercase. It cannot be changed later."
+          error={errors.slug?.message}
+          {...register('slug')}
+        />
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>
             Cancel

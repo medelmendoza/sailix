@@ -13,10 +13,13 @@ import { describeError } from '../../services/api/errors';
 import type { PublicTenant } from '../../services/api/types';
 import { palette } from '../tenant-look/look';
 import {
+  OWN_SCOPE,
   useBranding,
   useRemoveBrandingImage,
+  useResetBranding,
   useSaveBranding,
   useUploadBrandingImage,
+  type TenantScope,
 } from './api';
 
 /** WCAG contrast of a #RRGGBB colour against white (the colour of the button text). */
@@ -41,31 +44,33 @@ function colourProblem(value: string): string | undefined {
 
 /** How the organization looks: tagline, two colours, logo and favicon, with a live preview. */
 export function BrandingPage() {
-  const branding = useBranding();
   return (
     <>
       <PageHeader
         title="Branding"
         description="How your organization looks on the sign-in page and across this portal. Leave a field empty to use the Sailix default."
       />
-      {branding.isPending ? (
-        <Spinner />
-      ) : branding.isError ? (
-        <ErrorState
-          message={describeError(branding.error)}
-          onRetry={() => void branding.refetch()}
-        />
-      ) : (
-        <BrandingForm key={branding.data.version} data={branding.data} />
-      )}
+      <BrandingEditor scope={OWN_SCOPE} />
     </>
   );
 }
 
-function BrandingForm({ data }: { data: PublicTenant }) {
-  const save = useSaveBranding();
-  const upload = useUploadBrandingImage();
-  const remove = useRemoveBrandingImage();
+/** The branding form for one organization: the signed-in one's own, or (superadmin) the one named by the scope. */
+export function BrandingEditor({ scope }: { scope: TenantScope }) {
+  const branding = useBranding(scope);
+  if (branding.isPending) return <Spinner />;
+  if (branding.isError)
+    return (
+      <ErrorState message={describeError(branding.error)} onRetry={() => void branding.refetch()} />
+    );
+  return <BrandingForm key={branding.data.version} data={branding.data} scope={scope} />;
+}
+
+function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope }) {
+  const save = useSaveBranding(scope);
+  const upload = useUploadBrandingImage(scope);
+  const remove = useRemoveBrandingImage(scope);
+  const reset = useResetBranding(scope);
   const toast = useToast();
   const [tagline, setTagline] = useState(data.tagline ?? '');
   const [primary, setPrimary] = useState(data.primary_color ?? '');
@@ -143,6 +148,21 @@ function BrandingForm({ data }: { data: PublicTenant }) {
             <Button type="submit" loading={save.isPending}>
               Save branding
             </Button>
+            {scope.own ? null : (
+              <Button
+                variant="secondary"
+                className="ml-2"
+                loading={reset.isPending}
+                onClick={() =>
+                  reset.mutate(undefined, {
+                    onSuccess: () => toast.success('Back to the Sailix look.'),
+                    onError: (e) => toast.error(describeError(e)),
+                  })
+                }
+              >
+                Reset to the Sailix look
+              </Button>
+            )}
           </div>
         </form>
       </Card>

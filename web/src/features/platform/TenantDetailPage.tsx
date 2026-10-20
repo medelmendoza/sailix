@@ -19,6 +19,9 @@ import {
   useToast,
 } from '../../components/ui';
 import { toApiError } from '../../services/api/errors';
+import { platformScope } from '../tenant/api';
+import { BrandingEditor } from '../tenant/BrandingPage';
+import { DomainsEditor } from '../tenant/DomainsPage';
 import type { PlatformTenantModule, Tenant, TenantStatus } from '../../services/api/types';
 import { applyServerErrors } from '../authentication/forms';
 import {
@@ -393,7 +396,7 @@ export function TenantDetailPage() {
     <>
       <PageHeader
         title={t.name}
-        description={`Code ${t.code}`}
+        description={t.default_address ? `Code ${t.code} · ${t.default_address}` : `Code ${t.code}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={t.status} />
@@ -411,6 +414,18 @@ export function TenantDetailPage() {
       />
 
       <div className="flex flex-col gap-6">
+        <section aria-labelledby="addr-h" className="flex flex-col gap-3">
+          <h2 id="addr-h" className="text-base font-semibold">
+            Address and domains
+          </h2>
+          <DomainsEditor scope={platformScope(t.id)} />
+        </section>
+        <section aria-labelledby="look-h" className="flex flex-col gap-3">
+          <h2 id="look-h" className="text-base font-semibold">
+            Branding
+          </h2>
+          <BrandingEditor scope={platformScope(t.id)} />
+        </section>
         <Card
           title="Administrators"
           actions={

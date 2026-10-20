@@ -42,7 +42,7 @@ export function useTenantById(id: string) {
 export function useCreateTenant() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (body: { code: string; name: string }) =>
+    mutationFn: async (body: { code: string; name: string; slug?: string }) =>
       (await api.post<Envelope<Tenant>>('/platform/tenants', body)).data.data,
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['platform'] }),
   });

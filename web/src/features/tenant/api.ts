@@ -137,37 +137,61 @@ export function useSendCrewPasswordReset(id: string) {
   });
 }
 
-export function useBranding() {
+/** Whose branding and domains: the signed-in organization's own, or (for the superadmin) one organization chosen by id. */
+export interface TenantScope {
+  base: string;
+  key: string;
+  /** Changing the signed-in organization's own look re-themes this very portal. */
+  own: boolean;
+}
+export const OWN_SCOPE: TenantScope = { base: '/tenant', key: 'own', own: true };
+export const platformScope = (tenantId: string): TenantScope => ({
+  base: `/platform/tenants/${tenantId}`,
+  key: tenantId,
+  own: false,
+});
+
+export function useBranding(scope: TenantScope = OWN_SCOPE) {
   return useQuery({
-    queryKey: ['branding'],
-    queryFn: async () => (await api.get<Envelope<PublicTenant>>('/tenant/branding')).data.data,
+    queryKey: ['branding', scope.key],
+    queryFn: async () =>
+      (await api.get<Envelope<PublicTenant>>(`${scope.base}/branding`)).data.data,
   });
 }
 
-function useBrandingMutation<T>(run: (arg: T) => Promise<unknown>) {
+function useBrandingMutation<T>(scope: TenantScope, run: (arg: T) => Promise<unknown>) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: run,
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['branding'] });
-      void qc.invalidateQueries({ queryKey: ['tenant-look'] }); // the whole portal re-themes
+      void qc.invalidateQueries({ queryKey: ['branding', scope.key] });
+      if (scope.own) void qc.invalidateQueries({ queryKey: ['tenant-look'] }); // the whole portal re-themes
       void qc.invalidateQueries({ queryKey: ['audit'] });
+      void qc.invalidateQueries({ queryKey: ['platform', 'audit'] });
     },
   });
 }
 
-export const useSaveBranding = () =>
-  useBrandingMutation(async (input: BrandingInput) => api.patch('/tenant/branding', input));
+export const useSaveBranding = (scope: TenantScope = OWN_SCOPE) =>
+  useBrandingMutation(scope, async (input: BrandingInput) =>
+    api.patch(`${scope.base}/branding`, input),
+  );
 
-export const useUploadBrandingImage = () =>
-  useBrandingMutation(async ({ kind, file }: { kind: 'logo' | 'favicon'; file: File }) => {
+export const useUploadBrandingImage = (scope: TenantScope = OWN_SCOPE) =>
+  useBrandingMutation(scope, async ({ kind, file }: { kind: 'logo' | 'favicon'; file: File }) => {
     const body = new FormData();
     body.append('file', file);
-    return api.post(`/tenant/branding/${kind}`, body);
+    return api.post(`${scope.base}/branding/${kind}`, body);
   });
 
-export const useRemoveBrandingImage = () =>
-  useBrandingMutation(async (kind: 'logo' | 'favicon') => api.delete(`/tenant/branding/${kind}`));
+export const useRemoveBrandingImage = (scope: TenantScope = OWN_SCOPE) =>
+  useBrandingMutation(scope, async (kind: 'logo' | 'favicon') =>
+    api.delete(`${scope.base}/branding/${kind}`),
+  );
+
+/** Superadmin only: back to the Sailix look (the endpoint exists for the platform scope alone). */
+export const useResetBranding = (scope: TenantScope) =>
+  useBrandingMutation(scope, async () => api.post(`${scope.base}/branding/reset`));
 
 export interface DomainList {
   default_address: string;
@@ -175,38 +199,38 @@ export interface DomainList {
   domains: TenantDomain[];
 }
 
-export function useDomains() {
+export function useDomains(scope: TenantScope = OWN_SCOPE) {
   return useQuery({
-    queryKey: ['domains'],
-    queryFn: async () => (await api.get<Envelope<DomainList>>('/tenant/domains')).data.data,
+    queryKey: ['domains', scope.key],
+    queryFn: async () => (await api.get<Envelope<DomainList>>(`${scope.base}/domains`)).data.data,
   });
 }
 
-export function useAddDomain() {
+export function useAddDomain(scope: TenantScope = OWN_SCOPE) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (domain: string) =>
-      (await api.post<Envelope<TenantDomain>>('/tenant/domains', { domain })).data.data,
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['domains'] }),
+      (await api.post<Envelope<TenantDomain>>(`${scope.base}/domains`, { domain })).data.data,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['domains', scope.key] }),
   });
 }
 
-export function useVerifyDomain() {
+export function useVerifyDomain(scope: TenantScope = OWN_SCOPE) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) =>
-      (await api.post<Envelope<TenantDomain>>(`/tenant/domains/${id}/verify`)).data.data,
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['domains'] }),
+      (await api.post<Envelope<TenantDomain>>(`${scope.base}/domains/${id}/verify`)).data.data,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['domains', scope.key] }),
   });
 }
 
-export function useRemoveDomain() {
+export function useRemoveDomain(scope: TenantScope = OWN_SCOPE) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/tenant/domains/${id}`);
+      await api.delete(`${scope.base}/domains/${id}`);
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['domains'] }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['domains', scope.key] }),
   });
 }
 

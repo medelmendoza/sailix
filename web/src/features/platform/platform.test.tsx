@@ -40,6 +40,25 @@ function detailData(t: Tenant, opts: { admins?: unknown[]; module?: unknown } = 
     http.get(`${V1}/platform/tenants/${t.id}/modules`, () =>
       HttpResponse.json({ data: [opts.module ?? talaModule()] }),
     ),
+    http.get(`${V1}/platform/tenants/${t.id}/domains`, () =>
+      HttpResponse.json({
+        data: { default_address: 'sfai.sailix.test', slug: 'sfai', domains: [] },
+      }),
+    ),
+    http.get(`${V1}/platform/tenants/${t.id}/branding`, () =>
+      HttpResponse.json({
+        data: {
+          slug: 'sfai',
+          name: t.name,
+          tagline: null,
+          logo_url: null,
+          favicon_url: null,
+          primary_color: null,
+          secondary_color: null,
+          version: 1,
+        },
+      }),
+    ),
   );
 }
 
@@ -105,6 +124,39 @@ describe('organization directory', () => {
 
     expect(await screen.findByRole('heading', { name: 'New Co' })).toBeInTheDocument();
     expect(created.calls[0]!.body).toEqual({ code: 'NEWCO', name: 'New Co' });
+  });
+
+  it('sends the chosen address name (lowercased) only when one is given, and checks its shape first', async () => {
+    server.use(http.get(`${V1}/platform/tenants`, () => HttpResponse.json(pageOf([]))));
+    const created = capture<Record<string, unknown>>();
+    server.use(
+      http.post(
+        `${V1}/platform/tenants`,
+        async ({ request }) => (
+          await created.record(request),
+          problem(422, 'validation', 'x', { slug: ['The slug has already been taken.'] })
+        ),
+      ),
+    );
+    const { user } = renderApp('/platform/tenants');
+
+    await user.click(await screen.findByRole('button', { name: 'New organization' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByLabelText('Agency code'), 'NEWCO');
+    await user.type(within(dialog).getByLabelText('Name'), 'New Co');
+    await user.type(within(dialog).getByLabelText('Address name (optional)'), 'bad_name');
+    await user.click(within(dialog).getByRole('button', { name: 'Create organization' }));
+    expect(
+      await within(dialog).findByText(/Lowercase letters, digits and single hyphens/),
+    ).toBeInTheDocument();
+    expect(created.calls).toHaveLength(0);
+
+    await user.clear(within(dialog).getByLabelText('Address name (optional)'));
+    await user.type(within(dialog).getByLabelText('Address name (optional)'), 'Blue-Harbor');
+    await user.click(within(dialog).getByRole('button', { name: 'Create organization' }));
+    await waitFor(() => expect(created.calls).toHaveLength(1));
+    expect(created.calls[0]!.body).toEqual({ code: 'NEWCO', name: 'New Co', slug: 'blue-harbor' });
+    expect(await within(dialog).findByText('The slug has already been taken.')).toBeInTheDocument(); // the server's complaint, beside the field
   });
 
   it('shows a duplicate code from the server on the code field', async () => {
@@ -431,5 +483,110 @@ describe('platform settings and audit', () => {
     expect(screen.getByText('Platform admin')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Filter by organization ID'), 't-1');
     await waitFor(() => expect(urls.at(-1)!.searchParams.get('filter[tenant_id]')).toBe('t-1'));
+  });
+});
+
+describe('organization detail: address and branding', () => {
+  beforeEach(() => asPlatformAdmin());
+
+  const look = (over: Record<string, unknown> = {}) => ({
+    slug: 'sfai',
+    name: 'Southfield Agencies',
+    tagline: null,
+    logo_url: null,
+    favicon_url: null,
+    primary_color: null,
+    secondary_color: null,
+    version: 1,
+    ...over,
+  });
+
+  it('shows the default address in the header and under Address and domains', async () => {
+    detailData(tenant({ default_address: 'sfai.sailix.test', slug: 'sfai' }));
+    renderApp('/platform/tenants/t-1');
+
+    expect(await screen.findByText(/Code SFAI · sfai.sailix.test/)).toBeInTheDocument();
+    expect(
+      await screen.findByText('sfai.sailix.test', { selector: 'span.font-medium' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Address and domains' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Branding' })).toBeInTheDocument();
+  });
+
+  it('adds and verifies a domain for that organization, through the platform endpoints', async () => {
+    detailData(tenant());
+    const added = capture<Record<string, unknown>>();
+    const row = {
+      id: 'd1',
+      domain: 'school.example.com',
+      verified: false,
+      verified_at: null,
+      txt_name: '_sailix-challenge.school.example.com',
+      txt_value: 'sx-1',
+      cname_target: 'sfai.sailix.test',
+    };
+    const verified = capture<unknown>();
+    server.use(
+      http.post(
+        `${V1}/platform/tenants/t-1/domains`,
+        async ({ request }) => (
+          await added.record(request),
+          HttpResponse.json({ data: row }, { status: 201 })
+        ),
+      ),
+      http.post(
+        `${V1}/platform/tenants/t-1/domains/d1/verify`,
+        async ({ request }) => (
+          await verified.record(request),
+          HttpResponse.json({ data: { ...row, verified: true, txt_value: null } })
+        ),
+      ),
+    );
+    const { user } = renderApp('/platform/tenants/t-1');
+
+    await user.type(await screen.findByLabelText('Domain'), 'school.example.com');
+    await user.click(screen.getByRole('button', { name: 'Add domain' }));
+    await waitFor(() => expect(added.calls).toHaveLength(1));
+    expect(added.calls[0]!.body).toEqual({ domain: 'school.example.com' });
+  });
+
+  it('sets the tagline and colours of that organization', async () => {
+    detailData(tenant());
+    const saved = capture<Record<string, unknown>>();
+    server.use(
+      http.patch(
+        `${V1}/platform/tenants/t-1/branding`,
+        async ({ request }) => (
+          await saved.record(request),
+          HttpResponse.json({ data: look({ version: 2 }) })
+        ),
+      ),
+    );
+    const { user } = renderApp('/platform/tenants/t-1');
+
+    await user.type(await screen.findByLabelText('Tagline'), 'Set by the platform');
+    await user.type(screen.getByLabelText('Primary colour'), '#355DAD');
+    await user.click(screen.getByRole('button', { name: 'Save branding' }));
+    await waitFor(() => expect(saved.calls).toHaveLength(1));
+    expect(saved.calls[0]!.body).toEqual({
+      tagline: 'Set by the platform',
+      primary_color: '#355DAD',
+      secondary_color: null,
+    });
+  });
+
+  it('can put an organization back to the Sailix look, which the organization itself cannot do', async () => {
+    detailData(tenant());
+    const reset = capture<unknown>();
+    server.use(
+      http.post(
+        `${V1}/platform/tenants/t-1/branding/reset`,
+        async ({ request }) => (await reset.record(request), HttpResponse.json({ data: look() })),
+      ),
+    );
+    const { user } = renderApp('/platform/tenants/t-1');
+
+    await user.click(await screen.findByRole('button', { name: 'Reset to the Sailix look' }));
+    await waitFor(() => expect(reset.calls).toHaveLength(1));
   });
 });

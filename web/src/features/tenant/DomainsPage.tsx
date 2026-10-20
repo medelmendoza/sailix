@@ -14,14 +14,31 @@ import {
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { TenantDomain } from '../../services/api/types';
-import { useAddDomain, useDomains, useRemoveDomain, useVerifyDomain } from './api';
+import {
+  OWN_SCOPE,
+  useAddDomain,
+  useDomains,
+  useRemoveDomain,
+  useVerifyDomain,
+  type TenantScope,
+} from './api';
 
 /** The addresses the organization is reached on: its default one, and its own domains once the DNS proves they are its own. */
 export function DomainsPage() {
-  const list = useDomains();
-  const add = useAddDomain();
-  const verify = useVerifyDomain();
-  const remove = useRemoveDomain();
+  return (
+    <>
+      <PageHeader title="Domains" description="The addresses your organization is reached on." />
+      <DomainsEditor scope={OWN_SCOPE} />
+    </>
+  );
+}
+
+/** The default address and custom domains of one organization: the signed-in one's own, or (superadmin) the one in the scope. */
+export function DomainsEditor({ scope }: { scope: TenantScope }) {
+  const list = useDomains(scope);
+  const add = useAddDomain(scope);
+  const verify = useVerifyDomain(scope);
+  const remove = useRemoveDomain(scope);
   const toast = useToast();
   const [domain, setDomain] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +70,6 @@ export function DomainsPage() {
 
   return (
     <>
-      <PageHeader title="Domains" description="The addresses your organization is reached on." />
       {list.isPending ? (
         <Spinner />
       ) : list.isError ? (

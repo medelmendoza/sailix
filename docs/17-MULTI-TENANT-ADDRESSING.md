@@ -55,8 +55,8 @@ secondary colour, logo, favicon, and a `version` that changes with every edit. T
   that is switched off serves none.
 - Web: the portal draws itself with CSS variables derived from the two colours and shows the logo and name; it caches the last look
   per address only to avoid a flash.
-- **Who edits:** an organization's administrators (`tenant.manage`) on *Branding* and *Domains*; the superadmin through
-  `/platform/tenants/{id}/branding|domains` (API; the console UI for these is not built yet).
+- **Who edits:** an organization's administrators (`tenant.manage`) on *Branding* and *Domains*; the superadmin on the organization page of the console (*Address and domains*, *Branding*, with a reset to the Sailix look), and
+  can choose the address name when creating an organization.
 
 ## 3. Shared-address demos
 
@@ -71,5 +71,4 @@ secondary colour, logo, favicon, and a `version` that changes with every edit. T
 - DNS verification runs from the API host and needs outbound DNS.
 
 ## 5. Not covered
-Plans and limits, groups of organizations, per-organization colours in the mobile app (it shows no look yet), a console UI for
-the superadmin's branding and domains, and choosing a primary domain for emailed links (they use `SAILIX_RESET_URL`).
+Plans and limits, groups of organizations, per-organization colours in the mobile app (it shows no look yet), and choosing a primary domain for emailed links (they use `SAILIX_RESET_URL`).
