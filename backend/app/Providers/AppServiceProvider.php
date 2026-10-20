@@ -10,6 +10,9 @@ use App\Policies\MembershipPolicy;
 use App\Support\Net\DnsHostResolver;
 use App\Support\Net\HostResolver;
 use App\Support\Tenancy\TenantContext;
+use App\Tenancy\AddressedTenant;
+use App\Tenancy\DnsDomainVerifier;
+use App\Tenancy\DomainVerifier;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -23,7 +26,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // Request/job scoped: discarded between requests and queued jobs.
         $this->app->scoped(TenantContext::class);
+        $this->app->scoped(AddressedTenant::class);
         $this->app->bind(HostResolver::class, DnsHostResolver::class);
+        $this->app->bind(DomainVerifier::class, DnsDomainVerifier::class);
     }
 
     public function boot(): void

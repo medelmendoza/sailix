@@ -15,6 +15,8 @@ class TenantResource extends JsonResource
         return [
             'id' => $this->id,
             'code' => $this->code,
+            'slug' => $this->slug,
+            'default_address' => $this->slug.'.'.config('sailix.tenancy.base_domain'),
             'name' => $this->name,
             'status' => $this->status->value,
             'activated_at' => $this->activated_at?->toIso8601String(),

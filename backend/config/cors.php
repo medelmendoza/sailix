@@ -25,7 +25,7 @@ return [
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['Accept', 'Content-Type', 'Authorization', 'X-Requested-With', 'X-XSRF-TOKEN', 'X-Request-Id', 'X-Tenant-Hint', 'Idempotency-Key'],
+    'allowed_headers' => ['Accept', 'Content-Type', 'Authorization', 'X-Requested-With', 'X-XSRF-TOKEN', 'X-Request-Id', 'X-Tenant-Hint', 'X-Tenant-Host', 'X-Tenant-Slug', 'Idempotency-Key'],
 
     'exposed_headers' => ['X-Request-Id', 'Retry-After'],
 

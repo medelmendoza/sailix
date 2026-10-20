@@ -56,7 +56,9 @@ class TenancyStaticChecksTest extends TestCase
     /** Every tenant-owned table has a model that uses BelongsToTenant (auth infrastructure exempt). */
     public function test_every_table_with_tenant_id_has_a_scoped_model(): void
     {
-        $exempt = ['personal_access_tokens', 'audit_logs']; // token: auth infra w/ composite FK; audit: AuditScope
+        // token: auth infra w/ composite FK; audit: AuditScope; domains and branding: platform-level records of the organization
+        // itself, addressed by an explicit tenant id (a domain is looked up by host BEFORE any tenant is known)
+        $exempt = ['personal_access_tokens', 'audit_logs', 'tenant_domains', 'tenant_branding'];
         $modelTables = [];
         foreach ((new Finder)->files()->name('*.php')->in(base_path('app/Models')) as $file) {
             $class = 'App\\Models\\'.$file->getBasename('.php');

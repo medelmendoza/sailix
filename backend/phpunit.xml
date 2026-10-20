@@ -27,6 +27,12 @@
         <env name="APP_ENV" value="testing"/>
         <!-- Pinned so a developer's local .env can never change what the tests exercise (writes are OFF by default; hosts come from each test). -->
         <env name="SAILIX_TALA_PROGRESS_WRITES" value="false"/>
+        <!-- tests must not inherit a developer's local switches -->
+        <env name="SAILIX_PLATFORM_REQUIRE_OTP" value="true"/>
+        <env name="SAILIX_BASE_DOMAIN" value="sailix.test"/>
+        <env name="SAILIX_TENANT_DEV_MODE" value="false"/>
+        <env name="SAILIX_TENANT_ALLOW_HOST_HEADER" value="true"/>
+        <env name="SAILIX_TENANT_ALLOW_SLUG_HEADER" value="false"/>
         <env name="SAILIX_TALA_ALLOWED_HOSTS" value=""/>
         <env name="SAILIX_TRUSTED_PROXIES" value=""/>
         <env name="SANCTUM_STATEFUL_DOMAINS" value="localhost:5173"/>

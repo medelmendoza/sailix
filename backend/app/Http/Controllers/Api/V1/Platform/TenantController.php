@@ -34,9 +34,9 @@ class TenantController extends Controller
 
     public function store(StoreTenantRequest $request): JsonResponse
     {
-        $tenant = (new Tenant($request->only('code', 'name')));
+        $tenant = (new Tenant(array_filter($request->only('code', 'name', 'slug'), fn ($v) => $v !== null && $v !== '')));
         $tenant->forceFill(['status' => TenantStatus::Provisioning])->save();
-        Audit::record('tenant.created', $tenant->getKey(), $tenant, ['code' => $tenant->code]);
+        Audit::record('tenant.created', $tenant->getKey(), $tenant, ['code' => $tenant->code, 'slug' => $tenant->slug]);
 
         return (new TenantResource($tenant))->response()->setStatusCode(201);
     }

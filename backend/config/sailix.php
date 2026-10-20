@@ -27,6 +27,24 @@ return [
     // Platform (superadmin) session idle timeout in minutes (docs/04).
     'platform_idle_minutes' => (int) env('SAILIX_PLATFORM_IDLE_MINUTES', 30),
 
+    // How organizations are addressed (docs: multi-tenancy). The host picks the organization:
+    // <slug>.<base_domain>, or a customer's verified domain. Nothing here grants access: a signed-in credential must
+    // still belong to the organization the request addresses.
+    'tenancy' => [
+        'base_domain' => strtolower((string) env('SAILIX_BASE_DOMAIN', 'localhost')),
+        'platform_slug' => env('SAILIX_PLATFORM_SLUG', 'platform'),
+        // `<slug>.localhost` addresses an organization. Honoured only in a local or testing environment.
+        'dev_mode' => filter_var(env('SAILIX_TENANT_DEV_MODE', false), FILTER_VALIDATE_BOOLEAN),
+        // When the web portal and the API are on different hosts, the portal says which host it is on (X-Tenant-Host).
+        // Used only when the API's own host matches no organization.
+        'allow_host_header' => filter_var(env('SAILIX_TENANT_ALLOW_HOST_HEADER', true), FILTER_VALIDATE_BOOLEAN),
+        // Shared-address demos: `?tenant=<slug>` on the sign-in page becomes X-Tenant-Slug. DEMO ONLY: anyone can pick
+        // an organization by slug. It chooses what a request addresses; it never authorizes anything.
+        'allow_slug_header' => filter_var(env('SAILIX_TENANT_ALLOW_SLUG_HEADER', false), FILTER_VALIDATE_BOOLEAN),
+        // Prefix of the DNS TXT record a customer publishes to prove they own a domain.
+        'challenge_prefix' => '_sailix-challenge',
+    ],
+
     // Optional client hint header; compared with the authenticated tenant, never trusted.
     'tenant_hint_header' => 'X-Tenant-Hint',
 

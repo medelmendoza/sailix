@@ -1,9 +1,11 @@
 <?php
 
 use App\Exceptions\ProblemRenderer;
+use App\Http\Middleware\AllowTenantOrigins;
 use App\Http\Middleware\EnsurePlatformContext;
 use App\Http\Middleware\RequestId;
 use App\Http\Middleware\RequireModule;
+use App\Http\Middleware\ResolveAddressedTenant;
 use App\Http\Middleware\ResolveTenantContext;
 use App\Http\Middleware\SecurityHeaders;
 use App\Support\ApiProblem;
@@ -33,11 +35,12 @@ return Application::configure(basePath: dirname(__DIR__))
             $middleware->trustProxies(at: $proxies === ['*'] ? '*' : $proxies);
         }
         $middleware->append(SecurityHeaders::class);
+        $middleware->prepend(AllowTenantOrigins::class); // before CORS handling reads the allowed origins
         $middleware->statefulApi();
         // API only: an unauthenticated request is a 401 problem document, never a redirect to a web login route
         // (there is none; without this a request lacking `Accept: application/json` became a 500).
         $middleware->redirectGuestsTo(fn () => null);
-        $middleware->api(prepend: [RequestId::class]);
+        $middleware->api(prepend: [RequestId::class, ResolveAddressedTenant::class]);
         $middleware->alias([
             'tenant.context' => ResolveTenantContext::class,
             'platform.context' => EnsurePlatformContext::class,

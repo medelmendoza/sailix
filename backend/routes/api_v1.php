@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\Me;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\Modules;
 use App\Http\Controllers\Api\V1\Platform;
+use App\Http\Controllers\Api\V1\PublicTenantController;
 use App\Http\Controllers\Api\V1\Tenant;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,10 @@ Route::middleware('throttle:login')->group(function () {
     Route::get('platform/auth/options', [Platform\AuthController::class, 'options'])->middleware('throttle:api');
     Route::post('platform/auth/session', [Platform\AuthController::class, 'store'])->middleware('throttle:platform-login');
 });
+// Public organization look (name, colours, logo): no sign-in, never any people or data
+Route::get('public/tenant', [PublicTenantController::class, 'show'])->middleware('throttle:api');
+Route::get('public/tenants/{slug}/logo', [PublicTenantController::class, 'logo'])->middleware('throttle:api');
+Route::get('public/tenants/{slug}/favicon', [PublicTenantController::class, 'favicon'])->middleware('throttle:api');
 Route::post('auth/invitations/accept', [InvitationController::class, 'accept'])->middleware('throttle:invitation');
 Route::post('auth/register', [RegisterController::class, 'store'])->middleware('throttle:register');
 Route::post('auth/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:forgot');
@@ -75,6 +80,14 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
         Route::patch('/', [Tenant\TenantController::class, 'update']);
         Route::get('users', [Tenant\UserController::class, 'index']);
         Route::patch('users/{membership}', [Tenant\UserController::class, 'update']);
+        Route::get('branding', [Tenant\BrandingController::class, 'show']);
+        Route::patch('branding', [Tenant\BrandingController::class, 'update']);
+        Route::post('branding/{kind}', [Tenant\BrandingController::class, 'setImage'])->middleware('throttle:document-upload');
+        Route::delete('branding/{kind}', [Tenant\BrandingController::class, 'removeImage']);
+        Route::get('domains', [Tenant\DomainController::class, 'index']);
+        Route::post('domains', [Tenant\DomainController::class, 'store']);
+        Route::post('domains/{domain}/verify', [Tenant\DomainController::class, 'verify'])->middleware('throttle:module-link');
+        Route::delete('domains/{domain}', [Tenant\DomainController::class, 'destroy']);
         Route::get('crew/fleets', [Tenant\CrewController::class, 'fleets']);
         Route::get('crew', [Tenant\CrewController::class, 'index'])->name('crew.index');
         Route::get('crew/{membership}', [Tenant\CrewController::class, 'show'])->name('crew.show');
@@ -154,6 +167,16 @@ Route::prefix('platform')->middleware(['auth:platform', 'platform.context', 'thr
 
     Route::get('tenants/{tenant}/modules', [Platform\TenantModuleController::class, 'index']);
     Route::put('tenants/{tenant}/modules/{module}', [Platform\TenantModuleController::class, 'update']);
+
+    Route::get('tenants/{tenant}/branding', [Platform\TenantBrandingController::class, 'show']);
+    Route::patch('tenants/{tenant}/branding', [Platform\TenantBrandingController::class, 'update']);
+    Route::post('tenants/{tenant}/branding/reset', [Platform\TenantBrandingController::class, 'reset']);
+    Route::post('tenants/{tenant}/branding/{kind}', [Platform\TenantBrandingController::class, 'setImage'])->middleware('throttle:document-upload');
+    Route::delete('tenants/{tenant}/branding/{kind}', [Platform\TenantBrandingController::class, 'removeImage']);
+    Route::get('tenants/{tenant}/domains', [Platform\TenantDomainController::class, 'index']);
+    Route::post('tenants/{tenant}/domains', [Platform\TenantDomainController::class, 'store']);
+    Route::post('tenants/{tenant}/domains/{domain}/verify', [Platform\TenantDomainController::class, 'verify']);
+    Route::delete('tenants/{tenant}/domains/{domain}', [Platform\TenantDomainController::class, 'destroy']);
 
     Route::get('settings', [Platform\SettingsController::class, 'show']);
     Route::patch('settings', [Platform\SettingsController::class, 'update']);

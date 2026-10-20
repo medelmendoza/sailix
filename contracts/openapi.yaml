@@ -428,6 +428,55 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
         '429': { $ref: '#/components/responses/Problem' }
+  /public/tenant:
+    get:
+      tags: [tenant]
+      operationId: getPublicTenant
+      summary: The look of the organization the request's address names
+      description: >
+        No sign-in. The organization comes from the host (its default address or a verified custom domain), or from
+        `X-Tenant-Host` when the web portal and the API are on different hosts, or from `X-Tenant-Slug` where shared-address
+        demos are switched on. `404 tenant_not_found` when the address names none (the shared sign-in page);
+        `403 tenant_unavailable` when the organization is switched off. Carries only its name and look, never ids or people.
+      security: []
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicTenantEnvelope' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /public/tenants/{slug}/logo:
+    get:
+      tags: [tenant]
+      operationId: getPublicTenantLogo
+      summary: An organization's logo (public image)
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The image.
+          content:
+            image/png: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /public/tenants/{slug}/favicon:
+    get:
+      tags: [tenant]
+      operationId: getPublicTenantFavicon
+      summary: An organization's favicon (public image)
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The image.
+          content:
+            image/png: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+        '404': { $ref: '#/components/responses/Problem' }
   /announcements:
     get:
       tags: [announcements]
@@ -1825,6 +1874,165 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '429': { $ref: '#/components/responses/Problem' }
+  /tenant/branding:
+    get:
+      tags: [tenant]
+      operationId: getTenantBranding
+      summary: The organization's branding
+      description: Requires `tenant.manage`. The organization is the session's, never a parameter.
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandingEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [tenant]
+      operationId: updateTenantBranding
+      summary: Set the tagline and colours
+      description: >
+        Requires `tenant.manage`. Colours are `#RRGGBB` and must be dark enough for white button text (contrast of at least
+        4.5:1 against white). An empty value clears a field (platform default). Text is plain: no markup. The audit trail
+        names the fields changed, never their values.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BrandingInput' }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandingEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /tenant/branding/{kind}:
+    parameters:
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [logo, favicon] } }
+    post:
+      tags: [tenant]
+      operationId: setTenantBrandingImage
+      summary: Upload the logo or the favicon
+      description: >
+        Requires `tenant.manage`. A JPEG or PNG judged by its content (no SVG), at most 5 MB. It is shrunk (logo 512 px,
+        favicon 128 px) and re-encoded, which also drops metadata. The earlier image is deleted.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandingEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [tenant]
+      operationId: removeTenantBrandingImage
+      summary: Remove the logo or the favicon
+      description: Requires `tenant.manage`.
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandingEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /tenant/domains:
+    get:
+      tags: [tenant]
+      operationId: listTenantDomains
+      summary: The default address and the custom domains
+      description: Requires `tenant.manage`.
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DomainList' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [tenant]
+      operationId: addTenantDomain
+      summary: Add a custom domain (unverified)
+      description: >
+        Requires `tenant.manage`. The name is normalized (lowercase, no port, no leading `www`). It routes nothing until it
+        is verified. `422 invalid_domain`, `422 reserved_domain` (under the Sailix domain), `409 domain_taken` (verified by
+        another organization), `409 domain_exists`, `409 too_many_domains` (10).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [domain]
+              properties:
+                domain: { type: string, maxLength: 253 }
+      responses:
+        '201':
+          description: Added.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DomainEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+  /tenant/domains/{domainId}/verify:
+    post:
+      tags: [tenant]
+      operationId: verifyTenantDomain
+      summary: Check the DNS record and start routing the domain
+      description: >
+        Requires `tenant.manage`. The organization publishes a TXT record named `txt_name` with the value `txt_value`; this
+        looks it up. `422 verification_failed` until it is found. Other organizations' unverified claims on the domain are
+        dropped; a domain already verified by another organization is `409 domain_taken`.
+      parameters:
+        - { name: domainId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DomainEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+  /tenant/domains/{domainId}:
+    delete:
+      tags: [tenant]
+      operationId: removeTenantDomain
+      summary: Remove a domain
+      description: Requires `tenant.manage`.
+      parameters:
+        - { name: domainId, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Removed. }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /tenant/audit-logs:
     get:
       tags: [tenant]
@@ -2441,6 +2649,11 @@ paths:
               properties:
                 code: { type: string, pattern: '^[A-Za-z0-9]{2,32}$' }
                 name: { type: string, maxLength: 255 }
+                slug:
+                  type: string
+                  description: >
+                    The organization's default address (`<slug>.<base domain>`): 3 to 40 lowercase letters, digits or single
+                    hyphens, unique, not reserved (www, api, platform...). Optional: it starts as the agency code. Fixed once created.
       responses:
         '201':
           description: Tenant created in `provisioning`.
@@ -2583,6 +2796,170 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /platform/tenants/{tenant}/branding:
+    parameters:
+      - { name: tenant, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [platform]
+      operationId: getPlatformTenantBranding
+      summary: An organization's branding
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandingEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [platform]
+      operationId: updatePlatformTenantBranding
+      summary: Set an organization's tagline and colours
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BrandingInput' }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandingEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /platform/tenants/{tenant}/branding/reset:
+    parameters:
+      - { name: tenant, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [platform]
+      operationId: resetPlatformTenantBranding
+      summary: Back to the platform look
+      description: Removes the branding and its images. Nothing else about the organization changes.
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandingEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /platform/tenants/{tenant}/branding/{kind}:
+    parameters:
+      - { name: tenant, in: path, required: true, schema: { type: string } }
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [logo, favicon] } }
+    post:
+      tags: [platform]
+      operationId: setPlatformTenantBrandingImage
+      summary: Upload an organization's logo or favicon
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandingEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [platform]
+      operationId: removePlatformTenantBrandingImage
+      summary: Remove an organization's logo or favicon
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandingEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /platform/tenants/{tenant}/domains:
+    parameters:
+      - { name: tenant, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [platform]
+      operationId: listPlatformTenantDomains
+      summary: An organization's default address and custom domains
+      security: [{ sessionCookie: [] }]
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DomainList' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [platform]
+      operationId: addPlatformTenantDomain
+      summary: Add a custom domain for an organization (unverified)
+      security: [{ sessionCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [domain]
+              properties:
+                domain: { type: string, maxLength: 253 }
+      responses:
+        '201':
+          description: Added.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DomainEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /platform/tenants/{tenant}/domains/{domainId}/verify:
+    post:
+      tags: [platform]
+      operationId: verifyPlatformTenantDomain
+      summary: Check the DNS record and start routing the domain
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - { name: tenant, in: path, required: true, schema: { type: string } }
+        - { name: domainId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DomainEnvelope' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /platform/tenants/{tenant}/domains/{domainId}:
+    delete:
+      tags: [platform]
+      operationId: removePlatformTenantDomain
+      summary: Remove a domain
+      security: [{ sessionCookie: [] }]
+      parameters:
+        - { name: tenant, in: path, required: true, schema: { type: string } }
+        - { name: domainId, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Removed. }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /platform/tenants/{tenant}/modules:
     parameters:
       - { name: tenant, in: path, required: true, schema: { type: string } }
@@ -3529,11 +3906,70 @@ components:
       properties:
         id: { type: string }
         code: { type: string }
+        slug: { type: string }
+        default_address: { type: string, description: 'The address the organization is reached on by default.' }
         name: { type: string }
         status: { $ref: '#/components/schemas/TenantStatus' }
         activated_at: { type: [string, 'null'], format: date-time }
         archived_at: { type: [string, 'null'], format: date-time }
         created_at: { type: string, format: date-time }
+    PublicTenant:
+      type: object
+      required: [slug, name, tagline, logo_url, favicon_url, primary_color, secondary_color, version]
+      properties:
+        slug: { type: string }
+        name: { type: string, description: "The organization's `display_name` setting, else its registered name." }
+        tagline: { type: [string, 'null'] }
+        logo_url: { type: [string, 'null'], description: 'Public address of the logo image.' }
+        favicon_url: { type: [string, 'null'] }
+        primary_color: { type: [string, 'null'], pattern: '^#[0-9A-F]{6}$' }
+        secondary_color: { type: [string, 'null'], pattern: '^#[0-9A-F]{6}$' }
+        version: { type: integer, description: 'Changes with every branding change; already part of the image addresses.' }
+    PublicTenantEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: '#/components/schemas/PublicTenant' }
+    BrandingEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: '#/components/schemas/PublicTenant' }
+    BrandingInput:
+      type: object
+      properties:
+        tagline: { type: [string, 'null'], maxLength: 120, description: 'Plain text.' }
+        primary_color: { type: [string, 'null'], maxLength: 7, description: '#RRGGBB, contrast against white of at least 4.5:1.' }
+        secondary_color: { type: [string, 'null'], maxLength: 7 }
+    TenantDomain:
+      type: object
+      required: [id, domain, verified, verified_at, txt_name, txt_value, cname_target]
+      properties:
+        id: { type: string }
+        domain: { type: string, description: 'Canonical form.' }
+        verified: { type: boolean }
+        verified_at: { type: [string, 'null'], format: date-time }
+        txt_name: { type: string, description: 'The DNS TXT record to publish.' }
+        txt_value: { type: [string, 'null'], description: 'Its value; null once verified.' }
+        cname_target: { type: string, description: 'Where to point the domain once verified.' }
+    DomainEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: '#/components/schemas/TenantDomain' }
+    DomainList:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [default_address, slug, domains]
+          properties:
+            default_address: { type: string }
+            slug: { type: string }
+            domains:
+              type: array
+              items: { $ref: '#/components/schemas/TenantDomain' }
     TenantPage:
       allOf:
         - $ref: '#/components/schemas/PageEnvelope'

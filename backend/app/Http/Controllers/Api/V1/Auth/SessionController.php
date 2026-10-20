@@ -9,6 +9,7 @@ use App\Identity\LoginFlow;
 use App\Models\Membership;
 use App\Models\User;
 use App\Support\Audit;
+use App\Tenancy\AddressedTenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -24,7 +25,7 @@ class SessionController extends Controller
         $result = $this->flow->begin(
             $request->string('username')->toString(),
             $request->string('password')->toString(),
-            $request->input('agency_code'),
+            app(AddressedTenant::class)->agencyCodeFor($request->input('agency_code')),
             'session',
         );
 

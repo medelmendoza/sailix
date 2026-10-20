@@ -14,6 +14,7 @@ use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Support\ApiProblem;
 use App\Support\Audit;
+use App\Tenancy\AddressedTenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -28,7 +29,7 @@ class TokenController extends Controller
         $result = $this->flow->begin(
             $request->string('username')->toString(),
             $request->string('password')->toString(),
-            $request->input('agency_code'),
+            app(AddressedTenant::class)->agencyCodeFor($request->input('agency_code')),
             'token',
         );
 

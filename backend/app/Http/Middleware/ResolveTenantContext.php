@@ -7,6 +7,7 @@ use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Support\ApiProblem;
 use App\Support\Tenancy\TenantContext;
+use App\Tenancy\AddressedTenant;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,7 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ResolveTenantContext
 {
-    public function __construct(private MembershipDirectory $directory, private TenantContext $context) {}
+    public function __construct(private MembershipDirectory $directory, private TenantContext $context, private AddressedTenant $addressed) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -52,6 +53,12 @@ class ResolveTenantContext
         }
         if (! $viaToken && ! $membership->role->canUseWeb()) {
             throw ApiProblem::forbidden('web_access_denied', 'This account cannot use the web portal.');
+        }
+
+        // A credential is good only for the organization it was issued for. When the request's address names an
+        // organization, replaying another organization's token or session on it authenticates nothing.
+        if ($this->addressed->has() && $this->addressed->get()->getKey() !== $membership->tenant_id) {
+            throw ApiProblem::unauthenticated('This credential belongs to another organization.');
         }
 
         $hint = $request->header(config('sailix.tenant_hint_header'));

@@ -262,6 +262,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/tenant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The look of the organization the request's address names
+         * @description No sign-in. The organization comes from the host (its default address or a verified custom domain), or from `X-Tenant-Host` when the web portal and the API are on different hosts, or from `X-Tenant-Slug` where shared-address demos are switched on. `404 tenant_not_found` when the address names none (the shared sign-in page); `403 tenant_unavailable` when the organization is switched off. Carries only its name and look, never ids or people.
+         */
+        get: operations["getPublicTenant"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/tenants/{slug}/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An organization's logo (public image) */
+        get: operations["getPublicTenantLogo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/tenants/{slug}/favicon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An organization's favicon (public image) */
+        get: operations["getPublicTenantFavicon"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/announcements": {
         parameters: {
             query?: never;
@@ -1236,6 +1290,120 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenant/branding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The organization's branding
+         * @description Requires `tenant.manage`. The organization is the session's, never a parameter.
+         */
+        get: operations["getTenantBranding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set the tagline and colours
+         * @description Requires `tenant.manage`. Colours are `#RRGGBB` and must be dark enough for white button text (contrast of at least 4.5:1 against white). An empty value clears a field (platform default). Text is plain: no markup. The audit trail names the fields changed, never their values.
+         */
+        patch: operations["updateTenantBranding"];
+        trace?: never;
+    };
+    "/tenant/branding/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "logo" | "favicon";
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload the logo or the favicon
+         * @description Requires `tenant.manage`. A JPEG or PNG judged by its content (no SVG), at most 5 MB. It is shrunk (logo 512 px, favicon 128 px) and re-encoded, which also drops metadata. The earlier image is deleted.
+         */
+        post: operations["setTenantBrandingImage"];
+        /**
+         * Remove the logo or the favicon
+         * @description Requires `tenant.manage`.
+         */
+        delete: operations["removeTenantBrandingImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/domains": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The default address and the custom domains
+         * @description Requires `tenant.manage`.
+         */
+        get: operations["listTenantDomains"];
+        put?: never;
+        /**
+         * Add a custom domain (unverified)
+         * @description Requires `tenant.manage`. The name is normalized (lowercase, no port, no leading `www`). It routes nothing until it is verified. `422 invalid_domain`, `422 reserved_domain` (under the Sailix domain), `409 domain_taken` (verified by another organization), `409 domain_exists`, `409 too_many_domains` (10).
+         */
+        post: operations["addTenantDomain"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/domains/{domainId}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check the DNS record and start routing the domain
+         * @description Requires `tenant.manage`. The organization publishes a TXT record named `txt_name` with the value `txt_value`; this looks it up. `422 verification_failed` until it is found. Other organizations' unverified claims on the domain are dropped; a domain already verified by another organization is `409 domain_taken`.
+         */
+        post: operations["verifyTenantDomain"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenant/domains/{domainId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a domain
+         * @description Requires `tenant.manage`.
+         */
+        delete: operations["removeTenantDomain"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenant/audit-logs": {
         parameters: {
             query?: never;
@@ -1663,6 +1831,123 @@ export interface paths {
         /** Invite tenant admin */
         post: operations["inviteTenantAdmin"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/tenants/{tenant}/branding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        /** An organization's branding */
+        get: operations["getPlatformTenantBranding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set an organization's tagline and colours */
+        patch: operations["updatePlatformTenantBranding"];
+        trace?: never;
+    };
+    "/platform/tenants/{tenant}/branding/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Back to the platform look
+         * @description Removes the branding and its images. Nothing else about the organization changes.
+         */
+        post: operations["resetPlatformTenantBranding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/tenants/{tenant}/branding/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                kind: "logo" | "favicon";
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload an organization's logo or favicon */
+        post: operations["setPlatformTenantBrandingImage"];
+        /** Remove an organization's logo or favicon */
+        delete: operations["removePlatformTenantBrandingImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/tenants/{tenant}/domains": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        /** An organization's default address and custom domains */
+        get: operations["listPlatformTenantDomains"];
+        put?: never;
+        /** Add a custom domain for an organization (unverified) */
+        post: operations["addPlatformTenantDomain"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/tenants/{tenant}/domains/{domainId}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check the DNS record and start routing the domain */
+        post: operations["verifyPlatformTenantDomain"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/tenants/{tenant}/domains/{domainId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a domain */
+        delete: operations["removePlatformTenantDomain"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2387,6 +2672,9 @@ export interface components {
         Tenant: {
             id: string;
             code: string;
+            slug?: string;
+            /** @description The address the organization is reached on by default. */
+            default_address?: string;
             name: string;
             status: components["schemas"]["TenantStatus"];
             /** Format: date-time */
@@ -2395,6 +2683,56 @@ export interface components {
             archived_at?: string | null;
             /** Format: date-time */
             created_at: string;
+        };
+        PublicTenant: {
+            slug: string;
+            /** @description The organization's `display_name` setting, else its registered name. */
+            name: string;
+            tagline: string | null;
+            /** @description Public address of the logo image. */
+            logo_url: string | null;
+            favicon_url: string | null;
+            primary_color: string | null;
+            secondary_color: string | null;
+            /** @description Changes with every branding change; already part of the image addresses. */
+            version: number;
+        };
+        PublicTenantEnvelope: {
+            data: components["schemas"]["PublicTenant"];
+        };
+        BrandingEnvelope: {
+            data: components["schemas"]["PublicTenant"];
+        };
+        BrandingInput: {
+            /** @description Plain text. */
+            tagline?: string | null;
+            /** @description #RRGGBB, contrast against white of at least 4.5:1. */
+            primary_color?: string | null;
+            secondary_color?: string | null;
+        };
+        TenantDomain: {
+            id: string;
+            /** @description Canonical form. */
+            domain: string;
+            verified: boolean;
+            /** Format: date-time */
+            verified_at: string | null;
+            /** @description The DNS TXT record to publish. */
+            txt_name: string;
+            /** @description Its value; null once verified. */
+            txt_value: string | null;
+            /** @description Where to point the domain once verified. */
+            cname_target: string;
+        };
+        DomainEnvelope: {
+            data: components["schemas"]["TenantDomain"];
+        };
+        DomainList: {
+            data: {
+                default_address: string;
+                slug: string;
+                domains: components["schemas"]["TenantDomain"][];
+            };
         };
         TenantPage: components["schemas"]["PageEnvelope"] & {
             data?: components["schemas"]["Tenant"][];
@@ -3035,6 +3373,76 @@ export interface operations {
             403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
+        };
+    };
+    getPublicTenant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicTenantEnvelope"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getPublicTenantLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The image. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                    "image/jpeg": string;
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    getPublicTenantFavicon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The image. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                    "image/jpeg": string;
+                };
+            };
+            404: components["responses"]["Problem"];
         };
     };
     listAnnouncements: {
@@ -4825,6 +5233,219 @@ export interface operations {
             429: components["responses"]["Problem"];
         };
     };
+    getTenantBranding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandingEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updateTenantBranding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandingInput"];
+            };
+        };
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandingEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    setTenantBrandingImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "logo" | "favicon";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandingEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    removeTenantBrandingImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "logo" | "favicon";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandingEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listTenantDomains: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainList"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    addTenantDomain: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    domain: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Added. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    verifyTenantDomain: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                domainId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    removeTenantDomain: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                domainId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
     listTenantAuditLogs: {
         parameters: {
             query?: {
@@ -5498,6 +6119,8 @@ export interface operations {
                 "application/json": {
                     code: string;
                     name: string;
+                    /** @description The organization's default address (`<slug>.<base domain>`): 3 to 40 lowercase letters, digits or single hyphens, unique, not reserved (www, api, platform...). Optional: it starts as the agency code. Fixed once created. */
+                    slug?: string;
                 };
             };
         };
@@ -5673,6 +6296,247 @@ export interface operations {
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    getPlatformTenantBranding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandingEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updatePlatformTenantBranding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandingInput"];
+            };
+        };
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandingEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    resetPlatformTenantBranding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandingEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    setPlatformTenantBrandingImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                kind: "logo" | "favicon";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandingEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    removePlatformTenantBrandingImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                kind: "logo" | "favicon";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandingEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listPlatformTenantDomains: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainList"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    addPlatformTenantDomain: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    domain: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Added. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    verifyPlatformTenantDomain: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                domainId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainEnvelope"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    removePlatformTenantDomain: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                domainId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     listPlatformTenantModules: {
