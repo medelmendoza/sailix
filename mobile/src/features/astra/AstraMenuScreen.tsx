@@ -6,6 +6,7 @@ import { colors, gradients, radius, spacing } from '@/constants/theme';
 import { ServiceLogo } from '@/features/services/ServiceLogo';
 import { useSessionStore } from '@/store/sessionStore';
 import { Grid, MenuCard } from './parts';
+import { useBrand } from '@/theme/brand';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'AstraMenu'>;
 
@@ -18,6 +19,7 @@ type Tool = {
 
 export function AstraMenuScreen({ navigation }: Props) {
   const me = useSessionStore((s) => s.me);
+  const brand = useBrand();
   const name = me?.profile?.first_name ?? me?.user.display_name ?? me?.user.username ?? '';
   const sections: { heading: string; tint: 'amber' | 'green' | 'blue'; tools: Tool[] }[] = [
     {
@@ -77,7 +79,13 @@ export function AstraMenuScreen({ navigation }: Props) {
   ];
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <View style={styles.hero}>
+      <View
+        key={brand.gradients.header}
+        style={[
+          styles.hero,
+          { backgroundColor: brand.primary, experimental_backgroundImage: brand.gradients.header },
+        ]}
+      >
         <View style={{ flex: 1, gap: spacing.xs }}>
           <AppText style={styles.white}>Welcome,</AppText>
           <AppText variant="title" accessibilityRole="header" style={styles.white}>

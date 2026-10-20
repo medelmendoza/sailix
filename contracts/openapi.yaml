@@ -3161,6 +3161,12 @@ components:
         id: { type: string }
         code: { type: string }
         name: { type: string }
+        look:
+          description: >
+            How the organization looks (the same fields as the public look). Present on the signed-in organization of `/me`, so
+            clients with no address of their own (the mobile app) can draw themselves with its colours and logo.
+          allOf:
+            - { $ref: '#/components/schemas/PublicTenant' }
     MembershipSummary:
       type: object
       required: [id, role, tenant]

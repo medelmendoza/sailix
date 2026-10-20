@@ -201,4 +201,17 @@ class TenantBrandingTest extends TestCase
 
         $this->get('http://api.sailix.test/api/v1/public/tenants/aaa/logo')->assertNotFound();
     }
+
+    public function test_the_signed_in_member_gets_their_organizations_look_with_the_session_for_clients_that_have_no_address(): void
+    {
+        $this->change('adminA', ['tagline' => 'Sailing since 1990', 'primary_color' => '#355dad'])->assertOk();
+        $this->upload('adminA', 'logo', $this->picture())->assertOk();
+
+        $look = $this->getJson('/api/v1/me', $this->as('crewA'))->assertOk()->json('data.tenant.look');
+        $this->assertSame('aaa', $look['slug']);
+        $this->assertSame('#355DAD', $look['primary_color']);
+        $this->assertSame('Sailing since 1990', $look['tagline']);
+        $this->assertStringContainsString('/api/v1/public/tenants/aaa/logo?v=', $look['logo_url']);
+        $this->assertNull($this->getJson('/api/v1/me', $this->as('adminB'))->json('data.tenant.look.primary_color')); // B has its own look
+    }
 }

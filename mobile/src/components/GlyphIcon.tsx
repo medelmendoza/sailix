@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import { colors } from '@/constants/theme';
 import { AppText } from './AppText';
+import { useBrand } from '@/theme/brand';
 
 export type GlyphName =
   | 'person'
@@ -32,13 +33,15 @@ export type GlyphName =
  */
 export function GlyphIcon({
   name,
-  color = colors.primary,
+  color,
   size = 24,
 }: {
   name: GlyphName;
   color?: string;
   size?: number;
 }) {
+  const brand = useBrand();
+  color ??= brand.primary; // by default an icon wears the organization's colour
   const u = size / 24; // all shapes are drawn on a 24 x 24 grid
   const fill = { backgroundColor: color };
   const line = { borderColor: color };

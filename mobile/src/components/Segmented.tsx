@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { colors, minTouchTarget, radius } from '@/constants/theme';
 import { AppText } from './AppText';
+import { useBrand } from '@/theme/brand';
 
 /** A pill-shaped segmented control: one choice of a few, the picked one lifted on a quiet track. */
 export function Segmented<T extends string>({
@@ -12,6 +13,7 @@ export function Segmented<T extends string>({
   value: T;
   onChange: (v: T) => void;
 }) {
+  const brand = useBrand();
   return (
     <View style={styles.track} accessibilityRole="radiogroup">
       {options.map((o) => {
@@ -25,7 +27,7 @@ export function Segmented<T extends string>({
             onPress={() => onChange(o.value)}
             style={[styles.segment, picked && styles.picked]}
           >
-            <AppText variant="button" style={{ color: picked ? colors.primary : colors.textMuted }}>
+            <AppText variant="button" style={{ color: picked ? brand.primary : colors.textMuted }}>
               {o.label}
             </AppText>
           </Pressable>

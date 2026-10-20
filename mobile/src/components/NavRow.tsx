@@ -4,6 +4,7 @@ import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { AppText } from './AppText';
 import { Card } from './Card';
 import { GlyphIcon, type GlyphName } from './GlyphIcon';
+import { useBrand } from '@/theme/brand';
 
 /** A flat card row that opens something: a round light-blue icon, a title with a short note, and a chevron. */
 export function NavRow({
@@ -24,6 +25,7 @@ export function NavRow({
   onPress: () => void;
   accessibilityLabel?: string;
 }) {
+  const brand = useBrand();
   return (
     <Pressable
       accessibilityRole="button"
@@ -33,8 +35,8 @@ export function NavRow({
     >
       <Card variant="flat" style={styles.card}>
         {icon ?? (
-          <View style={styles.icon}>
-            <GlyphIcon name={glyph} color={colors.primary} size={26} />
+          <View style={[styles.icon, { backgroundColor: brand.infoBg }]}>
+            <GlyphIcon name={glyph} size={26} />
           </View>
         )}
         <View style={styles.text}>

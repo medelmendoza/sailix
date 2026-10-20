@@ -2,7 +2,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { onTabScroll } from '@/app/navigation/tabBarCollapse';
 import type { AppStackParamList, MainTabParamList } from '@/app/navigation/types';
@@ -14,6 +14,7 @@ import { useNextTodos } from '@/features/todos/api';
 import { describeError } from '@/services/api/errors';
 import { useSessionStore } from '@/store/sessionStore';
 import { QuickActions, Tile } from './HomeShortcuts';
+import { useBrand, useLogoUrl } from '@/theme/brand';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Home'>,
@@ -44,6 +45,8 @@ export function HomeScreen({ navigation }: Props) {
   const refreshMe = useSessionStore((s) => s.refreshMe);
   const switchError = useSessionStore((s) => s.switchError);
   const insets = useSafeAreaInsets();
+  const brand = useBrand();
+  const logo = useLogoUrl();
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const todos = useNextTodos();
@@ -95,7 +98,22 @@ export function HomeScreen({ navigation }: Props) {
       contentContainerStyle={styles.scroll}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}
     >
-      <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
+      <View
+        key={brand.gradients.header} // the gradient is rebuilt, not changed, when the look changes
+        style={[
+          styles.header,
+          { paddingTop: insets.top + spacing.lg },
+          { backgroundColor: brand.primary, experimental_backgroundImage: brand.gradients.header },
+        ]}
+      >
+        {logo ? (
+          <Image
+            source={{ uri: logo }}
+            accessibilityLabel={`${me.tenant.name} logo`}
+            resizeMode="contain"
+            style={styles.logo}
+          />
+        ) : null}
         <View style={{ flex: 1, gap: 2 }}>
           <AppText variant="body" style={styles.white}>
             {greeting(new Date().getHours())}
@@ -134,14 +152,14 @@ export function HomeScreen({ navigation }: Props) {
             title="To-do list"
             note={todoNote}
             noteColor={overdue > 0 ? colors.danger : colors.textMuted}
-            icon={<GlyphIcon name="check" color={colors.primary} size={26} />}
+            icon={<GlyphIcon name="check" size={26} />}
             onPress={() => navigation.navigate('Todos')}
           />
           <Tile
             title="Documents"
             note={docNote}
             noteColor={expired > 0 ? colors.danger : colors.warning}
-            icon={<TabIcon name="folder" color={colors.primary} />}
+            icon={<TabIcon name="folder" color={brand.primary} />}
             onPress={() => navigation.navigate('Files')}
           />
         </View>
@@ -164,6 +182,13 @@ const styles = StyleSheet.create({
     experimental_backgroundImage: gradients.header,
   },
   white: { color: colors.onPrimary },
+  logo: {
+    width: 48,
+    height: 48,
+    marginRight: spacing.md,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+  },
   account: {
     width: 48,
     height: 48,

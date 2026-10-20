@@ -63,6 +63,7 @@ import { ModuleScreen } from '@/features/modules/ModuleScreen';
 import { useSessionStore } from '@/store/sessionStore';
 import type { AppStackParamList, AuthStackParamList, MainTabParamList } from './types';
 import { resetTabBar, tabBarCollapse } from './tabBarCollapse';
+import { useBrand } from '@/theme/brand';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const AppStack = createNativeStackNavigator<AppStackParamList>();
@@ -122,7 +123,14 @@ function TabButton(props: BottomTabBarButtonProps) {
 
 /** The tab's icon on a light-blue pill while its tab is open. */
 function TabPill({ focused, children }: { focused: boolean; children: React.ReactNode }) {
-  return <View style={[styles.pill, focused && styles.pillOn]}>{children}</View>;
+  const brand = useBrand();
+  return (
+    <View
+      style={[styles.pill, focused && styles.pillOn, focused && { backgroundColor: brand.infoBg }]}
+    >
+      {children}
+    </View>
+  );
 }
 
 /** The old Sailix "settings menu": reachable from every tab's header. */
@@ -136,12 +144,13 @@ function AccountButton() {
       hitSlop={8}
       style={styles.accountButton}
     >
-      <GlyphIcon name="person" color={colors.primary} size={26} />
+      <GlyphIcon name="person" size={26} />
     </Pressable>
   );
 }
 
 function MainTabs() {
+  const brand = useBrand();
   const unread = useUnreadCount(true);
   const insets = useSafeAreaInsets();
   const bottom = Math.max(insets.bottom, 8) + 8; // the bar floats this far above the bottom edge
@@ -150,7 +159,9 @@ function MainTabs() {
       screenListeners={{ focus: resetTabBar }}
       screenOptions={{
         ...headerOptions,
+        headerTintColor: brand.primary,
         ...tabOptions,
+        tabBarActiveTintColor: brand.primary,
         tabBarStyle: { ...tabOptions.tabBarStyle, bottom },
         sceneStyle: {
           backgroundColor: colors.background,
@@ -249,11 +260,12 @@ function ConnectionProblem() {
 /** Auth gate by STATE, never by manual navigate('Login') (docs/03 rule 1). */
 export function RootNavigator() {
   const status = useSessionStore((s) => s.status);
+  const brand = useBrand();
 
   if (status === 'bootstrapping') {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.primary} accessibilityLabel="Loading" />
+        <ActivityIndicator color={brand.primary} accessibilityLabel="Loading" />
       </View>
     );
   }
@@ -277,6 +289,7 @@ export function RootNavigator() {
       <AppStack.Navigator
         screenOptions={{
           ...headerOptions,
+          headerTintColor: brand.primary,
           headerBackButtonDisplayMode: 'minimal',
           animation: 'fade', // pages fade in instead of sliding
           animationDuration: 250,

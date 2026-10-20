@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText, Card, GlyphIcon, TabIcon } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
+import { useBrand } from '@/theme/brand';
 
 /** The three round shortcuts of the dashboard. */
 export function QuickActions({
@@ -12,24 +13,25 @@ export function QuickActions({
   onFinance: () => void;
   onServices: () => void;
 }) {
+  const brand = useBrand();
   const items = [
     {
       label: 'Upload documents',
       icon: (
         <View style={{ transform: [{ rotate: '180deg' }] }}>
-          <GlyphIcon name="download" color={colors.primary} size={26} />
+          <GlyphIcon name="download" size={26} />
         </View>
       ),
       onPress: onUpload,
     },
     {
       label: 'View finances',
-      icon: <TabIcon name="money" color={colors.primary} />,
+      icon: <TabIcon name="money" color={brand.primary} />,
       onPress: onFinance,
     },
     {
       label: 'Services',
-      icon: <TabIcon name="case" color={colors.primary} />,
+      icon: <TabIcon name="case" color={brand.primary} />,
       onPress: onServices,
     },
   ];
@@ -43,7 +45,7 @@ export function QuickActions({
           onPress={i.onPress}
           style={({ pressed }) => [styles.quickItem, pressed && { opacity: 0.75 }]}
         >
-          <View style={styles.circle}>{i.icon}</View>
+          <View style={[styles.circle, { backgroundColor: brand.infoBg }]}>{i.icon}</View>
           <AppText variant="caption" style={styles.center}>
             {i.label}
           </AppText>
@@ -67,6 +69,7 @@ export function Tile({
   icon: React.ReactNode;
   onPress: () => void;
 }) {
+  const brand = useBrand();
   return (
     <Pressable
       accessibilityRole="button"
@@ -75,7 +78,7 @@ export function Tile({
       style={({ pressed }) => [styles.tile, pressed && { opacity: 0.75 }]}
     >
       <Card variant="flat" style={styles.tileCard}>
-        <View style={styles.circle}>{icon}</View>
+        <View style={[styles.circle, { backgroundColor: brand.infoBg }]}>{icon}</View>
         <AppText variant="heading" style={styles.center}>
           {title}
         </AppText>

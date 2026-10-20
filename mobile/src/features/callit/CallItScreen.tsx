@@ -7,11 +7,13 @@ import { describeError } from '@/services/api/errors';
 import { useSessionStore } from '@/store/sessionStore';
 import { ServiceLogo } from '@/features/services/ServiceLogo';
 import { useCallItStats } from './api';
+import { useBrand } from '@/theme/brand';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'CallIt'>;
 
 export function CallItScreen({ navigation }: Props) {
   const me = useSessionStore((s) => s.me);
+  const brand = useBrand();
   const stats = useCallItStats();
   const name = me?.profile?.first_name ?? me?.user.display_name ?? me?.user.username ?? '';
 
@@ -22,7 +24,13 @@ export function CallItScreen({ navigation }: Props) {
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <View style={styles.hero}>
+      <View
+        key={brand.gradients.header}
+        style={[
+          styles.hero,
+          { backgroundColor: brand.primary, experimental_backgroundImage: brand.gradients.header },
+        ]}
+      >
         <View style={{ flex: 1 }}>
           <AppText style={styles.white}>Welcome,</AppText>
           <AppText variant="title" accessibilityRole="header" style={styles.white}>
@@ -33,8 +41,8 @@ export function CallItScreen({ navigation }: Props) {
       </View>
       <Card variant="flat" style={styles.card}>
         <View style={styles.row}>
-          <View style={styles.statIcon}>
-            <GlyphIcon name="chart" size={28} color={colors.primary} />
+          <View style={[styles.statIcon, { backgroundColor: brand.infoBg }]}>
+            <GlyphIcon name="chart" size={28} />
           </View>
           <View>
             <AppText variant="caption" muted>
@@ -42,7 +50,7 @@ export function CallItScreen({ navigation }: Props) {
             </AppText>
             <AppText
               variant="title"
-              style={{ color: colors.primary }}
+              style={{ color: brand.primary }}
               accessibilityLabel={`${reports_made} reports made`}
             >
               {reports_made}

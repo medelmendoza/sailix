@@ -1,6 +1,7 @@
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { colors, fonts } from '@/constants/theme';
 import { AppText } from './AppText';
+import { useBrand } from '@/theme/brand';
 
 const W = 2.2; // stroke of the outlined icons
 
@@ -18,6 +19,7 @@ export function TabIcon({
   color: string;
   filled?: boolean;
 }) {
+  const brand = useBrand();
   // a solid shape, or just its rounded outline
   const shape = (extra: ViewStyle = {}): ViewStyle =>
     filled
@@ -63,7 +65,7 @@ export function TabIcon({
                 fontFamily: fonts.heading,
                 fontSize: 15,
                 lineHeight: 20,
-                color: filled ? colors.infoBg : color,
+                color: filled ? brand.infoBg : color,
               }}
             >
               $
@@ -99,7 +101,7 @@ export function TabIcon({
                 left: 2,
                 width: 22,
                 height: W,
-                backgroundColor: filled ? colors.infoBg : color,
+                backgroundColor: filled ? brand.infoBg : color,
               },
             ]}
           />
@@ -112,7 +114,7 @@ export function TabIcon({
                 width: 4,
                 height: 4,
                 borderRadius: 1,
-                backgroundColor: filled ? colors.infoBg : color,
+                backgroundColor: filled ? brand.infoBg : color,
               },
             ]}
           />
@@ -152,7 +154,7 @@ export function TabIcon({
                 width: 2.4,
                 height: 6,
                 borderRadius: 1.2,
-                backgroundColor: filled ? colors.infoBg : color,
+                backgroundColor: filled ? brand.infoBg : color,
               },
             ]}
           />
@@ -165,7 +167,7 @@ export function TabIcon({
                 width: 2.4,
                 height: 2.4,
                 borderRadius: 1.2,
-                backgroundColor: filled ? colors.infoBg : color,
+                backgroundColor: filled ? brand.infoBg : color,
               },
             ]}
           />

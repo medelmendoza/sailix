@@ -2050,6 +2050,8 @@ export interface components {
             id: string;
             code: string;
             name: string;
+            /** @description How the organization looks (the same fields as the public look). Present on the signed-in organization of `/me`, so clients with no address of their own (the mobile app) can draw themselves with its colours and logo. */
+            look?: components["schemas"]["PublicTenant"];
         };
         MembershipSummary: {
             id: string;

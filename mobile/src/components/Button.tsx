@@ -9,6 +9,7 @@ import {
   typography,
 } from '@/constants/theme';
 import { AppText } from './AppText';
+import { useBrand } from '@/theme/brand';
 
 type Props = {
   title: string;
@@ -34,6 +35,7 @@ export function Button({
   accessibilityLabel,
   style,
 }: Props) {
+  const brand = useBrand();
   const inactive = disabled || loading;
   const primary = variant === 'primary';
   return (
@@ -49,17 +51,21 @@ export function Button({
       style={({ pressed }) => [
         styles.base,
         primary ? styles.primary : styles.secondary,
+        primary
+          ? {
+              backgroundColor: brand.primary,
+              experimental_backgroundImage: brand.gradients.primary,
+            }
+          : null,
         { boxShadow: pressed ? shadows.insetSm : shadows.raisedSm },
         inactive && styles.dim,
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={primary ? colors.onPrimary : colors.primary} />
+        <ActivityIndicator color={primary ? colors.onPrimary : brand.primary} />
       ) : (
-        <AppText
-          style={[typography.button, { color: primary ? colors.onPrimary : colors.primary }]}
-        >
+        <AppText style={[typography.button, { color: primary ? colors.onPrimary : brand.primary }]}>
           {title}
         </AppText>
       )}

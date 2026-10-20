@@ -9,6 +9,7 @@ use App\Models\Membership;
 use App\Modules\ModuleAccess;
 use App\Support\Settings\SettingsRegistry;
 use App\Support\Tenancy\TenantContext;
+use App\Tenancy\TenantBrandingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -32,6 +33,8 @@ class MeController extends Controller
                 'id' => $membership->tenant->getKey(),
                 'code' => $membership->tenant->code,
                 'name' => SettingsRegistry::tenant('display_name') ?? $membership->tenant->name,
+                // how the organization looks (colours, logo), for clients that have no address to ask the public endpoint with
+                'look' => app(TenantBrandingService::class)->publicPayload($membership->tenant),
             ],
             'profile' => $membership->profile ? (new ProfileResource($membership->profile))->resolve() : null,
             'abilities' => $context->role()->abilities(),
