@@ -20,7 +20,7 @@ import {
 } from '../../components/ui';
 import { applyServerErrors } from '../authentication/forms';
 import { formatDateTime } from '../shared/AuditTable';
-import { describeError, useCreateTenant, useTenants } from './api';
+import { describeError, useCreateTenant, useTenants, useTenantStatusCount } from './api';
 
 const STATUS_OPTIONS = ['', 'provisioning', 'active', 'suspended', 'deactivated', 'archived'].map(
   (v) => ({ value: v, label: v ? v[0]!.toUpperCase() + v.slice(1) : 'All statuses' }),
@@ -106,6 +106,38 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
+const STATUSES = ['provisioning', 'active', 'suspended', 'deactivated', 'archived'] as const;
+
+/** One tile of the summary row; the open tile is the current filter. */
+function StatusTile({
+  status,
+  selected,
+  onPick,
+}: {
+  status: (typeof STATUSES)[number];
+  selected: boolean;
+  onPick: () => void;
+}) {
+  const count = useTenantStatusCount(status);
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onPick}
+      className={`rounded-xl border bg-surface p-3 text-left transition hover:shadow-sm ${
+        selected ? 'border-accent-600 ring-1 ring-accent-600' : 'border-line'
+      }`}
+    >
+      <p className="text-2xl font-semibold text-brand-800">
+        {count.isPending ? '…' : (count.data ?? '—')}
+      </p>
+      <div className="mt-1">
+        <StatusBadge status={status} />
+      </div>
+    </button>
+  );
+}
+
 export function TenantsPage() {
   const [params, setParams] = useSearchParams();
   const [creating, setCreating] = useState(false);
@@ -135,6 +167,16 @@ export function TenantsPage() {
         description="Every organization on the platform."
         actions={<Button onClick={() => setCreating(true)}>New organization</Button>}
       />
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {STATUSES.map((st) => (
+          <StatusTile
+            key={st}
+            status={st}
+            selected={status === st}
+            onPick={() => set({ status: status === st ? '' : st, page: '' })}
+          />
+        ))}
+      </div>
       <div className="mb-4 grid gap-3 sm:grid-cols-2">
         <SelectField
           label="Status"
@@ -156,17 +198,30 @@ export function TenantsPage() {
         <EmptyState title="No organizations match" />
       ) : (
         <>
-          <Table caption="Organizations" headers={['Code', 'Name', 'Status', 'Created']}>
+          <Table caption="Organizations" headers={['Organization', 'Address', 'Status', 'Created']}>
             {tenants.data.data.map((t) => (
               <tr key={t.id}>
-                <td className="px-4 py-3 font-mono text-xs">{t.code}</td>
-                <td className="px-4 py-3 font-medium">
-                  <Link
-                    to={`/platform/tenants/${t.id}`}
-                    className="text-accent-600 hover:underline"
-                  >
-                    {t.name}
-                  </Link>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span
+                      aria-hidden="true"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent-600 to-brand-800 text-sm font-semibold text-white"
+                    >
+                      {t.name.charAt(0).toUpperCase()}
+                    </span>
+                    <div className="min-w-0">
+                      <Link
+                        to={`/platform/tenants/${t.id}`}
+                        className="block truncate font-medium text-accent-600 hover:underline"
+                      >
+                        {t.name}
+                      </Link>
+                      <span className="font-mono text-xs text-muted">{t.code}</span>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3 font-mono text-xs text-muted">
+                  {t.default_address ?? '—'}
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={t.status} />
