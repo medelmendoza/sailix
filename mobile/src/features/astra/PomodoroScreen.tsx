@@ -17,10 +17,12 @@ import {
   tick,
   tip,
 } from './pomodoro';
+import { useBrand } from '@/theme/brand';
 
 const KEEP_AWAKE = 'astra-pomodoro';
 
 export function PomodoroScreen() {
+  const brand = useBrand();
   const help = useHelp(HELP.pomodoro);
   const [timer, setTimer] = useState(initial);
   const [now, setNow] = useState(() => Date.now());
@@ -93,7 +95,13 @@ export function PomodoroScreen() {
         accessibilityLabel={`${view.completed} of ${CYCLES} work sessions finished`}
       >
         {Array.from({ length: CYCLES }, (_, i) => (
-          <View key={i} style={[styles.dot, i < view.completed && styles.dotDone]} />
+          <View
+            key={i}
+            style={[
+              styles.dot,
+              i < view.completed && { backgroundColor: brand.primary, borderColor: brand.primary },
+            ]}
+          />
         ))}
       </View>
     </ScrollView>
@@ -117,5 +125,4 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.border,
   },
-  dotDone: { backgroundColor: colors.primary, borderColor: colors.primary },
 });

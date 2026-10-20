@@ -21,12 +21,14 @@ import { TalaHowItWorks } from './TalaHowItWorks';
 import { isDone } from './materials';
 import { TalaMaterialRow } from './TalaMaterialRow';
 import { CourseDetailSkeleton } from './TalaSkeletons';
+import { useBrand } from '@/theme/brand';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'TalaCourse'>;
 
 export { materialStatsLine, statusWord } from './materials';
 
 export function TalaCourseScreen({ route }: Props) {
+  const brand = useBrand();
   const { assignId } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const queryClient = useQueryClient();
@@ -224,8 +226,8 @@ export function TalaCourseScreen({ route }: Props) {
             <AppText variant="heading" accessibilityRole="header">
               Materials
             </AppText>
-            <View style={styles.count}>
-              <AppText variant="caption" style={{ color: colors.primary }}>
+            <View style={[styles.count, { backgroundColor: brand.infoBg }]}>
+              <AppText variant="caption" style={{ color: brand.primary }}>
                 {c.materials.filter((m) => isDone(m) || pending.has(m.id)).length} of{' '}
                 {c.materials.length} done
               </AppText>

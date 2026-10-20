@@ -24,6 +24,7 @@ import { fetchTalaDeck } from './api';
 import { queueFlashcards, syncOutbox } from './offline/outbox';
 import { currentScope } from './offline/paths';
 import { getCachedDeck, getLocalRatings, setCachedDeck, setLocalRatings } from './offline/store';
+import { useBrand } from '@/theme/brand';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'TalaFlashcards'>;
 type Rating = 'easy' | 'medium' | 'hard';
@@ -369,6 +370,7 @@ function Face({
   hidden: boolean;
   accent?: boolean;
 }) {
+  const brand = useBrand();
   return (
     <Animated.View
       accessibilityElementsHidden={hidden}
@@ -381,9 +383,9 @@ function Face({
       ]}
     >
       <View
-        style={[styles.faceChip, { backgroundColor: accent ? colors.successBg : colors.infoBg }]}
+        style={[styles.faceChip, { backgroundColor: accent ? colors.successBg : brand.infoBg }]}
       >
-        <AppText variant="caption" style={{ color: accent ? colors.success : colors.primary }}>
+        <AppText variant="caption" style={{ color: accent ? colors.success : brand.primary }}>
           {title}
         </AppText>
       </View>

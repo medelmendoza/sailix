@@ -3,6 +3,7 @@ import { AppText, Card, CourseImage, ProgressBar } from '@/components';
 import { colors, radius, spacing } from '@/constants/theme';
 import type { TalaCourse } from '@/services/api/types';
 import { dueInfo, type Due } from './stats';
+import { useBrand } from '@/theme/brand';
 
 const INK: Record<Due['tone'], string> = {
   done: colors.success,
@@ -20,6 +21,7 @@ export function TalaCourseGridCard({
   course: TalaCourse;
   onPress: () => void;
 }) {
+  const brand = useBrand();
   const due = dueInfo(course);
   return (
     <Pressable
@@ -39,7 +41,7 @@ export function TalaCourseGridCard({
             <AppText variant="caption" muted>
               {course.completed} of {course.total} done
             </AppText>
-            <AppText variant="caption" style={styles.percent}>
+            <AppText variant="caption" style={[styles.percent, { color: brand.primary }]}>
               {course.percent}%
             </AppText>
           </View>

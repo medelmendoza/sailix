@@ -10,6 +10,7 @@ import { describeError, toApiError } from '@/services/api/errors';
 import { discard } from '@/features/scanner/scan';
 import { useScanStore } from '@/features/scanner/scanStore';
 import { useDocument, useDocumentTypes, useSaveDocument, type PickedFile } from './api';
+import { useBrand } from '@/theme/brand';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'DocumentForm'>;
 
@@ -42,6 +43,7 @@ const EMPTY: Values = {
 
 /** Add a document, or fix and send again one that is waiting or was sent back. The owner and status are the server's call. */
 export function DocumentFormScreen({ route, navigation }: Props) {
+  const brand = useBrand();
   const id = route.params.id;
   const types = useDocumentTypes();
   const existing = useDocument(id ?? '');
@@ -150,7 +152,10 @@ export function DocumentFormScreen({ route, navigation }: Props) {
                 accessibilityState={{ checked: picked }}
                 accessibilityLabel={t.name}
                 onPress={() => set({ type: t.id })}
-                style={[styles.chip, picked && styles.chipPicked]}
+                style={[
+                  styles.chip,
+                  picked && { backgroundColor: brand.primary, borderColor: brand.primary },
+                ]}
               >
                 <AppText
                   variant="caption"
@@ -274,7 +279,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  chipPicked: { backgroundColor: colors.primary, borderColor: colors.primary },
   input: {
     minHeight: minTouchTarget,
     borderWidth: 1.5,

@@ -18,12 +18,14 @@ import { useTalaCourses } from './api';
 import { TalaCourseProgress } from './TalaCourseProgress';
 import { savedCopyText } from './TalaCourseList';
 import { byUrgency, dueInfo, overall } from './stats';
+import { useBrand } from '@/theme/brand';
 
 /**
  * My Stats: how far the learner is, course by course, and what is due. Everything comes from Tala's own counters through the
  * gateway (read-only) and is available offline from the saved copy. It is computed by Tala/the gateway, not on the device.
  */
 export function TalaStatsScreen() {
+  const brand = useBrand();
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const courses = useTalaCourses();
   const [refreshing, setRefreshing] = useState(false);
@@ -62,7 +64,10 @@ export function TalaStatsScreen() {
               Overall
             </AppText>
             <View style={styles.big}>
-              <AppText style={styles.bigNumber} accessibilityElementsHidden>
+              <AppText
+                style={[styles.bigNumber, { color: brand.primary }]}
+                accessibilityElementsHidden
+              >
                 {o.percent}%
               </AppText>
               <View style={{ flex: 1, gap: spacing.xs }}>
@@ -74,7 +79,7 @@ export function TalaStatsScreen() {
             </View>
             <View style={styles.tiles}>
               <Tile n={o.completed} label="completed" bg={colors.successBg} ink={colors.success} />
-              <Tile n={o.inProgress} label="in progress" bg={colors.infoBg} ink={colors.primary} />
+              <Tile n={o.inProgress} label="in progress" bg={brand.infoBg} ink={brand.primary} />
               <Tile
                 n={o.notStarted}
                 label="not started"

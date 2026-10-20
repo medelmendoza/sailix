@@ -20,6 +20,7 @@ import { useTalaCourses } from './api';
 import { TalaCourseCard } from './TalaCourseCard';
 import { TalaCourseGridCard } from './TalaCourseGridCard';
 import { CourseListSkeleton } from './TalaSkeletons';
+import { useBrand } from '@/theme/brand';
 
 /** Courses shown at a time; "Show more" adds this many again. */
 export const PAGE_SIZE = 10;
@@ -73,6 +74,7 @@ export function TalaCourseList({
   header: React.ReactNode;
   footer?: React.ReactNode;
 }) {
+  const brand = useBrand();
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const courses = useTalaCourses();
   const [refreshing, setRefreshing] = useState(false);
@@ -121,11 +123,7 @@ export function TalaCourseList({
               onPress={() => setView(v)}
               style={[styles.toggleButton, view === v && styles.toggleOn]}
             >
-              <GlyphIcon
-                name={v}
-                size={20}
-                color={view === v ? colors.primary : colors.textMuted}
-              />
+              <GlyphIcon name={v} size={20} color={view === v ? brand.primary : colors.textMuted} />
             </Pressable>
           ))}
         </View>
@@ -170,7 +168,10 @@ export function TalaCourseList({
                         setFilter(f.value);
                         setShown(PAGE_SIZE);
                       }}
-                      style={[styles.chip, on && styles.chipOn]}
+                      style={[
+                        styles.chip,
+                        on && { backgroundColor: brand.primary, borderColor: brand.primary },
+                      ]}
                     >
                       <AppText
                         variant="button"
@@ -258,7 +259,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  chipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   toggle: {
     flexDirection: 'row',

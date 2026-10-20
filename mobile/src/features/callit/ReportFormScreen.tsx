@@ -12,6 +12,7 @@ import { discard } from '@/features/scanner/scan';
 import { useScanStore } from '@/features/scanner/scanStore';
 import { useCallItReport, useDeleteDraft, useSaveReport } from './api';
 import { CLASSIFICATIONS, LOCATIONS, SUB_CLASSIFICATIONS, labelOf } from './content';
+import { useBrand } from '@/theme/brand';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'CallItForm'>;
 type Values = {
@@ -335,6 +336,7 @@ function Choice({
   onPick: (v: string) => void;
   error?: string;
 }) {
+  const brand = useBrand();
   const [open, setOpen] = useState(false);
   const chosen = options.find((o) => o.value === value)?.label;
   return (
@@ -382,7 +384,7 @@ function Choice({
                     onPick(o.value);
                     setOpen(false);
                   }}
-                  style={[styles.option, picked && styles.optionPicked]}
+                  style={[styles.option, picked && { backgroundColor: brand.primary }]}
                 >
                   <AppText style={{ color: picked ? colors.onPrimary : colors.text }}>
                     {o.label}
@@ -410,6 +412,7 @@ function YesNo({
   error?: string;
   noLabel?: string;
 }) {
+  const brand = useBrand();
   return (
     <View style={{ gap: spacing.sm }}>
       {label ? (
@@ -430,7 +433,10 @@ function YesNo({
             accessibilityLabel={text}
             accessibilityState={{ checked: value === x }}
             onPress={() => onPick(x)}
-            style={[styles.chip, value === x && styles.chipPicked]}
+            style={[
+              styles.chip,
+              value === x && { backgroundColor: brand.primary, borderColor: brand.primary },
+            ]}
           >
             <AppText
               variant="caption"
@@ -511,7 +517,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  chipPicked: { backgroundColor: colors.primary, borderColor: colors.primary },
   input: {
     minHeight: minTouchTarget,
     borderWidth: 1.5,
@@ -542,7 +547,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     borderRadius: radius.md,
   },
-  optionPicked: { backgroundColor: colors.primary },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',

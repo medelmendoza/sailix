@@ -3,6 +3,7 @@ import { AppText, Card } from '@/components';
 import { colors, minTouchTarget, spacing } from '@/constants/theme';
 import type { Announcement } from '@/services/api/types';
 import { ageLabel } from './age';
+import { useBrand } from '@/theme/brand';
 
 /** One announcement in a list: bold title with a dot while unread, a two-line preview and how long ago it was written. */
 export function AnnouncementCard({
@@ -15,6 +16,7 @@ export function AnnouncementCard({
   /** Inside another card (the Dashboard): no raised card of its own. */
   flat?: boolean;
 }) {
+  const brand = useBrand();
   const unread = announcement.is_read === false;
   const age = ageLabel(announcement.created_at);
   return (
@@ -29,7 +31,7 @@ export function AnnouncementCard({
         style={flat ? { ...styles.card, padding: spacing.lg } : styles.card}
       >
         <View style={styles.head}>
-          {unread ? <View style={styles.dot} /> : null}
+          {unread ? <View style={[styles.dot, { backgroundColor: brand.primary }]} /> : null}
           <AppText variant="button" style={styles.title} numberOfLines={2}>
             {announcement.title}
           </AppText>

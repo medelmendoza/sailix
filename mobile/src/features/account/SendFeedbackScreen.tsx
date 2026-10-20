@@ -7,6 +7,7 @@ import { AppText, Button, FormError, FormScreen, Notice, TextField } from '@/com
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { applyServerErrors } from '@/features/auth/serverErrors';
 import { api } from '@/services/api/client';
+import { useBrand } from '@/theme/brand';
 
 const CATEGORIES = [
   { value: 'bug', label: 'Something is wrong' },
@@ -26,6 +27,7 @@ type Values = z.infer<typeof schema>;
 
 /** Feedback about the Sailix app, sent to the organization's administrators (not to Tala). */
 export function SendFeedbackScreen() {
+  const brand = useBrand();
   const [formError, setFormError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const {
@@ -73,7 +75,10 @@ export function SendFeedbackScreen() {
                     accessibilityState={{ checked: picked }}
                     accessibilityLabel={c.label}
                     onPress={() => field.onChange(c.value)}
-                    style={[styles.chip, picked && styles.chipPicked]}
+                    style={[
+                      styles.chip,
+                      picked && { backgroundColor: brand.primary, borderColor: brand.primary },
+                    ]}
                   >
                     <AppText
                       variant="caption"
@@ -113,6 +118,5 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  chipPicked: { backgroundColor: colors.primary, borderColor: colors.primary },
   message: { minHeight: 140 },
 });

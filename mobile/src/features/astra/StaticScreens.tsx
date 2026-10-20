@@ -27,6 +27,7 @@ import {
   TagNote,
   useHelp,
 } from './parts';
+import { useBrand } from '@/theme/brand';
 
 type Nav<N extends keyof AppStackParamList> = NativeStackScreenProps<AppStackParamList, N>;
 
@@ -34,6 +35,7 @@ const page = StyleSheet.create({ content: { padding: spacing.lg, gap: spacing.lg
 
 /** The 2x2 chart, as in the original: probability up the side, impact along the bottom. Tapping a box opens its advice. */
 export function RiskScreen() {
+  const brand = useBrand();
   const help = useHelp(HELP.risk);
   const [picked, setPicked] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
@@ -61,7 +63,11 @@ export function RiskScreen() {
                     setPicked(i);
                     setOpen(true);
                   }}
-                  style={[styles.cell, on && styles.cellOn]}
+                  style={[
+                    styles.cell,
+                    { borderColor: brand.primary },
+                    on && { backgroundColor: brand.infoBg },
+                  ]}
                 >
                   <AppText variant="heading">{cell.title.replace(' your risk!', '')}</AppText>
                 </Pressable>
@@ -132,6 +138,7 @@ export function WhysScreen() {
 
 /** P.M.E.P.E, first page: the picture, the mnemonic with its initials picked out, and a way on to the details. */
 export function PmepeScreen({ navigation }: Nav<'AstraPmepe'>) {
+  const brand = useBrand();
   const help = useHelp(HELP.pmepe);
   const initial = (t: string) => (
     <AppText variant="title" style={{ color: colors.coralText }}>
@@ -171,7 +178,7 @@ export function PmepeScreen({ navigation }: Nav<'AstraPmepe'>) {
         onPress={() => navigation.navigate('AstraPmepeDetail')}
         style={styles.more}
       >
-        <View style={styles.moreCircle}>
+        <View style={[styles.moreCircle, { backgroundColor: brand.primary }]}>
           <GlyphIcon name="download" color={colors.onPrimary} size={26} />
         </View>
         <AppText variant="heading">Click to learn more.</AppText>
@@ -335,7 +342,6 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     padding: spacing.sm,
   },
-  cellOn: { backgroundColor: colors.infoBg },
   axisX: { alignSelf: 'center', color: colors.coralText },
   scrim: { flex: 1, backgroundColor: 'rgba(18, 36, 61, 0.45)' },
   sheet: {

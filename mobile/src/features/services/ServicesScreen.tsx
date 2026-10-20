@@ -12,6 +12,7 @@ import { describeError } from '@/services/api/errors';
 import type { MyModule } from '@/services/api/types';
 import { useSessionStore } from '@/store/sessionStore';
 import { ServiceLogo, hasLogo } from './ServiceLogo';
+import { useBrand } from '@/theme/brand';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Services'>,
@@ -39,12 +40,13 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 function ServiceCard({ module, onPress }: { module: MyModule; onPress: () => void }) {
+  const brand = useBrand();
   const label = STATUS_LABEL[module.status] ?? module.status;
   return (
     <NavRow
       title={module.label}
       note={label}
-      noteColor={STATUS_COLOR[module.status]}
+      noteColor={module.status === 'not_linked' ? brand.accent : STATUS_COLOR[module.status]}
       glyph={GLYPH[module.code] ?? 'cards'}
       icon={hasLogo(module.code) ? <ServiceLogo code={module.code} /> : undefined}
       accessibilityLabel={`${module.label}, ${label}`}

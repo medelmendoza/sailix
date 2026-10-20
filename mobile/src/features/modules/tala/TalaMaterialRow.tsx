@@ -12,6 +12,7 @@ import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import type { TalaMaterialSummary } from '@/services/api/types';
 import type { DownloadRecord } from './offline/store';
 import { isDone, materialStatsLine, statusWord, TYPE_LABEL } from './materials';
+import { useBrand } from '@/theme/brand';
 
 const ICON: Record<string, GlyphName> = {
   video: 'video',
@@ -80,6 +81,7 @@ export function TalaMaterialRow({
   onRemove: () => void;
   onMarkCompleted: () => void;
 }) {
+  const brand = useBrand();
   const stats = lockedBy ? null : materialStatsLine(m);
   const isFile = m.type === 'video' || m.type === 'pdf';
   const known = statusWord(m.status);
@@ -98,7 +100,9 @@ export function TalaMaterialRow({
       ? 'Completed, waiting to send'
       : (known ?? (isDone(m) ? 'Completed' : 'Not started'));
   const typeLabel = TYPE_LABEL[m.type] ?? m.type;
-  const tint = TINT[m.type] ?? TINT.pdf!;
+  const chip = tone === 'progress' ? { bg: brand.infoBg, ink: brand.primary } : CHIP[tone];
+  const tint =
+    m.type === 'video' ? { bg: brand.infoBg, ink: brand.primary } : (TINT[m.type] ?? TINT.pdf!);
 
   // the one action, and what it does
   const action: { text: string; run: () => void; primary: boolean } | null =
@@ -126,7 +130,7 @@ export function TalaMaterialRow({
       style={{
         ...styles.card,
         ...(lockedBy ? styles.lockedCard : null),
-        ...(upNext ? styles.upNextCard : null),
+        ...(upNext ? { ...styles.upNextCard, borderColor: brand.primary } : null),
       }}
     >
       <View
@@ -155,7 +159,7 @@ export function TalaMaterialRow({
               {typeLabel}
             </AppText>
             {upNext ? (
-              <View style={styles.upNextPill}>
+              <View style={[styles.upNextPill, { backgroundColor: brand.primary }]}>
                 <AppText variant="caption" style={{ color: colors.onPrimary }}>
                   Up next
                 </AppText>
@@ -163,11 +167,9 @@ export function TalaMaterialRow({
             ) : null}
           </View>
           <AppText style={styles.name}>{m.name}</AppText>
-          <View
-            style={[styles.chip, { backgroundColor: lockedBy ? colors.surface : CHIP[tone].bg }]}
-          >
-            {lockedBy ? <GlyphIcon name="lock" size={13} color={CHIP[tone].ink} /> : null}
-            <AppText variant="caption" style={{ color: CHIP[tone].ink }}>
+          <View style={[styles.chip, { backgroundColor: lockedBy ? colors.surface : chip.bg }]}>
+            {lockedBy ? <GlyphIcon name="lock" size={13} color={chip.ink} /> : null}
+            <AppText variant="caption" style={{ color: chip.ink }}>
               {status}
             </AppText>
           </View>
@@ -175,7 +177,7 @@ export function TalaMaterialRow({
       </View>
 
       {stats ? (
-        <AppText variant="caption" style={{ color: colors.primary }}>
+        <AppText variant="caption" style={{ color: brand.primary }}>
           {stats}
         </AppText>
       ) : null}
@@ -190,8 +192,8 @@ export function TalaMaterialRow({
           accessibilityLabel={`Locked. Complete ${lockedBy} first to unlock this.`}
           style={styles.lockNote}
         >
-          <View style={styles.lockNoteIcon}>
-            <GlyphIcon name="lock" size={16} color={colors.primary} />
+          <View style={[styles.lockNoteIcon, { backgroundColor: brand.infoBg }]}>
+            <GlyphIcon name="lock" size={16} />
           </View>
           <View style={{ flex: 1 }}>
             <AppText variant="caption" muted>

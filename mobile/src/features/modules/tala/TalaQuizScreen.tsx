@@ -18,6 +18,7 @@ import { describeError, toApiError } from '@/services/api/errors';
 import type { TalaQuiz, TalaQuizResult } from '@/services/api/types';
 import { scopedKey } from '@/store/scopedKey';
 import { fetchTalaQuiz, submitTalaQuiz, type QuizAnswer } from './api';
+import { useBrand } from '@/theme/brand';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'TalaQuiz'>;
 type Value = string | string[];
@@ -33,6 +34,7 @@ const answered = (q: Question, v: Value | undefined) =>
  * whether an answer is right until it gets the total. Nothing about the quiz or the answers is kept on the device.
  */
 export function TalaQuizScreen({ route, navigation }: Props) {
+  const brand = useBrand();
   const { assignId, quizId } = route.params;
   const queryClient = useQueryClient();
   // Never cached beyond this screen: a reopened quiz is always fetched fresh (it may have changed).
@@ -188,14 +190,20 @@ export function TalaQuizScreen({ route, navigation }: Props) {
                         onPress={() => choose(q, String(ci))}
                         style={({ pressed }) => [
                           styles.option,
-                          picked && styles.optionPicked,
+                          picked && { borderColor: brand.primary, backgroundColor: brand.infoBg },
                           pressed && { opacity: 0.8 },
                         ]}
                       >
-                        <View style={[styles.letter, picked && styles.letterPicked]}>
+                        <View
+                          style={[
+                            styles.letter,
+                            { backgroundColor: brand.infoBg },
+                            picked && { backgroundColor: brand.primary },
+                          ]}
+                        >
                           <AppText
                             variant="caption"
-                            style={{ color: picked ? colors.onPrimary : colors.primary }}
+                            style={{ color: picked ? colors.onPrimary : brand.primary }}
                           >
                             {String.fromCharCode(65 + (ci % 26))}
                           </AppText>
@@ -205,7 +213,10 @@ export function TalaQuizScreen({ route, navigation }: Props) {
                           style={[
                             styles.mark,
                             single ? styles.markRound : styles.markSquare,
-                            picked && styles.markPicked,
+                            picked && {
+                              backgroundColor: brand.primary,
+                              borderColor: brand.primary,
+                            },
                           ]}
                         >
                           {picked ? (
@@ -255,8 +266,6 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSoft,
     backgroundColor: colors.surface,
   },
-  // a chosen answer takes the brand outline and a light-blue fill
-  optionPicked: { borderColor: colors.primary, backgroundColor: colors.infoBg },
   letter: {
     width: 32,
     height: 32,
@@ -265,7 +274,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.infoBg,
   },
-  letterPicked: { backgroundColor: colors.primary },
   choice: { flex: 1 },
   mark: {
     width: 26,
@@ -277,7 +285,6 @@ const styles = StyleSheet.create({
   },
   markRound: { borderRadius: 13 },
   markSquare: { borderRadius: 7 },
-  markPicked: { backgroundColor: colors.primary, borderColor: colors.primary },
   input: {
     minHeight: minTouchTarget,
     borderWidth: 1.5,

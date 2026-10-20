@@ -1,5 +1,6 @@
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import { useMemo } from 'react';
 import { RootNavigator } from './navigation/RootNavigator';
 import { env } from '@/app/config/env';
 import { ErrorBoundary } from '@/components';
@@ -9,6 +10,7 @@ import { installDemo } from '@/demo/demoApi';
 import { installGlobalCrashHandler } from '@/services/crashReporter';
 import { navigationRef } from './navigation/navigationRef';
 import { AppProviders } from './providers/AppProviders';
+import { useBrand } from '@/theme/brand';
 
 /** The navigator's own backgrounds follow the app surface, so nothing flashes white between screens. */
 const navigationTheme = {
@@ -28,10 +30,15 @@ if (env.demo) installDemo();
 installGlobalCrashHandler();
 
 export default function App() {
+  const brand = useBrand();
+  const theme = useMemo(
+    () => ({ ...navigationTheme, colors: { ...navigationTheme.colors, primary: brand.primary } }),
+    [brand.primary],
+  );
   return (
     <ErrorBoundary>
       <AppProviders>
-        <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+        <NavigationContainer ref={navigationRef} theme={theme}>
           <RootNavigator />
           {env.demo && env.demoTour ? <DemoTour /> : null}
           <StatusBar style="auto" />

@@ -3,6 +3,7 @@ import { useLayoutEffect, useState, type ReactNode } from 'react';
 import { Image, Modal, Pressable, StyleSheet, View, type ImageSourcePropType } from 'react-native';
 import { AppText, Button, Card, GlyphIcon, type GlyphName } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
+import { useBrand } from '@/theme/brand';
 
 /**
  * The "What is ...?" explanation, as in the original: a round "?" in the header opens a sheet that slides up from the
@@ -21,7 +22,7 @@ export function useHelp({ title, body }: { title: string; body: string }) {
           hitSlop={8}
           style={styles.helpButton}
         >
-          <GlyphIcon name="quiz" color={colors.primary} size={26} />
+          <GlyphIcon name="quiz" size={26} />
         </Pressable>
       ),
     });
@@ -59,6 +60,7 @@ export function GridTile({
   onPress: () => void;
   label?: string;
 }) {
+  const brand = useBrand();
   return (
     <Pressable
       accessibilityRole="button"
@@ -70,8 +72,8 @@ export function GridTile({
         {image ? (
           <Image source={image} accessibilityElementsHidden style={styles.gridImage} />
         ) : glyph ? (
-          <View style={styles.gridIcon}>
-            <GlyphIcon name={glyph} color={colors.primary} size={30} />
+          <View style={[styles.gridIcon, { backgroundColor: brand.infoBg }]}>
+            <GlyphIcon name={glyph} size={30} />
           </View>
         ) : null}
         <AppText variant="heading" style={styles.gridTitle}>
@@ -102,7 +104,8 @@ export function MenuCard({
   tint: keyof typeof TINTS;
   onPress: () => void;
 }) {
-  const t = TINTS[tint];
+  const brand = useBrand();
+  const t = tint === 'blue' ? { bg: brand.infoBg, ink: brand.primary } : TINTS[tint];
   return (
     <Pressable
       accessibilityRole="button"
@@ -135,11 +138,12 @@ export function Grid({ children }: { children: ReactNode }) {
 
 /** A coloured pill with a word on it (the old app's blue and orange buttons). */
 export function Tag({ word, tone = 'primary' }: { word: string; tone?: 'primary' | 'accent' }) {
+  const brand = useBrand();
   return (
     <View
       style={[
         styles.tag,
-        { backgroundColor: tone === 'primary' ? colors.primary : colors.coralText },
+        { backgroundColor: tone === 'primary' ? brand.primary : colors.coralText },
       ]}
     >
       <AppText variant="button" style={{ color: colors.onPrimary }}>
@@ -180,9 +184,14 @@ export function TagNote({
 
 /** A small round arrow pointing down, between two steps. */
 export function DownArrow() {
+  const brand = useBrand();
   return (
-    <View style={styles.arrow} accessibilityElementsHidden importantForAccessibility="no">
-      <View style={styles.chevron} />
+    <View
+      style={[styles.arrow, { backgroundColor: brand.infoBg }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no"
+    >
+      <View style={[styles.chevron, { borderColor: brand.primary }]} />
     </View>
   );
 }

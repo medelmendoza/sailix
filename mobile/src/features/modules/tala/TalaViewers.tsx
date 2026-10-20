@@ -11,6 +11,7 @@ import { colors, radius, spacing } from '@/constants/theme';
 import { scopedKey } from '@/store/scopedKey';
 import { queueCompletion, syncOutbox } from './offline/outbox';
 import { TalaFeedbackModal } from './TalaFeedbackModal';
+import { useBrand } from '@/theme/brand';
 
 /** Plays and shows ONLY files that this app downloaded into its own directory (offline copies). */
 export function TalaPdfScreen({ route }: NativeStackScreenProps<AppStackParamList, 'TalaPdf'>) {
@@ -102,14 +103,15 @@ export function TalaVideoScreen({ route }: NativeStackScreenProps<AppStackParamL
 }
 
 function Step({ number, done, text }: { number: number; done: boolean; text: string }) {
+  const brand = useBrand();
   return (
     <View
       style={styles.step}
       accessible
       accessibilityLabel={`Step ${number}: ${text}${done ? ', done' : ''}`}
     >
-      <View style={[styles.stepDot, done && styles.stepDotDone]}>
-        <AppText variant="caption" style={{ color: done ? colors.onPrimary : colors.primary }}>
+      <View style={[styles.stepDot, { backgroundColor: brand.infoBg }, done && styles.stepDotDone]}>
+        <AppText variant="caption" style={{ color: done ? colors.onPrimary : brand.primary }}>
           {done ? '✓' : number}
         </AppText>
       </View>

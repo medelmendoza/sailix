@@ -6,12 +6,14 @@ import { AppText, Card, LinkButton, SkeletonList, TabIcon } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { AnnouncementCard } from './AnnouncementCard';
 import { useAnnouncements } from './api';
+import { useBrand } from '@/theme/brand';
 
 /**
  * The announcements card of the old Sailix dashboard: a title with a bell that opens the Announcements tab, a green
  * rule, then the latest announcements (or a plain "none yet"). A load failure shows nothing rather than an error box.
  */
 export function HomeAnnouncements({ onOpenAll }: { onOpenAll: () => void }) {
+  const brand = useBrand();
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const list = useAnnouncements();
   const latest = list.data?.pages[0]?.data.slice(0, 3) ?? [];
@@ -25,7 +27,11 @@ export function HomeAnnouncements({ onOpenAll }: { onOpenAll: () => void }) {
           Announcements
         </AppText>
         {unread > 0 ? (
-          <View style={styles.count} accessible accessibilityLabel={`${unread} new`}>
+          <View
+            style={[styles.count, { backgroundColor: brand.primary }]}
+            accessible
+            accessibilityLabel={`${unread} new`}
+          >
             <AppText variant="caption" style={{ color: colors.onPrimary }}>
               {unread} new
             </AppText>
@@ -38,7 +44,7 @@ export function HomeAnnouncements({ onOpenAll }: { onOpenAll: () => void }) {
           hitSlop={8}
           style={styles.bell}
         >
-          <TabIcon name="announce" color={colors.primary} />
+          <TabIcon name="announce" color={brand.primary} />
         </Pressable>
       </View>
       <View style={styles.rule} />

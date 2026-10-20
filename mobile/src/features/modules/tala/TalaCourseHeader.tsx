@@ -5,6 +5,7 @@ import { colors, radius, spacing } from '@/constants/theme';
 import type { TalaCourseDetail } from '@/services/api/types';
 import { TalaCourseProgress } from './TalaCourseProgress';
 import { dueInfo, type Due } from './stats';
+import { useBrand } from '@/theme/brand';
 
 const DUE_CHIP: Record<Due['tone'], { bg: string; ink: string }> = {
   done: { bg: colors.successBg, ink: colors.success },
@@ -35,7 +36,12 @@ export function TalaCourseHeader({
   const due = dueInfo(c);
   const [open, setOpen] = useState(false);
   const long = (c.description?.length ?? 0) > LONG_DESCRIPTION;
-  const chip = due ? DUE_CHIP[due.tone] : null;
+  const brand = useBrand();
+  const chip = due
+    ? due.tone === 'upcoming'
+      ? { bg: brand.infoBg, ink: brand.primary }
+      : DUE_CHIP[due.tone]
+    : null;
   return (
     <>
       <View>
@@ -55,8 +61,8 @@ export function TalaCourseHeader({
               {c.name}
             </AppText>
             <View style={styles.creator}>
-              <View style={styles.creatorIcon}>
-                <GlyphIcon name="person" size={16} color={colors.primary} />
+              <View style={[styles.creatorIcon, { backgroundColor: brand.infoBg }]}>
+                <GlyphIcon name="person" size={16} />
               </View>
               <View style={{ flex: 1 }}>
                 <AppText variant="caption" muted>
@@ -76,8 +82,8 @@ export function TalaCourseHeader({
               <Counter
                 value={Math.max(0, c.total - c.completed)}
                 label="To do"
-                tone={colors.primary}
-                bg={colors.infoBg}
+                tone={brand.primary}
+                bg={brand.infoBg}
               />
               <Counter
                 value={saved}
@@ -111,7 +117,9 @@ export function TalaCourseHeader({
             onPress={() => setOpen((v) => !v)}
             style={styles.more}
           >
-            <AppText style={styles.moreText}>{open ? 'Show less' : 'Read more'}</AppText>
+            <AppText style={[styles.moreText, { color: brand.primary }]}>
+              {open ? 'Show less' : 'Read more'}
+            </AppText>
           </Pressable>
         ) : null}
       </Card>

@@ -63,8 +63,9 @@ The app has no address, so the look comes with the sign-in: `GET /me` carries `t
 app keeps it in a small store that follows the signed-in organization and forgets it on sign-out. The brand surfaces draw with it
 (`useBrand()`): primary buttons and progress bars, links, selected states, default icon colour, the tab bar's open pill and header
 tint, and the Dashboard, Call-it and Astra headers (primary into the secondary, or into a darker primary); the Dashboard also
-shows the logo. With no colours set, the Sailix tokens are used exactly. Some screens still draw parts of themselves with the
-fixed Sailix blue (for example inside the Tala pages and the announcements card); they are changed to `useBrand()` as they are touched.
+shows the logo. With no colours set, the Sailix tokens are used exactly. Every screen's brand-coloured parts follow it (Tala pages,
+Astra, Call-it, announcements, Files, forms). Deliberately fixed: the sign-in screens (no organization is known before sign-in), the
+logo mark, and the status colours (green done, amber, red) and the informational notice, which carry meaning, not brand.
 
 ## 3. Shared-address demos
 

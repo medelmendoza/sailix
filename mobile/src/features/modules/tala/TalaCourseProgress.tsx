@@ -3,6 +3,7 @@ import { AppText, ProgressBar } from '@/components';
 import { colors, spacing } from '@/constants/theme';
 import type { TalaCourse } from '@/services/api/types';
 import { dueInfo, type Due } from './stats';
+import { useBrand } from '@/theme/brand';
 
 const TONE: Record<Due['tone'], string> = {
   done: colors.success,
@@ -36,6 +37,7 @@ export function TalaCourseProgress({
   /** A "Progress  27%" line above the bar. */
   showPercent?: boolean;
 }) {
+  const brand = useBrand();
   const due = dueInfo(course);
   return (
     <View style={{ gap: spacing.xs }}>
@@ -46,7 +48,7 @@ export function TalaCourseProgress({
           <AppText variant="caption" muted>
             Progress
           </AppText>
-          <AppText style={{ fontFamily: 'Quicksand_700Bold', color: colors.primary }}>
+          <AppText style={{ fontFamily: 'Quicksand_700Bold', color: brand.primary }}>
             {course.percent}%
           </AppText>
         </View>

@@ -6,6 +6,7 @@ import { WebView } from 'react-native-webview';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { ErrorState } from '@/components';
 import { colors } from '@/constants/theme';
+import { useBrand } from '@/theme/brand';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'AstraDoc'>;
 
@@ -17,6 +18,7 @@ const FILES = {
 
 /** One of the three guides bundled with the app, shown from the app's own files (nothing is downloaded). */
 export function AstraDocScreen({ route }: Props) {
+  const brand = useBrand();
   const { doc } = route.params;
   const [state, setState] = useState<{ doc: string; uri?: string; failed?: boolean } | null>(null);
   const current = state?.doc === doc ? state : null;
@@ -36,7 +38,7 @@ export function AstraDocScreen({ route }: Props) {
   if (!current?.uri) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.primary} accessibilityLabel="Opening the guide" />
+        <ActivityIndicator color={brand.primary} accessibilityLabel="Opening the guide" />
       </View>
     );
   }

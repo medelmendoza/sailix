@@ -8,6 +8,7 @@ import { AppText, Button, ErrorState } from '@/components';
 import { colors, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { finished, idle, msLeft, pauseSession, play, stopSession } from './listening';
 import { DURATIONS_MIN, findSound, playTime } from './sounds';
+import { useBrand } from '@/theme/brand';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'AstraSound'>;
 
@@ -24,6 +25,7 @@ export function SoundScreen({ route }: Props) {
 }
 
 function Player({ sound }: { sound: NonNullable<ReturnType<typeof findSound>> }) {
+  const brand = useBrand();
   useKeepAwake('astra-sound'); // the screen stays awake while this screen is open, as in the original
   const player = useAudioPlayer(sound.audio);
   const [minutes, setMinutes] = useState<number>(5);
@@ -123,7 +125,7 @@ function Player({ sound }: { sound: NonNullable<ReturnType<typeof findSound>> })
               onPress={() => choose(m)}
               style={[
                 styles.chip,
-                picked && styles.chipPicked,
+                picked && { backgroundColor: brand.primary, borderColor: brand.primary },
                 locked && !picked && { opacity: 0.45 },
               ]}
             >
@@ -154,5 +156,4 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  chipPicked: { backgroundColor: colors.primary, borderColor: colors.primary },
 });

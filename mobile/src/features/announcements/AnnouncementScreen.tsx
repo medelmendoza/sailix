@@ -7,11 +7,13 @@ import { colors, spacing } from '@/constants/theme';
 import { describeError, toApiError } from '@/services/api/errors';
 import { ageLabel } from './age';
 import { useAnnouncement, useMarkRead } from './api';
+import { useBrand } from '@/theme/brand';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'Announcement'>;
 
 /** Opening an unread announcement marks it read. The text is shown as plain text, never interpreted. */
 export function AnnouncementScreen({ route, navigation }: Props) {
+  const brand = useBrand();
   const { id } = route.params;
   const one = useAnnouncement(id);
   const markRead = useMarkRead();
@@ -37,8 +39,8 @@ export function AnnouncementScreen({ route, navigation }: Props) {
     <ScrollView contentContainerStyle={styles.content}>
       <Card variant="flat" style={styles.card}>
         <View style={styles.meta}>
-          <View style={styles.bell}>
-            <TabIcon name="announce" color={colors.primary} />
+          <View style={[styles.bell, { backgroundColor: brand.infoBg }]}>
+            <TabIcon name="announce" color={brand.primary} />
           </View>
           <AppText variant="caption" muted>
             Announcement · {ageLabel(one.data.created_at)}

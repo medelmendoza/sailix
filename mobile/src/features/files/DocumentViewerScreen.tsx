@@ -7,6 +7,7 @@ import { ErrorState } from '@/components';
 import { colors } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { downloadToCache, removeFromCache } from './api';
+import { useBrand } from '@/theme/brand';
 
 type Props = NativeStackScreenProps<AppStackParamList, 'DocumentViewer'>;
 
@@ -15,6 +16,7 @@ type Props = NativeStackScreenProps<AppStackParamList, 'DocumentViewer'>;
  * shown, and deleted when the screen closes: a document is personal data and is never kept on the device.
  */
 export function DocumentViewerScreen({ route }: Props) {
+  const brand = useBrand();
   const { id, source } = route.params;
   const [attempt, setAttempt] = useState(0);
   const key = `${id}:${attempt}`;
@@ -48,7 +50,7 @@ export function DocumentViewerScreen({ route }: Props) {
   if (!file) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.primary} accessibilityLabel="Loading the document" />
+        <ActivityIndicator color={brand.primary} accessibilityLabel="Loading the document" />
       </View>
     );
   }
