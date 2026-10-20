@@ -6,14 +6,28 @@ import { usePlatformAudit, useTenantStatusCount } from './api';
 
 const STATUSES = ['provisioning', 'active', 'suspended', 'deactivated', 'archived'] as const;
 
+const DOT: Record<string, string> = {
+  provisioning: 'bg-amber-500',
+  active: 'bg-emerald-500',
+  suspended: 'bg-orange-500',
+  deactivated: 'bg-slate-400',
+  archived: 'bg-slate-300',
+};
+
 function StatusCount({ status }: { status: string }) {
   const count = useTenantStatusCount(status);
   return (
     <Card>
       <Link to={`/platform/tenants?status=${status}`} className="block hover:underline">
-        <p className="text-3xl font-semibold text-brand-800">
-          {count.isPending ? '…' : (count.data ?? '—')}
-        </p>
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-3xl font-semibold text-brand-800">
+            {count.isPending ? '…' : (count.data ?? '—')}
+          </p>
+          <span
+            aria-hidden="true"
+            className={`mt-1 h-2.5 w-2.5 rounded-full ${DOT[status] ?? 'bg-line'}`}
+          />
+        </div>
         <div className="mt-2">
           <StatusBadge status={status} />
         </div>
