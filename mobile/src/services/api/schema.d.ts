@@ -316,6 +316,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/tenants/{slug}/login-logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An organization's sign-in logo (public image) */
+        get: operations["getPublicTenantLoginLogo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/tenants/{slug}/login-background": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An organization's sign-in background picture (public image) */
+        get: operations["getPublicTenantLoginBackground"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/announcements": {
         parameters: {
             query?: never;
@@ -1319,7 +1353,7 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                kind: "logo" | "favicon";
+                kind: "logo" | "favicon" | "login-logo" | "login-background";
             };
             cookie?: never;
         };
@@ -1884,7 +1918,7 @@ export interface paths {
             header?: never;
             path: {
                 tenant: string;
-                kind: "logo" | "favicon";
+                kind: "logo" | "favicon" | "login-logo" | "login-background";
             };
             cookie?: never;
         };
@@ -2724,12 +2758,24 @@ export interface components {
             slug: string;
             /** @description The organization's `display_name` setting, else its registered name. */
             name: string;
+            /** @description A short form of the name for tight spaces. */
+            short_name?: string | null;
             tagline: string | null;
+            /** @description Shown on the sign-in card. */
+            login_welcome_message?: string | null;
             /** @description Public address of the logo image. */
             logo_url: string | null;
             favicon_url: string | null;
+            /** @description Optional; the logo is used when empty. */
+            login_logo_url?: string | null;
+            login_background_url?: string | null;
             primary_color: string | null;
             secondary_color: string | null;
+            accent_color?: string | null;
+            background_color?: string | null;
+            text_color?: string | null;
+            /** @enum {string|null} */
+            font_preset?: "default" | "rounded" | "serif" | "system" | null;
             /** @description Changes with every branding change; already part of the image addresses. */
             version: number;
         };
@@ -2745,6 +2791,20 @@ export interface components {
             /** @description #RRGGBB, contrast against white of at least 4.5:1. */
             primary_color?: string | null;
             secondary_color?: string | null;
+            /** @description Plain text. */
+            short_name?: string | null;
+            /** @description Plain text. */
+            login_welcome_message?: string | null;
+            /** @description Contrast against white of at least 3:1. */
+            accent_color?: string | null;
+            /** @description The text colour must read on it (4.5:1); an unset side is the Sailix default. */
+            background_color?: string | null;
+            text_color?: string | null;
+            /**
+             * @description Fonts every device already has; nothing is downloaded.
+             * @enum {string|null}
+             */
+            font_preset?: "default" | "rounded" | "serif" | "system" | null;
         };
         TenantDomain: {
             id: string;
@@ -3458,6 +3518,54 @@ export interface operations {
         };
     };
     getPublicTenantFavicon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The image. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                    "image/jpeg": string;
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    getPublicTenantLoginLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The image. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                    "image/jpeg": string;
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    getPublicTenantLoginBackground: {
         parameters: {
             query?: never;
             header?: never;
@@ -5325,7 +5433,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                kind: "logo" | "favicon";
+                kind: "logo" | "favicon" | "login-logo" | "login-background";
             };
             cookie?: never;
         };
@@ -5358,7 +5466,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                kind: "logo" | "favicon";
+                kind: "logo" | "favicon" | "login-logo" | "login-background";
             };
             cookie?: never;
         };
@@ -6417,7 +6525,7 @@ export interface operations {
             header?: never;
             path: {
                 tenant: string;
-                kind: "logo" | "favicon";
+                kind: "logo" | "favicon" | "login-logo" | "login-background";
             };
             cookie?: never;
         };
@@ -6450,7 +6558,7 @@ export interface operations {
             header?: never;
             path: {
                 tenant: string;
-                kind: "logo" | "favicon";
+                kind: "logo" | "favicon" | "login-logo" | "login-background";
             };
             cookie?: never;
         };

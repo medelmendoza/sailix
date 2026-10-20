@@ -15,7 +15,7 @@ import { describeError } from '@/services/api/errors';
 import { useSessionStore } from '@/store/sessionStore';
 import { useFeature } from '@/store/featureAccess';
 import { QuickActions, Tile } from './HomeShortcuts';
-import { useBrand, useLogoUrl } from '@/theme/brand';
+import { useBrand, useLogoUrl, useShortName } from '@/theme/brand';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Home'>,
@@ -48,6 +48,7 @@ export function HomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const brand = useBrand();
   const logo = useLogoUrl();
+  const orgName = useShortName(me?.tenant.name ?? '');
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasTodos = useFeature('todos');
@@ -127,7 +128,7 @@ export function HomeScreen({ navigation }: Props) {
             {name}
           </AppText>
           <AppText variant="caption" style={[styles.white, { opacity: 0.9 }]}>
-            {me.tenant.name}
+            {orgName}
           </AppText>
         </View>
         <Pressable

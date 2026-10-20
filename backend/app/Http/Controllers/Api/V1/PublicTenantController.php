@@ -38,6 +38,20 @@ class PublicTenantController extends Controller
         return BrandingImages::stream($b->favicon_path, $b->favicon_mime);
     }
 
+    public function loginLogo(string $slug): StreamedResponse
+    {
+        $b = $this->branding($slug);
+
+        return BrandingImages::stream($b->login_logo_path, $b->login_logo_mime);
+    }
+
+    public function loginBackground(string $slug): StreamedResponse
+    {
+        $b = $this->branding($slug);
+
+        return BrandingImages::stream($b->login_background_path, $b->login_background_mime);
+    }
+
     /** Images are public by design, but only for an organization that is open. */
     private function branding(string $slug): TenantBranding
     {

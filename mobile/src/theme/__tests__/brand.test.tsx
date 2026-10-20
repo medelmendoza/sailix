@@ -118,3 +118,30 @@ describe("screens wear the organization's colours", () => {
     expect(screen.queryByLabelText('Southfield Agencies logo')).toBeNull();
   });
 });
+
+describe('the rest of the look', () => {
+  it('shows the short name on the dashboard when there is one, else the full name', async () => {
+    mockApi({});
+    signedInAs(meWith(look({ short_name: 'SFAI Crew' })));
+    await renderApp();
+    await dashboardReady();
+    expect(screen.getByText('SFAI Crew')).toBeTruthy();
+    expect(screen.queryByText('Southfield Agencies')).toBeNull();
+  });
+
+  it('takes the accent and page colours from the look, and ignores what is not a colour', () => {
+    const b = brandPalette({
+      primary_color: '#1F6B4A',
+      secondary_color: null,
+      accent_color: '#0B6E99',
+      background_color: '#FFFFFF',
+    });
+    expect(b.accent).toBe('#0B6E99');
+    expect(b.background).toBe('#FFFFFF');
+    expect(b.primary).toBe('#1F6B4A');
+
+    const bad = brandPalette({ accent_color: 'red', background_color: 'url(x)' });
+    expect(bad.accent).toBe(brandPalette(null).accent);
+    expect(bad.background).toBe(brandPalette(null).background);
+  });
+});

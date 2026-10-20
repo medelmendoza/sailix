@@ -28,6 +28,8 @@ Route::middleware('throttle:login')->group(function () {
 Route::get('public/tenant', [PublicTenantController::class, 'show'])->middleware('throttle:api');
 Route::get('public/tenants/{slug}/logo', [PublicTenantController::class, 'logo'])->middleware('throttle:api');
 Route::get('public/tenants/{slug}/favicon', [PublicTenantController::class, 'favicon'])->middleware('throttle:api');
+Route::get('public/tenants/{slug}/login-logo', [PublicTenantController::class, 'loginLogo'])->middleware('throttle:api');
+Route::get('public/tenants/{slug}/login-background', [PublicTenantController::class, 'loginBackground'])->middleware('throttle:api');
 Route::post('auth/invitations/accept', [InvitationController::class, 'accept'])->middleware('throttle:invitation');
 Route::post('auth/register', [RegisterController::class, 'store'])->middleware('throttle:register');
 Route::post('auth/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:forgot');

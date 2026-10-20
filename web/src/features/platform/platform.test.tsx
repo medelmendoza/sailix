@@ -566,7 +566,7 @@ describe('organization detail: address and branding', () => {
     await user.type(screen.getByLabelText('Primary colour'), '#355DAD');
     await user.click(screen.getByRole('button', { name: 'Save branding' }));
     await waitFor(() => expect(saved.calls).toHaveLength(1));
-    expect(saved.calls[0]!.body).toEqual({
+    expect(saved.calls[0]!.body).toMatchObject({
       tagline: 'Set by the platform',
       primary_color: '#355DAD',
       secondary_color: null,

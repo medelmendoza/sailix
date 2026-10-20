@@ -43,6 +43,29 @@ describe('organization look', () => {
     });
   });
 
+  it('takes accent, page and text colours and a font style, and ignores anything that is not safe', () => {
+    const p = palette({
+      ...look,
+      accent_color: '#0B6E99',
+      background_color: '#FFFFFF',
+      text_color: '#0F172A',
+      font_preset: 'serif',
+    });
+    expect(p['--color-accent-600']).toBe('#0B6E99'); // the accent wins over the primary for links and focus rings
+    expect(p['--color-page']).toBe('#FFFFFF');
+    expect(p['--color-ink']).toBe('#0F172A');
+    expect(p['--font-sans']).toContain('serif');
+
+    const bad = palette({
+      accent_color: 'red',
+      background_color: 'url(x)',
+      text_color: '#12',
+      font_preset: 'x; background: url(y)' as never, // not a known preset
+    });
+    expect(bad).toEqual({});
+    expect(palette({ font_preset: 'default' })).toEqual({}); // the default font is the portal's own
+  });
+
   it('puts the colours, title and icon on the page and takes them off again', () => {
     applyLook(look);
     expect(document.documentElement.style.getPropertyValue('--color-brand-700')).toBe('#355DAD');

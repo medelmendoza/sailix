@@ -168,7 +168,7 @@ function MainTabs() {
         tabBarActiveTintColor: brand.primary,
         tabBarStyle: { ...tabOptions.tabBarStyle, bottom },
         sceneStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: brand.background,
           paddingBottom: TAB_BAR_HEIGHT + bottom + 8,
         },
         headerRight: () => <AccountButton />,

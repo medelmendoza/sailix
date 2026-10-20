@@ -187,6 +187,7 @@ class TenantRouteSweepTest extends TestCase
         // Tala gateway whose ids belong to Tala (checked by its own tests against the stored link)
         $exempt = collect([
             'GET api/v1/public/tenants/{slug}/logo', 'GET api/v1/public/tenants/{slug}/favicon',
+            'GET api/v1/public/tenants/{slug}/login-logo', 'GET api/v1/public/tenants/{slug}/login-background',
             'POST api/v1/tenant/branding/{kind}', 'DELETE api/v1/tenant/branding/{kind}',
             'GET api/v1/tenant/finance/imports/{kind}/template', 'POST api/v1/tenant/finance/imports/{kind}',
             'PUT api/v1/tenant/modules/{module}',

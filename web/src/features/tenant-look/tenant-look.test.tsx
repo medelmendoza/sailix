@@ -46,6 +46,26 @@ describe("sign-in on an organization's own address", () => {
     expect(document.title).toContain('Southfield Agencies');
   });
 
+  it('shows the sign-in logo, welcome message and background picture when the organization set them', async () => {
+    asAnonymous();
+    addressedAs({
+      ...look,
+      login_logo_url: 'http://localhost:8000/api/v1/public/tenants/aaa/login-logo?v=2',
+      login_background_url: 'http://localhost:8000/api/v1/public/tenants/aaa/login-background?v=2',
+      login_welcome_message: 'Welcome aboard.',
+    });
+    renderApp('/login');
+
+    expect(await screen.findByText('Welcome aboard.')).toBeInTheDocument();
+    expect(document.querySelector('img')).toHaveAttribute(
+      'src',
+      'http://localhost:8000/api/v1/public/tenants/aaa/login-logo?v=2',
+    ); // the sign-in logo, not the main one
+    expect(document.querySelector<HTMLElement>('.bg-cover')?.style.backgroundImage).toContain(
+      'login-background',
+    );
+  });
+
   it('sends no agency code: the address names the organization', async () => {
     asAnonymous();
     addressedAs(look);

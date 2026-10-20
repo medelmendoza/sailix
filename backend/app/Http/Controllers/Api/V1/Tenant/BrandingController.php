@@ -8,6 +8,7 @@ use App\Http\Requests\Tenant\BrandingRequest;
 use App\Models\Tenant;
 use App\Support\ApiProblem;
 use App\Support\Tenancy\TenantContext;
+use App\Tenancy\BrandingImages;
 use App\Tenancy\TenantBrandingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
@@ -51,7 +52,7 @@ class BrandingController extends Controller
 
     private function kind(string $kind): string
     {
-        return in_array($kind, ['logo', 'favicon'], true) ? $kind : throw ApiProblem::notFound('Not found.');
+        return array_key_exists($kind, BrandingImages::KINDS) ? $kind : throw ApiProblem::notFound('Not found.');
     }
 
     private function tenant(TenantContext $context): Tenant

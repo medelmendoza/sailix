@@ -477,6 +477,36 @@ paths:
             image/png: { schema: { type: string, format: binary } }
             image/jpeg: { schema: { type: string, format: binary } }
         '404': { $ref: '#/components/responses/Problem' }
+  /public/tenants/{slug}/login-logo:
+    get:
+      tags: [tenant]
+      operationId: getPublicTenantLoginLogo
+      summary: An organization's sign-in logo (public image)
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The image.
+          content:
+            image/png: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /public/tenants/{slug}/login-background:
+    get:
+      tags: [tenant]
+      operationId: getPublicTenantLoginBackground
+      summary: An organization's sign-in background picture (public image)
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The image.
+          content:
+            image/png: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+        '404': { $ref: '#/components/responses/Problem' }
   /announcements:
     get:
       tags: [announcements]
@@ -1914,7 +1944,7 @@ paths:
         '422': { $ref: '#/components/responses/Problem' }
   /tenant/branding/{kind}:
     parameters:
-      - { name: kind, in: path, required: true, schema: { type: string, enum: [logo, favicon] } }
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [logo, favicon, login-logo, login-background] } }
     post:
       tags: [tenant]
       operationId: setTenantBrandingImage
@@ -2851,7 +2881,7 @@ paths:
   /platform/tenants/{tenant}/branding/{kind}:
     parameters:
       - { name: tenant, in: path, required: true, schema: { type: string } }
-      - { name: kind, in: path, required: true, schema: { type: string, enum: [logo, favicon] } }
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [logo, favicon, login-logo, login-background] } }
     post:
       tags: [platform]
       operationId: setPlatformTenantBrandingImage
@@ -3996,11 +4026,19 @@ components:
       properties:
         slug: { type: string }
         name: { type: string, description: "The organization's `display_name` setting, else its registered name." }
+        short_name: { type: [string, 'null'], description: 'A short form of the name for tight spaces.' }
         tagline: { type: [string, 'null'] }
+        login_welcome_message: { type: [string, 'null'], description: 'Shown on the sign-in card.' }
         logo_url: { type: [string, 'null'], description: 'Public address of the logo image.' }
         favicon_url: { type: [string, 'null'] }
+        login_logo_url: { type: [string, 'null'], description: 'Optional; the logo is used when empty.' }
+        login_background_url: { type: [string, 'null'] }
         primary_color: { type: [string, 'null'], pattern: '^#[0-9A-F]{6}$' }
         secondary_color: { type: [string, 'null'], pattern: '^#[0-9A-F]{6}$' }
+        accent_color: { type: [string, 'null'], pattern: '^#[0-9A-F]{6}$' }
+        background_color: { type: [string, 'null'], pattern: '^#[0-9A-F]{6}$' }
+        text_color: { type: [string, 'null'], pattern: '^#[0-9A-F]{6}$' }
+        font_preset: { type: [string, 'null'], enum: [default, rounded, serif, system, null] }
         version: { type: integer, description: 'Changes with every branding change; already part of the image addresses.' }
     PublicTenantEnvelope:
       type: object
@@ -4018,6 +4056,12 @@ components:
         tagline: { type: [string, 'null'], maxLength: 120, description: 'Plain text.' }
         primary_color: { type: [string, 'null'], maxLength: 7, description: '#RRGGBB, contrast against white of at least 4.5:1.' }
         secondary_color: { type: [string, 'null'], maxLength: 7 }
+        short_name: { type: [string, 'null'], maxLength: 40, description: 'Plain text.' }
+        login_welcome_message: { type: [string, 'null'], maxLength: 200, description: 'Plain text.' }
+        accent_color: { type: [string, 'null'], maxLength: 7, description: 'Contrast against white of at least 3:1.' }
+        background_color: { type: [string, 'null'], maxLength: 7, description: 'The text colour must read on it (4.5:1); an unset side is the Sailix default.' }
+        text_color: { type: [string, 'null'], maxLength: 7 }
+        font_preset: { type: [string, 'null'], enum: [default, rounded, serif, system, null], description: 'Fonts every device already has; nothing is downloaded.' }
     TenantDomain:
       type: object
       required: [id, domain, verified, verified_at, txt_name, txt_value, cname_target]

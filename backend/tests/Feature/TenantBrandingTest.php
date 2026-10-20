@@ -214,4 +214,64 @@ class TenantBrandingTest extends TestCase
         $this->assertStringContainsString('/api/v1/public/tenants/aaa/logo?v=', $look['logo_url']);
         $this->assertNull($this->getJson('/api/v1/me', $this->as('adminB'))->json('data.tenant.look.primary_color')); // B has its own look
     }
+
+    public function test_names_welcome_text_accent_background_text_and_font_are_saved_and_public(): void
+    {
+        $this->change('adminA', [
+            'short_name' => 'AAA Crew',
+            'login_welcome_message' => 'Welcome aboard.',
+            'accent_color' => '#0b6e99',
+            'background_color' => '#ffffff',
+            'text_color' => '#0f172a',
+            'font_preset' => 'serif',
+        ])->assertOk()
+            ->assertJsonPath('data.short_name', 'AAA Crew')
+            ->assertJsonPath('data.login_welcome_message', 'Welcome aboard.')
+            ->assertJsonPath('data.accent_color', '#0B6E99')
+            ->assertJsonPath('data.background_color', '#FFFFFF')
+            ->assertJsonPath('data.text_color', '#0F172A')
+            ->assertJsonPath('data.font_preset', 'serif');
+
+        $this->publicLook('aaa.sailix.test')->assertOk()
+            ->assertJsonPath('data.short_name', 'AAA Crew')
+            ->assertJsonPath('data.font_preset', 'serif');
+        $this->publicLook('bbb.sailix.test')->assertOk()->assertJsonPath('data.short_name', null)->assertJsonPath('data.font_preset', null);
+
+        $this->change('adminA', ['short_name' => null, 'font_preset' => null])->assertOk()->assertJsonPath('data.short_name', null)->assertJsonPath('data.font_preset', null);
+    }
+
+    public function test_the_new_fields_are_checked(): void
+    {
+        $this->change('adminA', ['font_preset' => 'comic'])->assertStatus(422)->assertJsonValidationErrors('font_preset');
+        $this->change('adminA', ['short_name' => '<b>x</b>'])->assertStatus(422)->assertJsonValidationErrors('short_name');
+        $this->change('adminA', ['login_welcome_message' => str_repeat('a', 201)])->assertStatus(422)->assertJsonValidationErrors('login_welcome_message');
+        $this->change('adminA', ['accent_color' => 'blue'])->assertStatus(422)->assertJsonValidationErrors('accent_color');
+        $this->change('adminA', ['accent_color' => '#EEEEEE'])->assertStatus(422)->assertJsonValidationErrors('accent_color');
+        // text against background: light on light is refused, whichever side is set; an unset side is the Sailix default
+        $this->change('adminA', ['text_color' => '#F0F0F0'])->assertStatus(422)->assertJsonValidationErrors('text_color');
+        $this->change('adminA', ['background_color' => '#12243D'])->assertStatus(422)->assertJsonValidationErrors('background_color');
+        $this->change('adminA', ['text_color' => '#FFFFFF', 'background_color' => '#12243D'])->assertOk();
+        $this->change('adminA', ['background_color' => '#FFFFFF'])->assertStatus(422)->assertJsonValidationErrors('background_color');
+        $this->assertEqualsWithDelta(21.0, ColorContrast::between('#000000', '#FFFFFF'), 0.01);
+    }
+
+    public function test_login_logo_and_background_are_stored_resized_and_public_only_for_that_organization(): void
+    {
+        $this->upload('adminA', 'login-logo', $this->picture('png', 900, 900))->assertOk();
+        $this->upload('adminA', 'login-background', $this->picture('jpg', 2600, 1400, 'bg'))->assertOk();
+
+        $look = $this->publicLook('aaa.sailix.test')->assertOk();
+        $this->assertStringContainsString('/api/v1/public/tenants/aaa/login-logo?v=', $look->json('data.login_logo_url'));
+        $this->assertStringContainsString('/api/v1/public/tenants/aaa/login-background?v=', $look->json('data.login_background_url'));
+
+        $bg = $this->get('http://aaa.sailix.test/api/v1/public/tenants/aaa/login-background')->assertOk();
+        $this->assertSame('image/jpeg', $bg->headers->get('Content-Type'));
+        [$w] = getimagesizefromstring($bg->streamedContent());
+        $this->assertSame(1920, $w);
+        $this->get('http://bbb.sailix.test/api/v1/public/tenants/bbb/login-background')->assertNotFound();
+
+        $this->deleteJson('/api/v1/tenant/branding/login-background', [], $this->as('adminA'))->assertOk()->assertJsonPath('data.login_background_url', null);
+        $this->get('http://aaa.sailix.test/api/v1/public/tenants/aaa/login-background')->assertNotFound();
+        $this->upload('adminA', 'banner', $this->picture())->assertNotFound();
+    }
 }

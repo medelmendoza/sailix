@@ -13,7 +13,17 @@ const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 /** The colour variables the whole portal is drawn with, derived from the organization's two colours. */
 export function palette(
-  look: Pick<PublicTenant, 'primary_color' | 'secondary_color'>,
+  look: Partial<
+    Pick<
+      PublicTenant,
+      | 'primary_color'
+      | 'secondary_color'
+      | 'accent_color'
+      | 'background_color'
+      | 'text_color'
+      | 'font_preset'
+    >
+  >,
 ): Record<string, string> {
   const primary = look.primary_color && HEX.test(look.primary_color) ? look.primary_color : null;
   const secondary =
@@ -29,8 +39,31 @@ export function palette(
   } else if (secondary) {
     vars['--color-accent-500'] = secondary;
   }
+  // focus rings and links: the accent when there is one, else they follow the primary colour
+  if (look.accent_color && HEX.test(look.accent_color))
+    vars['--color-accent-600'] = look.accent_color;
+  if (look.background_color && HEX.test(look.background_color))
+    vars['--color-page'] = look.background_color;
+  if (look.text_color && HEX.test(look.text_color)) vars['--color-ink'] = look.text_color;
+  const font = look.font_preset ? FONT_STACKS[look.font_preset] : undefined;
+  if (font) vars['--font-sans'] = font;
   return vars;
 }
+
+/** Font styles: only fonts every device already has, so nothing is downloaded. The default is the portal's own stack. */
+export const FONT_STACKS: Record<string, string> = {
+  rounded:
+    "ui-rounded, 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Quicksand, system-ui, sans-serif",
+  serif: "ui-serif, Georgia, Cambria, 'Times New Roman', serif",
+  system: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+};
+
+export const FONT_OPTIONS = [
+  { value: 'default', label: 'Default', hint: 'The standard Sailix look.' },
+  { value: 'rounded', label: 'Rounded', hint: 'Soft, rounded system fonts.' },
+  { value: 'serif', label: 'Serif', hint: 'Traditional serif fonts for a formal tone.' },
+  { value: 'system', label: 'System', hint: "Each device's own interface font." },
+] as const;
 
 const VARS = [
   '--color-brand-700',
@@ -39,6 +72,9 @@ const VARS = [
   '--color-accent-600',
   '--color-accent-500',
   '--color-accent-100',
+  '--color-page',
+  '--color-ink',
+  '--font-sans',
 ];
 
 /** Puts the look on the page: colours, tab title and icon. With no look it puts the platform look back. */

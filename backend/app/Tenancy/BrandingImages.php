@@ -17,20 +17,31 @@ final class BrandingImages
 {
     private const TYPES = ['image/jpeg' => 'jpg', 'image/png' => 'png'];
 
-    private const LIMIT = ['logo' => 512, 'favicon' => 128];
+    /** Image kind (as in the address) => [column prefix, longest side in pixels]. */
+    public const KINDS = [
+        'logo' => ['logo', 512],
+        'favicon' => ['favicon', 128],
+        'login-logo' => ['login_logo', 512],
+        'login-background' => ['login_background', 1920],
+    ];
+
+    public static function column(string $kind): string
+    {
+        return self::KINDS[$kind][0];
+    }
 
     /** @return array{path: string, mime: string} */
     public static function store(UploadedFile $file, string $tenantId, string $kind): array
     {
         $mime = (string) $file->getMimeType();
-        abort_unless(isset(self::TYPES[$mime]) && isset(self::LIMIT[$kind]), 422, 'Use a JPEG or PNG image.');
+        abort_unless(isset(self::TYPES[$mime]) && isset(self::KINDS[$kind]), 422, 'Use a JPEG or PNG image.');
 
         $source = @imagecreatefromstring((string) file_get_contents($file->getRealPath()));
         abort_if($source === false, 422, 'That image could not be read.');
 
         [$w, $h] = [imagesx($source), imagesy($source)];
         abort_if($w * $h > 40_000_000, 422, 'That image is too large.'); // never decode a decompression bomb
-        $scale = min(1, self::LIMIT[$kind] / max($w, $h));
+        $scale = min(1, self::KINDS[$kind][1] / max($w, $h));
         $image = $scale < 1
             ? imagescale($source, max(1, (int) round($w * $scale)), max(1, (int) round($h * $scale)))
             : $source;

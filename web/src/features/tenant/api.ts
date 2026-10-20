@@ -108,6 +108,9 @@ export function useCrewDocuments(id: string) {
   });
 }
 
+/** The pictures an organization can set: shown in the portal, the browser tab and on the sign-in page. */
+export type BrandingImageKind = 'logo' | 'favicon' | 'login-logo' | 'login-background';
+
 /** Tick or untick "ask this member for that kind of document". */
 export function useSetDocumentRequest(id: string) {
   const qc = useQueryClient();
@@ -178,14 +181,14 @@ export const useSaveBranding = (scope: TenantScope = OWN_SCOPE) =>
   );
 
 export const useUploadBrandingImage = (scope: TenantScope = OWN_SCOPE) =>
-  useBrandingMutation(scope, async ({ kind, file }: { kind: 'logo' | 'favicon'; file: File }) => {
+  useBrandingMutation(scope, async ({ kind, file }: { kind: BrandingImageKind; file: File }) => {
     const body = new FormData();
     body.append('file', file);
     return api.post(`${scope.base}/branding/${kind}`, body);
   });
 
 export const useRemoveBrandingImage = (scope: TenantScope = OWN_SCOPE) =>
-  useBrandingMutation(scope, async (kind: 'logo' | 'favicon') =>
+  useBrandingMutation(scope, async (kind: BrandingImageKind) =>
     api.delete(`${scope.base}/branding/${kind}`),
   );
 

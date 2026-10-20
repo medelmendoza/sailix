@@ -13,9 +13,29 @@ const branding = (over: Record<string, unknown> = {}) => ({
   favicon_url: null,
   primary_color: null,
   secondary_color: null,
+  short_name: null,
+  login_welcome_message: null,
+  login_logo_url: null,
+  login_background_url: null,
+  accent_color: null,
+  background_color: null,
+  text_color: null,
+  font_preset: null,
   version: 1,
   ...over,
 });
+
+const EMPTY_SAVE = {
+  short_name: null,
+  tagline: null,
+  login_welcome_message: null,
+  primary_color: null,
+  secondary_color: null,
+  accent_color: null,
+  background_color: null,
+  text_color: null,
+  font_preset: null,
+};
 
 const api = (data = branding(), extra: Parameters<typeof server.use> = []) =>
   server.use(
@@ -55,6 +75,7 @@ describe('Branding page', () => {
 
     await waitFor(() => expect(saved.calls).toHaveLength(1));
     expect(saved.calls[0]!.body).toEqual({
+      ...EMPTY_SAVE,
       tagline: 'Fair winds',
       primary_color: '#355DAD',
       secondary_color: '#1F6B4A',
@@ -79,11 +100,7 @@ describe('Branding page', () => {
     await user.click(screen.getByRole('button', { name: 'Save branding' }));
 
     await waitFor(() => expect(saved.calls).toHaveLength(1));
-    expect(saved.calls[0]!.body).toEqual({
-      tagline: null,
-      primary_color: null,
-      secondary_color: null,
-    });
+    expect(saved.calls[0]!.body).toEqual(EMPTY_SAVE);
   });
 
   it('refuses a colour that is not a colour or too light for white text, before sending anything', async () => {
@@ -105,9 +122,8 @@ describe('Branding page', () => {
     await user.clear(screen.getByLabelText('Primary colour'));
     await user.type(screen.getByLabelText('Primary colour'), '#FFFF00');
     expect(screen.getByText(/Too light for white button text/)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Save branding' }));
-
-    expect(await screen.findByText('Fix the colours first.')).toBeInTheDocument();
+    // Save stays off while a field has a problem, so nothing can be sent
+    expect(screen.getByRole('button', { name: 'Save branding' })).toBeDisabled();
     expect(saved.calls).toHaveLength(0);
   });
 
@@ -161,6 +177,68 @@ describe('Branding page', () => {
     asTenantAdmin(makeMe({ abilities: ['tenant.view', 'users.view'] }));
     renderApp('/app/branding');
     expect(await screen.findByText('You do not have access to this page')).toBeInTheDocument();
+  });
+});
+
+describe('Branding page: the rest of the look', () => {
+  it('saves short name, welcome message, accent, background, text colour and font style', async () => {
+    asTenantAdmin();
+    const saved = capture<Record<string, unknown>>();
+    api(branding(), [
+      http.patch(
+        `${V1}/tenant/branding`,
+        async ({ request }) => (
+          await saved.record(request),
+          HttpResponse.json({ data: branding({ version: 2 }) })
+        ),
+      ),
+    ]);
+    const { user } = renderApp('/app/branding');
+
+    await user.type(await screen.findByLabelText('Short name'), 'AAA');
+    await user.type(screen.getByLabelText('Welcome message'), 'Welcome aboard.');
+    await user.type(screen.getByLabelText('Accent colour'), '#0B6E99');
+    await user.type(screen.getByLabelText('Background colour'), '#FFFFFF');
+    await user.type(screen.getByLabelText('Text colour'), '#0F172A');
+    await user.click(screen.getByRole('radio', { name: /Serif/ }));
+    await user.click(screen.getByRole('button', { name: 'Save branding' }));
+
+    await waitFor(() => expect(saved.calls).toHaveLength(1));
+    expect(saved.calls[0]!.body).toEqual({
+      ...EMPTY_SAVE,
+      short_name: 'AAA',
+      login_welcome_message: 'Welcome aboard.',
+      accent_color: '#0B6E99',
+      background_color: '#FFFFFF',
+      text_color: '#0F172A',
+      font_preset: 'serif',
+    });
+  });
+
+  it('refuses text that does not read on the background, and markup in the names', async () => {
+    asTenantAdmin();
+    api();
+    const { user } = renderApp('/app/branding');
+
+    await user.type(await screen.findByLabelText('Text colour'), '#F0F0F0');
+    expect(await screen.findByText(/Text on this background has only/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save branding' })).toBeDisabled();
+    await user.clear(screen.getByLabelText('Text colour'));
+    await user.type(screen.getByLabelText('Short name'), '<b>');
+    expect(screen.getByText(/The characters < and > are not allowed/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save branding' })).toBeDisabled();
+  });
+
+  it('shows the sign-in page as it will look, as you type', async () => {
+    asTenantAdmin();
+    api(branding({ login_logo_url: 'http://x/login-logo.png' }));
+    const { user } = renderApp('/app/branding');
+
+    await user.type(await screen.findByLabelText('Welcome message'), 'Fair winds');
+    const preview = screen.getByRole('complementary', { name: 'Preview' });
+    expect(within(preview).getByText('Fair winds')).toBeInTheDocument();
+    expect(within(preview).getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+    expect(preview.querySelector('img')).toHaveAttribute('src', 'http://x/login-logo.png');
   });
 });
 
