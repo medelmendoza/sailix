@@ -81,3 +81,14 @@ logo mark, and the status colours (green done, amber, red) and the informational
 
 ## 5. Not covered
 Plans and limits, groups of organizations, and choosing a primary domain for emailed links (they use `SAILIX_RESET_URL`).
+
+## 6. Isolation tests
+`tests/Isolation/TenantRouteSweepTest.php` tries to reach organization B's records as organization A through **every route that takes an
+identifier** (todos, announcements and their files, documents, payslips, Call-it reports and files, crew, document requests, domains,
+members). A foreign record must answer exactly as a missing one does (usually 404; a validation or finance gate that runs first must
+answer the same for both), never succeed, and leave B's data unchanged. The same test file checks that lists never contain B's records or
+ids, that a `tenant_id` in a request never places or moves a record, that B's ids inside a body refuse the whole request, that B's token
+and a forged hint open nothing, that organization admins cannot use the platform routes, and that crew cannot use administrator routes.
+
+A guard in that file fails when a route with an identifier is added without being listed there (or listed but gone), so isolation is
+decided for each new route. The addressing tests (`TenantAddressingTest`) cover the host, header and credential matrix.
