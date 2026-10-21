@@ -6,7 +6,6 @@ use App\Enums\MembershipStatus;
 use App\Enums\Role;
 use App\Enums\TenantStatus;
 use App\Models\Announcement;
-use App\Models\AnnouncementFleet;
 use App\Models\CrewDocument;
 use App\Models\CrewProfile;
 use App\Models\DocumentType;
@@ -378,13 +377,11 @@ final class LegacyImporter
                 'expires_at' => $r->date_expired ? Carbon::parse($r->date_expired)->endOfDay() : null,
             ] + ($attachment ?: ['file_disk' => null, 'file_path' => null, 'file_original_name' => null, 'file_mime' => null, 'file_size' => null]), 'announcement', $r);
 
-            // The old "group" is the nearest thing to a fleet (the audience of an announcement in v2).
-            AnnouncementFleet::withoutTenantScope()->where('announcement_id', $announcement->id)->delete();
+            // The old "group" names a set of people, but nothing in the imported data says who is in it, and as a fleet it would
+            // match nobody. The announcement goes to everyone in the organization; narrowing it is done in the portal. Any
+            // audience set in v2 afterwards is left as it is.
             foreach (array_filter(array_map('trim', explode(',', (string) $r->groupNames))) as $group) {
-                $this->upsert(AnnouncementFleet::withoutTenantScope(), new AnnouncementFleet, $this->id('fleet', $r->announceID.'|'.$group), [
-                    'tenant_id' => $tenant->id, 'announcement_id' => $announcement->id, 'fleet' => $this->fit($group, 100),
-                ], 'announcement audience', $r);
-                $this->report->note("announcement {$r->announceID} is addressed to the group \"{$group}\" as a fleet: only crew whose fleet is exactly that will see it");
+                $this->report->note("announcement {$r->announceID} was for the old group \"{$group}\": imported for everyone in the organization (set a fleet audience in the portal to narrow it)");
             }
         }
     }

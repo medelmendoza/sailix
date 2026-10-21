@@ -69,7 +69,7 @@ The volume is tiny, so the import can be checked row by row.
 | Old | New | Notes |
 |---|---|---|
 | `tb_announcement` `title`, `description`, `date_expired`, `is_inactive` | `announcements` `title`, `body`, `expires_at`, `is_active` | `creatorID` to `created_by_membership_id` |
-| `groupNames` (here `ABACUS`) | `announcement_fleets` | the old "group" is the closest thing to v2's fleet |
+| `groupNames` (here `ABACUS`) | not carried over | nothing in the imported data says who is in the group, and as a fleet it matched nobody (decided after the first real run): the announcement goes to everyone and the report names the group |
 | `employmentStatus` (here `VACATION`) | not imported | v2 audiences are fleets only |
 | `filename` | attachment: see 5.3 | |
 | `tb_to_do_list` | `todos` | `New` / `Ongoing` to open, `Completed` to done; `todo_due_date` to `due_date`; `userID` to `membership_id` |
@@ -130,7 +130,7 @@ Why things were skipped:
 - 1 user: **no username and no email** (a crew member with a crew id), so v2 cannot sign them in. Two of their uploaded documents are skipped with them.
 - 10 documents: 8 only because no files folder was given; 2 because their crew member was not imported.
 - 2 to-dos: their owners' ids do not exist in the old user table at all.
-- The announcement is addressed to the group `ABACUS`; as a fleet, only crew whose fleet is exactly `ABACUS` will see it, and no imported crew member has a fleet yet.
+- The announcement was for the group `ABACUS`; as a fleet nobody would have seen it. (Changed afterwards: the group is no longer turned into a fleet, so the announcement is for everyone.)
 
 Found by this run, and fixed: a user with an empty username or email is now skipped with a reason instead of stopping the import, and a
 database error no longer prints the values being written (they can contain names).

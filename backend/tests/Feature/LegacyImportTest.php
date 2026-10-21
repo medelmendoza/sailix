@@ -257,8 +257,9 @@ class LegacyImportTest extends TestCase
         $this->assertSame('Drill', $a->title);
         $this->assertTrue($a->is_active);
         $this->assertNotNull($a->file_path); // attached from the files folder
-        $this->assertSame(['ABACUS'], AnnouncementFleet::withoutTenantScope()->pluck('fleet')->all());
-        $this->assertStringContainsString('only crew whose fleet is exactly that', implode("\n", $report->notes));
+        // the old group is not turned into a fleet (it would match nobody): the announcement is for everyone
+        $this->assertSame(0, AnnouncementFleet::withoutTenantScope()->count());
+        $this->assertStringContainsString('imported for everyone in the organization', implode("\n", $report->notes));
 
         $todos = Todo::withoutTenantScope()->orderBy('description')->get();
         $this->assertSame(['Renew medical', 'Sign contract'], $todos->pluck('description')->all()); // T-3's user was not imported
