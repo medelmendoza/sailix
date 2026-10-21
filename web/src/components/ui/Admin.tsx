@@ -170,3 +170,50 @@ export function SearchField({
     </div>
   );
 }
+
+/**
+ * The section tabs of a detail page: plain text with a line under the open one, and a faint line under the one you point
+ * at. `id` ties each tab to its panel (`panel-<key>`), which the page labels with `tab-<key>`.
+ */
+export function ProfileTabs({
+  label,
+  tabs,
+  value,
+  onChange,
+}: {
+  label: string;
+  tabs: { key: string; label: string }[];
+  value: string;
+  onChange: (key: string) => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label={label}
+      className="flex gap-1 overflow-x-auto border-b border-line"
+    >
+      {tabs.map((t) => {
+        const selected = t.key === value;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            id={`tab-${t.key}`}
+            aria-selected={selected}
+            aria-controls={`panel-${t.key}`}
+            onClick={() => onChange(t.key)}
+            className={cn(
+              'relative -mb-px whitespace-nowrap border-b-2 px-4 py-3 text-base font-medium transition-colors',
+              selected
+                ? 'border-brand-700 text-brand-700'
+                : 'border-transparent text-muted hover:border-line hover:text-ink',
+            )}
+          >
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}

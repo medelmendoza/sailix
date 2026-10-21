@@ -195,3 +195,12 @@ export function useTenantCounts(): { all?: number } & Partial<
   });
   return Object.fromEntries(keys.map((k, i) => [k || 'all', results[i]!.data]));
 }
+
+export function useUpdateTenant(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { name: string }) =>
+      (await api.patch<Envelope<Tenant>>(`/platform/tenants/${id}`, body)).data.data,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['platform'] }),
+  });
+}

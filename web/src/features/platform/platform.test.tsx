@@ -37,6 +37,7 @@ function detailData(t: Tenant, opts: { admins?: unknown[]; module?: unknown } = 
     http.get(`${V1}/platform/tenants/${t.id}/admins`, () =>
       HttpResponse.json(pageOf(opts.admins ?? [])),
     ),
+    http.get(`${V1}/platform/tenants/${t.id}/features`, () => HttpResponse.json({ data: [] })),
     http.get(`${V1}/platform/tenants/${t.id}/modules`, () =>
       HttpResponse.json({ data: [opts.module ?? talaModule()] }),
     ),
@@ -198,9 +199,9 @@ describe('organization detail: lifecycle', () => {
     renderApp('/platform/tenants/t-1');
 
     await screen.findByRole('heading', { name: 'Southfield Agencies' });
-    const header = screen.getByRole('heading', { name: 'Southfield Agencies' }).closest('header')!;
+    // the lifecycle buttons live in the Status card of the Overview tab
     for (const label of ['Activate', 'Suspend', 'Reactivate', 'Deactivate', 'Archive']) {
-      const found = within(header).queryByRole('button', { name: label });
+      const found = screen.queryByRole('button', { name: label });
       if (labels.includes(label as never)) expect(found, label).toBeInTheDocument();
       else expect(found, label).not.toBeInTheDocument();
     }
@@ -306,7 +307,7 @@ describe('organization detail: administrators and modules', () => {
         ),
       ),
     );
-    const { user } = renderApp('/platform/tenants/t-1');
+    const { user } = renderApp('/platform/tenants/t-1?tab=admins');
 
     expect(await screen.findByText('No administrators yet')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Invite administrator' }));
@@ -325,7 +326,7 @@ describe('organization detail: administrators and modules', () => {
         HttpResponse.json({ data: adminRow('invited') }, { status: 201 }),
       ),
     );
-    const { user } = renderApp('/platform/tenants/t-1');
+    const { user } = renderApp('/platform/tenants/t-1?tab=admins');
 
     await user.click(await screen.findByRole('button', { name: 'Invite administrator' }));
     const dialog = await screen.findByRole('dialog');
@@ -338,7 +339,7 @@ describe('organization detail: administrators and modules', () => {
 
   it('lists administrators with their status', async () => {
     detailData(tenant(), { admins: [adminRow('active')] });
-    renderApp('/platform/tenants/t-1');
+    renderApp('/platform/tenants/t-1?tab=admins');
 
     const row = (await screen.findByText('Big Boss')).closest('tr')!;
     expect(within(row).getByText('boss@example.test')).toBeInTheDocument();
@@ -366,7 +367,7 @@ describe('organization detail: administrators and modules', () => {
         ),
       ),
     );
-    const { user } = renderApp('/platform/tenants/t-1?tab=modules');
+    const { user } = renderApp('/platform/tenants/t-1?tab=features');
 
     expect(await screen.findByText('4 linked account(s).')).toBeInTheDocument();
     expect(screen.getByLabelText('External team ID')).toHaveValue('TEAM-1');
@@ -383,7 +384,7 @@ describe('organization detail: administrators and modules', () => {
   ])('explains %s on provisioning', async (code, status, text) => {
     detailData(tenant({ status: 'active' }));
     server.use(http.put(`${V1}/platform/tenants/t-1/modules/tala`, () => problem(status, code)));
-    const { user } = renderApp('/platform/tenants/t-1?tab=modules');
+    const { user } = renderApp('/platform/tenants/t-1?tab=features');
 
     await user.type(await screen.findByLabelText('External team ID'), 'TEAM-X');
     await user.click(screen.getByRole('button', { name: 'Provision' }));
@@ -393,7 +394,7 @@ describe('organization detail: administrators and modules', () => {
 
   it('validates the team id locally', async () => {
     detailData(tenant({ status: 'active' }));
-    const { user } = renderApp('/platform/tenants/t-1?tab=modules');
+    const { user } = renderApp('/platform/tenants/t-1?tab=features');
 
     await user.type(await screen.findByLabelText('External team ID'), 'bad team!');
     await user.click(screen.getByRole('button', { name: 'Provision' }));
@@ -505,16 +506,85 @@ describe('organization detail: address and branding', () => {
     ...over,
   });
 
-  it('shows the default address in the header and under Address and domains', async () => {
+  it('shows the default address in the hero and under Domains', async () => {
     detailData(tenant({ default_address: 'sfai.sailix.test', slug: 'sfai' }));
-    renderApp('/platform/tenants/t-1?tab=address');
+    renderApp('/platform/tenants/t-1?tab=domains');
 
-    expect(await screen.findByText(/Code SFAI · sfai.sailix.test/)).toBeInTheDocument();
+    const hero = (await screen.findByRole('heading', { name: 'Southfield Agencies' })).closest(
+      'header',
+    )!;
+    expect(within(hero).getByText('sfai.sailix.test')).toBeInTheDocument();
     expect(
       await screen.findByText('sfai.sailix.test', { selector: 'span.font-medium' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Address and domains' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Branding' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Default address' })).toBeInTheDocument();
+  });
+
+  it('lists the sections in the schoolhub order, with Administrators last and no Billing', async () => {
+    detailData(tenant());
+    renderApp('/platform/tenants/t-1');
+
+    const tabs = await screen.findByRole('tablist', { name: 'Organization sections' });
+    expect(
+      within(tabs)
+        .getAllByRole('tab')
+        .map((t) => t.textContent),
+    ).toEqual([
+      'Overview',
+      'Appearance',
+      'Feature Access',
+      'Domains',
+      'Activity',
+      'Administrators',
+    ]);
+    expect(within(tabs).getByRole('tab', { name: 'Overview' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+  });
+
+  it('Overview: renames the organization, shows its fixed names, and points to Appearance', async () => {
+    detailData(tenant({ default_address: 'sfai.sailix.test', slug: 'sfai' }));
+    const patched = capture<{ name: string }>();
+    server.use(
+      http.patch(`${V1}/platform/tenants/t-1`, async ({ request }) => {
+        await patched.record(request);
+        return HttpResponse.json({ data: tenant({ name: 'Renamed Agencies' }) });
+      }),
+    );
+    const { user } = renderApp('/platform/tenants/t-1');
+
+    const name = await screen.findByLabelText('Name');
+    expect(screen.getByLabelText('Agency code')).toBeDisabled();
+    expect(screen.getByLabelText('Address name')).toHaveValue('sfai');
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled(); // nothing changed yet
+    await user.clear(name);
+    await user.type(name, 'Renamed Agencies');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() =>
+      expect(patched.calls.map((c) => c.body)).toEqual([{ name: 'Renamed Agencies' }]),
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Open Appearance' }));
+    expect(screen.getByRole('tab', { name: 'Appearance' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+  });
+
+  it("Activity: this organization's audit entries only, and a friendly empty state", async () => {
+    detailData(tenant());
+    const urls: URL[] = [];
+    server.use(
+      http.get(`${V1}/platform/audit-logs`, ({ request }) => {
+        urls.push(new URL(request.url));
+        return HttpResponse.json(pageOf([]));
+      }),
+    );
+    renderApp('/platform/tenants/t-1?tab=activity');
+
+    expect(await screen.findByText('No activity recorded yet')).toBeInTheDocument();
+    expect(urls[0]!.searchParams.get('filter[tenant_id]')).toBe('t-1');
   });
 
   it('adds and verifies a domain for that organization, through the platform endpoints', async () => {
@@ -546,7 +616,7 @@ describe('organization detail: address and branding', () => {
         ),
       ),
     );
-    const { user } = renderApp('/platform/tenants/t-1?tab=address');
+    const { user } = renderApp('/platform/tenants/t-1?tab=domains');
 
     await user.type(await screen.findByLabelText('Domain'), 'school.example.com');
     await user.click(screen.getByRole('button', { name: 'Add domain' }));
@@ -566,7 +636,7 @@ describe('organization detail: address and branding', () => {
         ),
       ),
     );
-    const { user } = renderApp('/platform/tenants/t-1?tab=branding');
+    const { user } = renderApp('/platform/tenants/t-1?tab=appearance');
 
     await user.type(await screen.findByLabelText('Tagline'), 'Set by the platform');
     await user.type(screen.getByLabelText('Primary colour'), '#355DAD');
@@ -588,7 +658,7 @@ describe('organization detail: address and branding', () => {
         async ({ request }) => (await reset.record(request), HttpResponse.json({ data: look() })),
       ),
     );
-    const { user } = renderApp('/platform/tenants/t-1?tab=branding');
+    const { user } = renderApp('/platform/tenants/t-1?tab=appearance');
 
     await user.click(await screen.findByRole('button', { name: 'Reset to the Sailix look' }));
     await waitFor(() => expect(reset.calls).toHaveLength(1));
@@ -662,13 +732,22 @@ describe('loading placeholders match the pages they stand in for', () => {
     renderApp('/platform/tenants/t-1?tab=features');
 
     const loading = await screen.findByRole('status', { name: 'Loading organization' });
-    expect(within(loading).getByRole('link', { name: '← Organizations' })).toBeInTheDocument();
-    for (const fact of ['Created', 'Activated']) {
-      expect(within(loading).getByText(fact)).toBeInTheDocument();
+    expect(
+      within(loading).getByRole('link', { name: '← Back to organizations' }),
+    ).toBeInTheDocument();
+    for (const tab of [
+      'Overview',
+      'Appearance',
+      'Feature Access',
+      'Domains',
+      'Activity',
+      'Administrators',
+    ]) {
+      expect(within(loading).getByText(tab)).toBeInTheDocument(); // the real tab strip
     }
-    expect(within(loading).getAllByText('Administrators')).toHaveLength(2); // the fact, and the tab
     expect(within(loading).getByText('Feature access', { selector: 'h2' })).toBeInTheDocument();
-    expect(within(loading).getAllByRole('listitem')).toHaveLength(7); // one row per feature switch
+    expect(within(loading).getByText('Modules', { selector: 'h2' })).toBeInTheDocument();
+    expect(within(loading).getAllByRole('listitem').length).toBeGreaterThanOrEqual(7); // one row per feature switch
   });
 
   it('Settings: the real labels and hints stay, only the controls shimmer', async () => {
