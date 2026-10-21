@@ -5,7 +5,8 @@ import {
   ErrorState,
   FormError,
   PageHeader,
-  Spinner,
+  Skeleton,
+  SkeletonField,
   TextField,
   useToast,
 } from '../../components/ui';
@@ -96,7 +97,7 @@ export function BrandingPage() {
 /** The branding form for one organization: the signed-in one's own, or (superadmin) the one named by the scope. */
 export function BrandingEditor({ scope }: { scope: TenantScope }) {
   const branding = useBranding(scope);
-  if (branding.isPending) return <Spinner />;
+  if (branding.isPending) return <BrandingSkeleton />;
   if (branding.isError)
     return (
       <ErrorState message={describeError(branding.error)} onRetry={() => void branding.refetch()} />
@@ -518,6 +519,98 @@ function ImageSlot({
           </button>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+/**
+ * The branding editor while it loads: the same two columns, the same cards with their real titles and field labels, and
+ * the preview beside them; only the controls and pictures shimmer.
+ */
+export function BrandingSkeleton() {
+  const colour = (label: string) => (
+    <div key={label} className="flex items-end gap-3">
+      <div className="flex-1">
+        <SkeletonField label={label} />
+      </div>
+      <Skeleton className="mb-1 h-10 w-12 rounded-md" />
+    </div>
+  );
+  return (
+    <div
+      role="status"
+      aria-label="Loading branding"
+      className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]"
+    >
+      <div className="flex flex-col gap-6">
+        <Card title="Identity">
+          <div className="flex flex-col gap-4">
+            <SkeletonField label="Short name" />
+            <SkeletonField label="Tagline" />
+          </div>
+        </Card>
+        <Card title="Pictures">
+          <div className="flex flex-col divide-y divide-line">
+            {(Object.keys(GUIDANCE) as BrandingImageKind[]).map((kind) => (
+              <div key={kind} className="flex items-start gap-4 py-4 first:pt-0 last:pb-0">
+                <Skeleton
+                  className={`shrink-0 rounded-md ${kind === 'login-background' ? 'h-16 w-28' : 'size-16'}`}
+                />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <span className="text-sm font-medium">{GUIDANCE[kind].label}</span>
+                  <Skeleton className="h-4 w-48 max-w-full" />
+                  <Skeleton className="h-3 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card title="Colours">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              'Primary colour',
+              'Secondary colour',
+              'Accent colour',
+              'Background colour',
+              'Text colour',
+            ].map(colour)}
+          </div>
+        </Card>
+        <Card title="Font style">
+          <div className="grid gap-2 sm:grid-cols-2">
+            {FONT_OPTIONS.map((o) => (
+              <div key={o.value} className="flex flex-col gap-2 rounded-lg border border-line p-3">
+                <span className="text-sm font-medium">{o.label}</span>
+                <Skeleton className="h-3 w-3/4" />
+                <Skeleton className="h-5 w-full" />
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card title="Sign-in page">
+          <SkeletonField label="Welcome message" />
+        </Card>
+        <div className="flex flex-wrap items-center gap-2">
+          <Skeleton className="h-10 w-36 rounded-full" />
+        </div>
+      </div>
+      <aside aria-hidden="true">
+        <Card title="Preview">
+          <div className="rounded-lg border border-line p-4">
+            <div className="flex flex-col items-center gap-2">
+              <Skeleton className="h-12 w-24" />
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+            <div className="mt-3 rounded-lg border border-line bg-white p-3 shadow-sm">
+              <Skeleton className="mb-2 h-3 w-16" />
+              <Skeleton className="mb-3 h-7 w-full rounded" />
+              <Skeleton className="h-9 w-full rounded-full" />
+            </div>
+          </div>
+        </Card>
+      </aside>
+      <span className="sr-only">Loading…</span>
     </div>
   );
 }

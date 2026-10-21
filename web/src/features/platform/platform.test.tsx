@@ -638,3 +638,112 @@ describe('organization detail: feature access', () => {
     expect(screen.getByRole('switch', { name: 'Documents access' })).toBeChecked();
   });
 });
+
+describe('loading placeholders match the pages they stand in for', () => {
+  beforeEach(() => asPlatformAdmin());
+
+  const never = () => new Promise<never>(() => {}); // a request that does not answer
+
+  it('Organizations: the real column headers and a row shape per cell, before any data', async () => {
+    server.use(http.get(`${V1}/platform/tenants`, never));
+    renderApp('/platform/tenants');
+
+    const loading = await screen.findByRole('status', { name: 'Loading organizations' });
+    const headers = within(loading)
+      .getAllByRole('columnheader')
+      .map((h) => h.textContent);
+    expect(headers).toEqual(['Organization', 'Address', 'Status', 'Created', '']);
+    expect(within(loading).getAllByRole('row')).toHaveLength(1 + 6); // the header and six placeholder rows
+    expect(loading.querySelectorAll('.shimmer').length).toBeGreaterThan(20);
+  });
+
+  it('Organization page: the real back link, facts and tabs around shimmering values, and the shape of the open tab', async () => {
+    server.use(http.get(`${V1}/platform/tenants/t-1`, never));
+    renderApp('/platform/tenants/t-1?tab=features');
+
+    const loading = await screen.findByRole('status', { name: 'Loading organization' });
+    expect(within(loading).getByRole('link', { name: '← Organizations' })).toBeInTheDocument();
+    for (const fact of ['Created', 'Activated']) {
+      expect(within(loading).getByText(fact)).toBeInTheDocument();
+    }
+    expect(within(loading).getAllByText('Administrators')).toHaveLength(2); // the fact, and the tab
+    expect(within(loading).getByText('Feature access', { selector: 'h2' })).toBeInTheDocument();
+    expect(within(loading).getAllByRole('listitem')).toHaveLength(7); // one row per feature switch
+  });
+
+  it('Settings: the real labels and hints stay, only the controls shimmer', async () => {
+    server.use(http.get(`${V1}/platform/settings`, never));
+    renderApp('/platform/settings');
+
+    const loading = await screen.findByRole('status', { name: 'Loading settings' });
+    expect(within(loading).getByText('Tala API address')).toBeInTheDocument();
+    expect(within(loading).getByText('Minimum password length')).toBeInTheDocument();
+    expect(within(loading).getByText(/Organizations may raise this/)).toBeInTheDocument();
+    expect(within(loading).queryByRole('textbox')).not.toBeInTheDocument(); // nothing to type in yet
+  });
+
+  it('Audit log: the table has its own columns while it loads', async () => {
+    server.use(http.get(`${V1}/platform/audit-logs`, never));
+    renderApp('/platform/audit');
+
+    const loading = await screen.findByRole('status', { name: 'Loading audit log' });
+    expect(
+      within(loading)
+        .getAllByRole('columnheader')
+        .map((h) => h.textContent),
+    ).toEqual(['When', 'Action', 'Actor', 'Subject']);
+  });
+});
+
+describe('dashboard: organizations by status', () => {
+  beforeEach(() => asPlatformAdmin());
+
+  const totals: Record<string, number> = {
+    '': 5,
+    active: 3,
+    provisioning: 1,
+    suspended: 1,
+    deactivated: 0,
+    archived: 0,
+  };
+  const withCounts = () =>
+    server.use(
+      http.get(`${V1}/platform/tenants`, ({ request }) => {
+        const status = new URL(request.url).searchParams.get('filter[status]') ?? '';
+        return HttpResponse.json(pageOf([], { total: totals[status] ?? 0 }));
+      }),
+      http.get(`${V1}/platform/audit-logs`, () => HttpResponse.json(pageOf([]))),
+    );
+
+  it('shows the total in the ring and a row per status with its count and share, each opening the filtered list', async () => {
+    withCounts();
+    renderApp('/platform');
+
+    await screen.findByText('Organizations by status');
+    // the card is replaced when the counts arrive, so it is looked up again each time
+    const card = () => screen.getByText('Organizations by status').closest('section')!;
+    await waitFor(() => expect(within(card()).getByText('5')).toBeInTheDocument()); // the total, in the middle of the ring
+    expect(
+      within(card()).getByRole('img', { name: /3 active, 1 provisioning, 1 suspended/ }),
+    ).toBeInTheDocument();
+
+    const active = within(card()).getByRole('link', { name: /Active/ });
+    expect(active).toHaveAttribute('href', '/platform/tenants?status=active');
+    expect(active).toHaveTextContent('3');
+    expect(active).toHaveTextContent('60%');
+    expect(within(card()).getByRole('link', { name: /Archived/ })).toHaveTextContent('0%');
+  });
+
+  it('pointing at a row puts that status in the middle of the ring', async () => {
+    withCounts();
+    const { user } = renderApp('/platform');
+
+    await screen.findByText('Organizations by status');
+    const card = () => screen.getByText('Organizations by status').closest('section')!;
+    await waitFor(() => expect(within(card()).getByText('5')).toBeInTheDocument());
+    await user.hover(within(card()).getByRole('link', { name: /Provisioning/ }));
+
+    expect(within(card()).getByText('provisioning')).toBeInTheDocument();
+    expect(within(card()).queryByText('5')).not.toBeInTheDocument();
+  });
+});

@@ -1,8 +1,16 @@
+import type { ReactNode } from 'react';
 import { cn } from './cn';
+import { Table } from './Table';
 
 /** One loading block with the shimmer sweep. Hidden from screen readers: the container says "Loading". */
 export function Skeleton({ className }: { className?: string }) {
-  return <div aria-hidden="true" className={cn('shimmer rounded-md', className)} />;
+  // rounded-md unless the caller chose its own corners (two radius classes on one element would fight)
+  return (
+    <div
+      aria-hidden="true"
+      className={cn('shimmer', !/\brounded/.test(className ?? '') && 'rounded-md', className)}
+    />
+  );
 }
 
 /** A few lines of text, each a different length, so it reads as text and not as a bar. */
@@ -102,59 +110,91 @@ export function SkeletonCard({ lines = 4, label = 'Loading' }: { lines?: number;
   );
 }
 
-/** A form while its values load. */
-export function SkeletonForm({
-  fields = 3,
+/** One kind of cell in a loading table: the shape of what the real cell holds, at the same height. */
+export type CellKind = 'identity' | 'text' | 'mono' | 'pill' | 'date' | 'chevron';
+
+const WIDTHS = ['w-40', 'w-32', 'w-44', 'w-36'];
+
+function SkeletonCell({ kind, row }: { kind: CellKind; row: number }) {
+  const w = WIDTHS[row % WIDTHS.length];
+  switch (kind) {
+    case 'identity':
+      return (
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-9 shrink-0 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className={cn('h-3.5', w)} />
+            <Skeleton className="h-3 w-14" />
+          </div>
+        </div>
+      );
+    case 'mono':
+      return (
+        <div className="flex h-4 items-center">
+          <Skeleton className="h-3 w-28" />
+        </div>
+      );
+    case 'pill':
+      return <Skeleton className="h-5 w-20 rounded-full" />;
+    case 'date':
+      return (
+        <div className="flex h-5 items-center">
+          <Skeleton className="h-3.5 w-32" />
+        </div>
+      );
+    case 'chevron':
+      return <Skeleton className="ml-auto h-4 w-3" />;
+    default:
+      return (
+        <div className="flex h-5 items-center">
+          <Skeleton className={cn('h-3.5', w)} />
+        </div>
+      );
+  }
+}
+
+/**
+ * A loading table that IS the real table: same frame, same column headers (they are known text), same row padding, with
+ * each cell replaced by a shimmering shape of the kind it will hold, so nothing moves when the rows arrive.
+ */
+export function SkeletonDataTable({
+  caption,
+  headers,
+  cells,
+  rows = 6,
   label = 'Loading',
 }: {
-  fields?: number;
+  caption: string;
+  headers: string[];
+  cells: CellKind[];
+  rows?: number;
   label?: string;
 }) {
   return (
-    <div
-      role="status"
-      aria-label={label}
-      className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)]"
-    >
-      <div className="flex max-w-lg flex-col gap-5">
-        {Array.from({ length: fields }, (_, i) => (
-          <div key={i} className="space-y-2">
-            <Skeleton className="h-3 w-28" />
-            <Skeleton className="h-10 w-full rounded-lg" />
-          </div>
+    <div role="status" aria-label={label}>
+      <Table caption={caption} headers={headers}>
+        {Array.from({ length: rows }, (_, r) => (
+          <tr key={r}>
+            {cells.map((kind, c) => (
+              <td key={c} className={cn('px-4 py-3', kind === 'chevron' && 'w-10 px-2')}>
+                <SkeletonCell kind={kind} row={r} />
+              </td>
+            ))}
+          </tr>
         ))}
-        <Skeleton className="h-10 w-32 rounded-md" />
-      </div>
+      </Table>
       <span className="sr-only">{label}…</span>
     </div>
   );
 }
 
-/** The header card of a detail page (avatar, name, tabs) while it loads. */
-export function SkeletonDetail({ label = 'Loading' }: { label?: string }) {
+/** A form field whose label (and hint) are known text: only the control shimmers. */
+export function SkeletonField({ label, hint }: { label: string; hint?: ReactNode }) {
   return (
-    <div role="status" aria-label={label}>
-      <Skeleton className="mb-3 h-3 w-24" />
-      <div className="mb-4 rounded-xl border border-line bg-surface p-5">
-        <div className="flex items-center gap-4">
-          <Skeleton className="size-14 shrink-0 rounded-full" />
-          <div className="flex-1 space-y-2.5">
-            <Skeleton className="h-6 w-56" />
-            <Skeleton className="h-3.5 w-40" />
-          </div>
-          <Skeleton className="hidden h-10 w-24 sm:block" />
-        </div>
-        <div className="mt-4 grid gap-3 border-t border-line pt-4 sm:grid-cols-3">
-          {Array.from({ length: 3 }, (_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          ))}
-        </div>
-      </div>
-      <SkeletonCard lines={5} />
-      <span className="sr-only">{label}…</span>
+    <div className="flex flex-col gap-1">
+      <span className="text-sm font-medium">{label}</span>
+      <Skeleton className="min-h-10 w-full rounded-xl" />
+      {hint && <p className="text-xs text-muted">{hint}</p>}
     </div>
   );
 }

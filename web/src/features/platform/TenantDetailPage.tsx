@@ -11,9 +11,6 @@ import {
   FormDialog,
   FormError,
   SelectField,
-  SkeletonCard,
-  SkeletonDetail,
-  SkeletonTable,
   StatusBadge,
   Table,
   TextField,
@@ -26,6 +23,14 @@ import { DomainsEditor } from '../tenant/DomainsPage';
 import type { PlatformTenantModule, Tenant, TenantStatus } from '../../services/api/types';
 import { applyServerErrors } from '../authentication/forms';
 import { formatDateTime } from '../shared/AuditTable';
+import {
+  FEATURES_NOTE,
+  FeatureRowsSkeleton,
+  ModuleCardsSkeleton,
+  AdminsTableSkeleton,
+  TABS,
+  TenantDetailSkeleton,
+} from './TenantDetailSkeleton';
 import {
   describeError,
   useInviteAdmin,
@@ -367,69 +372,61 @@ function ModuleCard({ tenantId, module }: { tenantId: string; module: PlatformTe
   );
 }
 
-const TABS = [
-  { key: 'admins', label: 'Administrators' },
-  { key: 'address', label: 'Address and domains' },
-  { key: 'branding', label: 'Branding' },
-  { key: 'features', label: 'Feature access' },
-  { key: 'modules', label: 'Modules' },
-] as const;
-
 function FeatureAccess({ tenantId }: { tenantId: string }) {
   const features = usePlatformFeatures(tenantId);
   const update = useUpdateFeatures(tenantId);
   const toast = useToast();
 
-  if (features.isPending) return <SkeletonCard lines={6} label="Loading feature access" />;
-  if (features.isError) {
-    return (
-      <ErrorState message={describeError(features.error)} onRetry={() => void features.refetch()} />
-    );
-  }
   return (
     <section aria-labelledby="features-h" className="flex flex-col gap-3">
       <div>
         <h2 id="features-h" className="text-base font-semibold">
           Feature access
         </h2>
-        <p className="text-sm text-muted">
-          A feature that is off is hidden in the portal and the mobile app, and the server refuses
-          it. Astra, Call-it and Tala are switched under Modules.
-        </p>
+        <p className="text-sm text-muted">{FEATURES_NOTE}</p>
       </div>
-      <Card>
-        <ul className="divide-y divide-line">
-          {features.data.map((f) => (
-            <li key={f.code} className="flex items-center justify-between gap-4 py-3">
-              <div className="min-w-0">
-                <p className="font-medium">{f.label}</p>
-                <p className="text-sm text-muted">{f.description}</p>
-              </div>
-              <label className="flex shrink-0 items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  role="switch"
-                  className="size-5 accent-[var(--color-accent-600)]"
-                  aria-label={`${f.label} access`}
-                  checked={f.enabled}
-                  disabled={update.isPending}
-                  onChange={(e) => {
-                    const on = e.target.checked; // read now: the box has moved by the time the server answers
-                    update.mutate(
-                      { [f.code]: on },
-                      {
-                        onSuccess: () => toast.success(`${f.label} ${on ? 'on' : 'off'}.`),
-                        onError: (err) => toast.error(describeError(err)),
-                      },
-                    );
-                  }}
-                />
-                {f.enabled ? 'On' : 'Off'}
-              </label>
-            </li>
-          ))}
-        </ul>
-      </Card>
+      {features.isPending ? (
+        <FeatureRowsSkeleton />
+      ) : features.isError ? (
+        <ErrorState
+          message={describeError(features.error)}
+          onRetry={() => void features.refetch()}
+        />
+      ) : (
+        <Card>
+          <ul className="divide-y divide-line">
+            {features.data.map((f) => (
+              <li key={f.code} className="flex items-center justify-between gap-4 py-3">
+                <div className="min-w-0">
+                  <p className="font-medium">{f.label}</p>
+                  <p className="text-sm text-muted">{f.description}</p>
+                </div>
+                <label className="flex shrink-0 items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    className="size-5 accent-[var(--color-accent-600)]"
+                    aria-label={`${f.label} access`}
+                    checked={f.enabled}
+                    disabled={update.isPending}
+                    onChange={(e) => {
+                      const on = e.target.checked; // read now: the box has moved by the time the server answers
+                      update.mutate(
+                        { [f.code]: on },
+                        {
+                          onSuccess: () => toast.success(`${f.label} ${on ? 'on' : 'off'}.`),
+                          onError: (err) => toast.error(describeError(err)),
+                        },
+                      );
+                    }}
+                  />
+                  {f.enabled ? 'On' : 'Off'}
+                </label>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
     </section>
   );
 }
@@ -445,7 +442,7 @@ export function TenantDetailPage() {
   const [inviting, setInviting] = useState(false);
   const [devToken, setDevToken] = useState<string | null>(null);
 
-  if (tenant.isPending) return <SkeletonDetail label="Loading organization" />;
+  if (tenant.isPending) return <TenantDetailSkeleton tab={tab} />;
   if (tenant.isError) {
     const e = toApiError(tenant.error);
     return (
@@ -473,17 +470,17 @@ export function TenantDetailPage() {
       >
         ← Organizations
       </Link>
-      <header className="mb-4 rounded-xl border border-line bg-surface p-5">
+      <header className="mb-4 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4">
             <span
               aria-hidden="true"
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent-600 to-brand-800 text-xl font-semibold text-white shadow-sm"
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-900 font-heading text-2xl font-bold text-white shadow-sm"
             >
               {t.name.charAt(0).toUpperCase()}
             </span>
             <div className="min-w-0">
-              <h1 className="truncate text-2xl font-semibold">{t.name}</h1>
+              <h1 className="truncate text-3xl font-bold leading-tight">{t.name}</h1>
               <p className="mt-0.5 text-sm text-muted">
                 {t.default_address ? `Code ${t.code} · ${t.default_address}` : `Code ${t.code}`}
               </p>
@@ -585,7 +582,7 @@ export function TenantDetailPage() {
               </p>
             )}
             {admins.isPending ? (
-              <SkeletonTable columns={3} rows={3} label="Loading administrators" />
+              <AdminsTableSkeleton />
             ) : admins.isError ? (
               <ErrorState
                 message={describeError(admins.error)}
@@ -621,7 +618,7 @@ export function TenantDetailPage() {
               Modules
             </h2>
             {modules.isPending ? (
-              <SkeletonCard lines={4} label="Loading modules" />
+              <ModuleCardsSkeleton />
             ) : modules.isError ? (
               <ErrorState
                 message={describeError(modules.error)}

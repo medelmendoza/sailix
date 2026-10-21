@@ -4,10 +4,10 @@ import {
   ErrorState,
   PageHeader,
   Pagination,
-  SkeletonTable,
+  SkeletonDataTable,
   TextField,
 } from '../../components/ui';
-import { AuditTable } from '../shared/AuditTable';
+import { AUDIT_CELLS, AUDIT_HEADERS, AuditTable } from '../shared/AuditTable';
 import { describeError, usePlatformAudit } from './api';
 
 export function PlatformAuditPage() {
@@ -49,7 +49,13 @@ export function PlatformAuditPage() {
         </div>
       </Card>
       {logs.isPending ? (
-        <SkeletonTable columns={4} rows={8} label="Loading audit log" />
+        <SkeletonDataTable
+          caption="Audit log"
+          headers={AUDIT_HEADERS}
+          cells={AUDIT_CELLS}
+          rows={8}
+          label="Loading audit log"
+        />
       ) : logs.isError ? (
         <ErrorState message={describeError(logs.error)} onRetry={() => void logs.refetch()} />
       ) : (

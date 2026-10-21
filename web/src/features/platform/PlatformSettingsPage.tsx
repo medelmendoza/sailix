@@ -8,7 +8,8 @@ import {
   ErrorState,
   FormError,
   PageHeader,
-  SkeletonForm,
+  Skeleton,
+  SkeletonField,
   TextField,
 } from '../../components/ui';
 import { applyServerErrors } from '../authentication/forms';
@@ -28,6 +29,11 @@ const schema = z.object({
     .max(50, 'At most 50.'),
 });
 type Input = z.input<typeof schema>;
+
+// The form's text, shared with its loading placeholder so both read the same
+const TALA_HINT =
+  "An https:// origin on the server's approved host list that resolves to a public address. Leave empty to keep the Tala module unavailable.";
+const PASSWORD_HINT = 'Organizations may raise this, never lower it.';
 type Values = z.output<typeof schema>;
 
 export function PlatformSettingsPage() {
@@ -73,7 +79,7 @@ export function PlatformSettingsPage() {
     <>
       <PageHeader title="Platform settings" description="Defaults for every organization." />
       {settings.isPending ? (
-        <SkeletonForm fields={3} label="Loading settings" />
+        <SettingsSkeleton />
       ) : settings.isError ? (
         <ErrorState
           message={describeError(settings.error)}
@@ -86,14 +92,14 @@ export function PlatformSettingsPage() {
             <TextField
               label="Tala API address"
               type="url"
-              hint="An https:// origin on the server's approved host list that resolves to a public address. Leave empty to keep the Tala module unavailable."
+              hint={TALA_HINT}
               error={formState.errors.tala_api_base_url?.message}
               {...register('tala_api_base_url')}
             />
             <TextField
               label="Minimum password length"
               type="number"
-              hint="Organizations may raise this, never lower it."
+              hint={PASSWORD_HINT}
               error={formState.errors.password_min_length?.message}
               {...register('password_min_length')}
             />
@@ -112,5 +118,20 @@ export function PlatformSettingsPage() {
         </Card>
       )}
     </>
+  );
+}
+
+/** The form while the settings load: its real card, labels and hints, with the controls shimmering. */
+function SettingsSkeleton() {
+  return (
+    <Card>
+      <div role="status" aria-label="Loading settings" className="flex max-w-lg flex-col gap-4">
+        <SkeletonField label="Tala API address" hint={TALA_HINT} />
+        <SkeletonField label="Minimum password length" hint={PASSWORD_HINT} />
+        <SkeletonField label="Upload size limit (MB)" />
+        <Skeleton className="h-10 w-32 rounded-full" />
+        <span className="sr-only">Loading…</span>
+      </div>
+    </Card>
   );
 }

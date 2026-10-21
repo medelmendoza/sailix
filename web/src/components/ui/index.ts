@@ -7,12 +7,13 @@ export { Card, EmptyState, ErrorState, FormError, PageHeader, PageHero, Spinner 
 export {
   Skeleton,
   SkeletonCard,
-  SkeletonDetail,
-  SkeletonForm,
+  SkeletonDataTable,
+  SkeletonField,
   SkeletonLines,
   SkeletonShell,
   SkeletonStatTiles,
   SkeletonTable,
+  type CellKind,
 } from './Skeleton';
 export { Pagination, Table } from './Table';
 export { ToastProvider, useToast } from './Toast';

@@ -8,7 +8,8 @@ import {
   ErrorState,
   FormError,
   PageHeader,
-  Spinner,
+  Skeleton,
+  SkeletonField,
   TextField,
   useToast,
 } from '../../components/ui';
@@ -71,7 +72,7 @@ export function DomainsEditor({ scope }: { scope: TenantScope }) {
   return (
     <>
       {list.isPending ? (
-        <Spinner />
+        <DomainsSkeleton />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : (
@@ -181,5 +182,29 @@ export function DomainsEditor({ scope }: { scope: TenantScope }) {
         onCancel={() => setRemoving(null)}
       />
     </>
+  );
+}
+
+/** The domains page while it loads: its real cards and labels, with the address, the field and the list shimmering. */
+export function DomainsSkeleton() {
+  return (
+    <div role="status" aria-label="Loading domains" className="flex flex-col gap-6">
+      <Card title="Default address">
+        <Skeleton className="h-5 w-80 max-w-full" />
+      </Card>
+      <Card title="Your own domains">
+        <div className="mb-4 flex flex-wrap items-end gap-3">
+          <div className="w-full sm:w-80">
+            <SkeletonField label="Domain" />
+          </div>
+          <Skeleton className="h-10 w-28 rounded-full" />
+        </div>
+        <div className="rounded-[var(--radius-card)] border border-dashed border-line px-6 py-10">
+          <Skeleton className="mx-auto h-4 w-40" />
+          <Skeleton className="mx-auto mt-2 h-3.5 w-64 max-w-full" />
+        </div>
+      </Card>
+      <span className="sr-only">Loading…</span>
+    </div>
   );
 }

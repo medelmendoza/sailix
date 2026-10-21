@@ -12,11 +12,12 @@ import {
   PageHeader,
   Pagination,
   SearchField,
-  SkeletonTable,
+  SkeletonDataTable,
   StatusBadge,
   StatusTabs,
   Table,
   TextField,
+  type CellKind,
   useToast,
 } from '../../components/ui';
 import { applyServerErrors } from '../authentication/forms';
@@ -110,6 +111,9 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
+/** The list's columns, shared with its loading placeholder. */
+const ORG_HEADERS = ['Organization', 'Address', 'Status', 'Created', ''];
+const ORG_CELLS: CellKind[] = ['identity', 'mono', 'pill', 'date', 'chevron'];
 const cap = (v: string) => v[0]!.toUpperCase() + v.slice(1);
 
 function StatusFilter({ value, onChange }: { value: string; onChange: (s: string) => void }) {
@@ -173,7 +177,13 @@ export function TenantsPage() {
         )}
       </div>
       {tenants.isPending ? (
-        <SkeletonTable columns={5} rows={6} label="Loading organizations" />
+        <SkeletonDataTable
+          caption="Organizations"
+          headers={ORG_HEADERS}
+          cells={ORG_CELLS}
+          rows={6}
+          label="Loading organizations"
+        />
       ) : tenants.isError ? (
         <ErrorState message={describeError(tenants.error)} onRetry={() => void tenants.refetch()} />
       ) : tenants.data.data.length === 0 ? (
@@ -182,10 +192,7 @@ export function TenantsPage() {
         />
       ) : (
         <>
-          <Table
-            caption="Organizations"
-            headers={['Organization', 'Address', 'Status', 'Created', '']}
-          >
+          <Table caption="Organizations" headers={ORG_HEADERS}>
             {tenants.data.data.map((t) => (
               <tr key={t.id} className="hover:bg-page">
                 <td className="px-4 py-3">

@@ -1,4 +1,4 @@
-import { Badge, EmptyState, Table } from '../../components/ui';
+import { Badge, EmptyState, Table, type CellKind } from '../../components/ui';
 import type { AuditEntry } from '../../services/api/types';
 
 const ACTOR_LABEL: Record<string, string> = {
@@ -11,6 +11,10 @@ export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+/** The audit table's columns, shared with its loading placeholder so the two always have the same shape. */
+export const AUDIT_HEADERS = ['When', 'Action', 'Actor', 'Subject'];
+export const AUDIT_CELLS: CellKind[] = ['date', 'mono', 'pill', 'text'];
+
 export function AuditTable({ entries }: { entries: AuditEntry[] }) {
   if (entries.length === 0)
     return (
@@ -20,7 +24,7 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
       />
     );
   return (
-    <Table caption="Audit log" headers={['When', 'Action', 'Actor', 'Subject']}>
+    <Table caption="Audit log" headers={AUDIT_HEADERS}>
       {entries.map((e) => (
         <tr key={e.id}>
           <td className="whitespace-nowrap px-4 py-3">{formatDateTime(e.created_at)}</td>

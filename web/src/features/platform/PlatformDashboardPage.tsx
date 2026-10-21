@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Button, Card, ErrorState, PageHero, SkeletonTable } from '../../components/ui';
+import { Button, Card, ErrorState, PageHero, SkeletonDataTable } from '../../components/ui';
+import { AUDIT_CELLS, AUDIT_HEADERS } from '../shared/AuditTable';
 import { usePlatformAdmin } from '../authentication/session';
 import { describeError } from '../../services/api/errors';
 import { AuditTable } from '../shared/AuditTable';
@@ -61,7 +62,13 @@ export function PlatformDashboardPage() {
       <section>
         <h2 className="mb-3 text-lg font-bold">Recent platform activity</h2>
         {audit.isPending ? (
-          <SkeletonTable columns={4} rows={5} label="Loading activity" />
+          <SkeletonDataTable
+            caption="Audit log"
+            headers={AUDIT_HEADERS}
+            cells={AUDIT_CELLS}
+            rows={5}
+            label="Loading activity"
+          />
         ) : audit.isError ? (
           <ErrorState message={describeError(audit.error)} onRetry={() => void audit.refetch()} />
         ) : (
