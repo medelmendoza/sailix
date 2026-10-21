@@ -17,13 +17,13 @@ export function Card({
   return (
     <section
       className={cn(
-        'rounded-2xl border border-white bg-surface p-5 shadow-sm ring-1 ring-line',
+        'rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)]',
         className,
       )}
     >
       {(title || actions) && (
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          {title && <h2 className="text-base font-bold">{title}</h2>}
+          {title && <h2 className="text-lg font-bold">{title}</h2>}
           {actions}
         </div>
       )}
@@ -44,7 +44,7 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        <h1 className="title-bar text-3xl font-bold leading-tight">{title}</h1>
         {description && <p className="mt-1 text-sm text-muted">{description}</p>}
       </div>
       {actions}
@@ -53,6 +53,48 @@ export function PageHeader({
 }
 
 /** The generic loading placeholder (a few shimmering lines). Pages with a known shape use the matching Skeleton instead. */
+/**
+ * The welcome banner at the top of a console's dashboard: the brand colours as a gradient, soft blobs and a dot grid,
+ * white text. Decorative parts are hidden from screen readers.
+ */
+export function PageHero({
+  eyebrow,
+  title,
+  description,
+  actions,
+}: {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+}) {
+  return (
+    <section className="relative mb-6 overflow-hidden rounded-[var(--radius-card)] bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700 p-6 text-white shadow-[var(--shadow-lift)] sm:p-8">
+      <div aria-hidden="true" className="bg-dots absolute inset-0" />
+      <div
+        aria-hidden="true"
+        className="float-slow absolute -right-16 -top-20 size-48 rounded-full bg-accent-500/25 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute -bottom-24 left-1/4 size-64 rounded-full bg-brand-600/50 blur-3xl"
+      />
+      <div className="relative flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          {eyebrow && (
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/75">
+              {eyebrow}
+            </p>
+          )}
+          <h1 className="text-3xl font-bold leading-tight sm:text-4xl">{title}</h1>
+          {description && <p className="mt-2 max-w-xl text-sm text-white/80">{description}</p>}
+        </div>
+        {actions}
+      </div>
+    </section>
+  );
+}
+
 export function Spinner({ label = 'Loading' }: { label?: string }) {
   return (
     <div role="status" aria-label={label} className="py-4">
@@ -64,7 +106,7 @@ export function Spinner({ label = 'Loading' }: { label?: string }) {
 
 export function EmptyState({ title, description }: { title: string; description?: string }) {
   return (
-    <div className="rounded-lg border border-dashed border-line px-6 py-10 text-center">
+    <div className="rounded-[var(--radius-card)] border border-dashed border-line bg-surface/60 px-6 py-10 text-center">
       <p className="font-medium">{title}</p>
       {description && <p className="mt-1 text-sm text-muted">{description}</p>}
     </div>

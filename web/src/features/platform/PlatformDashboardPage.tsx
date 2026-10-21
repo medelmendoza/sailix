@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Button, Card, ErrorState, PageHeader, SkeletonTable } from '../../components/ui';
+import { Button, Card, ErrorState, PageHero, SkeletonTable } from '../../components/ui';
+import { usePlatformAdmin } from '../authentication/session';
 import { describeError } from '../../services/api/errors';
 import { AuditTable } from '../shared/AuditTable';
 import { usePlatformAudit } from './api';
@@ -7,15 +8,17 @@ import { StatusBreakdown } from './StatusBreakdown';
 import { TenantSummary } from './TenantSummary';
 
 export function PlatformDashboardPage() {
+  const admin = usePlatformAdmin();
   const audit = usePlatformAudit({ per_page: 8 });
   return (
     <>
-      <PageHeader
-        title="Platform dashboard"
+      <PageHero
+        eyebrow="Platform administration"
+        title={`Welcome back, ${admin.name.split(' ')[0]}`}
         description="Organizations on the platform, and what happened lately."
         actions={
           <Link to="/platform/tenants">
-            <Button>Manage organizations</Button>
+            <Button variant="secondary">Manage organizations</Button>
           </Link>
         }
       />
@@ -40,7 +43,7 @@ export function PlatformDashboardPage() {
               <li key={to}>
                 <Link
                   to={to!}
-                  className="flex items-start justify-between gap-3 py-3 hover:text-accent-600"
+                  className="flex items-start justify-between gap-3 py-3 transition-colors hover:text-brand-700"
                 >
                   <span>
                     <span className="block font-medium">{title}</span>
@@ -56,7 +59,7 @@ export function PlatformDashboardPage() {
         </Card>
       </div>
       <section>
-        <h2 className="mb-3 text-base font-bold">Recent platform activity</h2>
+        <h2 className="mb-3 text-lg font-bold">Recent platform activity</h2>
         {audit.isPending ? (
           <SkeletonTable columns={4} rows={5} label="Loading activity" />
         ) : audit.isError ? (

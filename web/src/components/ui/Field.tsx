@@ -38,7 +38,7 @@ function FieldFrame({ label, error, hint, id, children }: FieldFrameProps) {
 }
 
 const CONTROL =
-  'min-h-10 w-full rounded-md border bg-surface px-3 text-sm placeholder:text-muted disabled:bg-page';
+  'min-h-10 w-full rounded-xl border bg-surface px-3.5 text-sm transition-colors placeholder:text-muted hover:border-brand-600/60 focus:border-brand-600 disabled:bg-page';
 
 interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;

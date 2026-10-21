@@ -76,7 +76,7 @@ describe('tenant sign in', () => {
     await user.type(screen.getByLabelText('Password'), 'secret-password');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Welcome back, Alex/ })).toBeInTheDocument();
     expect(order).toEqual(['csrf', 'login']);
     expect(posted.calls[0]!.body).toEqual({ username: 'admin1', password: 'secret-password' });
   });
@@ -137,7 +137,7 @@ describe('tenant sign in', () => {
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Beta Manning/ }));
 
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Welcome back, Alex/ })).toBeInTheDocument();
     expect(selected.calls[0]!.body).toEqual({ ticket: 'ticket-123', membership_id: 'm-b' });
   });
 
@@ -228,7 +228,7 @@ describe('platform sign in', () => {
     await user.type(screen.getByLabelText('Authenticator code'), '123456');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
-    expect(await screen.findByRole('heading', { name: 'Platform dashboard' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Welcome back, Root/ })).toBeInTheDocument();
   });
 });
 

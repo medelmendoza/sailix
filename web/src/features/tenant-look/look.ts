@@ -30,10 +30,14 @@ export function palette(
     look.secondary_color && HEX.test(look.secondary_color) ? look.secondary_color : null;
   const vars: Record<string, string> = {};
   if (primary) {
+    vars['--color-brand-50'] = mix(primary, '#ffffff', 0.94);
+    vars['--color-brand-100'] = mix(primary, '#ffffff', 0.84);
+    vars['--color-brand-600'] = mix(primary, '#ffffff', 0.12);
     vars['--color-brand-700'] = primary;
     vars['--color-brand-800'] = mix(primary, '#000000', 0.25);
     vars['--color-brand-900'] = mix(primary, '#000000', 0.5);
     vars['--color-accent-600'] = primary;
+    vars['--color-accent-50'] = mix(primary, '#ffffff', 0.94);
     vars['--color-accent-100'] = mix(primary, '#ffffff', 0.88);
     vars['--color-accent-500'] = secondary ?? mix(primary, '#ffffff', 0.15);
   } else if (secondary) {
@@ -46,7 +50,10 @@ export function palette(
     vars['--color-page'] = look.background_color;
   if (look.text_color && HEX.test(look.text_color)) vars['--color-ink'] = look.text_color;
   const font = look.font_preset ? FONT_STACKS[look.font_preset] : undefined;
-  if (font) vars['--font-sans'] = font;
+  if (font) {
+    vars['--font-sans'] = font;
+    vars['--font-heading'] = font; // a chosen font style applies to the headings too
+  }
   return vars;
 }
 
@@ -66,6 +73,10 @@ export const FONT_OPTIONS = [
 ] as const;
 
 const VARS = [
+  '--color-brand-50',
+  '--color-brand-100',
+  '--color-brand-600',
+  '--color-accent-50',
   '--color-brand-700',
   '--color-brand-800',
   '--color-brand-900',
@@ -75,6 +86,7 @@ const VARS = [
   '--color-page',
   '--color-ink',
   '--font-sans',
+  '--font-heading',
 ];
 
 /** Puts the look on the page: colours, tab title and icon. With no look it puts the platform look back. */

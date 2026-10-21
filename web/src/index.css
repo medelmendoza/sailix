@@ -1,25 +1,67 @@
 @import 'tailwindcss';
 
-/* "Harbor" tokens, shared with the mobile app: cool white ground, white cards, the logo's sail blue, navy ink. Light theme only for now. */
+/*
+ * Design tokens, in the style of the MK DevWorks site: rounded friendly headings, white cards on a soft tinted page, 1rem
+ * card radius, soft layered shadows, round icon tiles, pill buttons that lift on hover, a gradient underline under titles.
+ * The colour is Sailix's own: deep teal (the sea) with a warm amber spark. An organization's branding overrides the brand
+ * and accent variables at run time (features/tenant-look/look.ts), so components must use these names, never raw colours.
+ * Text-bearing uses pick 700 and darker so white-on-colour stays at 4.5:1 or better.
+ */
 @theme {
-  --color-brand-900: #14264a;
-  --color-brand-800: #1f3f7c;
-  --color-brand-700: #355dad;
-  --color-accent-600: #355dad;
-  --color-accent-500: #4a76c4;
-  --color-accent-100: #e3ecf8;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-heading: 'Baloo 2', ui-rounded, 'Quicksand', system-ui, sans-serif;
+
+  --color-brand-50: #f0fdfa;
+  --color-brand-100: #ccfbf1;
+  --color-brand-600: #0d9488;
+  --color-brand-700: #0f766e;
+  --color-brand-800: #115e59;
+  --color-brand-900: #134e4a;
+
+  /* accent-600 is what links and focus rings use (it follows the brand); accent-500 is the decorative spark */
+  --color-accent-50: #f0fdfa;
+  --color-accent-100: #dcf5f1;
+  --color-accent-500: #f59e0b;
+  --color-accent-600: #0f766e;
+
   --color-surface: #ffffff;
-  --color-page: #f4f7fb;
-  --color-ink: #12243d;
-  --color-muted: #51627a;
-  --color-line: #dce4ef;
+  --color-page: #f5f9f8;
+  --color-ink: #10211f;
+  --color-muted: #4d625e;
+  --color-line: #dbe7e4;
   --color-ok-bg: #e3f3ea;
   --color-ok-fg: #1f6b4a;
   --color-warn-bg: #fdf0dc;
   --color-warn-fg: #8f5200;
   --color-bad-bg: #fbe9e7;
   --color-bad-fg: #b3362f;
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --radius-card: 1rem;
+  --shadow-soft: 0 1px 2px rgb(16 33 31 / 0.05), 0 10px 28px -14px rgb(16 33 31 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(16 33 31 / 0.06), 0 22px 44px -18px rgb(16 33 31 / 0.28);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-page);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-accent-600);
+    outline-offset: 2px;
+    border-radius: 0.375rem;
+  }
 }
 
 html,
@@ -28,15 +70,90 @@ body,
   min-height: 100%;
 }
 
-body {
-  background: var(--color-page);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
+@layer components {
+  /* the short gradient bar under a page title */
+  .title-bar::after {
+    content: '';
+    display: block;
+    margin-top: 0.6rem;
+    height: 4px;
+    width: 3rem;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, var(--color-brand-600), var(--color-accent-500));
+  }
+  .text-center.title-bar::after {
+    margin-inline: auto;
+  }
+  .text-gradient {
+    background-image: linear-gradient(90deg, var(--color-brand-600), var(--color-accent-500));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .bg-dots {
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      rgb(255 255 255 / 0.16) 1px,
+      transparent 0
+    );
+    background-size: 22px 22px;
+  }
+  .card-hover {
+    transition:
+      transform 0.3s,
+      box-shadow 0.3s;
+  }
+  .card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+  }
+  .icon-tile {
+    display: grid;
+    height: 2.5rem;
+    width: 2.5rem;
+    place-items: center;
+    border-radius: 9999px;
+    background: var(--color-brand-100);
+    color: var(--color-brand-800);
+  }
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-accent-600);
-  outline-offset: 2px;
+/* A page's content eases in when the route changes: opacity and a small rise, nothing that shifts layout. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.page-in {
+  animation: page-in 0.35s ease-out;
+}
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.float-slow {
+  animation: float-y 7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-hover:hover {
+    transform: none;
+  }
+  .page-in,
+  .float-slow {
+    animation: none;
+  }
 }
 
 /* Loading placeholders: a soft block with a light band sweeping across it. Still (no sweep) when the person asks for less motion. */

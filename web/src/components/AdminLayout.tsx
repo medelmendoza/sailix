@@ -31,13 +31,13 @@ function Sidebar({ sections, portalName, portalKind, logoUrl }: Props) {
         ) : (
           <span
             aria-hidden="true"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent-600 to-brand-800 text-sm font-bold text-white shadow-sm"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-900 font-heading text-base font-bold text-white shadow-sm"
           >
             {portalName.charAt(0).toUpperCase()}
           </span>
         )}
         <div className="min-w-0">
-          <p className="truncate text-base font-bold leading-tight" title={portalName}>
+          <p className="truncate font-heading text-lg font-bold leading-tight" title={portalName}>
             {portalName}
           </p>
           <p className="truncate text-xs leading-tight text-muted">{portalKind}</p>
@@ -58,7 +58,9 @@ function Sidebar({ sections, portalName, portalKind, logoUrl }: Props) {
                   className={({ isActive }) =>
                     cn(
                       'group flex min-h-10 items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-sm font-medium transition',
-                      isActive ? 'bg-accent-100 text-brand-800' : 'hover:bg-line/50',
+                      isActive
+                        ? 'bg-brand-50 text-brand-800 shadow-[inset_3px_0_0_var(--color-brand-700)]'
+                        : 'text-ink hover:bg-brand-50/70 hover:text-brand-800',
                     )
                   }
                 >
@@ -67,10 +69,10 @@ function Sidebar({ sections, portalName, portalKind, logoUrl }: Props) {
                       <span
                         aria-hidden="true"
                         className={cn(
-                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
+                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors',
                           isActive
-                            ? 'bg-gradient-to-br from-accent-600 to-brand-800 text-white shadow-sm'
-                            : 'bg-line/60 text-muted',
+                            ? 'bg-gradient-to-br from-brand-600 to-brand-800 text-white shadow-sm'
+                            : 'bg-brand-50 text-brand-800 group-hover:bg-brand-100',
                         )}
                       >
                         {item.icon}
@@ -128,11 +130,11 @@ function AccountMenu({
         aria-expanded={open}
         aria-label={`Account menu, ${user.name}`}
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 hover:bg-line/50"
+        className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-brand-50"
       >
         <span
           aria-hidden="true"
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent-600 to-brand-800 text-xs font-semibold text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-900 text-xs font-semibold text-white"
         >
           {initials}
         </span>
@@ -146,14 +148,14 @@ function AccountMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-52 rounded-xl border border-line bg-surface p-1 shadow-lg"
+          className="absolute right-0 z-40 mt-2 w-52 rounded-2xl border border-line bg-surface p-1.5 shadow-[var(--shadow-lift)]"
         >
           {accountTo && (
             <Link
               role="menuitem"
               to={accountTo}
               onClick={() => setOpen(false)}
-              className="block rounded-lg px-3 py-2 text-sm hover:bg-line/50"
+              className="block rounded-xl px-3 py-2 text-sm hover:bg-brand-50"
             >
               My account
             </Link>
@@ -165,7 +167,7 @@ function AccountMenu({
               setOpen(false);
               setConfirming(true);
             }}
-            className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-line/50"
+            className="block w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-brand-50"
           >
             Sign out
           </button>
@@ -217,8 +219,8 @@ export function AdminLayout(props: Props) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header
           className={cn(
-            'sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-line bg-surface px-4 py-3 transition-shadow sm:px-6',
-            scrolled && 'shadow-sm',
+            'sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-line bg-surface/90 px-4 py-3 backdrop-blur transition-shadow sm:px-6',
+            scrolled && 'shadow-[0_8px_20px_-14px_rgb(16_33_31/0.35)]',
           )}
         >
           <div className="flex items-center gap-2">
@@ -242,7 +244,10 @@ export function AdminLayout(props: Props) {
           />
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
-          <Outlet />
+          {/* keyed by the page, so its content eases in each time the route changes */}
+          <div key={pathname} className="page-in">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

@@ -139,7 +139,7 @@ describe('route guards', () => {
       http.get(`${V1}/platform/audit-logs`, () => HttpResponse.json(pageOf([]))),
     );
     renderApp('/platform');
-    expect(await screen.findByRole('heading', { name: 'Platform dashboard' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Welcome back, Root/ })).toBeInTheDocument();
     const nav = screen.getByRole('navigation', { name: 'Main' });
     expect(within(nav).getByRole('link', { name: 'Organizations' })).toBeInTheDocument();
     expect(screen.getByText('Root Admin')).toBeInTheDocument();

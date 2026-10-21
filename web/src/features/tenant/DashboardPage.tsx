@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ErrorState, PageHeader, Spinner } from '../../components/ui';
+import { ErrorState, PageHero, Spinner } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import { AuditTable } from '../shared/AuditTable';
 import { can, hasFeature, useMe } from '../authentication/session';
@@ -14,7 +14,11 @@ export function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="Dashboard" description={`Overview of ${me.tenant.name}.`} />
+      <PageHero
+        eyebrow={me.tenant.name}
+        title={`Welcome back, ${(me.user.display_name ?? me.user.username).split(' ')[0]}`}
+        description={`Overview of ${me.tenant.name}.`}
+      />
       {can(me, 'users.manage') && openDeletions > 0 ? (
         <p className="mb-4 rounded-md border border-line bg-surface px-4 py-3 text-sm">
           {openDeletions} account deletion {openDeletions === 1 ? 'request is' : 'requests are'}{' '}

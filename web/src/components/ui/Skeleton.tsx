@@ -24,7 +24,7 @@ export function SkeletonStatTiles({ count = 4 }: { count?: number }) {
       {Array.from({ length: count }, (_, i) => (
         <div
           key={i}
-          className="rounded-2xl border border-white bg-surface p-4 shadow-sm ring-1 ring-line"
+          className="rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-[var(--shadow-soft)]"
         >
           <Skeleton className="h-3 w-20" />
           <Skeleton className="mt-3 h-7 w-12" />
@@ -49,7 +49,7 @@ export function SkeletonTable({
     <div
       role="status"
       aria-label={label}
-      className="overflow-hidden rounded-2xl border border-white bg-surface shadow-sm ring-1 ring-line"
+      className="overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-soft)]"
     >
       <div
         className="grid gap-4 border-b border-line bg-page px-4 py-3"
@@ -93,7 +93,7 @@ export function SkeletonCard({ lines = 4, label = 'Loading' }: { lines?: number;
     <div
       role="status"
       aria-label={label}
-      className="rounded-2xl border border-white bg-surface p-5 shadow-sm ring-1 ring-line"
+      className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)]"
     >
       <Skeleton className="mb-4 h-4 w-32" />
       <SkeletonLines lines={lines} />
@@ -114,7 +114,7 @@ export function SkeletonForm({
     <div
       role="status"
       aria-label={label}
-      className="rounded-2xl border border-white bg-surface p-5 shadow-sm ring-1 ring-line"
+      className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)]"
     >
       <div className="flex max-w-lg flex-col gap-5">
         {Array.from({ length: fields }, (_, i) => (

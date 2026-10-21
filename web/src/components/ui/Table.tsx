@@ -15,10 +15,10 @@ export function Table({
   compact?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-white bg-surface shadow-sm ring-1 ring-line">
+    <div className="overflow-x-auto rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-soft)]">
       <table className={`w-full text-left text-sm ${compact ? '' : 'min-w-[40rem]'}`}>
         <caption className="sr-only">{caption}</caption>
-        <thead className="border-b border-line bg-page text-xs uppercase tracking-wide text-muted">
+        <thead className="border-b border-line bg-brand-50 text-xs uppercase tracking-wide text-brand-800">
           <tr>
             {headers.map((h) => (
               <th key={h} scope="col" className="px-4 py-3 font-medium">

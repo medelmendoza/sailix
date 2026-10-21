@@ -3,7 +3,7 @@ import { cn } from './cn';
 import { Skeleton } from './Skeleton';
 
 const TONES = {
-  blue: 'bg-accent-100 text-brand-800',
+  blue: 'bg-brand-100 text-brand-800',
   green: 'bg-ok-bg text-ok-fg',
   amber: 'bg-warn-bg text-warn-fg',
   red: 'bg-bad-bg text-bad-fg',
@@ -25,17 +25,19 @@ export function StatTile({
   tone?: keyof typeof TONES;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 rounded-2xl border border-white bg-surface p-4 shadow-sm ring-1 ring-line">
+    <div className="card-hover flex items-start justify-between gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-[var(--shadow-soft)]">
       <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
-        <p className="mt-1 text-2xl font-bold text-brand-800">{value}</p>
+        <p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted sm:text-xs">
+          {label}
+        </p>
+        <p className="mt-1 font-heading text-3xl font-bold leading-none text-brand-800">{value}</p>
         {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
       </div>
       {icon && (
         <span
           aria-hidden="true"
           className={cn(
-            'hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:flex',
+            'hidden h-10 w-10 shrink-0 items-center justify-center rounded-full sm:flex',
             TONES[tone],
           )}
         >
@@ -150,7 +152,7 @@ export function SearchField({
         placeholder={placeholder}
         value={typed}
         onChange={(e) => setTyped(e.target.value)}
-        className="w-full rounded-xl border border-line bg-surface py-2 pl-9 pr-9 text-sm"
+        className="w-full rounded-full border border-line bg-surface py-2 pl-9 pr-9 text-sm transition-colors hover:border-brand-600/60 focus:border-brand-600"
       />
       {typed && (
         <button
