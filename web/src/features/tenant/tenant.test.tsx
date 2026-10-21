@@ -177,9 +177,8 @@ describe('members', () => {
     listMembers([ADMIN]);
     renderApp('/app/members');
 
-    const row = within(await screen.findByRole('table'))
-      .getByText('Alex Admin')
-      .closest('tr')!;
+    await screen.findByText('You'); // the placeholder is the same table, so wait for a real row
+    const row = within(screen.getByRole('table')).getByText('Alex Admin').closest('tr')!;
     expect(within(row).getByText('You')).toBeInTheDocument();
     expect(within(row).queryByRole('button')).not.toBeInTheDocument();
   });
@@ -1156,5 +1155,87 @@ describe('feature access in the menu', () => {
     for (const label of ['Crew', 'Documents', 'Branding', 'Domains', 'Announcements']) {
       expect(within(nav).getByRole('link', { name: label })).toBeInTheDocument();
     }
+  });
+});
+
+describe('loading placeholders match the admin pages they stand in for', () => {
+  const never = () => new Promise<never>(() => {}); // a request that does not answer
+  const columns = (el: HTMLElement) =>
+    within(el)
+      .getAllByRole('columnheader')
+      .map((h) => h.textContent);
+
+  it('Members, Crew and Documents: the real column headers, a row shape per cell', async () => {
+    asTenantAdmin();
+    server.use(
+      http.get(`${V1}/tenant/users`, never),
+      http.get(`${V1}/tenant/crew`, never),
+      http.get(`${V1}/tenant/documents`, never),
+    );
+
+    const members = renderApp('/app/members');
+    const m = await screen.findByRole('status', { name: 'Loading members' });
+    expect(columns(m)).toEqual(['Name', 'Account', 'Role', 'Status', 'Joined', 'Actions']);
+    expect(within(m).getAllByRole('row')).toHaveLength(1 + 6);
+    members.unmount();
+
+    const crew = renderApp('/app/crew');
+    const c = await screen.findByRole('status', { name: 'Loading crew' });
+    expect(columns(c)).toEqual([
+      'Name',
+      'Suffix',
+      'Crew ID',
+      'Rank',
+      'Fleet',
+      'Employment status',
+      'Account',
+    ]);
+    crew.unmount();
+
+    renderApp('/app/documents');
+    const d = await screen.findByRole('status', { name: 'Loading documents' });
+    expect(columns(d)).toEqual(['Member', 'Document', 'Expires', 'Status', '']);
+  });
+
+  it('Settings: the real labels and hints stay, only the controls shimmer', async () => {
+    asTenantAdmin();
+    server.use(http.get(`${V1}/tenant`, never));
+    renderApp('/app/settings');
+
+    const loading = await screen.findByRole('status', { name: 'Loading settings' });
+    for (const label of ['Display name', 'Privacy policy address', 'Minimum password length']) {
+      expect(within(loading).getByText(label)).toBeInTheDocument();
+    }
+    expect(within(loading).getByText(/never lower it/)).toBeInTheDocument();
+    expect(within(loading).queryByRole('textbox')).not.toBeInTheDocument();
+  });
+
+  it('Modules: a card per module with a title and status shape, before the data', async () => {
+    asTenantAdmin();
+    server.use(http.get(`${V1}/tenant/modules`, never));
+    renderApp('/app/modules');
+
+    const loading = await screen.findByRole('status', { name: 'Loading modules' });
+    expect(loading.querySelectorAll('section').length).toBe(3);
+    expect(loading.querySelectorAll('.shimmer').length).toBeGreaterThan(8);
+  });
+
+  it('Crew profile: the form with its real labels, the sections with their headings and the shape of their tables', async () => {
+    asTenantAdmin();
+    server.use(http.get(`${V1}/tenant/crew/c1`, never));
+    renderApp('/app/crew/c1');
+
+    const loading = await screen.findByRole('status', { name: 'Loading crew member' });
+    for (const label of ['Last name', 'Crew ID', 'Employment status', 'Birthday']) {
+      expect(within(loading).getByText(label)).toBeInTheDocument();
+    }
+    expect(within(loading).getByText('Assign documents')).toBeInTheDocument();
+    expect(within(loading).getByText('To-do list')).toBeInTheDocument();
+    expect(columns(within(loading).getByRole('table', { name: 'Tasks' }))).toEqual([
+      'Task',
+      'Due date',
+      'Status',
+      '',
+    ]);
   });
 });

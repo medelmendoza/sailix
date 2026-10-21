@@ -9,9 +9,10 @@ import {
   ErrorState,
   FormError,
   PageHeader,
-  Spinner,
   TextField,
   useToast,
+  Skeleton,
+  SkeletonField,
 } from '../../components/ui';
 import { api } from '../../services/api/client';
 import { describeError } from '../../services/api/errors';
@@ -33,6 +34,26 @@ const schema = z.object({
 });
 type Input = z.input<typeof schema>;
 type Values = z.output<typeof schema>;
+
+// The form's hints, shared with its loading placeholder so both read the same
+const DISPLAY_NAME_HINT = 'Shown to your members instead of the registered name.';
+const PRIVACY_HINT = 'Optional. Must start with https://';
+const PASSWORD_HINT = 'You can raise this above the platform minimum, never lower it.';
+
+/** The form while the settings load: its real card, labels and hints, with the controls shimmering. */
+function SettingsSkeleton() {
+  return (
+    <Card>
+      <div role="status" aria-label="Loading settings" className="flex max-w-lg flex-col gap-4">
+        <SkeletonField label="Display name" hint={DISPLAY_NAME_HINT} />
+        <SkeletonField label="Privacy policy address" hint={PRIVACY_HINT} />
+        <SkeletonField label="Minimum password length" hint={PASSWORD_HINT} />
+        <Skeleton className="h-10 w-36 rounded-full" />
+        <span className="sr-only">Loading…</span>
+      </div>
+    </Card>
+  );
+}
 
 export function SettingsPage() {
   const tenant = useTenantDetail();
@@ -86,7 +107,7 @@ export function SettingsPage() {
     <>
       <PageHeader title="Settings" description="Organization profile and security." />
       {tenant.isPending ? (
-        <Spinner />
+        <SettingsSkeleton />
       ) : tenant.isError ? (
         <ErrorState message={describeError(tenant.error)} onRetry={() => void tenant.refetch()} />
       ) : (
@@ -99,21 +120,21 @@ export function SettingsPage() {
             <FormError message={formError} />
             <TextField
               label="Display name"
-              hint="Shown to your members instead of the registered name."
+              hint={DISPLAY_NAME_HINT}
               error={errors.display_name?.message}
               {...register('display_name')}
             />
             <TextField
               label="Privacy policy address"
               type="url"
-              hint="Optional. Must start with https://"
+              hint={PRIVACY_HINT}
               error={errors.privacy_policy_url?.message}
               {...register('privacy_policy_url')}
             />
             <TextField
               label="Minimum password length"
               type="number"
-              hint="You can raise this above the platform minimum, never lower it."
+              hint={PASSWORD_HINT}
               error={errors.password_min_length?.message}
               {...register('password_min_length')}
             />

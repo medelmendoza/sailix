@@ -8,16 +8,21 @@ import {
   PageHeader,
   Pagination,
   SelectField,
-  SkeletonTable,
   StatusBadge,
   Table,
   TextField,
+  SkeletonDataTable,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { Membership } from '../../services/api/types';
 import { formatDateTime } from '../shared/AuditTable';
 import { useMe } from '../authentication/session';
 import { useMembers, useUpdateMember } from './api';
+
+/** This table's columns, shared with its loading placeholder so the two always have the same shape. */
+const MEMBER_HEADERS = ['Name', 'Account', 'Role', 'Status', 'Joined', 'Actions'];
+const MEMBER_CELLS: CellKind[] = ['stack', 'stack', 'text', 'pill', 'date', 'actions2'];
 
 type Patch = { status?: 'active' | 'suspended'; role?: 'tenant_admin' | 'crew' };
 interface Action {
@@ -160,7 +165,13 @@ export function MembersPage() {
       </div>
 
       {members.isPending ? (
-        <SkeletonTable columns={4} rows={6} label="Loading members" />
+        <SkeletonDataTable
+          caption="Members"
+          headers={MEMBER_HEADERS}
+          cells={MEMBER_CELLS}
+          rows={6}
+          label="Loading members"
+        />
       ) : members.isError ? (
         <ErrorState message={describeError(members.error)} onRetry={() => void members.refetch()} />
       ) : members.data.data.length === 0 ? (
@@ -174,10 +185,7 @@ export function MembersPage() {
         />
       ) : (
         <>
-          <Table
-            caption="Members"
-            headers={['Name', 'Account', 'Role', 'Status', 'Joined', 'Actions']}
-          >
+          <Table caption="Members" headers={MEMBER_HEADERS}>
             {members.data.data.map((m) => {
               const name = displayName(m);
               const isMe = m.id === me.membership.id;

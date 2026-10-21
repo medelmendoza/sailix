@@ -13,16 +13,19 @@ import {
   FormDialog,
   FormError,
   PageHeader,
-  Spinner,
   StatusBadge,
   Table,
   TextField,
   useToast,
+  Skeleton,
+  SkeletonField,
+  SkeletonDataTable,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { Crew, Todo } from '../../services/api/types';
 import { applyServerErrors } from '../authentication/forms';
-import { CrewDocumentsSection } from './CrewDocumentsSection';
+import { CHECKLIST_CELLS, CHECKLIST_HEADERS, CrewDocumentsSection } from './CrewDocumentsSection';
 import {
   useAssignTodo,
   useCrewMember,
@@ -33,6 +36,83 @@ import {
   useUpdateCrew,
   useUpdateTodo,
 } from './api';
+
+const TASK_HEADERS = ['Task', 'Due date', 'Status', ''];
+const TASK_CELLS: CellKind[] = ['strong', 'date', 'pill', 'actions2'];
+
+/** The fields of the record form, in order: the real labels, shared with the page's loading placeholder. */
+const PROFILE_FIELDS = [
+  'Last name',
+  'First name',
+  'Middle name',
+  'Suffix',
+  'Crew ID',
+  'Rank',
+  'Fleet',
+  'Vessel',
+  'Employment status',
+  'Mobile',
+  'Date arrive',
+  'Date depart',
+  'Birthday',
+];
+
+/**
+ * The whole crew page while the member loads: the title and its line, the status, the record form with its real labels, and
+ * the sections under it with their real headings and the shape of their tables.
+ */
+function CrewProfileSkeleton() {
+  return (
+    <div role="status" aria-label="Loading crew member">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-72 max-w-full" />
+          <Skeleton className="h-4 w-80 max-w-full" />
+        </div>
+        <Skeleton className="h-10 w-36 rounded-full" />
+      </div>
+      <Skeleton className="-mt-2 mb-4 h-5 w-20 rounded-full" />
+      <Card className="mb-6">
+        <div className="flex flex-col gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            {PROFILE_FIELDS.map((label) => (
+              <SkeletonField key={label} label={label} />
+            ))}
+          </div>
+          <Skeleton className="h-10 w-36 rounded-full" />
+        </div>
+      </Card>
+      <section className="mb-6">
+        <h2 className="mb-1 text-base font-semibold">Assign documents</h2>
+        <p className="mb-3 text-sm text-muted">
+          Tick a document to ask this member to submit or renew it. It leaves the checklist when
+          they send one in.
+        </p>
+        <SkeletonDataTable
+          caption="Documents to assign"
+          headers={CHECKLIST_HEADERS}
+          cells={CHECKLIST_CELLS}
+          rows={5}
+          label="Loading documents"
+        />
+      </section>
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-semibold">To-do list</h2>
+          <Skeleton className="h-10 w-28 rounded-full" />
+        </div>
+        <SkeletonDataTable
+          caption="Tasks"
+          headers={TASK_HEADERS}
+          cells={TASK_CELLS}
+          rows={3}
+          label="Loading tasks"
+        />
+      </section>
+      <span className="sr-only">Loading…</span>
+    </div>
+  );
+}
 
 const text = (max: number) => z.string().max(max, `At most ${max} characters.`);
 const day = z
@@ -103,7 +183,7 @@ export function CrewProfilePage() {
         </Link>
       </p>
       {crew.isPending ? (
-        <Spinner label="Loading crew member" />
+        <CrewProfileSkeleton />
       ) : crew.isError ? (
         <ErrorState message={describeError(crew.error)} onRetry={() => void crew.refetch()} />
       ) : (
@@ -253,13 +333,19 @@ function CrewTodos({ crew }: { crew: Crew }) {
         </Button>
       </div>
       {list.isPending ? (
-        <Spinner />
+        <SkeletonDataTable
+          caption="Tasks"
+          headers={TASK_HEADERS}
+          cells={TASK_CELLS}
+          rows={3}
+          label="Loading tasks"
+        />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
         <EmptyState title="No tasks" description="Tasks you add show up in this member's app." />
       ) : (
-        <Table caption="Tasks" headers={['Task', 'Due date', 'Status', '']}>
+        <Table caption="Tasks" headers={TASK_HEADERS}>
           {list.data.data.map((t) => {
             const s = todoState(t);
             return (

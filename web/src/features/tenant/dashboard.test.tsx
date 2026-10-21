@@ -88,6 +88,61 @@ function dashboardApi(extra: Parameters<typeof server.use> = []) {
   );
 }
 
+// the sidebar has links with the same names, so the tiles are looked up inside the page itself
+const main = () => within(screen.getByRole('main'));
+const findTile = async (name: RegExp) => {
+  await screen.findByRole('main'); // the page appears once the session is known
+  return main().findByRole('link', { name });
+};
+
+describe('Dashboard: the summary tiles', () => {
+  it('show the figures and open the area they come from', async () => {
+    asTenantAdmin();
+    dashboardApi([
+      http.get(`${V1}/tenant/deletion-requests`, () => HttpResponse.json(pageOf([], { total: 2 }))),
+    ]);
+    renderApp('/app');
+
+    const crew = await findTile(/^Crew/);
+    await waitFor(() => expect(crew).toHaveTextContent('7')); // everyone: the stub answers 7 for every crew request
+    expect(crew).toHaveAttribute('href', '/app/crew');
+    expect(await findTile(/Documents to review/)).toHaveTextContent('3');
+    expect(main().getByRole('link', { name: /Documents to review/ })).toHaveAttribute(
+      'href',
+      '/app/documents',
+    );
+    expect(main().getByRole('link', { name: /^Announcements/ })).toHaveAttribute(
+      'href',
+      '/app/announcements',
+    );
+    const requests = main().getByRole('link', { name: /Deletion requests/ });
+    await waitFor(() => expect(requests).toHaveTextContent('2'));
+    expect(requests).toHaveTextContent('open, to review');
+  });
+
+  it('only for the areas the person may see and the organization has', async () => {
+    asTenantAdmin(makeMe({ feature_access: { documents: false, announcements: false } }));
+    dashboardApi();
+    renderApp('/app');
+
+    await findTile(/^Crew/);
+    expect(main().queryByRole('link', { name: /Documents to review/ })).not.toBeInTheDocument();
+    expect(main().queryByRole('link', { name: /^Announcements/ })).not.toBeInTheDocument();
+    // the hero offers no shortcut to a switched-off area either
+    expect(screen.queryByRole('button', { name: 'Review documents' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Write an announcement' })).not.toBeInTheDocument();
+  });
+
+  it('shimmer until they arrive', async () => {
+    asTenantAdmin();
+    dashboardApi([http.get(`${V1}/tenant/crew`, () => new Promise<never>(() => {}))]);
+    renderApp('/app');
+
+    const crew = await findTile(/^Crew/);
+    expect(crew.querySelectorAll('.shimmer').length).toBeGreaterThanOrEqual(2); // the figure and its line
+  });
+});
+
 describe('Dashboard', () => {
   it('shows the three working panels with how many wait in each', async () => {
     asTenantAdmin();

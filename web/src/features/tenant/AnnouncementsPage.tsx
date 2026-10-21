@@ -13,11 +13,12 @@ import {
   FormError,
   PageHeader,
   Pagination,
-  SkeletonTable,
   Table,
   TextAreaField,
   TextField,
   useToast,
+  SkeletonDataTable,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { Announcement } from '../../services/api/types';
@@ -34,6 +35,10 @@ import {
   useSaveAnnouncement,
 } from './api';
 import { useQueryClient } from '@tanstack/react-query';
+
+/** This table's columns, shared with its loading placeholder so the two always have the same shape. */
+const ANNOUNCEMENT_HEADERS = ['Title', 'Recipients', 'Status', 'Shown until', 'Written', ''];
+const ANNOUNCEMENT_CELLS: CellKind[] = ['stack', 'text', 'pill', 'date', 'date', 'actions3'];
 
 const schema = z.object({
   title: z.string().trim().min(1, 'Enter a title.').max(150, 'At most 150 characters.'),
@@ -89,17 +94,20 @@ export function AnnouncementsPage() {
         fleets it is for; a member sees it when their crew record names one of those fleets.
       </Card>
       {list.isPending ? (
-        <SkeletonTable columns={4} rows={6} label="Loading announcements" />
+        <SkeletonDataTable
+          caption="Announcements"
+          headers={ANNOUNCEMENT_HEADERS}
+          cells={ANNOUNCEMENT_CELLS}
+          rows={5}
+          label="Loading announcements"
+        />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
         <EmptyState title="No announcements yet" />
       ) : (
         <>
-          <Table
-            caption="Announcements"
-            headers={['Title', 'Recipients', 'Status', 'Shown until', 'Written', '']}
-          >
+          <Table caption="Announcements" headers={ANNOUNCEMENT_HEADERS}>
             {list.data.data.map((a) => {
               const s = status(a);
               return (

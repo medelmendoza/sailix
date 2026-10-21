@@ -9,14 +9,19 @@ import {
   PageHeader,
   Pagination,
   SelectField,
-  SkeletonTable,
   Table,
   useToast,
+  SkeletonDataTable,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { CallItReport } from '../../services/api/types';
 import { formatDateTime } from '../shared/AuditTable';
 import { openCallItFile, useCallItReports, useReviewCallItReport } from './api';
+
+/** This table's columns, shared with its loading placeholder so the two always have the same shape. */
+const REPORT_HEADERS = ['Reporter', 'What', 'Where', 'Sent', 'Status', ''];
+const REPORT_CELLS: CellKind[] = ['stack', 'stack', 'stack', 'date', 'pill', 'actions1'];
 
 const CLASSIFICATION: Record<string, string> = {
   unsafe_acts: 'Unsafe acts',
@@ -76,17 +81,20 @@ export function CallItPage() {
         />
       </div>
       {list.isPending ? (
-        <SkeletonTable columns={5} rows={6} label="Loading reports" />
+        <SkeletonDataTable
+          caption="Reports"
+          headers={REPORT_HEADERS}
+          cells={REPORT_CELLS}
+          rows={5}
+          label="Loading reports"
+        />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
         <EmptyState title="No reports here" />
       ) : (
         <>
-          <Table
-            caption="Call-it reports"
-            headers={['Reporter', 'What', 'Where', 'Sent', 'Status', '']}
-          >
+          <Table caption="Call-it reports" headers={REPORT_HEADERS}>
             {list.data.data.map((r) => (
               <tr key={r.id}>
                 <td className="px-4 py-3">

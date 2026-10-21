@@ -15,11 +15,17 @@ import {
   Table,
   TextField,
   useToast,
+  SkeletonDataTable,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { Membership, Todo } from '../../services/api/types';
 import { formatDateTime } from '../shared/AuditTable';
 import { useAssignTodo, useDeleteTodo, useMembers, useTodos, useUpdateTodo } from './api';
+
+/** This table's columns, shared with its loading placeholder so the two always have the same shape. */
+const TODO_HEADERS = ['Task', 'Assigned to', 'Due', 'Status', ''];
+const TODO_CELLS: CellKind[] = ['strong', 'stack', 'date', 'pill', 'actions2'];
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -69,14 +75,20 @@ export function TodosPage() {
         />
       </div>
       {list.isPending ? (
-        <Spinner />
+        <SkeletonDataTable
+          caption="To-dos"
+          headers={TODO_HEADERS}
+          cells={TODO_CELLS}
+          rows={6}
+          label="Loading to-dos"
+        />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
         <EmptyState title="No to-dos" />
       ) : (
         <>
-          <Table caption="To-dos" headers={['Task', 'Assigned to', 'Due', 'Status', '']}>
+          <Table caption="To-dos" headers={TODO_HEADERS}>
             {list.data.data.map((t) => {
               const s = stateOf(t);
               return (

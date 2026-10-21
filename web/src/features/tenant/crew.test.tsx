@@ -306,7 +306,8 @@ describe('Crew profile', () => {
     profileApi();
     renderApp('/app/crew/c1');
 
-    const table = within(await screen.findByRole('table', { name: 'Documents to assign' }));
+    await screen.findByText('SB-1'); // the placeholder is the same table, so wait for a real row
+    const table = within(screen.getByRole('table', { name: 'Documents to assign' }));
     expect(table.getByText('Expiring')).toBeInTheDocument();
     expect(table.getByText('Valid')).toBeInTheDocument();
     expect(table.getByText('Not submitted')).toBeInTheDocument();
@@ -322,7 +323,7 @@ describe('Crew profile', () => {
     asTenantAdmin();
     profileApi();
     const { user } = renderApp('/app/crew/c1');
-    await screen.findByRole('table', { name: 'Documents to assign' });
+    await screen.findByText("Seaman's Book", { selector: 'td' }); // a real row, not the placeholder table
 
     await user.type(screen.getByLabelText('Document name'), 'visa');
     expect(screen.queryByText("Seaman's Book", { selector: 'td' })).not.toBeInTheDocument();

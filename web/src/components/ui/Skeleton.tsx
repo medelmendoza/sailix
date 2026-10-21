@@ -110,13 +110,37 @@ export function SkeletonCard({ lines = 4, label = 'Loading' }: { lines?: number;
   );
 }
 
-/** One kind of cell in a loading table: the shape of what the real cell holds, at the same height. */
-export type CellKind = 'identity' | 'text' | 'mono' | 'pill' | 'date' | 'chevron';
+/**
+ * One kind of cell in a loading table: the shape of what the real cell holds, at the same height.
+ * `stack` is a name over a small grey line (two lines), `stack3` has a third; `actions1` to `actions3` are that many ghost
+ * buttons at the end of the row.
+ */
+export type CellKind =
+  | 'identity'
+  | 'text'
+  | 'strong'
+  | 'stack'
+  | 'stack3'
+  | 'mono'
+  | 'pill'
+  | 'date'
+  | 'chevron'
+  | 'actions1'
+  | 'actions2'
+  | 'actions3';
 
 const WIDTHS = ['w-40', 'w-32', 'w-44', 'w-36'];
+const SHORT = ['w-20', 'w-16', 'w-24', 'w-14'];
+const TEXT = ['w-24', 'w-28', 'w-20', 'w-32'];
 
 function SkeletonCell({ kind, row }: { kind: CellKind; row: number }) {
-  const w = WIDTHS[row % WIDTHS.length];
+  const w = WIDTHS[row % WIDTHS.length] ?? 'w-36';
+  const short = SHORT[row % SHORT.length] ?? 'w-16';
+  const line = (cls: string, h = 'h-5') => (
+    <div className={cn('flex items-center', h)}>
+      <Skeleton className={cn('h-3.5', cls)} />
+    </div>
+  );
   switch (kind) {
     case 'identity':
       return (
@@ -137,19 +161,46 @@ function SkeletonCell({ kind, row }: { kind: CellKind; row: number }) {
     case 'pill':
       return <Skeleton className="h-5 w-20 rounded-full" />;
     case 'date':
-      return (
-        <div className="flex h-5 items-center">
-          <Skeleton className="h-3.5 w-32" />
-        </div>
-      );
+      return line('w-32');
     case 'chevron':
       return <Skeleton className="ml-auto h-4 w-3" />;
-    default:
+    case 'strong':
+      return line(w);
+    case 'stack':
       return (
-        <div className="flex h-5 items-center">
-          <Skeleton className={cn('h-3.5', w)} />
+        <div>
+          {line(w)}
+          <div className="flex h-4 items-center">
+            <Skeleton className="h-3 w-44 max-w-full" />
+          </div>
         </div>
       );
+    case 'stack3':
+      return (
+        <div>
+          {line(w)}
+          <div className="flex h-4 items-center">
+            <Skeleton className="h-3 w-24" />
+          </div>
+          <div className="flex h-4 items-center">
+            <Skeleton className="h-3 w-36" />
+          </div>
+        </div>
+      );
+    case 'actions1':
+    case 'actions2':
+    case 'actions3': {
+      const n = Number(kind.slice(-1));
+      return (
+        <div className="flex justify-end gap-1">
+          {Array.from({ length: n }, (_, i) => (
+            <Skeleton key={i} className={cn('h-10 rounded-full', i === 0 ? 'w-16' : short)} />
+          ))}
+        </div>
+      );
+    }
+    default:
+      return line(TEXT[row % TEXT.length] ?? 'w-24');
   }
 }
 
@@ -163,20 +214,30 @@ export function SkeletonDataTable({
   cells,
   rows = 6,
   label = 'Loading',
+  compact = false,
 }: {
   caption: string;
   headers: string[];
   cells: CellKind[];
   rows?: number;
   label?: string;
+  /** The same as `compact` on the real table: no minimum width, for a table inside a narrow panel. */
+  compact?: boolean;
 }) {
   return (
     <div role="status" aria-label={label}>
-      <Table caption={caption} headers={headers}>
+      <Table caption={caption} headers={headers} compact={compact}>
         {Array.from({ length: rows }, (_, r) => (
           <tr key={r}>
             {cells.map((kind, c) => (
-              <td key={c} className={cn('px-4 py-3', kind === 'chevron' && 'w-10 px-2')}>
+              <td
+                key={c}
+                className={cn(
+                  'px-4 py-3',
+                  kind === 'chevron' && 'w-10 px-2',
+                  kind.startsWith('actions') && 'whitespace-nowrap text-right',
+                )}
+              >
                 <SkeletonCell kind={kind} row={r} />
               </td>
             ))}

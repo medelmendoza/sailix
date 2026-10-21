@@ -6,9 +6,10 @@ import {
   EmptyState,
   ErrorState,
   Pagination,
-  Spinner,
+  SkeletonDataTable,
   Table,
   TextField,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { Announcement } from '../../services/api/types';
@@ -18,7 +19,7 @@ import { useAnnouncements, useCrewList, useDocuments } from './api';
 
 const PER_PANEL = 5;
 
-/** A working panel of the dashboard: a coloured title bar with a count, then a short list and its own paging. */
+/** A working panel of the dashboard: a title with a count and a link to the full list, then a short list and its own paging. */
 function Panel({
   title,
   count,
@@ -34,15 +35,15 @@ function Panel({
   return (
     <section
       aria-labelledby={id}
-      className="overflow-hidden rounded-lg border border-line bg-surface shadow-sm"
+      className="overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-soft)]"
     >
-      <div className="flex items-center justify-between gap-3 bg-brand-700 px-4 py-3 text-white">
-        <h2 id={id} className="flex items-center gap-2 text-base font-semibold">
+      <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
+        <h2 id={id} className="flex items-center gap-2 text-lg font-bold">
           {title}
           {count ? (
             <span
               aria-label={`${count} waiting`}
-              className="inline-flex min-w-6 items-center justify-center rounded-full bg-white px-2 text-xs font-bold text-bad-fg"
+              className="inline-flex min-w-6 items-center justify-center rounded-full bg-warn-bg px-2 text-xs font-bold text-warn-fg"
             >
               {count}
             </span>
@@ -50,13 +51,21 @@ function Panel({
         </h2>
         {action}
       </div>
-      <div className="p-4">{children}</div>
+      <div className="p-5">{children}</div>
     </section>
   );
 }
 
 const headerLink =
-  'rounded-md bg-white/15 px-3 py-1 text-xs font-medium text-white hover:bg-white/25';
+  'rounded-full border border-line px-3 py-1 text-xs font-medium transition-colors hover:border-brand-600 hover:text-brand-800';
+
+/** The panels' columns, shared with their loading placeholders so the two always have the same shape. */
+const APPLICATION_HEADERS = ['Name', 'Crew ID', 'Rank', 'Fleet', ''];
+const APPLICATION_CELLS: CellKind[] = ['strong', 'text', 'text', 'text', 'text'];
+const DOCUMENT_HEADERS = ['Name', 'Crew ID', 'Document', ''];
+const DOCUMENT_CELLS: CellKind[] = ['strong', 'text', 'text', 'text'];
+const ANNOUNCEMENT_HEADERS = ['Title', 'Date', 'Author', 'Status', ''];
+const ANNOUNCEMENT_CELLS: CellKind[] = ['strong', 'date', 'text', 'pill', 'text'];
 
 const nameOf = (
   profile: { first_name?: string | null; last_name?: string | null } | null | undefined,
@@ -116,18 +125,21 @@ export function UserApplicationPanel() {
         </Button>
       </form>
       {list.isPending ? (
-        <Spinner label="Loading applications" />
+        <SkeletonDataTable
+          compact
+          caption="Applications waiting"
+          headers={APPLICATION_HEADERS}
+          cells={APPLICATION_CELLS}
+          rows={PER_PANEL}
+          label="Loading applications"
+        />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
         <EmptyState title={name ? 'No one matches' : 'No applications waiting'} />
       ) : (
         <>
-          <Table
-            compact
-            caption="Applications waiting"
-            headers={['Name', 'Crew ID', 'Rank', 'Fleet', '']}
-          >
+          <Table compact caption="Applications waiting" headers={APPLICATION_HEADERS}>
             {list.data.data.map((c) => (
               <tr key={c.id}>
                 <td className="px-4 py-3 font-medium">{nameOf(c, c.username)}</td>
@@ -169,14 +181,21 @@ export function DocumentApprovalPanel() {
       }
     >
       {list.isPending ? (
-        <Spinner label="Loading documents" />
+        <SkeletonDataTable
+          compact
+          caption="Documents waiting"
+          headers={DOCUMENT_HEADERS}
+          cells={DOCUMENT_CELLS}
+          rows={PER_PANEL}
+          label="Loading documents"
+        />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
         <EmptyState title="Nothing waiting for review" />
       ) : (
         <>
-          <Table compact caption="Documents waiting" headers={['Name', 'Crew ID', 'Document', '']}>
+          <Table compact caption="Documents waiting" headers={DOCUMENT_HEADERS}>
             {list.data.data.map((d) => {
               const who = nameOf(d.owner?.profile, d.owner?.user?.username ?? '—');
               return (
@@ -220,18 +239,21 @@ export function AnnouncementsPanel() {
       }
     >
       {list.isPending ? (
-        <Spinner label="Loading announcements" />
+        <SkeletonDataTable
+          compact
+          caption="Latest announcements"
+          headers={ANNOUNCEMENT_HEADERS}
+          cells={ANNOUNCEMENT_CELLS}
+          rows={PER_PANEL}
+          label="Loading announcements"
+        />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
         <EmptyState title="No announcements yet" />
       ) : (
         <>
-          <Table
-            compact
-            caption="Latest announcements"
-            headers={['Title', 'Date', 'Author', 'Status', '']}
-          >
+          <Table compact caption="Latest announcements" headers={ANNOUNCEMENT_HEADERS}>
             {list.data.data.map((a) => (
               <tr key={a.id}>
                 {/* written by an administrator: shown as text, never as HTML */}

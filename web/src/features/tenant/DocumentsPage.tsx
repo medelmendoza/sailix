@@ -11,15 +11,20 @@ import {
   PageHeader,
   Pagination,
   SelectField,
-  SkeletonTable,
   Table,
   TextAreaField,
   useToast,
+  SkeletonDataTable,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { CrewDocument } from '../../services/api/types';
 import { formatDateTime } from '../shared/AuditTable';
 import { openDocumentFile, useDocuments, useReviewDocument } from './api';
+
+/** This table's columns, shared with its loading placeholder so the two always have the same shape. */
+const DOCUMENT_HEADERS = ['Member', 'Document', 'Expires', 'Status', ''];
+const DOCUMENT_CELLS: CellKind[] = ['stack', 'stack3', 'stack', 'pill', 'actions3'];
 
 const STATUS: Record<string, { label: string; tone: 'warning' | 'success' | 'danger' }> = {
   pending: { label: 'Waiting for review', tone: 'warning' },
@@ -89,14 +94,20 @@ export function DocumentsPage() {
         />
       </div>
       {list.isPending ? (
-        <SkeletonTable columns={5} rows={6} label="Loading documents" />
+        <SkeletonDataTable
+          caption="Documents"
+          headers={DOCUMENT_HEADERS}
+          cells={DOCUMENT_CELLS}
+          rows={5}
+          label="Loading documents"
+        />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
         <EmptyState title="No documents here" />
       ) : (
         <>
-          <Table caption="Documents" headers={['Member', 'Document', 'Expires', 'Status', '']}>
+          <Table caption="Documents" headers={DOCUMENT_HEADERS}>
             {list.data.data.map((d) => {
               const s = STATUS[d.status] ?? STATUS.pending!;
               return (

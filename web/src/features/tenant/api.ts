@@ -1,4 +1,10 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useToast } from '../../components/ui';
 import { api } from '../../services/api/client';
 import { describeError } from '../../services/api/errors';
@@ -540,4 +546,55 @@ export function useAuditLogs(params: ListParams) {
     queryFn: async () => (await api.get<Page<AuditEntry>>('/tenant/audit-logs', { params })).data,
     placeholderData: keepPreviousData,
   });
+}
+
+/**
+ * The figures on the dashboard tiles. Each is a list request for one row that is only read for its total, and is asked only
+ * when the signed-in person may see that area. `undefined` while it is on its way. The keys start with the list's own key, so
+ * approving a document or answering a request refreshes them.
+ */
+export function useDashboardCounts(want: {
+  crew: boolean;
+  documents: boolean;
+  announcements: boolean;
+  requests: boolean;
+}) {
+  const total = async (url: string, params: Record<string, string> = {}) =>
+    (await api.get<Page<unknown>>(url, { params: { ...params, per_page: 1 } })).data.meta.total;
+  const [crew, pendingCrew, pendingDocs, announcements, requests] = useQueries({
+    queries: [
+      {
+        queryKey: ['crew', 'count', 'all'],
+        queryFn: () => total('/tenant/crew'),
+        enabled: want.crew,
+      },
+      {
+        queryKey: ['crew', 'count', 'pending'],
+        queryFn: () => total('/tenant/crew', { 'filter[status]': 'pending' }),
+        enabled: want.crew,
+      },
+      {
+        queryKey: ['documents', 'count', 'pending'],
+        queryFn: () => total('/tenant/documents', { status: 'pending' }),
+        enabled: want.documents,
+      },
+      {
+        queryKey: ['announcements', 'count'],
+        queryFn: () => total('/tenant/announcements'),
+        enabled: want.announcements,
+      },
+      {
+        queryKey: ['deletion-requests', 'count'],
+        queryFn: () => total('/tenant/deletion-requests'),
+        enabled: want.requests,
+      },
+    ],
+  });
+  return {
+    crew: crew.data,
+    pendingCrew: pendingCrew.data,
+    pendingDocs: pendingDocs.data,
+    announcements: announcements.data,
+    requests: requests.data,
+  };
 }

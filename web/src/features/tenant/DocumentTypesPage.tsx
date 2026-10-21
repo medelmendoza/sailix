@@ -8,14 +8,19 @@ import {
   FormDialog,
   FormError,
   PageHeader,
-  Spinner,
   Table,
   TextField,
   useToast,
+  SkeletonDataTable,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { DocumentType } from '../../services/api/types';
 import { useDeleteDocumentType, useDocumentTypes, useSaveDocumentType } from './api';
+
+/** This table's columns, shared with its loading placeholder so the two always have the same shape. */
+const TYPE_HEADERS = ['Name', 'Short name', 'Status', ''];
+const TYPE_CELLS: CellKind[] = ['strong', 'text', 'pill', 'actions3'];
 
 export function DocumentTypesPage() {
   const list = useDocumentTypes();
@@ -43,13 +48,19 @@ export function DocumentTypesPage() {
         actions={<Button onClick={() => setEditing('new')}>New document type</Button>}
       />
       {list.isPending ? (
-        <Spinner />
+        <SkeletonDataTable
+          caption="Document types"
+          headers={TYPE_HEADERS}
+          cells={TYPE_CELLS}
+          rows={6}
+          label="Loading document types"
+        />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.length === 0 ? (
         <EmptyState title="No document types yet" />
       ) : (
-        <Table caption="Document types" headers={['Name', 'Short name', 'Status', '']}>
+        <Table caption="Document types" headers={TYPE_HEADERS}>
           {list.data.map((t) => (
             <tr key={t.id}>
               <td className="px-4 py-3 font-medium">{t.name}</td>

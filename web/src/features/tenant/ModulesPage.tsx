@@ -5,13 +5,32 @@ import {
   ConfirmDialog,
   ErrorState,
   PageHeader,
-  Spinner,
   StatusBadge,
+  Skeleton,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { TenantModule } from '../../services/api/types';
 import { can, useMe } from '../authentication/session';
 import { useSetModuleEnabled, useTenantModules } from './api';
+
+/** The module cards while they load: a title with its status, a line or two, and the button. */
+function ModulesSkeleton() {
+  return (
+    <div role="status" aria-label="Loading modules" className="flex flex-col gap-4">
+      {Array.from({ length: 3 }, (_, i) => (
+        <Card key={i}>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <Skeleton className="h-7 w-28" />
+            <Skeleton className="h-5 w-24 rounded-full" />
+          </div>
+          <Skeleton className="mb-4 h-4 w-3/4" />
+          <Skeleton className="h-10 w-36 rounded-full" />
+        </Card>
+      ))}
+      <span className="sr-only">Loading…</span>
+    </div>
+  );
+}
 
 export function ModulesPage() {
   const me = useMe();
@@ -26,7 +45,7 @@ export function ModulesPage() {
         description="Services your organization can offer to its members."
       />
       {modules.isPending ? (
-        <Spinner />
+        <ModulesSkeleton />
       ) : modules.isError ? (
         <ErrorState message={describeError(modules.error)} onRetry={() => void modules.refetch()} />
       ) : (

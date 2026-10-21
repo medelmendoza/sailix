@@ -6,12 +6,17 @@ import {
   ErrorState,
   PageHeader,
   Pagination,
-  SkeletonTable,
   Table,
+  SkeletonDataTable,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import { formatDateTime } from '../shared/AuditTable';
 import { useFeedback } from './api';
+
+/** This table's columns, shared with its loading placeholder so the two always have the same shape. */
+const FEEDBACK_HEADERS = ['From', 'About', 'Message', 'Sent'];
+const FEEDBACK_CELLS: CellKind[] = ['stack', 'pill', 'strong', 'date'];
 
 const CATEGORY: Record<string, string> = {
   bug: 'Something is wrong',
@@ -33,7 +38,13 @@ export function FeedbackPage() {
         Feedback about the Sailix app only. It is not sent to Tala or any other service.
       </Card>
       {feedback.isPending ? (
-        <SkeletonTable columns={4} rows={6} label="Loading feedback" />
+        <SkeletonDataTable
+          caption="Feedback"
+          headers={FEEDBACK_HEADERS}
+          cells={FEEDBACK_CELLS}
+          rows={5}
+          label="Loading feedback"
+        />
       ) : feedback.isError ? (
         <ErrorState
           message={describeError(feedback.error)}
@@ -43,7 +54,7 @@ export function FeedbackPage() {
         <EmptyState title="No feedback yet" />
       ) : (
         <>
-          <Table caption="Feedback" headers={['From', 'About', 'Message', 'Sent']}>
+          <Table caption="Feedback" headers={FEEDBACK_HEADERS}>
             {feedback.data.data.map((f) => (
               <tr key={f.id}>
                 <td className="px-4 py-3">

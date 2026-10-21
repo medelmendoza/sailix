@@ -1,7 +1,13 @@
 import { useState } from 'react';
-import { ErrorState, PageHeader, Pagination, SkeletonTable, TextField } from '../../components/ui';
+import {
+  ErrorState,
+  PageHeader,
+  Pagination,
+  TextField,
+  SkeletonDataTable,
+} from '../../components/ui';
 import { describeError } from '../../services/api/errors';
-import { AuditTable } from '../shared/AuditTable';
+import { AUDIT_CELLS, AUDIT_HEADERS, AuditTable } from '../shared/AuditTable';
 import { useAuditLogs } from './api';
 
 export function AuditPage() {
@@ -24,7 +30,13 @@ export function AuditPage() {
         />
       </div>
       {logs.isPending ? (
-        <SkeletonTable columns={4} rows={6} label="Loading audit log" />
+        <SkeletonDataTable
+          caption="Audit log"
+          headers={AUDIT_HEADERS}
+          cells={AUDIT_CELLS}
+          rows={8}
+          label="Loading audit log"
+        />
       ) : logs.isError ? (
         <ErrorState message={describeError(logs.error)} onRetry={() => void logs.refetch()} />
       ) : (

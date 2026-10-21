@@ -5,12 +5,17 @@ import {
   ErrorState,
   PageHeader,
   Pagination,
-  SkeletonTable,
   Table,
+  SkeletonDataTable,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import { formatDateTime } from '../shared/AuditTable';
 import { useDeletionRequests } from './api';
+
+/** This table's columns, shared with its loading placeholder so the two always have the same shape. */
+const REQUEST_HEADERS = ['Member', 'Account', 'Requested'];
+const REQUEST_CELLS: CellKind[] = ['strong', 'stack', 'date'];
 
 export function DeletionRequestsPage() {
   const [page, setPage] = useState(1);
@@ -27,7 +32,13 @@ export function DeletionRequestsPage() {
         access until your organization and the platform decide how deletion is handled.
       </Card>
       {requests.isPending ? (
-        <SkeletonTable columns={4} rows={6} label="Loading requests" />
+        <SkeletonDataTable
+          caption="Deletion requests"
+          headers={REQUEST_HEADERS}
+          cells={REQUEST_CELLS}
+          rows={4}
+          label="Loading requests"
+        />
       ) : requests.isError ? (
         <ErrorState
           message={describeError(requests.error)}
@@ -37,7 +48,7 @@ export function DeletionRequestsPage() {
         <EmptyState title="No open requests" />
       ) : (
         <>
-          <Table caption="Deletion requests" headers={['Member', 'Account', 'Requested']}>
+          <Table caption="Deletion requests" headers={REQUEST_HEADERS}>
             {requests.data.data.map((r) => (
               <tr key={r.id}>
                 <td className="px-4 py-3 font-medium">

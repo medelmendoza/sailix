@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from './cn';
 import { Button } from './Button';
 import { Skeleton } from './Skeleton';
@@ -18,15 +19,18 @@ export function StatTile({
   hint,
   icon,
   tone = 'blue',
+  to,
 }: {
   label: string;
   value: ReactNode;
   hint?: ReactNode;
   icon?: ReactNode;
   tone?: keyof typeof TONES;
+  /** Makes the whole tile a link to where the figure comes from. */
+  to?: string;
 }) {
-  return (
-    <div className="card-hover flex items-start justify-between gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-[var(--shadow-soft)]">
+  const body = (
+    <>
       <div className="min-w-0">
         <p className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted sm:text-xs">
           {label}
@@ -45,7 +49,16 @@ export function StatTile({
           {icon}
         </span>
       )}
-    </div>
+    </>
+  );
+  const frame =
+    'card-hover flex items-start justify-between gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-[var(--shadow-soft)]';
+  return to ? (
+    <Link to={to} className={frame}>
+      {body}
+    </Link>
+  ) : (
+    <div className={frame}>{body}</div>
   );
 }
 

@@ -7,13 +7,18 @@ import {
   ErrorState,
   PageHeader,
   Pagination,
-  SkeletonTable,
   StatusBadge,
   Table,
   TextField,
+  SkeletonDataTable,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import { useCrewList } from './api';
+
+/** This table's columns, shared with its loading placeholder so the two always have the same shape. */
+const CREW_HEADERS = ['Name', 'Suffix', 'Crew ID', 'Rank', 'Fleet', 'Employment status', 'Account'];
+const CREW_CELLS: CellKind[] = ['strong', 'text', 'text', 'text', 'text', 'text', 'pill'];
 
 const blank = { last_name: '', first_name: '', crew_number: '' };
 
@@ -94,7 +99,13 @@ export function CrewListPage() {
       </Card>
 
       {list.isPending ? (
-        <SkeletonTable columns={5} rows={6} label="Loading crew" />
+        <SkeletonDataTable
+          caption="Crew"
+          headers={CREW_HEADERS}
+          cells={CREW_CELLS}
+          rows={6}
+          label="Loading crew"
+        />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
@@ -108,10 +119,7 @@ export function CrewListPage() {
         />
       ) : (
         <>
-          <Table
-            caption="Crew list"
-            headers={['Name', 'Suffix', 'Crew ID', 'Rank', 'Fleet', 'Employment status', 'Account']}
-          >
+          <Table caption="Crew list" headers={CREW_HEADERS}>
             {list.data.data.map((c) => {
               const name = [c.last_name, c.first_name].filter(Boolean).join(', ') || c.username;
               return (

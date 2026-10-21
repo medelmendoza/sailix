@@ -6,14 +6,21 @@ import {
   EmptyState,
   ErrorState,
   SelectField,
-  Spinner,
   Table,
   TextField,
+  SkeletonDataTable,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { Crew, CrewDocumentRow } from '../../services/api/types';
 import { formatDateTime } from '../shared/AuditTable';
 import { useCrewDocuments, useDocuments, useSetDocumentRequest } from './api';
+
+/** The two tables' columns, shared with their loading placeholders so the two always have the same shape. */
+export const CHECKLIST_HEADERS = ['Document', 'Number', 'Expires', 'Status', 'Ask'];
+export const CHECKLIST_CELLS: CellKind[] = ['strong', 'text', 'date', 'pill', 'text'];
+const UPLOAD_HEADERS = ['Document', 'Sent', ''];
+const UPLOAD_CELLS: CellKind[] = ['stack', 'date', 'actions2'];
 
 type State = CrewDocumentRow['state'];
 const STATE: Record<State, { label: string; tone: 'success' | 'warning' | 'danger' | 'neutral' }> =
@@ -62,7 +69,13 @@ function AssignDocuments({ crew }: { crew: Crew }) {
         send one in.
       </p>
       {rows.isPending ? (
-        <Spinner label="Loading documents" />
+        <SkeletonDataTable
+          caption="Documents to assign"
+          headers={CHECKLIST_HEADERS}
+          cells={CHECKLIST_CELLS}
+          rows={6}
+          label="Loading documents"
+        />
       ) : rows.isError ? (
         <ErrorState message={describeError(rows.error)} onRetry={() => void rows.refetch()} />
       ) : all.length === 0 ? (
@@ -113,10 +126,7 @@ function AssignDocuments({ crew }: { crew: Crew }) {
             {shown.length === 0 ? (
               <EmptyState title="No documents match" />
             ) : (
-              <Table
-                caption="Documents to assign"
-                headers={['Document', 'Number', 'Expires', 'Status', 'Ask']}
-              >
+              <Table caption="Documents to assign" headers={CHECKLIST_HEADERS}>
                 {shown.map((r) => {
                   const s = STATE[r.state];
                   return (
@@ -163,13 +173,19 @@ function UploadRequests({ crew }: { crew: Crew }) {
         {count > 0 ? <Badge tone="warning">{count}</Badge> : null}
       </h2>
       {list.isPending ? (
-        <Spinner />
+        <SkeletonDataTable
+          caption="Documents waiting for review"
+          headers={UPLOAD_HEADERS}
+          cells={UPLOAD_CELLS}
+          rows={2}
+          label="Loading upload requests"
+        />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
         <EmptyState title="Nothing waiting for review" />
       ) : (
-        <Table caption="Documents waiting for review" headers={['Document', 'Sent', '']}>
+        <Table caption="Documents waiting for review" headers={UPLOAD_HEADERS}>
           {list.data.data.map((d) => (
             <tr key={d.id}>
               <td className="px-4 py-3">
