@@ -124,6 +124,7 @@ class LegacyImportTest extends TestCase
             $user('U-CREW2', 'ROLE_USER', 'juan', 'juan@example.test', ['crewID' => '09978', 'is_inactive' => 'Y']),
             $user('U-DUP', 'ROLE_USER', 'boss2', 'Boss@Example.test'), // same person as the admin, second login
             $user('U-NOCREW', 'ROLE_USER', 'pat', 'pat@example.test'),
+            $user('U-BLANK', 'ROLE_USER', '', '', ['crewID' => '09979']), // a crew member who could never sign in
         ]);
         $this->rows('pl_documents', [
             ['id' => '1', 'docID' => 'D-PASS', 'document_name' => 'Passport', 'document_shortname' => 'PASS', 'is_license' => 'N', 'is_inactive' => 'N'],
@@ -178,15 +179,17 @@ class LegacyImportTest extends TestCase
 
     public function test_people_come_across_with_their_roles_passwords_and_details(): void
     {
-        $this->run_();
+        $report = $this->run_();
 
         $tenant = Tenant::where('code', 'OLDCO')->firstOrFail();
         $this->assertSame('provisioning', $tenant->status->value);
         $this->assertSame('oldco', $tenant->slug);
 
-        // 5 old accounts, one is a second login of the admin: 4 users
+        // 6 old accounts: one is a second login of the admin and one has no username or email, so 4 users
         $this->assertSame(4, DB::table('users')->count());
         $this->assertDatabaseMissing('users', ['username' => 'boss2']);
+        $this->assertNull(CrewProfile::withoutTenantScope()->where('crew_number', '09979')->first()); // no username or email: skipped, not half-imported
+        $this->assertStringContainsString('U-BLANK: no username or email', implode("\n", $report->notes));
         $this->assertTrue(Hash::check('old-secret', DB::table('users')->where('username', 'maria')->value('password'))); // old hash kept as it is
 
         $roles = Membership::withoutTenantScope()->where('tenant_id', $tenant->id)->get()->mapWithKeys(fn ($m) => [$m->user->username => $m->role->value]);

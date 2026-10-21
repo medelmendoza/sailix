@@ -185,6 +185,12 @@ final class LegacyImporter
             $email = mb_strtolower(trim((string) $r->email_address));
             $userId = $this->id('user', $r->userID);
 
+            if ($email === '' || trim((string) $r->username) === '') {
+                $this->report->skipped('user', $r->userID, 'no username or email (v2 needs both to sign in)');
+
+                continue;
+            }
+
             $clash = DB::table('users')->where('id', '!=', $userId)
                 ->where(fn ($q) => $q->where('email', $email)->orWhere('username', $r->username))->exists();
             if ($clash) {

@@ -111,3 +111,30 @@ The volume is tiny, so the import can be checked row by row.
 - An empty v2 database and a database user that can write to it.
 - Where the uploaded files are stored and how I can read them (or that they are not needed).
 - Answers to section 5, especially 5.1, 5.2, 5.3, 5.4 and 5.7.
+
+## 7. Dry run against the real old data (staging), 2026-10-21
+
+Source: the staging database, read only in practice (the importer only runs SELECT); target: the local dev database,
+everything rolled back (user and organization counts were identical before and after). No files folder was given.
+
+| Entity | Would be created | Skipped |
+|---|---|---|
+| users, memberships, crew profiles | 3 | 2 users |
+| document kinds | 5 | 0 |
+| documents | 0 | 10 |
+| announcements (with 1 audience group) | 1 | 0 |
+| to-dos | 0 | 2 |
+
+Why things were skipped:
+- 1 user: same email as another account (the other, the administrator, is kept; it owns no documents, to-dos or announcements).
+- 1 user: **no username and no email** (a crew member with a crew id), so v2 cannot sign them in. Two of their uploaded documents are skipped with them.
+- 10 documents: 8 only because no files folder was given; 2 because their crew member was not imported.
+- 2 to-dos: their owners' ids do not exist in the old user table at all.
+- The announcement is addressed to the group `ABACUS`; as a fleet, only crew whose fleet is exactly `ABACUS` will see it, and no imported crew member has a fleet yet.
+
+Found by this run, and fixed: a user with an empty username or email is now skipped with a reason instead of stopping the import, and a
+database error no longer prints the values being written (they can contain names).
+
+The staging database user can write (SELECT, DELETE, CREATE, ALTER); the importer's guard refuses that unless
+`--allow-writable-source` is given, which was done for this dry run only, with the owner's approval.
+
