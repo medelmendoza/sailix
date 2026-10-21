@@ -71,7 +71,7 @@ describe('Branding page', () => {
     await user.clear(tagline);
     await user.type(tagline, 'Fair winds');
     await user.type(screen.getByLabelText('Secondary colour'), '#1F6B4A');
-    await user.click(screen.getByRole('button', { name: 'Save branding' }));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     await waitFor(() => expect(saved.calls).toHaveLength(1));
     expect(saved.calls[0]!.body).toEqual({
@@ -97,7 +97,7 @@ describe('Branding page', () => {
     const { user } = renderApp('/app/branding');
     await user.clear(await screen.findByLabelText('Tagline'));
     await user.clear(screen.getByLabelText('Primary colour'));
-    await user.click(screen.getByRole('button', { name: 'Save branding' }));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     await waitFor(() => expect(saved.calls).toHaveLength(1));
     expect(saved.calls[0]!.body).toEqual(EMPTY_SAVE);
@@ -123,7 +123,7 @@ describe('Branding page', () => {
     await user.type(screen.getByLabelText('Primary colour'), '#FFFF00');
     expect(screen.getByText(/Too light for white button text/)).toBeInTheDocument();
     // Save stays off while a field has a problem, so nothing can be sent
-    expect(screen.getByRole('button', { name: 'Save branding' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
     expect(saved.calls).toHaveLength(0);
   });
 
@@ -136,7 +136,7 @@ describe('Branding page', () => {
     ]);
     const { user } = renderApp('/app/branding');
     await user.type(await screen.findByLabelText('Tagline'), 'Hello');
-    await user.click(screen.getByRole('button', { name: 'Save branding' }));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
   });
 
@@ -201,7 +201,7 @@ describe('Branding page: the rest of the look', () => {
     await user.type(screen.getByLabelText('Background colour'), '#FFFFFF');
     await user.type(screen.getByLabelText('Text colour'), '#0F172A');
     await user.click(screen.getByRole('radio', { name: /Serif/ }));
-    await user.click(screen.getByRole('button', { name: 'Save branding' }));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     await waitFor(() => expect(saved.calls).toHaveLength(1));
     expect(saved.calls[0]!.body).toEqual({
@@ -222,11 +222,11 @@ describe('Branding page: the rest of the look', () => {
 
     await user.type(await screen.findByLabelText('Text colour'), '#F0F0F0');
     expect(await screen.findByText(/Text on this background has only/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Save branding' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
     await user.clear(screen.getByLabelText('Text colour'));
     await user.type(screen.getByLabelText('Short name'), '<b>');
     expect(screen.getByText(/The characters < and > are not allowed/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Save branding' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
   });
 
   it('shows the sign-in page as it will look, as you type', async () => {
@@ -239,6 +239,38 @@ describe('Branding page: the rest of the look', () => {
     expect(within(preview).getByText('Fair winds')).toBeInTheDocument();
     expect(within(preview).getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
     expect(preview.querySelector('img')).toHaveAttribute('src', 'http://x/login-logo.png');
+  });
+});
+
+describe('Branding page: the save bar', () => {
+  it('says whether anything is unsaved, keeps Save off until something changed, and Discard puts it back', async () => {
+    asTenantAdmin();
+    api(branding({ tagline: 'Sailing since 1990' }));
+    const { user } = renderApp('/app/branding');
+
+    const tagline = await screen.findByLabelText('Tagline');
+    expect(screen.getByText('All changes saved')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Discard' })).not.toBeInTheDocument();
+
+    await user.type(tagline, '!');
+    expect(screen.getByText('You have unsaved changes')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeEnabled();
+
+    await user.click(screen.getByRole('button', { name: 'Discard' }));
+    expect(tagline).toHaveValue('Sailing since 1990');
+    expect(screen.getByText('All changes saved')).toBeInTheDocument();
+  });
+
+  it('shows the full name as read only, with where to change it', async () => {
+    asTenantAdmin();
+    api(branding());
+    renderApp('/app/branding');
+
+    const name = await screen.findByLabelText('Organization name');
+    expect(name).toBeDisabled();
+    expect(name).toHaveValue('Southfield Agencies');
+    expect(screen.getByText(/set by the platform administrator/)).toBeInTheDocument();
   });
 });
 

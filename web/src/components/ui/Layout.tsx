@@ -5,11 +5,14 @@ import { SkeletonLines } from './Skeleton';
 
 export function Card({
   title,
+  description,
   children,
   className,
   actions,
 }: {
   title?: string;
+  /** A line of explanation under the title. */
+  description?: string;
   children: ReactNode;
   className?: string;
   actions?: ReactNode;
@@ -27,6 +30,7 @@ export function Card({
           {actions}
         </div>
       )}
+      {description && <p className="-mt-2 mb-4 text-sm text-muted">{description}</p>}
       {children}
     </section>
   );

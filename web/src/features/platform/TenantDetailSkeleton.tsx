@@ -15,7 +15,7 @@ export const TABS = [
 ] as const;
 
 export const FEATURES_NOTE =
-  'A feature that is off is hidden in the portal and the mobile app, and the server refuses it. Astra, Call-it and Tala are switched under Modules, further down.';
+  'Choose which features this organization can use. Turning one off hides it in the portal and the mobile app and the server refuses it, but nothing is deleted: turning it back on restores everything. Astra, Call-it and Tala are switched under Modules, further down.';
 
 export const ADMIN_HEADERS = ['Account', 'Email', 'Status'];
 
@@ -32,25 +32,33 @@ export function AdminsTableSkeleton() {
   );
 }
 
-/** The rows of the feature switches while they load: a name and a line under it, a switch at the end. */
+/** The feature rows while they load: a name with its code chip, a line under it, the switch, and the save bar. */
 export function FeatureRowsSkeleton() {
   return (
-    <Card>
-      <ul role="status" aria-label="Loading feature access" className="divide-y divide-line">
+    <>
+      <ul
+        role="status"
+        aria-label="Loading feature access"
+        className="divide-y divide-line rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-soft)]"
+      >
         {Array.from({ length: 7 }, (_, i) => (
-          <li key={i} className="flex items-center justify-between gap-4 py-3">
+          <li key={i} className="flex items-center justify-between gap-4 px-4 py-3.5">
             <div className="min-w-0 space-y-2">
-              <Skeleton className="h-4 w-36" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-14" />
+              </div>
               <Skeleton className="h-3.5 w-72 max-w-full" />
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Skeleton className="size-5" />
-              <Skeleton className="h-4 w-6" />
-            </div>
+            <Skeleton className="h-6 w-11 shrink-0 rounded-full" />
           </li>
         ))}
       </ul>
-    </Card>
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-3 shadow-[var(--shadow-soft)]">
+        <span className="text-sm text-muted">All changes saved</span>
+        <Skeleton className="h-10 w-36 rounded-full" />
+      </div>
+    </>
   );
 }
 
@@ -132,7 +140,7 @@ export function TenantDetailSkeleton({ tab }: { tab: string }) {
         ← Back to organizations
       </Link>
       <header className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)]">
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
           <Skeleton className="size-16 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1 space-y-3">
             <div className="flex items-center gap-3">
@@ -166,11 +174,8 @@ export function TenantDetailSkeleton({ tab }: { tab: string }) {
         {tab === 'appearance' && <BrandingSkeleton />}
         {tab === 'features' && (
           <div className="flex flex-col gap-8">
-            <section className="flex flex-col gap-3">
-              <div>
-                <h2 className="text-base font-semibold">Feature access</h2>
-                <p className="text-sm text-muted">{FEATURES_NOTE}</p>
-              </div>
+            <section className="flex flex-col gap-4">
+              <p className="text-sm text-muted">{FEATURES_NOTE}</p>
               <FeatureRowsSkeleton />
             </section>
             <section>

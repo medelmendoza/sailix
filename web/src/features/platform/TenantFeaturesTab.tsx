@@ -7,6 +7,7 @@ import {
   Card,
   ErrorState,
   FormError,
+  SaveBar,
   SelectField,
   StatusBadge,
   TextField,
@@ -21,7 +22,7 @@ import {
   useProvisionModule,
   useUpdateFeatures,
 } from './api';
-import type { PlatformTenantModule, Tenant } from '../../services/api/types';
+import type { PlatformTenantFeature, PlatformTenantModule, Tenant } from '../../services/api/types';
 import { FEATURES_NOTE, FeatureRowsSkeleton, ModuleCardsSkeleton } from './TenantDetailSkeleton';
 
 const TEAM_ID = /^[A-Za-z0-9_-]{1,64}$/;
@@ -122,17 +123,9 @@ function ModuleCard({ tenantId, module }: { tenantId: string; module: PlatformTe
 
 function FeatureSwitches({ tenantId }: { tenantId: string }) {
   const features = usePlatformFeatures(tenantId);
-  const update = useUpdateFeatures(tenantId);
-  const toast = useToast();
-
   return (
-    <section aria-labelledby="features-h" className="flex flex-col gap-3">
-      <div>
-        <h2 id="features-h" className="text-base font-semibold">
-          Feature access
-        </h2>
-        <p className="text-sm text-muted">{FEATURES_NOTE}</p>
-      </div>
+    <section aria-label="Feature access" className="flex flex-col gap-4">
+      <p className="text-sm text-muted">{FEATURES_NOTE}</p>
       {features.isPending ? (
         <FeatureRowsSkeleton />
       ) : features.isError ? (
@@ -141,41 +134,94 @@ function FeatureSwitches({ tenantId }: { tenantId: string }) {
           onRetry={() => void features.refetch()}
         />
       ) : (
-        <Card>
-          <ul className="divide-y divide-line">
-            {features.data.map((f) => (
-              <li key={f.code} className="flex items-center justify-between gap-4 py-3">
-                <div className="min-w-0">
-                  <p className="font-medium">{f.label}</p>
-                  <p className="text-sm text-muted">{f.description}</p>
-                </div>
-                <label className="flex shrink-0 items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    role="switch"
-                    className="size-5 accent-[var(--color-accent-600)]"
-                    aria-label={`${f.label} access`}
-                    checked={f.enabled}
-                    disabled={update.isPending}
-                    onChange={(e) => {
-                      const on = e.target.checked; // read now: the box has moved by the time the server answers
-                      update.mutate(
-                        { [f.code]: on },
-                        {
-                          onSuccess: () => toast.success(`${f.label} ${on ? 'on' : 'off'}.`),
-                          onError: (err) => toast.error(describeError(err)),
-                        },
-                      );
-                    }}
-                  />
-                  {f.enabled ? 'On' : 'Off'}
-                </label>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        <FeatureEditor tenantId={tenantId} features={features.data} />
       )}
     </section>
+  );
+}
+
+/**
+ * The switches as a draft: pressing one changes only what you see, the bar at the bottom says how many changes are waiting,
+ * and one Save sends them together. Discard throws the draft away.
+ */
+function FeatureEditor({
+  tenantId,
+  features,
+}: {
+  tenantId: string;
+  features: PlatformTenantFeature[];
+}) {
+  const update = useUpdateFeatures(tenantId);
+  const toast = useToast();
+  const [draft, setDraft] = useState<Record<string, boolean>>({}); // feature code => the value pressed, only where it differs
+  const isOn = (f: PlatformTenantFeature) => draft[f.code] ?? f.enabled;
+  const changed = features.filter((f) => isOn(f) !== f.enabled);
+
+  function toggle(f: PlatformTenantFeature) {
+    const next = !isOn(f);
+    setDraft((d) => {
+      const rest = { ...d };
+      delete rest[f.code];
+      return next === f.enabled ? rest : { ...rest, [f.code]: next };
+    });
+  }
+
+  function save() {
+    update.mutate(Object.fromEntries(changed.map((f) => [f.code, isOn(f)])), {
+      onSuccess: () => {
+        setDraft({});
+        toast.success('Feature access saved.');
+      },
+      onError: (err) => toast.error(describeError(err)),
+    });
+  }
+
+  return (
+    <>
+      <ul className="divide-y divide-line rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-soft)]">
+        {features.map((f) => {
+          const on = isOn(f);
+          return (
+            <li key={f.code} className="flex items-center justify-between gap-4 px-4 py-3.5">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium">{f.label}</span>
+                  <code className="rounded bg-brand-50 px-1.5 py-0.5 text-[11px] text-brand-800">
+                    {f.code}
+                  </code>
+                </div>
+                <p className="mt-0.5 text-sm text-muted">{f.description}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={on}
+                aria-label={`${f.label} access`}
+                title={`${on ? 'Turn off' : 'Turn on'} ${f.label}`}
+                disabled={update.isPending}
+                onClick={() => toggle(f)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
+                  on ? 'bg-brand-700' : 'bg-muted/40'
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`inline-block size-5 rounded-full bg-white shadow transition-transform ${
+                    on ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <SaveBar
+        dirty={changed.length > 0}
+        saving={update.isPending}
+        onDiscard={() => setDraft({})}
+        onSave={save}
+      />
+    </>
   );
 }
 

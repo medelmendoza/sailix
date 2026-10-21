@@ -640,7 +640,7 @@ describe('organization detail: address and branding', () => {
 
     await user.type(await screen.findByLabelText('Tagline'), 'Set by the platform');
     await user.type(screen.getByLabelText('Primary colour'), '#355DAD');
-    await user.click(screen.getByRole('button', { name: 'Save branding' }));
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
     await waitFor(() => expect(saved.calls).toHaveLength(1));
     expect(saved.calls[0]!.body).toMatchObject({
       tagline: 'Set by the platform',
@@ -661,6 +661,10 @@ describe('organization detail: address and branding', () => {
     const { user } = renderApp('/platform/tenants/t-1?tab=appearance');
 
     await user.click(await screen.findByRole('button', { name: 'Reset to the Sailix look' }));
+    expect(reset.calls).toHaveLength(0); // it asks first
+    await user.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Reset' }),
+    );
     await waitFor(() => expect(reset.calls).toHaveLength(1));
   });
 });
@@ -697,15 +701,62 @@ describe('organization detail: feature access', () => {
     expect(crew).toBeChecked();
     expect(screen.getByRole('switch', { name: 'Documents access' })).toBeChecked();
 
+    // pressing a switch only changes the draft: nothing is sent yet, and the bar says so
+    expect(screen.getByRole('status', { name: '' })).toHaveTextContent('All changes saved');
     await user.click(crew);
+    expect(crew).not.toBeChecked();
+    expect(patched.calls).toHaveLength(0);
+    expect(screen.getByText('You have unsaved changes')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     await waitFor(() =>
       expect(patched.calls.map((c) => c.body)).toEqual([{ features: { crew: false } }]),
     );
-    await waitFor(() =>
-      expect(screen.getByRole('switch', { name: 'Crew access' })).not.toBeChecked(),
-    );
+    expect(await screen.findByText('All changes saved')).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Crew access' })).not.toBeChecked();
     expect(screen.getByRole('switch', { name: 'Documents access' })).toBeChecked();
+  });
+
+  it('Discard puts the switches back, and several changes go in one request', async () => {
+    detailData(tenant());
+    server.use(
+      http.get(`${V1}/platform/tenants/t-1/features`, () =>
+        HttpResponse.json({ data: [feature('crew', 'Crew'), feature('documents', 'Documents')] }),
+      ),
+    );
+    const patched = capture<{ features: Record<string, boolean> }>();
+    server.use(
+      http.patch(`${V1}/platform/tenants/t-1/features`, async ({ request }) => {
+        await patched.record(request);
+        return HttpResponse.json({
+          data: [feature('crew', 'Crew', false), feature('documents', 'Documents', false)],
+        });
+      }),
+    );
+    const { user } = renderApp('/platform/tenants/t-1?tab=features');
+
+    const crew = await screen.findByRole('switch', { name: 'Crew access' });
+    const documents = screen.getByRole('switch', { name: 'Documents access' });
+    await user.click(crew);
+    await user.click(documents);
+    await user.click(screen.getByRole('button', { name: 'Discard' }));
+    expect(crew).toBeChecked();
+    expect(documents).toBeChecked();
+    expect(screen.getByText('All changes saved')).toBeInTheDocument();
+
+    await user.click(crew); // pressing it twice is no change at all
+    await user.click(crew);
+    expect(screen.getByText('All changes saved')).toBeInTheDocument();
+
+    await user.click(crew);
+    await user.click(documents);
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() =>
+      expect(patched.calls.map((c) => c.body)).toEqual([
+        { features: { crew: false, documents: false } },
+      ]),
+    );
   });
 });
 
@@ -745,7 +796,9 @@ describe('loading placeholders match the pages they stand in for', () => {
     ]) {
       expect(within(loading).getByText(tab)).toBeInTheDocument(); // the real tab strip
     }
-    expect(within(loading).getByText('Feature access', { selector: 'h2' })).toBeInTheDocument();
+    expect(
+      within(loading).getByText(/Choose which features this organization can use/),
+    ).toBeInTheDocument();
     expect(within(loading).getByText('Modules', { selector: 'h2' })).toBeInTheDocument();
     expect(within(loading).getAllByRole('listitem').length).toBeGreaterThanOrEqual(7); // one row per feature switch
   });

@@ -71,7 +71,7 @@ export function TenantDetailPage() {
       </Link>
 
       <header className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)]">
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
           <span
             aria-hidden="true"
             className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-900 font-heading text-3xl font-bold text-white shadow-sm"
@@ -80,7 +80,7 @@ export function TenantDetailPage() {
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="truncate text-3xl font-bold leading-tight">{t.name}</h1>
+              <h1 className="break-words text-3xl font-bold leading-tight">{t.name}</h1>
               <StatusBadge status={t.status} />
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1.5">

@@ -2,9 +2,11 @@ import { useState } from 'react';
 import {
   Button,
   Card,
+  ConfirmDialog,
   ErrorState,
   FormError,
   PageHeader,
+  SaveBar,
   Skeleton,
   SkeletonField,
   TextField,
@@ -105,6 +107,14 @@ export function BrandingEditor({ scope }: { scope: TenantScope }) {
   return <BrandingForm key={branding.data.version} data={branding.data} scope={scope} />;
 }
 
+// The cards' explanations, shared with the loading placeholder so both read the same
+const BRANDING_NOTE =
+  'Names, tagline and pictures. Pictures are saved as soon as you add them; everything else applies when you press Save changes.';
+const COLOURS_NOTE =
+  'Leave a colour empty to use the Sailix default. Buttons and highlights need enough contrast to stay readable.';
+const TYPOGRAPHY_NOTE =
+  'Pick the typeface for headings and text. These are fonts every device already has, so nothing is downloaded.';
+
 /** Recommended picture sizes, from how each one is shown. */
 const GUIDANCE: Record<BrandingImageKind, { label: string; hint: string }> = {
   logo: {
@@ -141,6 +151,42 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
   const [text, setText] = useState(data.text_color ?? '');
   const [font, setFont] = useState(data.font_preset ?? 'default');
   const [error, setError] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  // what is saved, to tell whether anything has changed since
+  const saved = {
+    shortName: data.short_name ?? '',
+    tagline: data.tagline ?? '',
+    welcome: data.login_welcome_message ?? '',
+    primary: data.primary_color ?? '',
+    secondary: data.secondary_color ?? '',
+    accent: data.accent_color ?? '',
+    background: data.background_color ?? '',
+    text: data.text_color ?? '',
+    font: data.font_preset ?? 'default',
+  };
+  const dirty =
+    shortName !== saved.shortName ||
+    tagline !== saved.tagline ||
+    welcome !== saved.welcome ||
+    primary !== saved.primary ||
+    secondary !== saved.secondary ||
+    accent !== saved.accent ||
+    background !== saved.background ||
+    text !== saved.text ||
+    font !== saved.font;
+  function discard() {
+    setShortName(saved.shortName);
+    setTagline(saved.tagline);
+    setWelcome(saved.welcome);
+    setPrimary(saved.primary);
+    setSecondary(saved.secondary);
+    setAccent(saved.accent);
+    setBackground(saved.background);
+    setText(saved.text);
+    setFont(saved.font);
+    setError(null);
+  }
 
   const problems = {
     primary: colourProblem(primary),
@@ -181,7 +227,7 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
         text_color: text || null,
         font_preset: font === 'default' ? null : font,
       });
-      toast.success('Branding saved.');
+      toast.success('Appearance saved.');
     } catch (err) {
       setError(describeError(err));
     }
@@ -216,208 +262,242 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
   const signInLogo = urls['login-logo'] ?? urls.logo;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <form onSubmit={submit} noValidate className="flex flex-col gap-6">
-        <FormError message={error} />
+    <div className="flex flex-col gap-6">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_26rem]">
+        <form
+          id="appearance-form"
+          onSubmit={submit}
+          noValidate
+          className="order-2 flex min-w-0 flex-col gap-6 xl:order-1"
+        >
+          <FormError message={error} />
 
-        <Card title="Identity">
-          <div className="flex flex-col gap-4">
-            <TextField
-              label="Short name"
-              maxLength={LIMITS.short_name}
-              value={shortName}
-              onChange={(e) => setShortName(e.target.value)}
-              error={problems.shortName}
-              hint="A short form of the name for tight spaces, such as the mobile app header."
-            />
-            <TextField
-              label="Tagline"
-              maxLength={LIMITS.tagline}
-              value={tagline}
-              onChange={(e) => setTagline(e.target.value)}
-              error={problems.tagline}
-              hint="Shown under your name on the sign-in page. Plain text."
-            />
-          </div>
-        </Card>
-
-        <Card title="Pictures">
-          <div className="flex flex-col divide-y divide-line">
-            {(Object.keys(GUIDANCE) as BrandingImageKind[]).map((kind) => (
-              <div key={kind} className="py-4 first:pt-0 last:pb-0">
-                <ImageSlot
-                  kind={kind}
-                  label={GUIDANCE[kind].label}
-                  url={urls[kind]}
-                  hint={GUIDANCE[kind].hint}
-                  wide={kind === 'login-background'}
-                  busy={busy}
-                  onPick={pick}
-                  onRemove={drop}
-                />
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card title="Colours">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <ColourField
-              label="Primary colour"
-              value={primary}
-              onChange={setPrimary}
-              problem={problems.primary}
-              hint="Buttons, the menu and highlights (white text on top)."
-            />
-            <ColourField
-              label="Secondary colour"
-              value={secondary}
-              onChange={setSecondary}
-              problem={problems.secondary}
-              hint="Supporting accents (white text on top)."
-            />
-            <ColourField
-              label="Accent colour"
-              value={accent}
-              onChange={setAccent}
-              problem={problems.accent}
-              hint="Links and focus rings. Follows the primary colour when empty."
-            />
-            <ColourField
-              label="Background colour"
-              value={background}
-              onChange={setBackground}
-              problem={problems.background}
-              hint="The page behind the cards."
-            />
-            <ColourField
-              label="Text colour"
-              value={text}
-              onChange={setText}
-              problem={problems.text}
-              hint="Default text and headings. Cards stay white."
-            />
-          </div>
-        </Card>
-
-        <Card title="Font style">
-          <div className="grid gap-2 sm:grid-cols-2">
-            {FONT_OPTIONS.map((o) => (
-              <label
-                key={o.value}
-                className={`flex cursor-pointer flex-col gap-1 rounded-lg border p-3 text-sm ${
-                  font === o.value ? 'border-accent-600 ring-1 ring-accent-600' : 'border-line'
-                }`}
-              >
-                <span className="flex items-center gap-2 font-medium">
-                  <input
-                    type="radio"
-                    name="font"
-                    value={o.value}
-                    checked={font === o.value}
-                    onChange={() => setFont(o.value)}
+          <Card title="Branding" description={BRANDING_NOTE}>
+            <div className="flex flex-col gap-4">
+              <TextField
+                label="Organization name"
+                value={data.name}
+                disabled
+                readOnly
+                hint={
+                  scope.own
+                    ? 'The full name is set by the platform administrator.'
+                    : 'Edit the full name on the Overview tab.'
+                }
+              />
+              <TextField
+                label="Short name"
+                maxLength={LIMITS.short_name}
+                value={shortName}
+                onChange={(e) => setShortName(e.target.value)}
+                error={problems.shortName}
+                hint="A short form of the name for tight spaces, such as the mobile app header."
+              />
+              <TextField
+                label="Tagline"
+                maxLength={LIMITS.tagline}
+                value={tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                error={problems.tagline}
+                hint="Shown under your name on the sign-in page. Plain text."
+              />
+            </div>
+            <h3 className="mb-3 mt-6 border-t border-line pt-5 text-sm font-semibold">Pictures</h3>
+            <div className="flex flex-col divide-y divide-line">
+              {(Object.keys(GUIDANCE) as BrandingImageKind[]).map((kind) => (
+                <div key={kind} className="py-4 first:pt-0 last:pb-0">
+                  <ImageSlot
+                    kind={kind}
+                    label={GUIDANCE[kind].label}
+                    url={urls[kind]}
+                    hint={GUIDANCE[kind].hint}
+                    wide={kind === 'login-background'}
+                    busy={busy}
+                    onPick={pick}
+                    onRemove={drop}
                   />
-                  {o.label}
-                </span>
-                <span className="text-xs text-muted">{o.hint}</span>
-                <span
-                  aria-hidden="true"
-                  className="mt-1 text-base"
-                  style={o.value === 'default' ? undefined : { fontFamily: FONT_STACKS[o.value] }}
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card title="Colours" description={COLOURS_NOTE}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ColourField
+                label="Primary colour"
+                value={primary}
+                onChange={setPrimary}
+                problem={problems.primary}
+                hint="Buttons, the menu and highlights (white text on top)."
+              />
+              <ColourField
+                label="Secondary colour"
+                value={secondary}
+                onChange={setSecondary}
+                problem={problems.secondary}
+                hint="Supporting accents (white text on top)."
+              />
+              <ColourField
+                label="Accent colour"
+                value={accent}
+                onChange={setAccent}
+                problem={problems.accent}
+                hint="Links and focus rings. Follows the primary colour when empty."
+              />
+              <ColourField
+                label="Background colour"
+                value={background}
+                onChange={setBackground}
+                problem={problems.background}
+                hint="The page behind the cards."
+              />
+              <ColourField
+                label="Text colour"
+                value={text}
+                onChange={setText}
+                problem={problems.text}
+                hint="Default text and headings. Cards stay white."
+              />
+            </div>
+          </Card>
+
+          <Card title="Typography" description={TYPOGRAPHY_NOTE}>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {FONT_OPTIONS.map((o) => (
+                <label
+                  key={o.value}
+                  className={`flex cursor-pointer flex-col gap-1 rounded-xl border p-3 text-sm transition-colors ${
+                    font === o.value
+                      ? 'border-brand-700 bg-brand-50'
+                      : 'border-line hover:border-brand-600/60'
+                  }`}
                 >
-                  The quick brown fox 0123456789
-                </span>
-              </label>
-            ))}
-          </div>
-        </Card>
+                  <span className="flex items-center gap-2 font-medium">
+                    <input
+                      type="radio"
+                      name="font"
+                      value={o.value}
+                      checked={font === o.value}
+                      onChange={() => setFont(o.value)}
+                    />
+                    {o.label}
+                  </span>
+                  <span className="text-xs text-muted">{o.hint}</span>
+                  <span
+                    aria-hidden="true"
+                    className="mt-1 text-base"
+                    style={o.value === 'default' ? undefined : { fontFamily: FONT_STACKS[o.value] }}
+                  >
+                    The quick brown fox 0123456789
+                  </span>
+                </label>
+              ))}
+            </div>
+          </Card>
 
-        <Card title="Sign-in page">
-          <TextField
-            label="Welcome message"
-            maxLength={LIMITS.login_welcome_message}
-            value={welcome}
-            onChange={(e) => setWelcome(e.target.value)}
-            error={problems.welcome}
-            hint="Shown above the sign-in form. Leave empty for none."
-          />
-        </Card>
+          <Card title="Login page">
+            <TextField
+              label="Welcome message"
+              maxLength={LIMITS.login_welcome_message}
+              value={welcome}
+              onChange={(e) => setWelcome(e.target.value)}
+              error={problems.welcome}
+              hint="Shown above the sign-in form. Leave empty for none."
+            />
+          </Card>
+        </form>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button type="submit" loading={save.isPending} disabled={blocked}>
-            Save branding
-          </Button>
-          {scope.own ? null : (
-            <Button
-              variant="secondary"
-              loading={reset.isPending}
-              onClick={() =>
-                reset.mutate(undefined, {
-                  onSuccess: () => toast.success('Back to the Sailix look.'),
-                  onError: (e) => toast.error(describeError(e)),
-                })
-              }
+        <aside aria-label="Preview" className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
+          <Card title="Preview">
+            <div
+              style={{
+                ...(preview as React.CSSProperties),
+                backgroundColor: 'var(--color-page, #f4f8fc)',
+                backgroundImage: urls['login-background']
+                  ? `linear-gradient(rgba(255,255,255,.78), rgba(255,255,255,.78)), url(${urls['login-background']})`
+                  : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                fontFamily: preview['--font-sans'] ?? undefined,
+                color: 'var(--color-ink, #0f2036)',
+              }}
+              className="rounded-xl border border-line p-4"
             >
+              <div className="text-center">
+                {signInLogo ? (
+                  <img
+                    src={signInLogo}
+                    alt=""
+                    className="mx-auto mb-2 h-12 max-w-full object-contain"
+                  />
+                ) : null}
+                <p
+                  className="text-xs font-semibold uppercase tracking-widest"
+                  style={{ color: 'var(--color-accent-600, #1260d8)' }}
+                >
+                  {data.name}
+                </p>
+                {tagline ? <p className="mt-1 text-xs opacity-75">{tagline}</p> : null}
+                {welcome ? <p className="mt-2 text-sm">{welcome}</p> : null}
+              </div>
+              <div className="mt-3 rounded-xl border border-line bg-white p-3 text-sm shadow-sm">
+                <p className="mb-2 text-xs opacity-70">Username</p>
+                <div className="mb-3 h-7 rounded border border-line bg-white" />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  className="w-full rounded-full px-3 py-2 text-sm font-semibold text-white"
+                  style={{ backgroundColor: 'var(--color-brand-700, #1260d8)' }}
+                >
+                  Sign in
+                </button>
+                <p
+                  className="mt-2 text-center text-xs"
+                  style={{ color: 'var(--color-accent-600, #1260d8)' }}
+                >
+                  Forgot password?
+                </p>
+              </div>
+            </div>
+          </Card>
+        </aside>
+      </div>
+
+      <SaveBar
+        dirty={dirty}
+        saving={save.isPending}
+        canSave={!blocked}
+        formId="appearance-form"
+        onDiscard={discard}
+        extra={
+          scope.own ? null : (
+            <Button variant="secondary" onClick={() => setConfirmReset(true)}>
               Reset to the Sailix look
             </Button>
-          )}
-        </div>
-      </form>
+          )
+        }
+      />
 
-      <aside aria-label="Preview" className="lg:sticky lg:top-20 lg:self-start">
-        <Card title="Preview">
-          <div
-            style={{
-              ...(preview as React.CSSProperties),
-              backgroundColor: 'var(--color-page, #f4f7fb)',
-              backgroundImage: urls['login-background']
-                ? `linear-gradient(rgba(255,255,255,.78), rgba(255,255,255,.78)), url(${urls['login-background']})`
-                : undefined,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              fontFamily: preview['--font-sans'] ?? undefined,
-              color: 'var(--color-ink, #12243d)',
-            }}
-            className="rounded-lg border border-line p-4"
-          >
-            <div className="text-center">
-              {signInLogo ? (
-                <img
-                  src={signInLogo}
-                  alt=""
-                  className="mx-auto mb-2 h-12 max-w-full object-contain"
-                />
-              ) : null}
-              <p
-                className="text-xs font-semibold uppercase tracking-widest"
-                style={{ color: 'var(--color-accent-600, #355dad)' }}
-              >
-                {data.name}
-              </p>
-              {tagline ? <p className="mt-1 text-xs opacity-75">{tagline}</p> : null}
-              {welcome ? <p className="mt-2 text-sm">{welcome}</p> : null}
-            </div>
-            <div className="mt-3 rounded-lg border border-line bg-white p-3 text-sm shadow-sm">
-              <p className="mb-2 text-xs opacity-70">Username</p>
-              <div className="mb-3 h-7 rounded border border-line bg-white" />
-              <button
-                type="button"
-                tabIndex={-1}
-                className="w-full rounded-md px-3 py-2 text-sm font-medium text-white"
-                style={{ backgroundColor: 'var(--color-brand-700, #355dad)' }}
-              >
-                Sign in
-              </button>
-              <p
-                className="mt-2 text-center text-xs"
-                style={{ color: 'var(--color-accent-600, #355dad)' }}
-              >
-                Forgot password?
-              </p>
-            </div>
-          </div>
-        </Card>
-      </aside>
+      <ConfirmDialog
+        open={confirmReset}
+        title="Reset to the Sailix look"
+        description={`Reset ${data.name}'s appearance to the Sailix default? Its people, data and features are not affected.`}
+        confirmLabel="Reset"
+        loading={reset.isPending}
+        onCancel={() => setConfirmReset(false)}
+        onConfirm={() =>
+          reset.mutate(undefined, {
+            onSuccess: () => {
+              setConfirmReset(false);
+              toast.success('Back to the Sailix look.');
+            },
+            onError: (e) => {
+              setConfirmReset(false);
+              toast.error(describeError(e));
+            },
+          })
+        }
+      />
     </div>
   );
 }
@@ -524,8 +604,8 @@ function ImageSlot({
 }
 
 /**
- * The branding editor while it loads: the same two columns, the same cards with their real titles and field labels, and
- * the preview beside them; only the controls and pictures shimmer.
+ * The Appearance editor while it loads: the same two columns, the same cards with their real titles, descriptions and field
+ * labels, the preview beside them and the save bar; only the controls and pictures shimmer.
  */
 export function BrandingSkeleton() {
   const colour = (label: string) => (
@@ -537,79 +617,81 @@ export function BrandingSkeleton() {
     </div>
   );
   return (
-    <div
-      role="status"
-      aria-label="Loading branding"
-      className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]"
-    >
-      <div className="flex flex-col gap-6">
-        <Card title="Identity">
-          <div className="flex flex-col gap-4">
-            <SkeletonField label="Short name" />
-            <SkeletonField label="Tagline" />
-          </div>
-        </Card>
-        <Card title="Pictures">
-          <div className="flex flex-col divide-y divide-line">
-            {(Object.keys(GUIDANCE) as BrandingImageKind[]).map((kind) => (
-              <div key={kind} className="flex items-start gap-4 py-4 first:pt-0 last:pb-0">
-                <Skeleton
-                  className={`shrink-0 rounded-md ${kind === 'login-background' ? 'h-16 w-28' : 'size-16'}`}
-                />
-                <div className="min-w-0 flex-1 space-y-2">
-                  <span className="text-sm font-medium">{GUIDANCE[kind].label}</span>
-                  <Skeleton className="h-4 w-48 max-w-full" />
-                  <Skeleton className="h-3 w-full" />
+    <div role="status" aria-label="Loading appearance" className="flex flex-col gap-6">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_26rem]">
+        <div className="order-2 flex min-w-0 flex-col gap-6 xl:order-1">
+          <Card title="Branding" description={BRANDING_NOTE}>
+            <div className="flex flex-col gap-4">
+              <SkeletonField label="Organization name" />
+              <SkeletonField label="Short name" />
+              <SkeletonField label="Tagline" />
+            </div>
+            <h3 className="mb-3 mt-6 border-t border-line pt-5 text-sm font-semibold">Pictures</h3>
+            <div className="flex flex-col divide-y divide-line">
+              {(Object.keys(GUIDANCE) as BrandingImageKind[]).map((kind) => (
+                <div key={kind} className="flex items-start gap-4 py-4 first:pt-0 last:pb-0">
+                  <Skeleton
+                    className={`shrink-0 rounded-md ${kind === 'login-background' ? 'h-16 w-28' : 'size-16'}`}
+                  />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <span className="text-sm font-medium">{GUIDANCE[kind].label}</span>
+                    <Skeleton className="h-4 w-48 max-w-full" />
+                    <Skeleton className="h-3 w-full" />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-        <Card title="Colours">
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              'Primary colour',
-              'Secondary colour',
-              'Accent colour',
-              'Background colour',
-              'Text colour',
-            ].map(colour)}
-          </div>
-        </Card>
-        <Card title="Font style">
-          <div className="grid gap-2 sm:grid-cols-2">
-            {FONT_OPTIONS.map((o) => (
-              <div key={o.value} className="flex flex-col gap-2 rounded-lg border border-line p-3">
-                <span className="text-sm font-medium">{o.label}</span>
-                <Skeleton className="h-3 w-3/4" />
-                <Skeleton className="h-5 w-full" />
-              </div>
-            ))}
-          </div>
-        </Card>
-        <Card title="Sign-in page">
-          <SkeletonField label="Welcome message" />
-        </Card>
-        <div className="flex flex-wrap items-center gap-2">
-          <Skeleton className="h-10 w-36 rounded-full" />
+              ))}
+            </div>
+          </Card>
+          <Card title="Colours" description={COLOURS_NOTE}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                'Primary colour',
+                'Secondary colour',
+                'Accent colour',
+                'Background colour',
+                'Text colour',
+              ].map(colour)}
+            </div>
+          </Card>
+          <Card title="Typography" description={TYPOGRAPHY_NOTE}>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {FONT_OPTIONS.map((o) => (
+                <div
+                  key={o.value}
+                  className="flex flex-col gap-2 rounded-xl border border-line p-3"
+                >
+                  <span className="text-sm font-medium">{o.label}</span>
+                  <Skeleton className="h-3 w-3/4" />
+                  <Skeleton className="h-5 w-full" />
+                </div>
+              ))}
+            </div>
+          </Card>
+          <Card title="Login page">
+            <SkeletonField label="Welcome message" />
+          </Card>
         </div>
+        <aside aria-hidden="true" className="order-1 min-w-0 xl:order-2">
+          <Card title="Preview">
+            <div className="rounded-xl border border-line p-4">
+              <div className="flex flex-col items-center gap-2">
+                <Skeleton className="h-12 w-24" />
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+              <div className="mt-3 rounded-xl border border-line bg-white p-3 shadow-sm">
+                <Skeleton className="mb-2 h-3 w-16" />
+                <Skeleton className="mb-3 h-7 w-full rounded" />
+                <Skeleton className="h-9 w-full rounded-full" />
+              </div>
+            </div>
+          </Card>
+        </aside>
       </div>
-      <aside aria-hidden="true">
-        <Card title="Preview">
-          <div className="rounded-lg border border-line p-4">
-            <div className="flex flex-col items-center gap-2">
-              <Skeleton className="h-12 w-24" />
-              <Skeleton className="h-3 w-32" />
-              <Skeleton className="h-3 w-40" />
-            </div>
-            <div className="mt-3 rounded-lg border border-line bg-white p-3 shadow-sm">
-              <Skeleton className="mb-2 h-3 w-16" />
-              <Skeleton className="mb-3 h-7 w-full rounded" />
-              <Skeleton className="h-9 w-full rounded-full" />
-            </div>
-          </div>
-        </Card>
-      </aside>
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-3 shadow-[var(--shadow-soft)]">
+        <span className="text-sm text-muted">All changes saved</span>
+        <Skeleton className="h-10 w-36 rounded-full" />
+      </div>
       <span className="sr-only">Loading…</span>
     </div>
   );

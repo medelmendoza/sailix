@@ -1,4 +1,4 @@
-export { ProfileTabs, SearchField, StatTile, StatusTabs } from './Admin';
+export { ProfileTabs, SaveBar, SearchField, StatTile, StatusTabs } from './Admin';
 export { Badge, StatusBadge } from './Badge';
 export { Button } from './Button';
 export { ConfirmDialog, FormDialog } from './Dialog';

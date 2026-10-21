@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { cn } from './cn';
+import { Button } from './Button';
 import { Skeleton } from './Skeleton';
 
 const TONES = {
@@ -214,6 +215,57 @@ export function ProfileTabs({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * The bar that stays at the bottom of an editing page: says whether there is anything unsaved, and holds Discard and Save
+ * changes (and anything extra, such as a reset). Pass `formId` to make Save submit that form, or `onSave` otherwise.
+ */
+export function SaveBar({
+  dirty,
+  saving = false,
+  canSave = true,
+  onDiscard,
+  onSave,
+  formId,
+  extra,
+}: {
+  dirty: boolean;
+  saving?: boolean;
+  /** False while something is invalid: Save stays off. */
+  canSave?: boolean;
+  onDiscard: () => void;
+  onSave?: () => void;
+  formId?: string;
+  extra?: ReactNode;
+}) {
+  return (
+    <div className="sticky bottom-3 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface/95 p-3 shadow-[var(--shadow-lift)] backdrop-blur">
+      <span
+        role="status"
+        className={cn('text-sm', dirty ? 'font-medium text-warn-fg' : 'text-muted')}
+      >
+        {dirty ? 'You have unsaved changes' : 'All changes saved'}
+      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        {extra}
+        {dirty && (
+          <Button variant="secondary" onClick={onDiscard} disabled={saving}>
+            Discard
+          </Button>
+        )}
+        <Button
+          type={formId ? 'submit' : 'button'}
+          form={formId}
+          onClick={formId ? undefined : onSave}
+          loading={saving}
+          disabled={!dirty || !canSave}
+        >
+          Save changes
+        </Button>
+      </div>
     </div>
   );
 }
