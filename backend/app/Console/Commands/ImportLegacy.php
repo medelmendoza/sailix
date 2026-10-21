@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Platform\LegacyImport\LegacyImporter;
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class ImportLegacy extends Command
@@ -14,6 +15,7 @@ class ImportLegacy extends Command
         {--files= : Folder holding the old uploaded files (by file name)}
         {--include-licenses : Also import every document kind marked as a licence, not only the kinds in use}
         {--tenant-code= : Organization code to import into (default: the old client_code)}
+        {--same-database : The v2 tables were created in the same database as the old tables (the old tables stay as they are)}
         {--allow-writable-source : Do not refuse an old-database user that has write rights}';
 
     protected $description = 'Copies the old Sailix database (read only) into this v2 database. Re-runnable; see docs/18-LEGACY-IMPORT.md.';
@@ -22,7 +24,12 @@ class ImportLegacy extends Command
     {
         $importer = new LegacyImporter;
         try {
-            $importer->guard((bool) $this->option('allow-writable-source'));
+            if ($this->option('same-database')) {
+                // the old tables are read through the app's own database connection
+                config(['database.connections.legacy' => config('database.connections.'.config('database.default'))]);
+                DB::purge('legacy');
+            }
+            $importer->guard((bool) $this->option('allow-writable-source'), (bool) $this->option('same-database'));
             $report = $importer->import(
                 (bool) $this->option('dry-run'),
                 $this->option('files') ?: null,

@@ -138,3 +138,16 @@ database error no longer prints the values being written (they can contain names
 The staging database user can write (SELECT, DELETE, CREATE, ALTER); the importer's guard refuses that unless
 `--allow-writable-source` is given, which was done for this dry run only, with the owner's approval.
 
+## 8. Option B: the v2 tables next to the old ones (the staging copy)
+
+The staging database is a copy that nobody uses, so v2 is created in the same database as the old data (no second database).
+Only the generic tables whose names clash with v2 are dropped (`users`, `migrations`, `sessions`, `cache`, `cache_locks`,
+`password_reset_tokens`, `personal_access_tokens`; all empty except 1 session row and the 4 old migration records). Every `tb_*`,
+`pl_*` and `system_logs` table stays. A backup dump was taken first.
+
+The importer then runs with `--same-database`: it refuses to do that unless the v2 tables exist next to `tb_user`, and without
+the flag it still refuses a target that is the same database as the source.
+
+Steps: backup, drop the 7 clashing tables, `php artisan migrate --env=staging`, `php artisan legacy:import --same-database --dry-run
+--env=staging`, review, then the same without `--dry-run`.
+

@@ -58,7 +58,7 @@ final class LegacyImporter
     public function __construct(private readonly string $connection = 'legacy') {}
 
     /** @throws RuntimeException when the source or the target is not what it must be. Nothing is read before these hold. */
-    public function guard(bool $allowWritableSource = false): void
+    public function guard(bool $allowWritableSource = false, bool $sameDatabase = false): void
     {
         $default = config('database.connections.'.config('database.default'));
         $legacy = config('database.connections.'.$this->connection);
@@ -66,16 +66,27 @@ final class LegacyImporter
             throw new RuntimeException('The old database is not configured (LEGACY_DB_*).');
         }
         $same = fn (string $k) => ($default[$k] ?? null) === ($legacy[$k] ?? null);
-        if ($same('driver') && $same('host') && $same('port') && $same('database')) {
-            throw new RuntimeException('The old database and the v2 database are the same one. Refusing to continue.');
+        $isSame = $same('driver') && $same('host') && $same('port') && $same('database');
+        if ($isSame && ! $sameDatabase) {
+            throw new RuntimeException('The old database and the v2 database are the same one. Refusing to continue (use --same-database if the v2 tables were created next to the old ones on purpose).');
+        }
+        if (! $isSame && $sameDatabase) {
+            throw new RuntimeException('--same-database was given, but the old database is not the v2 database.');
         }
 
         $old = DB::connection($this->connection);
-        if (! Schema::connection($this->connection)->hasTable('tb_user') || Schema::connection($this->connection)->hasTable('tenants')) {
-            throw new RuntimeException('The source does not look like the old Sailix database (needs tb_user, must not have tenants).');
+        $schema = Schema::connection($this->connection);
+        if (! $schema->hasTable('tb_user')) {
+            throw new RuntimeException('The source does not look like the old Sailix database (needs tb_user).');
         }
-        if (! Schema::hasTable('tenants') || Schema::hasTable('tb_user')) {
-            throw new RuntimeException('The target is not a v2 database (needs tenants, must not have tb_user). Run the v2 migrations on it first.');
+        if ($schema->hasTable('tenants') && ! $sameDatabase) {
+            throw new RuntimeException('The source does not look like the old Sailix database (it has v2 tables: tenants).');
+        }
+        if (! Schema::hasTable('tenants') || (Schema::hasTable('tb_user') && ! $sameDatabase)) {
+            throw new RuntimeException('The target is not a v2 database (needs tenants, must not have tb_user unless --same-database). Run the v2 migrations on it first.');
+        }
+        if ($sameDatabase) {
+            return; // the old tables live next to the v2 ones, so the account that writes v2 also sees the old data: nothing more to check
         }
 
         if ($old->getDriverName() === 'mysql' && ! $allowWritableSource) {

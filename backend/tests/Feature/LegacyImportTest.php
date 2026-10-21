@@ -321,4 +321,43 @@ class LegacyImportTest extends TestCase
         $this->expectExceptionMessage('not configured');
         (new LegacyImporter)->guard();
     }
+
+    public function test_the_old_tables_may_sit_next_to_the_v2_tables_only_when_asked_for(): void
+    {
+        // the old tables are created in the same database as the v2 ones
+        $default = config('database.connections.'.config('database.default'));
+        config(['database.connections.legacy' => $default]);
+        DB::purge('legacy');
+        $legacyTables = ['tb_user', 'pl_documents', 'tb_crew_document', 'tb_crew_document_upload', 'tb_announcement', 'tb_to_do_list'];
+        try {
+            $this->buildLegacy();
+
+            try {
+                (new LegacyImporter)->guard();
+                $this->fail('the same database was accepted without being asked');
+            } catch (\RuntimeException $e) {
+                $this->assertStringContainsString('--same-database', $e->getMessage());
+            }
+
+            $importer = new LegacyImporter;
+            $importer->guard(sameDatabase: true);
+            $report = $importer->import(false, $this->files, false);
+
+            $this->assertSame(4, DB::table('users')->count());
+            $this->assertSame(3, CrewDocument::withoutTenantScope()->count());
+            $this->assertSame(6, DB::table('tb_user')->count()); // the old rows are untouched
+            $this->assertSame(4, $report->entities['user']['created']);
+        } finally {
+            foreach ($legacyTables as $table) {
+                Schema::dropIfExists($table);
+            }
+        }
+    }
+
+    public function test_same_database_is_refused_when_the_old_database_is_somewhere_else(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('is not the v2 database');
+        (new LegacyImporter)->guard(sameDatabase: true);
+    }
 }
