@@ -12,7 +12,7 @@ import {
   PageHeader,
   Pagination,
   SearchField,
-  Spinner,
+  SkeletonTable,
   StatusBadge,
   StatusTabs,
   Table,
@@ -115,8 +115,8 @@ const cap = (v: string) => v[0]!.toUpperCase() + v.slice(1);
 function StatusFilter({ value, onChange }: { value: string; onChange: (s: string) => void }) {
   const c = useTenantCounts();
   const tabs = [
-    { key: '', label: 'All', count: c.all },
-    ...TENANT_STATUSES.map((s) => ({ key: s, label: cap(s), count: c[s] })),
+    { key: '', label: 'All', count: c.all ?? null },
+    ...TENANT_STATUSES.map((s) => ({ key: s, label: cap(s), count: c[s] ?? null })),
   ];
   return <StatusTabs label="Filter by status" tabs={tabs} value={value} onChange={onChange} />;
 }
@@ -173,7 +173,7 @@ export function TenantsPage() {
         )}
       </div>
       {tenants.isPending ? (
-        <Spinner />
+        <SkeletonTable columns={5} rows={6} label="Loading organizations" />
       ) : tenants.isError ? (
         <ErrorState message={describeError(tenants.error)} onRetry={() => void tenants.refetch()} />
       ) : tenants.data.data.length === 0 ? (

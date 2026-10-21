@@ -38,3 +38,48 @@ body {
   outline: 2px solid var(--color-accent-600);
   outline-offset: 2px;
 }
+
+/* Loading placeholders: a soft block with a light band sweeping across it. Still (no sweep) when the person asks for less motion. */
+@keyframes shimmer-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-line);
+}
+
+.shimmer::after,
+.shimmer-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.7), transparent);
+  animation: shimmer-sweep 1.4s ease-in-out infinite;
+}
+
+/* the same sweep over something that already has content, such as a button that is working */
+.shimmer-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.shimmer-overlay::after {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::after,
+  .shimmer-overlay::after {
+    animation: none;
+    transform: none;
+    opacity: 0;
+  }
+}

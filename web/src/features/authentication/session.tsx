@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { Button, ErrorState, Spinner } from '../../components/ui';
+import { Button, ErrorState, SkeletonShell } from '../../components/ui';
 import { api, ensureCsrf } from '../../services/api/client';
 import { ApiError, describeError, toApiError } from '../../services/api/errors';
 import type { Envelope, Me, PlatformAdmin } from '../../services/api/types';
@@ -87,7 +87,7 @@ export function RequireTenant({ children }: { children?: ReactNode }) {
   const query = useTenantSessionQuery();
   const logout = useLogout('tenant');
 
-  if (query.isPending) return <Spinner label="Checking your session" />;
+  if (query.isPending) return <SkeletonShell />;
   if (query.isError) {
     const error = toApiError(query.error);
     if (error.status === 401)
@@ -106,7 +106,7 @@ export function RequirePlatform({ children }: { children?: ReactNode }) {
   const location = useLocation();
   const query = usePlatformSessionQuery();
 
-  if (query.isPending) return <Spinner label="Checking your session" />;
+  if (query.isPending) return <SkeletonShell />;
   if (query.isError) {
     const error = toApiError(query.error);
     if (error.status === 401)

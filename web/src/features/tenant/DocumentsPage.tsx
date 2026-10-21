@@ -11,7 +11,7 @@ import {
   PageHeader,
   Pagination,
   SelectField,
-  Spinner,
+  SkeletonTable,
   Table,
   TextAreaField,
   useToast,
@@ -89,7 +89,7 @@ export function DocumentsPage() {
         />
       </div>
       {list.isPending ? (
-        <Spinner />
+        <SkeletonTable columns={5} rows={6} label="Loading documents" />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (

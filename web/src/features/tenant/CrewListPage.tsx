@@ -7,7 +7,7 @@ import {
   ErrorState,
   PageHeader,
   Pagination,
-  Spinner,
+  SkeletonTable,
   StatusBadge,
   Table,
   TextField,
@@ -94,7 +94,7 @@ export function CrewListPage() {
       </Card>
 
       {list.isPending ? (
-        <Spinner label="Loading crew" />
+        <SkeletonTable columns={5} rows={6} label="Loading crew" />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (

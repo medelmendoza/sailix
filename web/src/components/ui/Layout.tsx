@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Button } from './Button';
 import { cn } from './cn';
+import { SkeletonLines } from './Skeleton';
 
 export function Card({
   title,
@@ -51,14 +52,12 @@ export function PageHeader({
   );
 }
 
+/** The generic loading placeholder (a few shimmering lines). Pages with a known shape use the matching Skeleton instead. */
 export function Spinner({ label = 'Loading' }: { label?: string }) {
   return (
-    <div role="status" className="flex items-center gap-2 py-6 text-sm text-muted">
-      <span
-        aria-hidden="true"
-        className="size-4 animate-spin rounded-full border-2 border-accent-600 border-t-transparent"
-      />
-      {label}…
+    <div role="status" aria-label={label} className="py-4">
+      <SkeletonLines lines={4} />
+      <span className="sr-only">{label}…</span>
     </div>
   );
 }

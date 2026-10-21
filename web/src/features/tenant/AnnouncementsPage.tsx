@@ -13,7 +13,7 @@ import {
   FormError,
   PageHeader,
   Pagination,
-  Spinner,
+  SkeletonTable,
   Table,
   TextAreaField,
   TextField,
@@ -89,7 +89,7 @@ export function AnnouncementsPage() {
         fleets it is for; a member sees it when their crew record names one of those fleets.
       </Card>
       {list.isPending ? (
-        <Spinner />
+        <SkeletonTable columns={4} rows={6} label="Loading announcements" />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (

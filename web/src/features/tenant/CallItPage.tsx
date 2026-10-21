@@ -9,7 +9,7 @@ import {
   PageHeader,
   Pagination,
   SelectField,
-  Spinner,
+  SkeletonTable,
   Table,
   useToast,
 } from '../../components/ui';
@@ -76,7 +76,7 @@ export function CallItPage() {
         />
       </div>
       {list.isPending ? (
-        <Spinner />
+        <SkeletonTable columns={5} rows={6} label="Loading reports" />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (

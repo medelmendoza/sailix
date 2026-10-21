@@ -11,7 +11,9 @@ import {
   FormDialog,
   FormError,
   SelectField,
-  Spinner,
+  SkeletonCard,
+  SkeletonDetail,
+  SkeletonTable,
   StatusBadge,
   Table,
   TextField,
@@ -378,7 +380,7 @@ function FeatureAccess({ tenantId }: { tenantId: string }) {
   const update = useUpdateFeatures(tenantId);
   const toast = useToast();
 
-  if (features.isPending) return <Spinner />;
+  if (features.isPending) return <SkeletonCard lines={6} label="Loading feature access" />;
   if (features.isError) {
     return (
       <ErrorState message={describeError(features.error)} onRetry={() => void features.refetch()} />
@@ -443,7 +445,7 @@ export function TenantDetailPage() {
   const [inviting, setInviting] = useState(false);
   const [devToken, setDevToken] = useState<string | null>(null);
 
-  if (tenant.isPending) return <Spinner />;
+  if (tenant.isPending) return <SkeletonDetail label="Loading organization" />;
   if (tenant.isError) {
     const e = toApiError(tenant.error);
     return (
@@ -583,7 +585,7 @@ export function TenantDetailPage() {
               </p>
             )}
             {admins.isPending ? (
-              <Spinner />
+              <SkeletonTable columns={3} rows={3} label="Loading administrators" />
             ) : admins.isError ? (
               <ErrorState
                 message={describeError(admins.error)}
@@ -619,7 +621,7 @@ export function TenantDetailPage() {
               Modules
             </h2>
             {modules.isPending ? (
-              <Spinner />
+              <SkeletonCard lines={4} label="Loading modules" />
             ) : modules.isError ? (
               <ErrorState
                 message={describeError(modules.error)}

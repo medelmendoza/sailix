@@ -1,7 +1,9 @@
-import { ErrorState, PageHeader, Spinner } from '../../components/ui';
+import { Link } from 'react-router-dom';
+import { Button, Card, ErrorState, PageHeader, SkeletonTable } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import { AuditTable } from '../shared/AuditTable';
 import { usePlatformAudit } from './api';
+import { StatusBreakdown } from './StatusBreakdown';
 import { TenantSummary } from './TenantSummary';
 
 export function PlatformDashboardPage() {
@@ -11,12 +13,52 @@ export function PlatformDashboardPage() {
       <PageHeader
         title="Platform dashboard"
         description="Organizations on the platform, and what happened lately."
+        actions={
+          <Link to="/platform/tenants">
+            <Button>Manage organizations</Button>
+          </Link>
+        }
       />
       <TenantSummary />
-      <section className="mt-8">
-        <h2 className="mb-3 text-base font-semibold">Recent platform activity</h2>
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+        <StatusBreakdown />
+        <Card title="Where to next">
+          <ul className="divide-y divide-line text-sm">
+            {[
+              [
+                '/platform/tenants',
+                'Organizations',
+                'Create one, open it, switch features and modules on or off.',
+              ],
+              [
+                '/platform/audit',
+                'Audit log',
+                'Every security and administrative event, filterable.',
+              ],
+              ['/platform/settings', 'Platform settings', 'Defaults for every organization.'],
+            ].map(([to, title, text]) => (
+              <li key={to}>
+                <Link
+                  to={to!}
+                  className="flex items-start justify-between gap-3 py-3 hover:text-accent-600"
+                >
+                  <span>
+                    <span className="block font-medium">{title}</span>
+                    <span className="block text-muted">{text}</span>
+                  </span>
+                  <span aria-hidden="true" className="pt-0.5 text-muted">
+                    ›
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
+      <section>
+        <h2 className="mb-3 text-base font-bold">Recent platform activity</h2>
         {audit.isPending ? (
-          <Spinner />
+          <SkeletonTable columns={4} rows={5} label="Loading activity" />
         ) : audit.isError ? (
           <ErrorState message={describeError(audit.error)} onRetry={() => void audit.refetch()} />
         ) : (

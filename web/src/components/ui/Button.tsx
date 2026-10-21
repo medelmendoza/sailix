@@ -30,18 +30,14 @@ export function Button({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        'inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed',
+        'relative inline-flex min-h-10 items-center justify-center gap-2 overflow-hidden rounded-md px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed',
+        loading && 'cursor-progress',
         VARIANTS[variant],
         className,
       )}
       {...rest}
     >
-      {loading && (
-        <span
-          aria-hidden="true"
-          className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-        />
-      )}
+      {loading && <span aria-hidden="true" className="shimmer-overlay" />}
       {children}
     </button>
   );

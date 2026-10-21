@@ -5,7 +5,7 @@ import {
   ErrorState,
   PageHeader,
   Pagination,
-  Spinner,
+  SkeletonTable,
   Table,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
@@ -27,7 +27,7 @@ export function DeletionRequestsPage() {
         access until your organization and the platform decide how deletion is handled.
       </Card>
       {requests.isPending ? (
-        <Spinner />
+        <SkeletonTable columns={4} rows={6} label="Loading requests" />
       ) : requests.isError ? (
         <ErrorState
           message={describeError(requests.error)}

@@ -8,7 +8,7 @@ import {
   PageHeader,
   Pagination,
   SelectField,
-  Spinner,
+  SkeletonTable,
   StatusBadge,
   Table,
   TextField,
@@ -160,7 +160,7 @@ export function MembersPage() {
       </div>
 
       {members.isPending ? (
-        <Spinner label="Loading members" />
+        <SkeletonTable columns={4} rows={6} label="Loading members" />
       ) : members.isError ? (
         <ErrorState message={describeError(members.error)} onRetry={() => void members.refetch()} />
       ) : members.data.data.length === 0 ? (

@@ -6,7 +6,7 @@ import {
   ErrorState,
   PageHeader,
   Pagination,
-  Spinner,
+  SkeletonTable,
   Table,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
@@ -33,7 +33,7 @@ export function FeedbackPage() {
         Feedback about the Sailix app only. It is not sent to Tala or any other service.
       </Card>
       {feedback.isPending ? (
-        <Spinner />
+        <SkeletonTable columns={4} rows={6} label="Loading feedback" />
       ) : feedback.isError ? (
         <ErrorState
           message={describeError(feedback.error)}

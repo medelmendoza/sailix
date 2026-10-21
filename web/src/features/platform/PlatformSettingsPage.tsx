@@ -8,7 +8,7 @@ import {
   ErrorState,
   FormError,
   PageHeader,
-  Spinner,
+  SkeletonForm,
   TextField,
 } from '../../components/ui';
 import { applyServerErrors } from '../authentication/forms';
@@ -73,7 +73,7 @@ export function PlatformSettingsPage() {
     <>
       <PageHeader title="Platform settings" description="Defaults for every organization." />
       {settings.isPending ? (
-        <Spinner />
+        <SkeletonForm fields={3} label="Loading settings" />
       ) : settings.isError ? (
         <ErrorState
           message={describeError(settings.error)}

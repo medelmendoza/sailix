@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { cn } from './cn';
+import { Skeleton } from './Skeleton';
 
 const TONES = {
   blue: 'bg-accent-100 text-brand-800',
@@ -19,7 +20,7 @@ export function StatTile({
 }: {
   label: string;
   value: ReactNode;
-  hint?: string;
+  hint?: ReactNode;
   icon?: ReactNode;
   tone?: keyof typeof TONES;
 }) {
@@ -53,7 +54,8 @@ export function StatusTabs({
   onChange,
 }: {
   label: string;
-  tabs: { key: string; label: string; count?: number }[];
+  /** `count: null` means the figure is still loading. */
+  tabs: { key: string; label: string; count?: number | null }[];
   value: string;
   onChange: (key: string) => void;
 }) {
@@ -80,7 +82,8 @@ export function StatusTabs({
             )}
           >
             {t.label}
-            {t.count !== undefined && (
+            {t.count === null && <Skeleton className="h-5 w-7 rounded-full" />}
+            {t.count !== undefined && t.count !== null && (
               <span
                 className={cn(
                   'rounded-full px-2 py-0.5 text-xs',
