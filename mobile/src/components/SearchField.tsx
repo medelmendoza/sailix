@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { BrandTextInput } from './BrandTextInput';
 import { colors, fonts, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { AppText } from './AppText';
 import { GlyphIcon } from './GlyphIcon';
@@ -18,7 +19,7 @@ export function SearchField({
   return (
     <View style={styles.box}>
       <GlyphIcon name="search" color={colors.textMuted} size={20} />
-      <TextInput
+      <BrandTextInput
         accessibilityLabel={label}
         value={value}
         onChangeText={onChangeText}

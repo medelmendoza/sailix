@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useController, type Control, type FieldValues, type Path } from 'react-hook-form';
-import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { Pressable, StyleSheet, View, type TextInputProps } from 'react-native';
+import { BrandTextInput } from './BrandTextInput';
 import { colors, fonts, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { AppText } from './AppText';
 import { GlyphIcon } from './GlyphIcon';
@@ -36,7 +37,7 @@ export function TextField<T extends FieldValues>({
         {label}
       </AppText>
       <View style={[styles.box, error ? styles.boxError : null]}>
-        <TextInput
+        <BrandTextInput
           {...inputProps}
           accessibilityLabel={label}
           accessibilityHint={hint}

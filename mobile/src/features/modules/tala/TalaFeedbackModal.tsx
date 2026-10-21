@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { BrandTextInput } from '@/components/BrandTextInput';
 import { AppText, Button } from '@/components';
 import { colors, fonts, minTouchTarget, radius, shadows, spacing } from '@/constants/theme';
 import type { Feedback } from './offline/outbox';
@@ -78,7 +79,7 @@ export function TalaFeedbackModal({
             {rating > 0 ? `Your rating: ${rating} of 5` : 'Choose a rating from 1 to 5'}
           </AppText>
 
-          <TextInput
+          <BrandTextInput
             accessibilityLabel="Comment"
             placeholder="Comment (optional)"
             value={comment}

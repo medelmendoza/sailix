@@ -1,7 +1,8 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { BrandTextInput } from '@/components/BrandTextInput';
 import type { AppStackParamList } from '@/app/navigation/types';
 import {
   AppText,
@@ -165,7 +166,7 @@ export function TalaQuizScreen({ route, navigation }: Props) {
                   </AppText>
                 ) : null}
                 {q.type === 'text' ? (
-                  <TextInput
+                  <BrandTextInput
                     accessibilityLabel={`Answer to question ${i + 1}`}
                     style={styles.input}
                     value={(values[q.ref] as string | undefined) ?? ''}

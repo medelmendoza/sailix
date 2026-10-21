@@ -164,8 +164,14 @@ function MainTabs() {
       screenOptions={{
         ...headerOptions,
         headerTintColor: brand.primary,
+        headerTitleStyle: {
+          ...headerOptions.headerTitleStyle,
+          color: brand.text,
+          ...brand.font(fonts.heading),
+        },
         ...tabOptions,
         tabBarActiveTintColor: brand.primary,
+        tabBarInactiveTintColor: brand.textMuted,
         tabBarStyle: { ...tabOptions.tabBarStyle, bottom },
         sceneStyle: {
           backgroundColor: brand.background,
@@ -300,6 +306,11 @@ export function RootNavigator() {
         screenOptions={{
           ...headerOptions,
           headerTintColor: brand.primary,
+          headerTitleStyle: {
+            ...headerOptions.headerTitleStyle,
+            color: brand.text,
+            ...brand.font(fonts.heading),
+          },
           headerBackButtonDisplayMode: 'minimal',
           animation: 'fade', // pages fade in instead of sliding
           animationDuration: 250,

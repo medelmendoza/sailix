@@ -32,8 +32,11 @@ installGlobalCrashHandler();
 export default function App() {
   const brand = useBrand();
   const theme = useMemo(
-    () => ({ ...navigationTheme, colors: { ...navigationTheme.colors, primary: brand.primary } }),
-    [brand.primary],
+    () => ({
+      ...navigationTheme,
+      colors: { ...navigationTheme.colors, primary: brand.primary, text: brand.text },
+    }),
+    [brand.primary, brand.text],
   );
   return (
     <ErrorBoundary>

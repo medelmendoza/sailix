@@ -2,7 +2,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { BrandTextInput } from '@/components/BrandTextInput';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText, Button, ErrorState, FormError, Notice, SkeletonList } from '@/components';
 import { colors, fonts, minTouchTarget, radius, spacing } from '@/constants/theme';
@@ -247,7 +248,7 @@ function Field({
   return (
     <View style={{ gap: spacing.xs }}>
       <AppText variant="caption">{label}</AppText>
-      <TextInput
+      <BrandTextInput
         accessibilityLabel={label}
         value={value}
         onChangeText={onChange}

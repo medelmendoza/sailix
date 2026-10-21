@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { BrandTextInput } from '@/components/BrandTextInput';
 import { AppText, Button, Card, FormError } from '@/components';
 import { colors, fonts, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
@@ -36,7 +37,7 @@ export function UnlockForm() {
       <FormError message={error} />
       <View style={{ gap: spacing.xs }}>
         <AppText variant="caption">Password</AppText>
-        <TextInput
+        <BrandTextInput
           accessibilityLabel="Password"
           secureTextEntry
           autoCapitalize="none"

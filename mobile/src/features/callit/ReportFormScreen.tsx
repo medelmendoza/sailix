@@ -2,7 +2,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { BrandTextInput } from '@/components/BrandTextInput';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText, Button, Card, ErrorState, FormError, SkeletonList } from '@/components';
 import { colors, fonts, minTouchTarget, radius, spacing } from '@/constants/theme';
@@ -478,7 +479,7 @@ function Field({
       <AppText variant="caption" style={styles.label}>
         {label}
       </AppText>
-      <TextInput
+      <BrandTextInput
         accessibilityLabel={label}
         accessibilityHint={hint}
         value={value}
