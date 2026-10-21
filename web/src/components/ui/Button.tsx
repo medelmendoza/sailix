@@ -33,14 +33,20 @@ export function Button({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        'relative inline-flex min-h-10 items-center justify-center gap-2 overflow-hidden rounded-full px-5 text-sm font-semibold transition duration-300 disabled:cursor-not-allowed',
+        'inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition duration-300 disabled:cursor-not-allowed',
         loading && 'cursor-progress',
         VARIANTS[variant],
         className,
       )}
       {...rest}
     >
-      {loading && <span aria-hidden="true" className="shimmer-overlay" />}
+      {loading && (
+        // a small ring turning at the left of the label, in the button's own text colour
+        <span
+          aria-hidden="true"
+          className="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-[spin_2s_linear_infinite]"
+        />
+      )}
       {children}
     </button>
   );

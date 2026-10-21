@@ -30,14 +30,20 @@ describe('loading placeholders', () => {
     expect(screen.getByRole('status', { name: 'Checking your session' })).toBeInTheDocument();
   });
 
-  it('a button that is working shimmers, keeps its label and cannot be pressed again', () => {
+  it('a button that is working shows a small ring at the left of its label, keeps the label and cannot be pressed again', () => {
     const { container } = render(<Button loading>Save</Button>);
 
     const button = screen.getByRole('button', { name: 'Save' });
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute('aria-busy', 'true');
-    expect(container.querySelector('.shimmer-overlay')).not.toBeNull();
-    expect(container.querySelector('.animate-spin')).toBeNull();
+    const ring = container.querySelector('.animate-spin');
+    expect(ring).not.toBeNull();
+    expect(button.firstElementChild).toBe(ring); // before the label, so it sits on the left
+    expect(container.querySelector('.shimmer-overlay')).toBeNull();
+
+    const idle = render(<Button>Save</Button>);
+    expect(idle.container.querySelector('.animate-spin')).toBeNull();
+    expect(idle.container.querySelector('button')).not.toHaveAttribute('aria-busy');
   });
 
   it('a figure and a tab count shimmer until they arrive', () => {

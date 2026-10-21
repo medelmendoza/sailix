@@ -177,8 +177,7 @@ body,
   background-color: var(--color-line);
 }
 
-.shimmer::after,
-.shimmer-overlay::after {
+.shimmer::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -187,22 +186,8 @@ body,
   animation: shimmer-sweep 1.4s ease-in-out infinite;
 }
 
-/* the same sweep over something that already has content, such as a button that is working */
-.shimmer-overlay {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.shimmer-overlay::after {
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .shimmer::after,
-  .shimmer-overlay::after {
+  .shimmer::after {
     animation: none;
     transform: none;
     opacity: 0;
