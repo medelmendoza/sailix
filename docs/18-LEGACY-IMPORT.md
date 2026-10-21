@@ -1,6 +1,11 @@
 # 18. Importing the old Sailix database into v2 (design, not built)
 
-Status: **proposal, awaiting approval**. Nothing here has been built or run. The old database was only inspected
+Status: **built and tested on invented data; not yet run against real data.** The seven decisions in section 5 were settled
+by taking the recommendations. Command: `php artisan legacy:import --dry-run [--files=DIR] [--include-licenses]`.
+The old database is configured with `LEGACY_DB_*` (host, port, database, username, password); the importer refuses a source
+user that can write, or a target that is the same database.
+
+Originally: proposal. Nothing here had been built or run. The old database was only inspected
 read-only (column structure and aggregate counts; no personal data was read or copied).
 
 ## 1. What was found
