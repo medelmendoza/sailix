@@ -3,7 +3,8 @@
 /*
  * Design tokens, in the style of the MK DevWorks site: rounded friendly headings, white cards on a soft tinted page, 1rem
  * card radius, soft layered shadows, round icon tiles, pill buttons that lift on hover, a gradient underline under titles.
- * The colour is Sailix's own: deep teal (the sea) with a warm amber spark. An organization's branding overrides the brand
+ * The colours are the Sailix logo's: its blue (#1260D8) is the brand, its green (#52BB88) the accent, and the teal between
+ * them (#3F9AA3) appears wherever a gradient runs from one to the other. An organization's branding overrides the brand
  * and accent variables at run time (features/tenant-look/look.ts), so components must use these names, never raw colours.
  * Text-bearing uses pick 700 and darker so white-on-colour stays at 4.5:1 or better.
  */
@@ -12,24 +13,24 @@
     ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-heading: 'Baloo 2', ui-rounded, 'Quicksand', system-ui, sans-serif;
 
-  --color-brand-50: #f0fdfa;
-  --color-brand-100: #ccfbf1;
-  --color-brand-600: #0d9488;
-  --color-brand-700: #0f766e;
-  --color-brand-800: #115e59;
-  --color-brand-900: #134e4a;
+  --color-brand-50: #f1f5fd;
+  --color-brand-100: #d9e6f9;
+  --color-brand-600: #2e73dd;
+  --color-brand-700: #1260d8;
+  --color-brand-800: #0e48a2;
+  --color-brand-900: #093070;
 
-  /* accent-600 is what links and focus rings use (it follows the brand); accent-500 is the decorative spark */
-  --color-accent-50: #f0fdfa;
-  --color-accent-100: #dcf5f1;
-  --color-accent-500: #f59e0b;
-  --color-accent-600: #0f766e;
+  /* accent-600 is what links and focus rings use (it follows the brand); accent-500 is the logo's green, for gradients */
+  --color-accent-50: #f1f5fd;
+  --color-accent-100: #e3ecfa;
+  --color-accent-500: #52bb88;
+  --color-accent-600: #1260d8;
 
   --color-surface: #ffffff;
-  --color-page: #f5f9f8;
-  --color-ink: #10211f;
-  --color-muted: #4d625e;
-  --color-line: #dbe7e4;
+  --color-page: #f4f8fc;
+  --color-ink: #0f2036;
+  --color-muted: #4a5d78;
+  --color-line: #dbe5f1;
   --color-ok-bg: #e3f3ea;
   --color-ok-fg: #1f6b4a;
   --color-warn-bg: #fdf0dc;
@@ -38,8 +39,15 @@
   --color-bad-fg: #b3362f;
 
   --radius-card: 1rem;
-  --shadow-soft: 0 1px 2px rgb(16 33 31 / 0.05), 0 10px 28px -14px rgb(16 33 31 / 0.18);
-  --shadow-lift: 0 2px 4px rgb(16 33 31 / 0.06), 0 22px 44px -18px rgb(16 33 31 / 0.28);
+  --shadow-soft: 0 1px 2px rgb(15 32 54 / 0.05), 0 10px 28px -14px rgb(15 32 54 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(15 32 54 / 0.06), 0 22px 44px -18px rgb(15 32 54 / 0.28);
+  /* the logo's run from blue through teal to green; the teal is the midpoint of the two brand colours, so it follows a branded look */
+  --gradient-brand: linear-gradient(
+    90deg,
+    var(--color-brand-700),
+    color-mix(in srgb, var(--color-brand-700) 50%, var(--color-accent-500)),
+    var(--color-accent-500)
+  );
 }
 
 @layer base {
@@ -79,13 +87,13 @@ body,
     height: 4px;
     width: 3rem;
     border-radius: 9999px;
-    background: linear-gradient(90deg, var(--color-brand-600), var(--color-accent-500));
+    background: var(--gradient-brand);
   }
   .text-center.title-bar::after {
     margin-inline: auto;
   }
   .text-gradient {
-    background-image: linear-gradient(90deg, var(--color-brand-600), var(--color-accent-500));
+    background-image: var(--gradient-brand);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

@@ -220,7 +220,7 @@ export function AdminLayout(props: Props) {
         <header
           className={cn(
             'sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-line bg-surface/90 px-4 py-3 backdrop-blur transition-shadow sm:px-6',
-            scrolled && 'shadow-[0_8px_20px_-14px_rgb(16_33_31/0.35)]',
+            scrolled && 'shadow-[0_8px_20px_-14px_rgb(15_32_54/0.35)]',
           )}
         >
           <div className="flex items-center gap-2">

@@ -73,11 +73,11 @@ export function PageHero({
       <div aria-hidden="true" className="bg-dots absolute inset-0" />
       <div
         aria-hidden="true"
-        className="float-slow absolute -right-16 -top-20 size-48 rounded-full bg-accent-500/25 blur-3xl"
+        className="float-slow absolute -bottom-28 -right-16 size-72 rounded-full bg-accent-500/55 blur-3xl"
       />
       <div
         aria-hidden="true"
-        className="absolute -bottom-24 left-1/4 size-64 rounded-full bg-brand-600/50 blur-3xl"
+        className="absolute -right-10 -top-24 size-60 rounded-full bg-brand-600/45 blur-3xl"
       />
       <div className="relative flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
