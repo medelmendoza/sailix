@@ -143,6 +143,7 @@ describe('route guards', () => {
     const nav = screen.getByRole('navigation', { name: 'Main' });
     expect(within(nav).getByRole('link', { name: 'Organizations' })).toBeInTheDocument();
     expect(screen.getByText('Root Admin')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Sailix' })).toHaveAttribute('src', '/sailix-logo.png'); // the platform's side bar
   });
 
   it('shows a not-found page for unknown routes', async () => {

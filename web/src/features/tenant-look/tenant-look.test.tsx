@@ -66,6 +66,15 @@ describe("sign-in on an organization's own address", () => {
     );
   });
 
+  it("shows the organization's own logo when it has one, and the Sailix logo when it has none", async () => {
+    asAnonymous();
+    addressedAs({ ...look, logo_url: null });
+    renderApp('/login');
+
+    expect(await screen.findByText('Southfield Agencies')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Sailix' })).toHaveAttribute('src', '/sailix-logo.png');
+  });
+
   it('sends no agency code: the address names the organization', async () => {
     asAnonymous();
     addressedAs(look);
@@ -110,7 +119,7 @@ describe('sign-in on the shared address', () => {
     renderApp('/login');
 
     expect(await screen.findByLabelText(/Agency code/)).toBeInTheDocument();
-    expect(screen.getByText('Sailix')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Sailix' })).toHaveAttribute('src', '/sailix-logo.png');
     expect(document.documentElement.style.getPropertyValue('--color-brand-700')).toBe('');
   });
 
@@ -192,6 +201,19 @@ describe('shared-address demo switcher', () => {
 });
 
 describe('inside the portal', () => {
+  it('puts the Sailix logo in the side bar when the organization has none, with its name under it', async () => {
+    asTenantAdmin();
+    addressedAs({ ...look, logo_url: null });
+    renderApp('/app/account');
+
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
+    expect(nav).toBeInTheDocument();
+    await waitFor(() =>
+      expect(document.querySelector('aside img')).toHaveAttribute('src', '/sailix-logo.png'),
+    );
+    expect(document.querySelector('aside img')).toHaveAttribute('alt', 'Sailix');
+  });
+
   it("shows the organization's name and logo in the side bar", async () => {
     asTenantAdmin();
     addressedAs(look);

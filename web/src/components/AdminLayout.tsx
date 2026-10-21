@@ -25,24 +25,32 @@ interface Props {
 function Sidebar({ sections, portalName, portalKind, logoUrl }: Props) {
   return (
     <>
-      <div className="flex min-w-0 items-center gap-2.5 border-b border-line px-6 py-4">
-        {logoUrl ? (
-          <img src={logoUrl} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" />
-        ) : (
-          <span
-            aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-900 font-heading text-base font-bold text-white shadow-sm"
-          >
-            {portalName.charAt(0).toUpperCase()}
-          </span>
-        )}
-        <div className="min-w-0">
-          <p className="truncate font-heading text-lg font-bold leading-tight" title={portalName}>
-            {portalName}
-          </p>
-          <p className="truncate text-xs leading-tight text-muted">{portalKind}</p>
+      {logoUrl ? (
+        // the organization's own logo, with its name
+        <div className="flex min-w-0 items-center gap-2.5 border-b border-line px-6 py-4">
+          <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
+          <div className="min-w-0">
+            <p className="truncate font-heading text-lg font-bold leading-tight" title={portalName}>
+              {portalName}
+            </p>
+            <p className="truncate text-xs leading-tight text-muted">{portalKind}</p>
+          </div>
         </div>
-      </div>
+      ) : (
+        // no logo of its own: the Sailix logo, and whose portal this is under it
+        <div className="min-w-0 border-b border-line px-6 py-4">
+          <img src="/sailix-logo.png" alt="Sailix" className="h-8 w-auto" />
+          <p className="mt-2 truncate text-xs leading-tight text-muted">
+            {portalName === 'Sailix' ? (
+              portalKind
+            ) : (
+              <>
+                <span className="font-semibold text-ink">{portalName}</span> · {portalKind}
+              </>
+            )}
+          </p>
+        </div>
+      )}
       <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 py-4">
         {sections.map((section, i) => (
           <div key={section.title} className={i === 0 ? '' : 'mt-5'}>

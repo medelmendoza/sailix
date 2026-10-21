@@ -45,10 +45,15 @@ export function PublicLayout({
         <div className="mb-6 text-center">
           {logo ? (
             <img src={logo} alt="" className="mx-auto mb-3 h-16 max-w-full object-contain" />
-          ) : null}
-          <p className="text-sm font-semibold uppercase tracking-widest text-brand-800">
-            {look?.name ?? 'Sailix'}
-          </p>
+          ) : (
+            // no logo of its own (or no organization at all): the Sailix logo
+            <img src="/sailix-logo.png" alt="Sailix" className="mx-auto mb-3 h-14 w-auto" />
+          )}
+          {look && (
+            <p className="text-sm font-semibold uppercase tracking-widest text-brand-800">
+              {look.name}
+            </p>
+          )}
           {look?.tagline ? <p className="mt-1 text-sm text-muted">{look.tagline}</p> : null}
           {look?.login_welcome_message ? (
             <p className="mt-2 text-sm">{look.login_welcome_message}</p>
