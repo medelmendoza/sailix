@@ -130,12 +130,16 @@ class PlatformAuthTest extends TestCase
         $this->login()->assertOk();
     }
 
-    public function test_the_switch_is_ignored_anywhere_but_a_development_machine(): void
+    public function test_the_switch_is_honoured_on_development_and_staging_machines_but_never_in_production(): void
     {
         config(['sailix.platform.require_otp' => false]);
-        $this->assertFalse(PlatformMfa::required()); // local/testing: honoured
+        $this->assertFalse(PlatformMfa::required()); // testing: honoured
 
-        foreach (['production', 'staging'] as $environment) {
+        $this->app->detectEnvironment(fn () => 'staging');
+        $this->assertFalse(PlatformMfa::required());
+        $this->spa()->getJson('/api/v1/platform/auth/options')->assertOk()->assertExactJson(['data' => ['otp_required' => false]]);
+
+        foreach (['production', 'prod', 'live'] as $environment) {
             $this->app->detectEnvironment(fn () => $environment);
             $this->assertTrue(PlatformMfa::required(), $environment);
             $this->spa()->getJson('/api/v1/platform/auth/options')->assertOk()->assertExactJson(['data' => ['otp_required' => true]]);
