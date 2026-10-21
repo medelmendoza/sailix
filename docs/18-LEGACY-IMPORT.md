@@ -151,3 +151,16 @@ the flag it still refuses a target that is the same database as the source.
 Steps: backup, drop the 7 clashing tables, `php artisan migrate --env=staging`, `php artisan legacy:import --same-database --dry-run
 --env=staging`, review, then the same without `--dry-run`.
 
+### Result on staging (2026-10-21)
+
+- Backup dump taken, the 7 clashing generic tables dropped by the owner, then `php artisan migrate --env=staging` (16 migrations;
+  the database went from 12 to 48 tables; the 12 old data tables are unchanged).
+- `php artisan legacy:import --same-database --env=staging` (no files folder): organization SFAI (provisioning), 3 users with
+  memberships and crew profiles (1 administrator, 2 crew), 5 document kinds, 1 announcement with its `ABACUS` audience.
+  Skipped: 2 users, 10 documents (8 only for the missing files folder), 2 to-dos, and the 55 `tb_crew_document` rows.
+- A superadmin was created with `platform:create-admin ... --env=staging` (password and authenticator secret known only to its owner).
+- Running the app against it: `APP_ENV=staging php artisan serve --port=8002` and the web app with
+  `VITE_API_BASE_URL=http://localhost:8002 npm --prefix web run dev -- --port 5174`. `backend/.env.staging` (git-ignored) needs
+  the `DB_*` values, an `APP_KEY` (keep it: it encrypts the authenticator secret), `SAILIX_WEB_ORIGINS=http://localhost:5174` and
+  `SANCTUM_STATEFUL_DOMAINS=localhost:5174`.
+
