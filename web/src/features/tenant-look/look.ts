@@ -90,24 +90,30 @@ const VARS = [
 ];
 
 /** Puts the look on the page: colours, tab title and icon. With no look it puts the platform look back. */
+/** The tab icon when an organization has none of its own: the Sailix sail. */
+const DEFAULT_ICON = '/favicon.png';
+
+function setTabIcon(href: string): void {
+  let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.head.appendChild(link);
+  }
+  link.href = href;
+}
+
 export function applyLook(look: PublicTenant | null): void {
   const root = document.documentElement;
   VARS.forEach((v) => root.style.removeProperty(v));
   if (!look) {
     document.title = 'Sailix Portal';
+    setTabIcon(DEFAULT_ICON); // leaving an organization puts the Sailix icon back
     return;
   }
   Object.entries(palette(look)).forEach(([k, v]) => root.style.setProperty(k, v));
   document.title = `${look.name} · Sailix Portal`;
-  if (look.favicon_url) {
-    let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'icon';
-      document.head.appendChild(link);
-    }
-    link.href = look.favicon_url;
-  }
+  setTabIcon(look.favicon_url ?? DEFAULT_ICON);
 }
 
 const cacheKey = (slug: string | null) => `${LOOK_CACHE}${window.location.hostname}:${slug ?? ''}`;

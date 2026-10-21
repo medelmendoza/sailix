@@ -6,7 +6,7 @@ import { AppText } from './AppText';
 import { Card } from './Card';
 
 /**
- * The sign-in family of screens: the blue-to-teal header of the Dashboard with the sail in a white badge, a title and a
+ * The sign-in family of screens: the blue-to-teal header of the Dashboard with the Sailix logo in a white badge, a title and a
  * line under it, and the form on a white card that overlaps the header.
  */
 export function AuthLayout({
@@ -38,7 +38,7 @@ export function AuthLayout({
             importantForAccessibility="no-hide-descendants"
           >
             <Image
-              source={require('../../assets/brand/sailix-sail.png')}
+              source={require('../../assets/brand/sailix-logo.png')}
               resizeMode="contain"
               style={styles.sail}
             />
@@ -73,15 +73,15 @@ const styles = StyleSheet.create({
     experimental_backgroundImage: gradients.header,
   },
   logo: {
-    width: 72,
-    height: 72,
+    height: 64,
+    paddingHorizontal: spacing.lg,
     borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
     backgroundColor: colors.surface,
   },
-  sail: { width: 40, height: 40 },
+  sail: { width: 92, height: 44 },
   white: { color: colors.onPrimary },
   sheet: { paddingHorizontal: spacing.lg, gap: spacing.lg, marginTop: -spacing.xxl },
   card: { gap: spacing.lg, padding: spacing.xl, borderRadius: radius.lg },

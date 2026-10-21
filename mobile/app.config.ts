@@ -77,7 +77,7 @@ const build = ({ config }: ConfigContext): ExpoConfig => ({
     ['expo-audio', { microphonePermission: false, enableBackgroundPlayback: false }],
     [
       'expo-splash-screen',
-      { backgroundColor: '#F4F7FB', image: './assets/splash-icon.png', imageWidth: 120 },
+      { backgroundColor: '#F4F8FC', image: './assets/splash-icon.png', imageWidth: 120 },
     ],
   ],
   extra: {

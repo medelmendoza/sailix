@@ -77,6 +77,16 @@ describe('organization look', () => {
     applyLook(null);
     expect(document.documentElement.style.getPropertyValue('--color-brand-700')).toBe('');
     expect(document.title).toBe('Sailix Portal');
+    expect(document.querySelector<HTMLLinkElement>('link[rel="icon"]')?.getAttribute('href')).toBe(
+      '/favicon.png',
+    ); // the Sailix sail is back
+  });
+
+  it('an organization without a favicon of its own shows the Sailix sail in the tab', () => {
+    applyLook({ ...look, favicon_url: null });
+    expect(document.querySelector<HTMLLinkElement>('link[rel="icon"]')?.getAttribute('href')).toBe(
+      '/favicon.png',
+    );
   });
 
   it('remembers the last look per address only to avoid a flash', () => {

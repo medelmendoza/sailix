@@ -1,23 +1,23 @@
 import type { BoxShadowValue } from 'react-native';
 
 /**
- * Design tokens, "Harbor": warm sand ground, white cards lifted by a soft shadow and a hairline, deep-teal brand,
- * navy ink and a little coral for warmth. Every text/background pair is checked against WCAG AA in the tokens test.
+ * Design tokens, "Harbor": a cool white ground, white cards lifted by a soft shadow and a hairline, navy ink, and the
+ * colours of the Sailix logo: its blue (#1260D8) as the brand, its green (#52BB88) and the teal between them for gradients. Every text/background pair is checked against WCAG AA in the tokens test.
  */
 export const colors = {
-  background: '#F4F7FB', // cool white
+  background: '#F4F8FC', // cool white
   surface: '#FFFFFF', // cards and bars
   surfaceSunken: '#E6ECF5', // wells, progress tracks, image placeholders
   // text
-  text: '#12243D', // navy ink
-  textMuted: '#51627A',
+  text: '#0F2036', // navy ink
+  textMuted: '#4A5D78',
   onPrimary: '#FFFFFF',
   // brand
-  primary: '#355DAD', // the sail blue of the Sailix logo
-  primaryEnd: '#2F67B3',
-  accent: '#355DAD', // links
+  primary: '#1260D8', // the blue of the Sailix logo
+  primaryEnd: '#0E4FB5',
+  accent: '#1260D8', // links
   // decorative fills (never the only carrier of text) and their text-safe counterparts
-  seafoam: '#55BD8B', // the green of the logo wordmark
+  seafoam: '#52BB88', // the green of the logo wordmark
   coral: '#F0A27F',
   coralText: '#A8391A',
   gold: '#B7791F',
@@ -33,18 +33,18 @@ export const colors = {
   warningBg: '#FDF0DC',
   success: '#1F6B4A',
   successBg: '#E3F3EA',
-  info: '#355DAD',
-  infoBg: '#E3ECF8',
+  info: '#1260D8',
+  infoBg: '#E3ECFA',
   skeleton: '#E3EAF3',
-  shadow: 'rgba(18, 36, 61, 0.10)',
+  shadow: 'rgba(15, 32, 54, 0.10)',
 } as const;
 
 export const gradients = {
-  primary: 'linear-gradient(135deg, #355DAD 0%, #2F67B3 100%)',
+  primary: 'linear-gradient(135deg, #1260D8 0%, #0E4FB5 100%)',
   /** The Dashboard header: the logo's blue fading to a teal (white text stays readable on both ends, see the tokens test). */
-  header: 'linear-gradient(180deg, #355DAD 0%, #2A7F8F 100%)',
-  /** Decorative placeholder fill (blue to teal); never a background for text that matters. */
-  soft: 'linear-gradient(135deg, #355DAD 0%, #409DA5 100%)',
+  header: 'linear-gradient(180deg, #1260D8 0%, #1B7A8F 100%)',
+  /** Decorative placeholder fill, the logo's run from blue through teal to green; never a background for text that matters. */
+  soft: 'linear-gradient(135deg, #1260D8 0%, #3F9AA3 55%, #52BB88 100%)',
 } as const;
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
@@ -52,7 +52,7 @@ export const radius = { sm: 10, md: 16, lg: 24, pill: 999 } as const;
 
 /** Elevation: a card lifts off the sand with a soft shadow; an inset well is a quiet inner shadow. */
 export const shadows = {
-  raised: [{ offsetX: 0, offsetY: 2, blurRadius: 10, color: 'rgba(18, 36, 61, 0.06)' }],
+  raised: [{ offsetX: 0, offsetY: 2, blurRadius: 10, color: 'rgba(15, 32, 54, 0.06)' }],
   raisedSm: [{ offsetX: 0, offsetY: 1, blurRadius: 4, color: colors.shadow }],
   inset: [{ offsetX: 0, offsetY: 1, blurRadius: 4, color: colors.shadow, inset: true as const }],
   insetSm: [{ offsetX: 0, offsetY: 1, blurRadius: 3, color: colors.shadow, inset: true as const }],
