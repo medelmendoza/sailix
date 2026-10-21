@@ -36,13 +36,13 @@ class ImportLegacy extends Command
                 (bool) $this->option('include-licenses'),
                 $this->option('tenant-code') ?: null,
             );
-        } catch (RuntimeException $e) {
-            $this->error($e->getMessage());
-
-            return self::FAILURE;
         } catch (QueryException $e) {
             // The full message carries the SQL with the values being written (names, emails): print only what failed.
             $this->error('Database error, nothing was written: '.(strstr($e->getMessage(), ' (Connection', true) ?: 'see the log'));
+
+            return self::FAILURE;
+        } catch (RuntimeException $e) {
+            $this->error($e->getMessage());
 
             return self::FAILURE;
         }
