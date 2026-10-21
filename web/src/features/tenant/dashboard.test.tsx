@@ -84,7 +84,6 @@ function dashboardApi(extra: Parameters<typeof server.use> = []) {
       ),
     ),
     http.get(`${V1}/tenant/deletion-requests`, () => HttpResponse.json(pageOf([]))),
-    http.get(`${V1}/tenant/audit-logs`, () => HttpResponse.json(pageOf([]))),
   );
 }
 
@@ -94,6 +93,24 @@ const findTile = async (name: RegExp) => {
   await screen.findByRole('main'); // the page appears once the session is known
   return main().findByRole('link', { name });
 };
+
+describe('Dashboard: no recent-activity list', () => {
+  it('is not on the dashboard (the audit log has its own page) and asks for no audit entries', async () => {
+    asTenantAdmin();
+    const asked: string[] = [];
+    dashboardApi([
+      http.get(
+        `${V1}/tenant/audit-logs`,
+        ({ request }) => (asked.push(request.url), HttpResponse.json(pageOf([]))),
+      ),
+    ]);
+    renderApp('/app');
+
+    await findTile(/^Crew/);
+    expect(screen.queryByRole('heading', { name: 'Recent activity' })).not.toBeInTheDocument();
+    expect(asked).toHaveLength(0);
+  });
+});
 
 describe('Dashboard: the summary tiles', () => {
   it('show the figures and open the area they come from', async () => {

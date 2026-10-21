@@ -1,17 +1,8 @@
 import { Link } from 'react-router-dom';
-import {
-  Button,
-  ErrorState,
-  PageHero,
-  Skeleton,
-  SkeletonDataTable,
-  StatTile,
-} from '../../components/ui';
+import { Button, PageHero, Skeleton, StatTile } from '../../components/ui';
 import { ICONS } from '../../components/icons';
-import { describeError } from '../../services/api/errors';
-import { AUDIT_CELLS, AUDIT_HEADERS, AuditTable } from '../shared/AuditTable';
 import { can, hasFeature, useMe } from '../authentication/session';
-import { useAuditLogs, useDashboardCounts } from './api';
+import { useDashboardCounts } from './api';
 import { AnnouncementsPanel, DocumentApprovalPanel, UserApplicationPanel } from './DashboardPanels';
 
 /** A figure that has not arrived shimmers; one that has is shown, with a plain hint under it. */
@@ -29,7 +20,6 @@ export function DashboardPage() {
     announcements: showAnnouncements,
     requests: showRequests,
   });
-  const audit = useAuditLogs({ per_page: 5 });
   const openRequests = counts.requests ?? 0;
   const first = (me.user.display_name ?? me.user.username).split(' ')[0];
 
@@ -132,35 +122,6 @@ export function DashboardPage() {
           </div>
         )}
       </div>
-
-      {can(me, 'audit.view') && (
-        <section className="mt-8" aria-labelledby="recent-h">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 id="recent-h" className="text-lg font-bold">
-              Recent activity
-            </h2>
-            <Link
-              to="/app/audit"
-              className="rounded-full border border-line px-3 py-1 text-xs font-medium transition-colors hover:border-brand-600 hover:text-brand-800"
-            >
-              View all
-            </Link>
-          </div>
-          {audit.isPending ? (
-            <SkeletonDataTable
-              caption="Audit log"
-              headers={AUDIT_HEADERS}
-              cells={AUDIT_CELLS}
-              rows={5}
-              label="Loading activity"
-            />
-          ) : audit.isError ? (
-            <ErrorState message={describeError(audit.error)} onRetry={() => void audit.refetch()} />
-          ) : (
-            <AuditTable entries={audit.data.data} />
-          )}
-        </section>
-      )}
     </>
   );
 }
