@@ -11,20 +11,24 @@ import {
   FormError,
   PageHeader,
   Pagination,
-  SelectField,
+  SearchField,
   Spinner,
   StatusBadge,
+  StatusTabs,
   Table,
   TextField,
   useToast,
 } from '../../components/ui';
 import { applyServerErrors } from '../authentication/forms';
 import { formatDateTime } from '../shared/AuditTable';
-import { describeError, useCreateTenant, useTenants, useTenantStatusCount } from './api';
-
-const STATUS_OPTIONS = ['', 'provisioning', 'active', 'suspended', 'deactivated', 'archived'].map(
-  (v) => ({ value: v, label: v ? v[0]!.toUpperCase() + v.slice(1) : 'All statuses' }),
-);
+import {
+  describeError,
+  TENANT_STATUSES,
+  useCreateTenant,
+  useTenantCounts,
+  useTenants,
+} from './api';
+import { TenantSummary } from './TenantSummary';
 
 const createSchema = z.object({
   code: z.string().regex(/^[A-Za-z0-9]{2,32}$/, 'Use 2–32 letters or digits.'),
@@ -106,36 +110,15 @@ function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
-const STATUSES = ['provisioning', 'active', 'suspended', 'deactivated', 'archived'] as const;
+const cap = (v: string) => v[0]!.toUpperCase() + v.slice(1);
 
-/** One tile of the summary row; the open tile is the current filter. */
-function StatusTile({
-  status,
-  selected,
-  onPick,
-}: {
-  status: (typeof STATUSES)[number];
-  selected: boolean;
-  onPick: () => void;
-}) {
-  const count = useTenantStatusCount(status);
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onPick}
-      className={`rounded-xl border bg-surface p-3 text-left transition hover:shadow-sm ${
-        selected ? 'border-accent-600 ring-1 ring-accent-600' : 'border-line'
-      }`}
-    >
-      <p className="text-2xl font-semibold text-brand-800">
-        {count.isPending ? '…' : (count.data ?? '—')}
-      </p>
-      <div className="mt-1">
-        <StatusBadge status={status} />
-      </div>
-    </button>
-  );
+function StatusFilter({ value, onChange }: { value: string; onChange: (s: string) => void }) {
+  const c = useTenantCounts();
+  const tabs = [
+    { key: '', label: 'All', count: c.all },
+    ...TENANT_STATUSES.map((s) => ({ key: s, label: cap(s), count: c[s] })),
+  ];
+  return <StatusTabs label="Filter by status" tabs={tabs} value={value} onChange={onChange} />;
 }
 
 export function TenantsPage() {
@@ -159,6 +142,7 @@ export function TenantsPage() {
     }
     setParams(next);
   };
+  const anyFilter = Boolean(status || q);
 
   return (
     <>
@@ -167,40 +151,43 @@ export function TenantsPage() {
         description="Every organization on the platform."
         actions={<Button onClick={() => setCreating(true)}>New organization</Button>}
       />
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {STATUSES.map((st) => (
-          <StatusTile
-            key={st}
-            status={st}
-            selected={status === st}
-            onPick={() => set({ status: status === st ? '' : st, page: '' })}
+      <TenantSummary />
+      <StatusFilter value={status} onChange={(s) => set({ status: s, page: '' })} />
+      <div className="my-4 flex flex-wrap items-center gap-3">
+        <div className="min-w-0 flex-1 sm:max-w-sm">
+          <SearchField
+            label="Search organizations"
+            placeholder="Search by code or name"
+            value={q}
+            onSearch={(v) => set({ q: v, page: '' })}
           />
-        ))}
-      </div>
-      <div className="mb-4 grid gap-3 sm:grid-cols-2">
-        <SelectField
-          label="Status"
-          options={STATUS_OPTIONS}
-          value={status}
-          onChange={(e) => set({ status: e.target.value, page: '' })}
-        />
-        <TextField
-          label="Search by code or name"
-          defaultValue={q}
-          onChange={(e) => set({ q: e.target.value, page: '' })}
-        />
+        </div>
+        {anyFilter && (
+          <button
+            type="button"
+            className="text-sm text-accent-600 hover:underline"
+            onClick={() => set({ status: '', q: '', page: '' })}
+          >
+            Clear filters
+          </button>
+        )}
       </div>
       {tenants.isPending ? (
         <Spinner />
       ) : tenants.isError ? (
         <ErrorState message={describeError(tenants.error)} onRetry={() => void tenants.refetch()} />
       ) : tenants.data.data.length === 0 ? (
-        <EmptyState title="No organizations match" />
+        <EmptyState
+          title={anyFilter ? 'No organizations match your filters' : 'No organizations yet'}
+        />
       ) : (
         <>
-          <Table caption="Organizations" headers={['Organization', 'Address', 'Status', 'Created']}>
+          <Table
+            caption="Organizations"
+            headers={['Organization', 'Address', 'Status', 'Created', '']}
+          >
             {tenants.data.data.map((t) => (
-              <tr key={t.id}>
+              <tr key={t.id} className="hover:bg-page">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <span
@@ -227,6 +214,15 @@ export function TenantsPage() {
                   <StatusBadge status={t.status} />
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">{formatDateTime(t.created_at)}</td>
+                <td className="w-10 px-2 py-3 text-right">
+                  <Link
+                    to={`/platform/tenants/${t.id}`}
+                    aria-label={`Open ${t.name}`}
+                    className="rounded-full px-2 py-1 text-muted hover:bg-line/50 hover:text-brand-800"
+                  >
+                    ›
+                  </Link>
+                </td>
               </tr>
             ))}
           </Table>

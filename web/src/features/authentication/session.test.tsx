@@ -49,7 +49,9 @@ describe('session lifecycle', () => {
     );
     const { user, client } = renderApp('/app');
 
-    await user.click(await screen.findByRole('button', { name: 'Sign out' }));
+    await user.click(await screen.findByRole('button', { name: /^Account menu/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'Sign out' }));
+    await user.click(await screen.findByRole('button', { name: 'Sign out' })); // the confirmation
 
     await waitFor(() => expect(assign).toHaveBeenCalledWith('/login'));
     expect(order).toEqual(['csrf', 'logout']);
@@ -67,7 +69,9 @@ describe('session lifecycle', () => {
     );
     const { user } = renderApp('/app');
 
-    await user.click(await screen.findByRole('button', { name: 'Sign out' }));
+    await user.click(await screen.findByRole('button', { name: /^Account menu/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'Sign out' }));
+    await user.click(await screen.findByRole('button', { name: 'Sign out' })); // the confirmation
 
     await waitFor(() => expect(assign).toHaveBeenCalledWith('/login'));
   });

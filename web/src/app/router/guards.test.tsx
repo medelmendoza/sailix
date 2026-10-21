@@ -62,7 +62,7 @@ describe('route guards', () => {
   it('renders the tenant app for a tenant admin and shows every menu entry their abilities allow', async () => {
     asTenantAdmin();
     dashboardData();
-    renderApp('/app');
+    const { user } = renderApp('/app');
     const nav = await screen.findByRole('navigation', { name: 'Main' });
     for (const label of [
       'Dashboard',
@@ -78,10 +78,15 @@ describe('route guards', () => {
       'Modules',
       'Settings',
       'Audit log',
-      'My account',
     ]) {
       expect(within(nav).getByRole('link', { name: label })).toBeInTheDocument();
     }
+    // the account page is in the account menu, not the sidebar
+    await user.click(screen.getByRole('button', { name: /^Account menu/ }));
+    expect(screen.getByRole('menuitem', { name: 'My account' })).toHaveAttribute(
+      'href',
+      '/app/account',
+    );
     expect(screen.getAllByText('Southfield Agencies').length).toBeGreaterThan(0);
     expect(screen.queryByRole('link', { name: 'Organizations' })).not.toBeInTheDocument();
   });
@@ -135,7 +140,7 @@ describe('route guards', () => {
     );
     renderApp('/platform');
     expect(await screen.findByRole('heading', { name: 'Platform dashboard' })).toBeInTheDocument();
-    const nav = screen.getByRole('navigation', { name: 'Platform' });
+    const nav = screen.getByRole('navigation', { name: 'Main' });
     expect(within(nav).getByRole('link', { name: 'Organizations' })).toBeInTheDocument();
     expect(screen.getByText('Root Admin')).toBeInTheDocument();
   });

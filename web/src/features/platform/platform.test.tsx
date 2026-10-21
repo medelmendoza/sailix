@@ -88,8 +88,14 @@ describe('organization directory', () => {
       '/platform/tenants/t-1',
     );
     expect(screen.getByText('Acme Crewing')).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText('Status'), 'active');
+    await user.click(screen.getByRole('tab', { name: /^Active/ }));
     await waitFor(() => expect(urls.at(-1)!.searchParams.get('filter[status]')).toBe('active'));
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search organizations' }), 'acme');
+    await waitFor(() => expect(urls.at(-1)!.searchParams.get('filter[q]')).toBe('acme'));
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+    await waitFor(() => expect(urls.at(-1)!.searchParams.get('filter[status]')).toBeNull());
+    expect(urls.at(-1)!.searchParams.get('filter[q]')).toBeNull();
   });
 
   it('creates an organization (validating the code locally) and opens it', async () => {

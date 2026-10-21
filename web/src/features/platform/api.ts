@@ -1,4 +1,10 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useToast } from '../../components/ui';
 import { api } from '../../services/api/client';
 import { describeError } from '../../services/api/errors';
@@ -27,7 +33,7 @@ export function useTenantStatusCount(status: string) {
     queryFn: async () =>
       (
         await api.get<Page<Tenant>>('/platform/tenants', {
-          params: { 'filter[status]': status, per_page: 1 },
+          params: { 'filter[status]': status || undefined, per_page: 1 },
         })
       ).data.meta.total,
   });
@@ -161,4 +167,31 @@ export function useUpdateFeatures(id: string) {
       ).data.data,
     onSuccess: (data) => qc.setQueryData(['platform', 'tenant', id, 'features'], data),
   });
+}
+
+export const TENANT_STATUSES = [
+  'provisioning',
+  'active',
+  'suspended',
+  'deactivated',
+  'archived',
+] as const;
+
+/** How many organizations there are in total and in each lifecycle state (undefined until it arrives). */
+export function useTenantCounts(): { all?: number } & Partial<
+  Record<(typeof TENANT_STATUSES)[number], number>
+> {
+  const keys = ['', ...TENANT_STATUSES];
+  const results = useQueries({
+    queries: keys.map((status) => ({
+      queryKey: ['platform', 'tenant-count', status],
+      queryFn: async () =>
+        (
+          await api.get<Page<Tenant>>('/platform/tenants', {
+            params: { 'filter[status]': status || undefined, per_page: 1 },
+          })
+        ).data.meta.total,
+    })),
+  });
+  return Object.fromEntries(keys.map((k, i) => [k || 'all', results[i]!.data]));
 }

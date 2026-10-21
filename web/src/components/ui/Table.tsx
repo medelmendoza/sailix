@@ -15,7 +15,7 @@ export function Table({
   compact?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-line bg-surface">
+    <div className="overflow-x-auto rounded-2xl border border-white bg-surface shadow-sm ring-1 ring-line">
       <table className={`w-full text-left text-sm ${compact ? '' : 'min-w-[40rem]'}`}>
         <caption className="sr-only">{caption}</caption>
         <thead className="border-b border-line bg-page text-xs uppercase tracking-wide text-muted">
