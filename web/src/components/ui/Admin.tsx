@@ -218,7 +218,7 @@ export function ProfileTabs({
             aria-controls={`panel-${t.key}`}
             onClick={() => onChange(t.key)}
             className={cn(
-              'relative -mb-px whitespace-nowrap border-b-2 px-4 py-3 text-base font-medium transition-colors',
+              'relative -mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors',
               selected
                 ? 'border-brand-700 text-brand-700'
                 : 'border-transparent text-muted hover:border-line hover:text-ink',

@@ -251,7 +251,7 @@ export function AdminLayout(props: Props) {
             signingOut={props.signingOut}
           />
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-[var(--page-pad)] sm:px-6">
+        <main className="min-w-0 w-full flex-1 p-[var(--page-pad)]">
           {/* keyed by the page, so its content eases in each time the route changes */}
           <div key={pathname} className="page-in">
             <Outlet />
