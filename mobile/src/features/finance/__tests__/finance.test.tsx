@@ -89,6 +89,22 @@ describe('payslips behind the password step-up', () => {
     expect(api.callsTo('POST /finance/unlock')[0]?.body).toEqual({ password: 'my-password' });
   });
 
+  it('lets you show the password you type to open the payslips, and hide it again', async () => {
+    await openFinance({ 'GET /payslips': problem(403, 'step_up_required') });
+    await fireEvent.press(await screen.findByRole('button', { name: 'Allotment' }));
+
+    const field = await screen.findByLabelText('Password');
+    expect(field.props.secureTextEntry).toBe(true); // hidden to begin with
+    await fireEvent.changeText(field, 'my-password');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Show Password' }));
+    expect(screen.getByLabelText('Password').props.secureTextEntry).toBe(false);
+    expect(screen.getByLabelText('Password').props.value).toBe('my-password'); // what was typed is kept
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Hide Password' }));
+    expect(screen.getByLabelText('Password').props.secureTextEntry).toBe(true);
+  });
+
   it('says the password was wrong and does not open anything', async () => {
     await openFinance({
       'GET /payslips': problem(403, 'step_up_required'),

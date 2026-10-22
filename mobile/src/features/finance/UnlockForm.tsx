@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { BrandTextInput } from '@/components/BrandTextInput';
-import { AppText, Button, Card, FormError } from '@/components';
+import { AppText, Button, Card, FormError, GlyphIcon } from '@/components';
 import { colors, fonts, minTouchTarget, radius, spacing } from '@/constants/theme';
 import { describeError } from '@/services/api/errors';
 import { useUnlock } from './api';
@@ -13,6 +13,7 @@ import { useUnlock } from './api';
 export function UnlockForm() {
   const unlock = useUnlock();
   const [password, setPassword] = useState('');
+  const [revealed, setRevealed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
@@ -37,18 +38,28 @@ export function UnlockForm() {
       <FormError message={error} />
       <View style={{ gap: spacing.xs }}>
         <AppText variant="caption">Password</AppText>
-        <BrandTextInput
-          accessibilityLabel="Password"
-          secureTextEntry
-          autoCapitalize="none"
-          autoCorrect={false}
-          autoComplete="current-password"
-          textContentType="password"
-          value={password}
-          onChangeText={setPassword}
-          onSubmitEditing={() => void submit()}
-          style={styles.input}
-        />
+        <View style={styles.box}>
+          <BrandTextInput
+            accessibilityLabel="Password"
+            secureTextEntry={!revealed}
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="current-password"
+            textContentType="password"
+            value={password}
+            onChangeText={setPassword}
+            onSubmitEditing={() => void submit()}
+            style={styles.input}
+          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={revealed ? 'Hide Password' : 'Show Password'}
+            onPress={() => setRevealed((v) => !v)}
+            style={styles.toggle}
+          >
+            <GlyphIcon name={revealed ? 'eyeoff' : 'eye'} color={colors.border} size={26} />
+          </Pressable>
+        </View>
       </View>
       <Button title="Open payslips" loading={unlock.isPending} onPress={() => void submit()} />
     </Card>
@@ -57,15 +68,27 @@ export function UnlockForm() {
 
 const styles = StyleSheet.create({
   card: { gap: spacing.md },
-  input: {
+  box: {
+    flexDirection: 'row',
+    alignItems: 'center',
     minHeight: minTouchTarget,
     borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  input: {
+    flex: 1,
+    minHeight: minTouchTarget,
     paddingHorizontal: spacing.lg,
     fontFamily: fonts.body,
     fontSize: 16,
     color: colors.text,
-    backgroundColor: colors.surface,
+  },
+  toggle: {
+    minWidth: minTouchTarget,
+    minHeight: minTouchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

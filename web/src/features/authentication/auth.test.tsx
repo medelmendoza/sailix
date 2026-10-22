@@ -426,3 +426,56 @@ describe('emailed one-time links', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('show password on the sign-in pages', () => {
+  async function toggleOn(password: HTMLElement, user: ReturnType<typeof renderApp>['user']) {
+    expect(password).toHaveAttribute('type', 'password'); // hidden to begin with
+    await user.type(password, 'secret-value');
+
+    await user.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(password).toHaveAttribute('type', 'text');
+    expect(password).toHaveValue('secret-value'); // what was typed is kept
+    expect(screen.getByRole('button', { name: 'Hide password' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Hide password' }));
+    expect(password).toHaveAttribute('type', 'password');
+  }
+
+  it('the organization sign-in has it', async () => {
+    asAnonymous();
+    const { user } = renderApp('/login');
+    await toggleOn(await screen.findByLabelText('Password'), user);
+  });
+
+  it('the superadmin sign-in has it', async () => {
+    asAnonymous();
+    server.use(
+      http.get(`${V1}/platform/auth/options`, () =>
+        HttpResponse.json({ data: { otp_required: false } }),
+      ),
+    );
+    const { user } = renderApp('/platform/login');
+    await toggleOn(await screen.findByLabelText('Password'), user);
+  });
+
+  it('pressing the eye does not submit the form', async () => {
+    asAnonymous();
+    const posted = capture();
+    server.use(
+      http.post(
+        `${V1}/auth/session`,
+        async ({ request }) => (await posted.record(request), HttpResponse.json({})),
+      ),
+    );
+    const { user } = renderApp('/login');
+
+    await user.type(await screen.findByLabelText('Username or email'), 'admin1');
+    await user.type(screen.getByLabelText('Password'), 'pw');
+    await user.click(screen.getByRole('button', { name: 'Show password' }));
+
+    expect(posted.calls).toHaveLength(0);
+  });
+});

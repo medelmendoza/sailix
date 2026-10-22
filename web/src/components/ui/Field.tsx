@@ -1,4 +1,5 @@
-import { useId } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import { useId, useState } from 'react';
 import type {
   InputHTMLAttributes,
   ReactNode,
@@ -47,18 +48,50 @@ interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   ref?: Ref<HTMLInputElement>;
 }
 
-export function TextField({ label, error, hint, className, ref, ...rest }: TextFieldProps) {
+export function TextField({ label, error, hint, className, ref, type, ...rest }: TextFieldProps) {
   const id = useId();
+  const [shown, setShown] = useState(false);
+  const isPassword = type === 'password';
+  const input = (
+    <input
+      id={id}
+      ref={ref}
+      type={isPassword && shown ? 'text' : type}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+      className={cn(
+        CONTROL,
+        error ? 'border-bad-fg' : 'border-line',
+        isPassword && 'pr-11',
+        className,
+      )}
+      {...rest}
+    />
+  );
   return (
     <FieldFrame label={label} error={error} hint={hint} id={id}>
-      <input
-        id={id}
-        ref={ref}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
-        className={cn(CONTROL, error ? 'border-bad-fg' : 'border-line', className)}
-        {...rest}
-      />
+      {isPassword ? (
+        // every password box can be shown and hidden again, with the same small eye at its right end
+        <div className="relative">
+          {input}
+          <button
+            type="button"
+            aria-label={shown ? 'Hide password' : 'Show password'}
+            aria-pressed={shown}
+            title={shown ? 'Hide password' : 'Show password'}
+            onClick={() => setShown((v) => !v)}
+            className="absolute inset-y-0 right-1 my-auto flex size-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-brand-50 hover:text-brand-800"
+          >
+            {shown ? (
+              <EyeOff className="size-4" aria-hidden="true" />
+            ) : (
+              <Eye className="size-4" aria-hidden="true" />
+            )}
+          </button>
+        </div>
+      ) : (
+        input
+      )}
     </FieldFrame>
   );
 }
