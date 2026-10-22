@@ -278,7 +278,7 @@ export function SkeletonShell({ label = 'Checking your session' }: { label?: str
               <Skeleton className="ml-3 h-3 w-16" />
               {Array.from({ length: n }, (_, i) => (
                 <div key={i} className="flex items-center gap-2.5 px-2.5 py-1.5">
-                  <Skeleton className="size-7 rounded-lg" />
+                  <Skeleton className="size-8 rounded-full" />
                   <Skeleton className="h-3.5 w-28" />
                 </div>
               ))}
@@ -291,7 +291,7 @@ export function SkeletonShell({ label = 'Checking your session' }: { label?: str
           <Skeleton className="h-3.5 w-36" />
           <Skeleton className="h-8 w-32 rounded-full" />
         </div>
-        <div className="mx-auto w-full max-w-6xl space-y-5 px-6 py-6">
+        <div className="w-full space-y-5 p-[var(--page-pad)]">
           <Skeleton className="h-8 w-56" />
           <SkeletonStatTiles />
           <SkeletonTable rows={4} />
