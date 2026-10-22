@@ -1,5 +1,4 @@
 import { CalendarDays, Globe, Hash, Users } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { cn, ErrorState, ProfileTabs, StatusBadge } from '../../components/ui';
 import { toApiError } from '../../services/api/errors';
@@ -7,27 +6,13 @@ import { platformScope } from '../tenant/api';
 import { BrandingEditor } from '../tenant/BrandingPage';
 import { DomainsEditor } from '../tenant/DomainsPage';
 import { formatDateTime } from '../shared/AuditTable';
+import { BACK_PILL, Fact } from '../shared/Hero';
 import { describeError, useTenantAdmins, useTenantById } from './api';
 import { TenantActivityTab } from './TenantActivityTab';
 import { TenantAdminsTab } from './TenantAdminsTab';
 import { TABS, TenantDetailSkeleton } from './TenantDetailSkeleton';
 import { TenantFeaturesTab } from './TenantFeaturesTab';
 import { TenantOverviewTab } from './TenantOverviewTab';
-
-/** One fact in the hero's row: a small icon and the text. */
-function Fact({ icon, children, mono }: { icon: ReactNode; children: ReactNode; mono?: boolean }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-sm text-muted">
-      <span aria-hidden="true" className="text-brand-700">
-        {icon}
-      </span>
-      <span className={mono ? 'font-mono text-xs' : undefined}>{children}</span>
-    </span>
-  );
-}
-
-const BACK_PILL =
-  'inline-flex w-fit items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm font-medium transition-colors hover:border-brand-600 hover:text-brand-800';
 
 /**
  * An organization, in the order the schoolhub console uses: the hero (who, what state, the facts), the section tabs

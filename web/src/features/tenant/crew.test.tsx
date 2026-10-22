@@ -138,12 +138,13 @@ describe('Crew profile', () => {
   it("shows the record, the account and the member's tasks", async () => {
     asTenantAdmin();
     profileApi();
-    renderApp('/app/crew/c1');
+    const { user } = renderApp('/app/crew/c1');
 
     expect(await screen.findByRole('heading', { name: 'Jaycob Bustamante' })).toBeInTheDocument();
     expect(screen.getByText(/user-c1/)).toBeInTheDocument();
     expect(screen.getByLabelText('Crew ID')).toHaveValue('09977');
     expect(screen.getByLabelText('Birthday')).toHaveValue('1990-05-04');
+    await user.click(await screen.findByRole('tab', { name: 'To-do list' }));
     expect(await screen.findByText('Renew your passport')).toBeInTheDocument();
     expect(screen.getByText('Overdue')).toBeInTheDocument();
   });
@@ -157,7 +158,7 @@ describe('Crew profile', () => {
         ({ request }) => (urls.push(new URL(request.url)), HttpResponse.json(pageOf([]))),
       ),
     ]);
-    renderApp('/app/crew/c1');
+    renderApp('/app/crew/c1?tab=todos');
     await screen.findByText('No tasks');
     expect(urls[0]?.searchParams.get('membership_id')).toBe('c1');
   });
@@ -262,7 +263,7 @@ describe('Crew profile', () => {
       ),
       http.get(`${V1}/tenant/todos`, () => HttpResponse.json(pageOf([]))),
     );
-    renderApp('/app/crew/c1');
+    renderApp('/app/crew/c1?tab=todos');
     expect(await screen.findByRole('button', { name: 'Reset password' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Add task' })).toBeDisabled();
   });
@@ -281,7 +282,7 @@ describe('Crew profile', () => {
         return new HttpResponse(null, { status: 204 });
       }),
     ]);
-    const { user } = renderApp('/app/crew/c1');
+    const { user } = renderApp('/app/crew/c1?tab=todos');
     await user.click(await screen.findByRole('button', { name: 'Add task' }));
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText('Task name'), 'Sign the form');
@@ -304,7 +305,7 @@ describe('Crew profile', () => {
   it('lists the kinds of documents with their state, and the checklist of what was asked for', async () => {
     asTenantAdmin();
     profileApi();
-    renderApp('/app/crew/c1');
+    renderApp('/app/crew/c1?tab=documents');
 
     await screen.findByText('SB-1'); // the placeholder is the same table, so wait for a real row
     const table = within(screen.getByRole('table', { name: 'Documents to assign' }));
@@ -322,7 +323,7 @@ describe('Crew profile', () => {
   it('filters the documents by name and by status', async () => {
     asTenantAdmin();
     profileApi();
-    const { user } = renderApp('/app/crew/c1');
+    const { user } = renderApp('/app/crew/c1?tab=documents');
     await screen.findByText("Seaman's Book", { selector: 'td' }); // a real row, not the placeholder table
 
     await user.type(screen.getByLabelText('Document name'), 'visa');
@@ -355,7 +356,7 @@ describe('Crew profile', () => {
         ),
       ),
     ]);
-    const { user } = renderApp('/app/crew/c1');
+    const { user } = renderApp('/app/crew/c1?tab=documents');
 
     await user.click(await screen.findByRole('checkbox', { name: 'Ask for US Visa' }));
     await waitFor(() => expect(asked.calls).toHaveLength(1));
@@ -370,7 +371,7 @@ describe('Crew profile', () => {
         HttpResponse.json({ data: { ...JAYCOB, status: 'suspended' } }),
       ),
     ]);
-    renderApp('/app/crew/c1');
+    renderApp('/app/crew/c1?tab=documents');
     expect(await screen.findByRole('checkbox', { name: 'Ask for US Visa' })).toBeDisabled();
   });
 
@@ -400,7 +401,7 @@ describe('Crew profile', () => {
         ({ request }) => (urls.push(new URL(request.url)), HttpResponse.json(pageOf([pending]))),
       ),
     ]);
-    renderApp('/app/crew/c1');
+    renderApp('/app/crew/c1?tab=documents');
 
     const heading = await screen.findByRole('heading', { name: /Document upload requests/ });
     expect(await within(heading).findByText('1')).toBeInTheDocument();
@@ -415,7 +416,7 @@ describe('Crew profile', () => {
   it('says so when nothing is waiting for review', async () => {
     asTenantAdmin();
     profileApi();
-    renderApp('/app/crew/c1');
+    renderApp('/app/crew/c1?tab=documents');
     expect(await screen.findByText('Nothing waiting for review')).toBeInTheDocument();
   });
 

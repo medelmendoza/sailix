@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useParams } from 'react-router-dom';
+import { Anchor, Cake, Hash, Mail, Phone, Ship, User } from 'lucide-react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import {
   Badge,
@@ -12,7 +13,8 @@ import {
   ErrorState,
   FormDialog,
   FormError,
-  PageHeader,
+  ProfileTabs,
+  SaveBar,
   StatusBadge,
   Table,
   TextField,
@@ -25,6 +27,7 @@ import {
 import { describeError } from '../../services/api/errors';
 import type { Crew, Todo } from '../../services/api/types';
 import { applyServerErrors } from '../authentication/forms';
+import { Avatar, BACK_PILL, Fact } from '../shared/Hero';
 import { CHECKLIST_CELLS, CHECKLIST_HEADERS, CrewDocumentsSection } from './CrewDocumentsSection';
 import {
   useAssignTodo,
@@ -40,54 +43,45 @@ import {
 const TASK_HEADERS = ['Task', 'Due date', 'Status', ''];
 const TASK_CELLS: CellKind[] = ['strong', 'date', 'pill', 'actions2'];
 
-/** The fields of the record form, in order: the real labels, shared with the page's loading placeholder. */
-const PROFILE_FIELDS = [
-  'Last name',
-  'First name',
-  'Middle name',
-  'Suffix',
-  'Crew ID',
-  'Rank',
-  'Fleet',
-  'Vessel',
-  'Employment status',
-  'Mobile',
-  'Date arrive',
-  'Date depart',
-  'Birthday',
+/** The sections of the crew page, in order. Shared with the page's loading placeholder. */
+const TABS = [
+  { key: 'details', label: 'Details' },
+  { key: 'documents', label: 'Documents' },
+  { key: 'todos', label: 'To-do list' },
+] as const;
+
+/** The detail cards, with their real titles and fields: shared with the loading placeholder. */
+const GROUPS = [
+  {
+    title: 'Personal',
+    fields: ['Last name', 'First name', 'Middle name', 'Suffix', 'Birthday', 'Mobile'],
+  },
+  {
+    title: 'Employment',
+    fields: ['Crew ID', 'Rank', 'Fleet', 'Vessel', 'Employment status'],
+  },
+  { title: 'Dates on board', fields: ['Date arrive', 'Date depart'] },
 ];
 
 /**
- * The whole crew page while the member loads: the title and its line, the status, the record form with its real labels, and
- * the sections under it with their real headings and the shape of their tables.
+ * The whole crew page while the member loads: the back link, the hero, the tabs with their real names, and the open
+ * section with its real headings and the shape of its tables.
  */
-function CrewProfileSkeleton() {
+function CrewProfileSkeleton({ tab }: { tab: string }) {
   return (
-    <div role="status" aria-label="Loading crew member">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-2">
-          <Skeleton className="h-9 w-72 max-w-full" />
-          <Skeleton className="h-4 w-80 max-w-full" />
-        </div>
-        <Skeleton className="h-10 w-36 rounded-full" />
-      </div>
-      <Skeleton className="-mt-2 mb-4 h-5 w-20 rounded-full" />
-      <Card className="mb-6">
-        <div className="flex flex-col gap-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            {PROFILE_FIELDS.map((label) => (
-              <SkeletonField key={label} label={label} />
-            ))}
+    <div role="status" aria-label="Loading crew member" className="flex flex-col gap-6">
+      <header className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)]">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+          <Skeleton className="size-16 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-3">
+            <Skeleton className="h-8 w-64 max-w-full" />
+            <Skeleton className="h-4 w-96 max-w-full" />
           </div>
           <Skeleton className="h-10 w-36 rounded-full" />
         </div>
-      </Card>
-      <section className="mb-6">
-        <h2 className="mb-1 text-base font-semibold">Assign documents</h2>
-        <p className="mb-3 text-sm text-muted">
-          Tick a document to ask this member to submit or renew it. It leaves the checklist when
-          they send one in.
-        </p>
+      </header>
+      <ProfileTabs label="Crew sections" tabs={[...TABS]} value={tab} onChange={() => {}} />
+      {tab === 'documents' ? (
         <SkeletonDataTable
           caption="Documents to assign"
           headers={CHECKLIST_HEADERS}
@@ -95,12 +89,7 @@ function CrewProfileSkeleton() {
           rows={5}
           label="Loading documents"
         />
-      </section>
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold">To-do list</h2>
-          <Skeleton className="h-10 w-28 rounded-full" />
-        </div>
+      ) : tab === 'todos' ? (
         <SkeletonDataTable
           caption="Tasks"
           headers={TASK_HEADERS}
@@ -108,7 +97,23 @@ function CrewProfileSkeleton() {
           rows={3}
           label="Loading tasks"
         />
-      </section>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {GROUPS.map((g) => (
+            <Card
+              key={g.title}
+              title={g.title}
+              className={g.fields.length > 5 ? 'lg:col-span-2' : ''}
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                {g.fields.map((label) => (
+                  <SkeletonField key={label} label={label} />
+                ))}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
       <span className="sr-only">Loading…</span>
     </div>
   );
@@ -170,30 +175,35 @@ function todoState(t: Todo): { label: string; tone: 'success' | 'warning' | 'neu
   return { label: 'Ongoing', tone: 'neutral' };
 }
 
-/** One crew member: their record (editable), the password-reset action, and the tasks assigned to them. */
+/** One crew member: a hero with who they are, then Details (the record), Documents and the to-do list as tabs. */
 export function CrewProfilePage() {
   const { id = '' } = useParams();
   const crew = useCrewMember(id);
+  const [params, setParams] = useSearchParams();
+  const requested = params.get('tab') ?? 'details';
+  const tab = TABS.some((x) => x.key === requested) ? requested : 'details';
 
   return (
-    <>
-      <p className="mb-2 text-sm">
-        <Link to="/app/crew" className="text-brand underline-offset-2 hover:underline">
-          ← Back to crew
-        </Link>
-      </p>
+    <div className="flex max-w-5xl flex-col gap-6">
+      <Link to="/app/crew" className={BACK_PILL}>
+        ← Back to crew
+      </Link>
       {crew.isPending ? (
-        <CrewProfileSkeleton />
+        <CrewProfileSkeleton tab={tab} />
       ) : crew.isError ? (
         <ErrorState message={describeError(crew.error)} onRetry={() => void crew.refetch()} />
       ) : (
-        <Profile crew={crew.data} />
+        <Profile
+          crew={crew.data}
+          tab={tab}
+          onTab={(key) => setParams(key === 'details' ? {} : { tab: key }, { replace: true })}
+        />
       )}
-    </>
+    </div>
   );
 }
 
-function Profile({ crew }: { crew: Crew }) {
+function Profile({ crew, tab, onTab }: { crew: Crew; tab: string; onTab: (key: string) => void }) {
   const update = useUpdateCrew(crew.id);
   const reset = useSendCrewPasswordReset(crew.id);
   const decide = useUpdateMember();
@@ -223,14 +233,38 @@ function Profile({ crew }: { crew: Crew }) {
 
   const name = [crew.first_name, crew.last_name].filter(Boolean).join(' ') || crew.username;
   const field = (f: (typeof FIELDS)[number]) => ({ error: errors[f]?.message, ...register(f) });
+  const post = [crew.rank, crew.fleet, crew.vessel].filter(Boolean).join(' · ');
 
   return (
     <>
-      <PageHeader
-        title={name}
-        description={`Username ${crew.username} · ${crew.email}`}
-        actions={
-          crew.status === 'pending' ? (
+      <header className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)]">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+          <Avatar name={name} />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="break-words text-3xl font-bold leading-tight">{name}</h1>
+              <StatusBadge status={crew.status} />
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1.5">
+              <Fact icon={<User className="size-4" />}>{crew.username}</Fact>
+              <Fact icon={<Mail className="size-4" />}>{crew.email}</Fact>
+              {crew.crew_number && (
+                <Fact icon={<Hash className="size-4" />} mono>
+                  {crew.crew_number}
+                </Fact>
+              )}
+              {post && <Fact icon={<Ship className="size-4" />}>{post}</Fact>}
+              {crew.mobile && <Fact icon={<Phone className="size-4" />}>{crew.mobile}</Fact>}
+              {crew.birthday && <Fact icon={<Cake className="size-4" />}>{crew.birthday}</Fact>}
+              {crew.date_arrive && (
+                <Fact icon={<Anchor className="size-4" />}>
+                  On board {crew.date_arrive}
+                  {crew.date_depart ? ` to ${crew.date_depart}` : ''}
+                </Fact>
+              )}
+            </div>
+          </div>
+          {crew.status === 'pending' ? (
             <div className="flex gap-2">
               <Button
                 loading={decide.isPending}
@@ -250,42 +284,64 @@ function Profile({ crew }: { crew: Crew }) {
             >
               Reset password
             </Button>
-          )
-        }
-      />
-      <p className="-mt-2 mb-4">
-        <StatusBadge status={crew.status} />
-      </p>
+          )}
+        </div>
+      </header>
 
-      <Card className="mb-6">
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-          <FormError message={formError} />
-          <div className="grid gap-4 md:grid-cols-2">
-            <TextField label="Last name" {...field('last_name')} />
-            <TextField label="First name" {...field('first_name')} />
-            <TextField label="Middle name" {...field('middle_name')} />
-            <TextField label="Suffix" {...field('suffix')} />
-            <TextField label="Crew ID" {...field('crew_number')} />
-            <TextField label="Rank" {...field('rank')} />
-            <TextField label="Fleet" {...field('fleet')} />
-            <TextField label="Vessel" {...field('vessel')} />
-            <TextField label="Employment status" {...field('employment_status')} />
-            <TextField label="Mobile" type="tel" {...field('mobile')} />
-            <TextField label="Date arrive" type="date" {...field('date_arrive')} />
-            <TextField label="Date depart" type="date" {...field('date_depart')} />
-            <TextField label="Birthday" type="date" {...field('birthday')} />
-          </div>
-          <div>
-            <Button type="submit" loading={isSubmitting} disabled={!isDirty}>
-              Save changes
-            </Button>
-          </div>
-        </form>
-      </Card>
+      <ProfileTabs label="Crew sections" tabs={[...TABS]} value={tab} onChange={onTab} />
 
-      <CrewDocumentsSection crew={crew} />
-
-      <CrewTodos crew={crew} />
+      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+        {tab === 'details' && (
+          <form
+            id="crew-form"
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="flex flex-col gap-6"
+          >
+            <FormError message={formError} />
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card title="Personal" className="lg:col-span-2">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <TextField label="Last name" {...field('last_name')} />
+                  <TextField label="First name" {...field('first_name')} />
+                  <TextField label="Middle name" {...field('middle_name')} />
+                  <TextField label="Suffix" {...field('suffix')} />
+                  <TextField label="Birthday" type="date" {...field('birthday')} />
+                  <TextField label="Mobile" type="tel" {...field('mobile')} />
+                </div>
+              </Card>
+              <Card title="Employment">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextField label="Crew ID" {...field('crew_number')} />
+                  <TextField label="Rank" {...field('rank')} />
+                  <TextField label="Fleet" {...field('fleet')} />
+                  <TextField label="Vessel" {...field('vessel')} />
+                  <div className="sm:col-span-2">
+                    <TextField label="Employment status" {...field('employment_status')} />
+                  </div>
+                </div>
+              </Card>
+              <Card title="Dates on board">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextField label="Date arrive" type="date" {...field('date_arrive')} />
+                  <TextField label="Date depart" type="date" {...field('date_depart')} />
+                </div>
+              </Card>
+            </div>
+            <SaveBar
+              dirty={isDirty}
+              saving={isSubmitting}
+              formId="crew-form"
+              onDiscard={() => {
+                resetForm(toForm(crew));
+                setFormError(null);
+              }}
+            />
+          </form>
+        )}
+        {tab === 'documents' && <CrewDocumentsSection crew={crew} />}
+        {tab === 'todos' && <CrewTodos crew={crew} />}
+      </div>
 
       <ConfirmDialog
         open={confirmReject}
