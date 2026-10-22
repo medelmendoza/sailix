@@ -58,7 +58,7 @@ class TenantAddressingTest extends TestCase
     {
         $data = $this->look('http://aaa.sailix.test/api/v1/public/tenant')->assertOk()->json('data');
 
-        $this->assertEqualsCanonicalizing(['slug', 'name', 'short_name', 'tagline', 'login_welcome_message', 'logo_url', 'favicon_url', 'login_logo_url', 'login_background_url', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'text_color', 'font_preset', 'version'], array_keys($data));
+        $this->assertEqualsCanonicalizing(['slug', 'name', 'short_name', 'tagline', 'login_welcome_message', 'logo_url', 'favicon_url', 'login_logo_url', 'login_background_url', 'primary_color', 'secondary_color', 'accent_color', 'background_color', 'text_color', 'font_preset', 'dashboard_layout', 'version'], array_keys($data));
         $this->assertStringNotContainsString($this->a->id, json_encode($data));
     }
 

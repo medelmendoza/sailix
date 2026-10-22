@@ -45,10 +45,21 @@ interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
   hint?: string;
+  /** A small icon at the left end of the box (sign-in pages). */
+  icon?: ReactNode;
   ref?: Ref<HTMLInputElement>;
 }
 
-export function TextField({ label, error, hint, className, ref, type, ...rest }: TextFieldProps) {
+export function TextField({
+  label,
+  error,
+  hint,
+  icon,
+  className,
+  ref,
+  type,
+  ...rest
+}: TextFieldProps) {
   const id = useId();
   const [shown, setShown] = useState(false);
   const isPassword = type === 'password';
@@ -63,6 +74,7 @@ export function TextField({ label, error, hint, className, ref, type, ...rest }:
         CONTROL,
         error ? 'border-bad-fg' : 'border-line',
         isPassword && 'pr-11',
+        icon ? 'pl-10' : null,
         className,
       )}
       {...rest}
@@ -70,24 +82,34 @@ export function TextField({ label, error, hint, className, ref, type, ...rest }:
   );
   return (
     <FieldFrame label={label} error={error} hint={hint} id={id}>
-      {isPassword ? (
+      {isPassword || icon ? (
         // every password box can be shown and hidden again, with the same small eye at its right end
         <div className="relative">
+          {icon && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-muted [&>svg]:size-4"
+            >
+              {icon}
+            </span>
+          )}
           {input}
-          <button
-            type="button"
-            aria-label={shown ? 'Hide password' : 'Show password'}
-            aria-pressed={shown}
-            title={shown ? 'Hide password' : 'Show password'}
-            onClick={() => setShown((v) => !v)}
-            className="absolute inset-y-0 right-1 my-auto flex size-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-brand-50 hover:text-brand-800"
-          >
-            {shown ? (
-              <EyeOff className="size-4" aria-hidden="true" />
-            ) : (
-              <Eye className="size-4" aria-hidden="true" />
-            )}
-          </button>
+          {isPassword && (
+            <button
+              type="button"
+              aria-label={shown ? 'Hide password' : 'Show password'}
+              aria-pressed={shown}
+              title={shown ? 'Hide password' : 'Show password'}
+              onClick={() => setShown((v) => !v)}
+              className="absolute inset-y-0 right-1 my-auto flex size-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-brand-50 hover:text-brand-800"
+            >
+              {shown ? (
+                <EyeOff className="size-4" aria-hidden="true" />
+              ) : (
+                <Eye className="size-4" aria-hidden="true" />
+              )}
+            </button>
+          )}
         </div>
       ) : (
         input

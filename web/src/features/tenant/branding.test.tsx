@@ -21,6 +21,7 @@ const branding = (over: Record<string, unknown> = {}) => ({
   background_color: null,
   text_color: null,
   font_preset: null,
+  dashboard_layout: null,
   version: 1,
   ...over,
 });
@@ -35,6 +36,7 @@ const EMPTY_SAVE = {
   background_color: null,
   text_color: null,
   font_preset: null,
+  dashboard_layout: null,
 };
 
 const api = (data = branding(), extra: Parameters<typeof server.use> = []) =>
@@ -67,10 +69,10 @@ describe('Branding page', () => {
 
     const tagline = await screen.findByLabelText('Tagline');
     expect(tagline).toHaveValue('Sailing since 1990');
-    expect(screen.getByLabelText('Primary colour')).toHaveValue('#355DAD');
+    expect(screen.getByLabelText('Primary color')).toHaveValue('#355DAD');
     await user.clear(tagline);
     await user.type(tagline, 'Fair winds');
-    await user.type(screen.getByLabelText('Secondary colour'), '#1F6B4A');
+    await user.type(screen.getByLabelText('Secondary color'), '#1F6B4A');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     await waitFor(() => expect(saved.calls).toHaveLength(1));
@@ -96,7 +98,7 @@ describe('Branding page', () => {
     ]);
     const { user } = renderApp('/app/branding');
     await user.clear(await screen.findByLabelText('Tagline'));
-    await user.clear(screen.getByLabelText('Primary colour'));
+    await user.clear(screen.getByLabelText('Primary color'));
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     await waitFor(() => expect(saved.calls).toHaveLength(1));
@@ -117,10 +119,10 @@ describe('Branding page', () => {
     ]);
     const { user } = renderApp('/app/branding');
 
-    await user.type(await screen.findByLabelText('Primary colour'), 'red');
+    await user.type(await screen.findByLabelText('Primary color'), 'red');
     expect(screen.getByText('Use a colour like #355DAD.')).toBeInTheDocument();
-    await user.clear(screen.getByLabelText('Primary colour'));
-    await user.type(screen.getByLabelText('Primary colour'), '#FFFF00');
+    await user.clear(screen.getByLabelText('Primary color'));
+    await user.type(screen.getByLabelText('Primary color'), '#FFFF00');
     expect(screen.getByText(/Too light for white button text/)).toBeInTheDocument();
     // Save stays off while a field has a problem, so nothing can be sent
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
@@ -197,10 +199,10 @@ describe('Branding page: the rest of the look', () => {
 
     await user.type(await screen.findByLabelText('Short name'), 'AAA');
     await user.type(screen.getByLabelText('Welcome message'), 'Welcome aboard.');
-    await user.type(screen.getByLabelText('Accent colour'), '#0B6E99');
-    await user.type(screen.getByLabelText('Background colour'), '#FFFFFF');
-    await user.type(screen.getByLabelText('Text colour'), '#0F172A');
-    await user.click(screen.getByRole('radio', { name: /Serif/ }));
+    await user.type(screen.getByLabelText('Accent color'), '#0B6E99');
+    await user.type(screen.getByLabelText('Background color'), '#FFFFFF');
+    await user.type(screen.getByLabelText('Text color'), '#0F172A');
+    await user.selectOptions(screen.getByLabelText('Font style'), 'serif');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     await waitFor(() => expect(saved.calls).toHaveLength(1));
@@ -215,30 +217,54 @@ describe('Branding page: the rest of the look', () => {
     });
   });
 
+  it('saves the compact dashboard layout, and sends null for the comfortable one', async () => {
+    asTenantAdmin();
+    api();
+    const saved = capture<Record<string, unknown>>();
+    server.use(
+      http.patch(
+        `${V1}/tenant/branding`,
+        async ({ request }) => (
+          await saved.record(request),
+          HttpResponse.json({ data: branding() })
+        ),
+      ),
+    );
+    const { user } = renderApp('/app/branding');
+
+    await user.selectOptions(await screen.findByLabelText('Dashboard layout'), 'compact');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(saved.calls).toHaveLength(1));
+    expect(saved.calls[0]!.body).toEqual({ ...EMPTY_SAVE, dashboard_layout: 'compact' });
+  });
+
   it('refuses text that does not read on the background, and markup in the names', async () => {
     asTenantAdmin();
     api();
     const { user } = renderApp('/app/branding');
 
-    await user.type(await screen.findByLabelText('Text colour'), '#F0F0F0');
+    await user.type(await screen.findByLabelText('Text color'), '#F0F0F0');
     expect(await screen.findByText(/Text on this background has only/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
-    await user.clear(screen.getByLabelText('Text colour'));
+    await user.clear(screen.getByLabelText('Text color'));
     await user.type(screen.getByLabelText('Short name'), '<b>');
     expect(screen.getByText(/The characters < and > are not allowed/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
   });
 
-  it('shows the sign-in page as it will look, as you type', async () => {
+  it('shows the admin portal as it will look, as you type', async () => {
     asTenantAdmin();
-    api(branding({ login_logo_url: 'http://x/login-logo.png' }));
+    api(branding({ logo_url: 'http://x/logo.png' }));
     const { user } = renderApp('/app/branding');
 
-    await user.type(await screen.findByLabelText('Welcome message'), 'Fair winds');
+    await user.type(await screen.findByLabelText('Short name'), 'Southfield');
     const preview = screen.getByRole('complementary', { name: 'Preview' });
-    expect(within(preview).getByText('Fair winds')).toBeInTheDocument();
-    expect(within(preview).getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
-    expect(preview.querySelector('img')).toHaveAttribute('src', 'http://x/login-logo.png');
+    expect(within(preview).getAllByText(/Southfield/).length).toBeGreaterThan(0);
+    expect(within(preview).getByText('Welcome back, Alex')).toBeInTheDocument();
+    expect(preview.querySelector('img')).toHaveAttribute('src', 'http://x/logo.png');
+
+    await user.click(within(preview).getByRole('button', { name: 'Components' }));
+    expect(within(preview).getByText('Focused field')).toBeInTheDocument();
   });
 });
 

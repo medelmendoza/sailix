@@ -20,7 +20,7 @@ export function Card({
   return (
     <section
       className={cn(
-        'rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)]',
+        'rounded-[var(--radius-card)] border border-line bg-surface p-[var(--card-pad)] shadow-[var(--shadow-soft)]',
         className,
       )}
     >

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tenant;
 
+use App\Enums\DashboardLayout;
 use App\Enums\FontPreset;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -26,6 +27,7 @@ class BrandingRequest extends FormRequest
             'background_color' => ['sometimes', 'nullable', 'string', 'max:7'],
             'text_color' => ['sometimes', 'nullable', 'string', 'max:7'],
             'font_preset' => ['sometimes', 'nullable', Rule::enum(FontPreset::class)],
+            'dashboard_layout' => ['sometimes', 'nullable', Rule::enum(DashboardLayout::class)],
         ];
     }
 }

@@ -62,8 +62,12 @@ function fontFor(preset: string | null | undefined, family: string | undefined) 
     case 'rounded': // the rounded Quicksand the app already carries, for body text too
       return { fontFamily: role === 'bold' ? 'Quicksand_700Bold' : 'Quicksand_600SemiBold' };
     case 'serif':
+    case 'elegant': // the web-only serif styles use the phone's serif
+    case 'classic':
       return { fontFamily: SERIF, fontWeight: WEIGHT[role] };
     case 'system': // the phone's own interface font
+    case 'modern': // the web-only sans styles use the phone's interface font
+    case 'geometric':
       return { fontFamily: undefined, fontWeight: WEIGHT[role] };
     default:
       return {};

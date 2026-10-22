@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import {
   Button,
   Card,
@@ -7,6 +7,7 @@ import {
   FormError,
   PageHeader,
   SaveBar,
+  SelectField,
   Skeleton,
   SkeletonField,
   TextField,
@@ -14,7 +15,8 @@ import {
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { PublicTenant } from '../../services/api/types';
-import { FONT_OPTIONS, FONT_STACKS, palette } from '../tenant-look/look';
+import { AdminPreview } from './AdminPreview';
+import { FONT_OPTIONS, LAYOUT_OPTIONS, loadFont, palette } from '../tenant-look/look';
 import {
   OWN_SCOPE,
   useBranding,
@@ -111,9 +113,10 @@ export function BrandingEditor({ scope }: { scope: TenantScope }) {
 const BRANDING_NOTE =
   'Names, tagline and pictures. Pictures are saved as soon as you add them; everything else applies when you press Save changes.';
 const COLOURS_NOTE =
-  'Leave a colour empty to use the Sailix default. Buttons and highlights need enough contrast to stay readable.';
+  'Leave a color empty to use the Sailix default. Buttons and highlights need enough contrast to stay readable.';
 const TYPOGRAPHY_NOTE =
-  'Pick the typeface for headings and text. These are fonts every device already has, so nothing is downloaded.';
+  'Pick the typeface for headings and text. Web fonts are fetched only for organizations that choose them; system fonts download nothing.';
+const LAYOUT_NOTE = 'Presets that change spacing and size in the admin portal, never the content.';
 
 /** Recommended picture sizes, from how each one is shown. */
 const GUIDANCE: Record<BrandingImageKind, { label: string; hint: string }> = {
@@ -149,7 +152,12 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
   const [accent, setAccent] = useState(data.accent_color ?? '');
   const [background, setBackground] = useState(data.background_color ?? '');
   const [text, setText] = useState(data.text_color ?? '');
-  const [font, setFont] = useState(data.font_preset ?? 'default');
+  const [font, setFont] = useState<NonNullable<PublicTenant['font_preset']>>(
+    data.font_preset ?? 'default',
+  );
+  const [layout, setLayout] = useState<NonNullable<PublicTenant['dashboard_layout']>>(
+    data.dashboard_layout ?? 'comfortable',
+  );
   const [error, setError] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -164,6 +172,7 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
     background: data.background_color ?? '',
     text: data.text_color ?? '',
     font: data.font_preset ?? 'default',
+    layout: data.dashboard_layout ?? 'comfortable',
   };
   const dirty =
     shortName !== saved.shortName ||
@@ -174,7 +183,8 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
     accent !== saved.accent ||
     background !== saved.background ||
     text !== saved.text ||
-    font !== saved.font;
+    font !== saved.font ||
+    layout !== saved.layout;
   function discard() {
     setShortName(saved.shortName);
     setTagline(saved.tagline);
@@ -185,6 +195,7 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
     setBackground(saved.background);
     setText(saved.text);
     setFont(saved.font);
+    setLayout(saved.layout);
     setError(null);
   }
 
@@ -210,6 +221,7 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
     font_preset: font === 'default' ? null : font,
   };
   const preview = palette(live);
+  useEffect(() => loadFont(font), [font]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -226,6 +238,7 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
         background_color: background || null,
         text_color: text || null,
         font_preset: font === 'default' ? null : font,
+        dashboard_layout: layout === 'comfortable' ? null : layout,
       });
       toast.success('Appearance saved.');
     } catch (err) {
@@ -259,7 +272,6 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
     'login-logo': data.login_logo_url ?? null,
     'login-background': data.login_background_url ?? null,
   };
-  const signInLogo = urls['login-logo'] ?? urls.logo;
 
   return (
     <div className="flex flex-col gap-6">
@@ -321,38 +333,43 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
             </div>
           </Card>
 
-          <Card title="Colours" description={COLOURS_NOTE}>
-            <div className="grid gap-4 sm:grid-cols-2">
+          <Card title="Colors" description={COLOURS_NOTE}>
+            <div className="flex flex-col gap-5">
               <ColourField
-                label="Primary colour"
+                label="Primary color"
+                fallback="#1260D8"
                 value={primary}
                 onChange={setPrimary}
                 problem={problems.primary}
                 hint="Buttons, the menu and highlights (white text on top)."
               />
               <ColourField
-                label="Secondary colour"
+                label="Secondary color"
+                fallback="#52BB88"
                 value={secondary}
                 onChange={setSecondary}
                 problem={problems.secondary}
                 hint="Supporting accents (white text on top)."
               />
               <ColourField
-                label="Accent colour"
+                label="Accent color"
+                fallback="#1260D8"
                 value={accent}
                 onChange={setAccent}
                 problem={problems.accent}
                 hint="Links and focus rings. Follows the primary colour when empty."
               />
               <ColourField
-                label="Background colour"
+                label="Background color"
+                fallback="#F4F8FC"
                 value={background}
                 onChange={setBackground}
                 problem={problems.background}
                 hint="The page behind the cards."
               />
               <ColourField
-                label="Text colour"
+                label="Text color"
+                fallback="#0F2036"
                 value={text}
                 onChange={setText}
                 problem={problems.text}
@@ -362,36 +379,48 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
           </Card>
 
           <Card title="Typography" description={TYPOGRAPHY_NOTE}>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {FONT_OPTIONS.map((o) => (
-                <label
-                  key={o.value}
-                  className={`flex cursor-pointer flex-col gap-1 rounded-xl border p-3 text-sm transition-colors ${
-                    font === o.value
-                      ? 'border-brand-700 bg-brand-50'
-                      : 'border-line hover:border-brand-600/60'
-                  }`}
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <SelectField
+                  label="Font style"
+                  value={font}
+                  onChange={(e) => setFont(e.target.value as typeof font)}
+                  options={FONT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+                />
+                <p className="text-xs text-muted">
+                  {FONT_OPTIONS.find((o) => o.value === font)?.hint}
+                </p>
+              </div>
+              <div
+                aria-hidden="true"
+                className="rounded-xl border border-line bg-page p-4"
+                style={preview as React.CSSProperties}
+              >
+                <p
+                  className="font-heading text-xl font-bold"
+                  style={{ fontFamily: 'var(--font-heading)' }}
                 >
-                  <span className="flex items-center gap-2 font-medium">
-                    <input
-                      type="radio"
-                      name="font"
-                      value={o.value}
-                      checked={font === o.value}
-                      onChange={() => setFont(o.value)}
-                    />
-                    {o.label}
-                  </span>
-                  <span className="text-xs text-muted">{o.hint}</span>
-                  <span
-                    aria-hidden="true"
-                    className="mt-1 text-base"
-                    style={o.value === 'default' ? undefined : { fontFamily: FONT_STACKS[o.value] }}
-                  >
-                    The quick brown fox 0123456789
-                  </span>
-                </label>
-              ))}
+                  Welcome aboard
+                </p>
+                <p className="mt-1 text-sm text-muted" style={{ fontFamily: 'var(--font-sans)' }}>
+                  Every crew member finds what they need here. The quick brown fox jumps over the
+                  lazy dog 0123456789
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card title="Layout" description={LAYOUT_NOTE}>
+            <div className="flex flex-col gap-1">
+              <SelectField
+                label="Dashboard layout"
+                value={layout}
+                onChange={(e) => setLayout(e.target.value as typeof layout)}
+                options={LAYOUT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+              />
+              <p className="text-xs text-muted">
+                {LAYOUT_OPTIONS.find((o) => o.value === layout)?.hint}
+              </p>
             </div>
           </Card>
 
@@ -409,56 +438,12 @@ function BrandingForm({ data, scope }: { data: PublicTenant; scope: TenantScope 
 
         <aside aria-label="Preview" className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
           <Card title="Preview">
-            <div
-              style={{
-                ...(preview as React.CSSProperties),
-                backgroundColor: 'var(--color-page, #f4f8fc)',
-                backgroundImage: urls['login-background']
-                  ? `linear-gradient(rgba(255,255,255,.78), rgba(255,255,255,.78)), url(${urls['login-background']})`
-                  : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                fontFamily: preview['--font-sans'] ?? undefined,
-                color: 'var(--color-ink, #0f2036)',
-              }}
-              className="rounded-xl border border-line p-4"
-            >
-              <div className="text-center">
-                {signInLogo ? (
-                  <img
-                    src={signInLogo}
-                    alt=""
-                    className="mx-auto mb-2 h-12 max-w-full object-contain"
-                  />
-                ) : null}
-                <p
-                  className="text-xs font-semibold uppercase tracking-widest"
-                  style={{ color: 'var(--color-accent-600, #1260d8)' }}
-                >
-                  {data.name}
-                </p>
-                {tagline ? <p className="mt-1 text-xs opacity-75">{tagline}</p> : null}
-                {welcome ? <p className="mt-2 text-sm">{welcome}</p> : null}
-              </div>
-              <div className="mt-3 rounded-xl border border-line bg-white p-3 text-sm shadow-sm">
-                <p className="mb-2 text-xs opacity-70">Username</p>
-                <div className="mb-3 h-7 rounded border border-line bg-white" />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  className="w-full rounded-full px-3 py-2 text-sm font-semibold text-white"
-                  style={{ backgroundColor: 'var(--color-brand-700, #1260d8)' }}
-                >
-                  Sign in
-                </button>
-                <p
-                  className="mt-2 text-center text-xs"
-                  style={{ color: 'var(--color-accent-600, #1260d8)' }}
-                >
-                  Forgot password?
-                </p>
-              </div>
-            </div>
+            <AdminPreview
+              vars={preview as React.CSSProperties}
+              name={shortName.trim() || data.name}
+              logoUrl={urls.logo}
+              compact={layout === 'compact'}
+            />
           </Card>
         </aside>
       </div>
@@ -506,35 +491,65 @@ function ColourField({
   label,
   value,
   onChange,
+  fallback,
   problem,
   hint,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  /** What the colour is when left empty. */
+  fallback: string;
   problem?: string;
   hint?: string;
 }) {
+  const id = useId();
+  const bad = value !== '' && !HEX.test(value);
   return (
-    <div className="flex items-end gap-3">
-      <div className="flex-1">
-        <TextField
-          label={label}
-          value={value}
-          onChange={(e) => onChange(e.target.value.trim())}
-          placeholder="#355DAD"
-          maxLength={7}
-          error={problem}
-          hint={hint}
+    <div>
+      <label htmlFor={id} className="mb-1 block text-sm font-medium">
+        {label}
+      </label>
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="color"
+          aria-label={`Pick ${label.toLowerCase()}`}
+          value={HEX.test(value) ? value : fallback}
+          onChange={(e) => onChange(e.target.value.toUpperCase())}
+          className="h-10 w-12 cursor-pointer rounded-lg border border-line bg-surface p-0.5"
         />
+        <input
+          id={id}
+          type="text"
+          value={value}
+          placeholder={fallback.toLowerCase()}
+          maxLength={7}
+          aria-invalid={bad || problem ? true : undefined}
+          aria-describedby={`${id}-note`}
+          onChange={(e) => onChange(e.target.value.trim())}
+          className={`min-h-10 w-32 rounded-xl border bg-surface px-3.5 font-mono text-sm placeholder:text-muted hover:border-brand-600/60 focus:border-brand-600 ${
+            bad || problem ? 'border-bad-fg' : 'border-line'
+          }`}
+        />
+        {value !== '' ? (
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="text-xs text-muted hover:underline"
+          >
+            Reset to default
+          </button>
+        ) : (
+          <span className="text-xs text-muted">Sailix default</span>
+        )}
       </div>
-      <input
-        type="color"
-        aria-label={`Pick ${label.toLowerCase()}`}
-        value={HEX.test(value) ? value : '#355dad'}
-        onChange={(e) => onChange(e.target.value.toUpperCase())}
-        className="mb-1 h-10 w-12 cursor-pointer rounded-md border border-line bg-surface"
-      />
+      <p
+        id={`${id}-note`}
+        role={bad || problem ? 'alert' : undefined}
+        className={`mt-1 text-xs ${bad || problem ? 'text-bad-fg' : 'text-muted'}`}
+      >
+        {problem ?? (bad ? 'Use a 6-digit hex colour like #1260D8.' : hint)}
+      </p>
     </div>
   );
 }
@@ -642,30 +657,25 @@ export function BrandingSkeleton() {
               ))}
             </div>
           </Card>
-          <Card title="Colours" description={COLOURS_NOTE}>
-            <div className="grid gap-4 sm:grid-cols-2">
+          <Card title="Colors" description={COLOURS_NOTE}>
+            <div className="flex flex-col gap-5">
               {[
-                'Primary colour',
-                'Secondary colour',
-                'Accent colour',
-                'Background colour',
-                'Text colour',
+                'Primary color',
+                'Secondary color',
+                'Accent color',
+                'Background color',
+                'Text color',
               ].map(colour)}
             </div>
           </Card>
           <Card title="Typography" description={TYPOGRAPHY_NOTE}>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {FONT_OPTIONS.map((o) => (
-                <div
-                  key={o.value}
-                  className="flex flex-col gap-2 rounded-xl border border-line p-3"
-                >
-                  <span className="text-sm font-medium">{o.label}</span>
-                  <Skeleton className="h-3 w-3/4" />
-                  <Skeleton className="h-5 w-full" />
-                </div>
-              ))}
+            <div className="flex flex-col gap-4">
+              <SkeletonField label="Font style" />
+              <Skeleton className="h-24 w-full rounded-xl" />
             </div>
+          </Card>
+          <Card title="Layout" description={LAYOUT_NOTE}>
+            <SkeletonField label="Dashboard layout" />
           </Card>
           <Card title="Login page">
             <SkeletonField label="Welcome message" />

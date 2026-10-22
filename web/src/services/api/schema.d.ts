@@ -2775,7 +2775,9 @@ export interface components {
             background_color?: string | null;
             text_color?: string | null;
             /** @enum {string|null} */
-            font_preset?: "default" | "rounded" | "serif" | "system" | null;
+            font_preset?: "default" | "rounded" | "serif" | "system" | "modern" | "friendly" | "geometric" | "playful" | "elegant" | "classic" | null;
+            /** @enum {string|null} */
+            dashboard_layout?: "comfortable" | "compact" | null;
             /** @description Changes with every branding change; already part of the image addresses. */
             version: number;
         };
@@ -2801,10 +2803,15 @@ export interface components {
             background_color?: string | null;
             text_color?: string | null;
             /**
-             * @description Fonts every device already has; nothing is downloaded.
+             * @description The first four are fonts every device has; the rest are web fonts fetched only when chosen.
              * @enum {string|null}
              */
-            font_preset?: "default" | "rounded" | "serif" | "system" | null;
+            font_preset?: "default" | "rounded" | "serif" | "system" | "modern" | "friendly" | "geometric" | "playful" | "elegant" | "classic" | null;
+            /**
+             * @description How roomy the admin portal is; empty is comfortable.
+             * @enum {string|null}
+             */
+            dashboard_layout?: "comfortable" | "compact" | null;
         };
         TenantDomain: {
             id: string;

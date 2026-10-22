@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { KeyRound, Lock } from 'lucide-react';
 import { z } from 'zod';
 import { Button, FormError, TextField } from '../../components/ui';
 import { api, ensureCsrf } from '../../services/api/client';
@@ -106,6 +107,7 @@ export function TokenPasswordPage({ kind }: Props) {
         <FormError message={formError} />
         <TextField
           label="New password"
+          icon={<Lock />}
           type="password"
           autoComplete="new-password"
           error={errors.password?.message}
@@ -113,6 +115,7 @@ export function TokenPasswordPage({ kind }: Props) {
         />
         <TextField
           label="Repeat the password"
+          icon={<KeyRound />}
           type="password"
           autoComplete="new-password"
           error={errors.password_confirmation?.message}

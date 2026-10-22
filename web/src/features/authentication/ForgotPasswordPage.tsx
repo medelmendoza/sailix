@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
+import { Mail } from 'lucide-react';
 import { z } from 'zod';
 import { Button, FormError, TextField } from '../../components/ui';
 import { api, ensureCsrf } from '../../services/api/client';
@@ -53,6 +54,7 @@ export function ForgotPasswordPage() {
         <FormError message={formError} />
         <TextField
           label="Email"
+          icon={<Mail />}
           type="email"
           autoComplete="email"
           error={errors.email?.message}

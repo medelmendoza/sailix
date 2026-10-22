@@ -639,7 +639,7 @@ describe('organization detail: address and branding', () => {
     const { user } = renderApp('/platform/tenants/t-1?tab=appearance');
 
     await user.type(await screen.findByLabelText('Tagline'), 'Set by the platform');
-    await user.type(screen.getByLabelText('Primary colour'), '#355DAD');
+    await user.type(screen.getByLabelText('Primary color'), '#355DAD');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
     await waitFor(() => expect(saved.calls).toHaveLength(1));
     expect(saved.calls[0]!.body).toMatchObject({

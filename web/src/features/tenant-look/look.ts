@@ -52,25 +52,132 @@ export function palette(
   const font = look.font_preset ? FONT_STACKS[look.font_preset] : undefined;
   if (font) {
     vars['--font-sans'] = font;
-    vars['--font-heading'] = font; // a chosen font style applies to the headings too
+    vars['--font-heading'] = look.font_preset ? (HEADING_STACKS[look.font_preset] ?? font) : font; // a chosen font style applies to the headings too
   }
   return vars;
 }
 
-/** Font styles: only fonts every device already has, so nothing is downloaded. The default is the portal's own stack. */
+const SANS = "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+const SERIF = "ui-serif, Georgia, Cambria, 'Times New Roman', serif";
+
+/** Body font of each style. The first three are fonts every device has; the rest are web fonts fetched when chosen. */
 export const FONT_STACKS: Record<string, string> = {
   rounded:
     "ui-rounded, 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Quicksand, system-ui, sans-serif",
-  serif: "ui-serif, Georgia, Cambria, 'Times New Roman', serif",
+  serif: SERIF,
   system: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+  modern: `Inter, ${SANS}`,
+  friendly: `Nunito, ${SANS}`,
+  geometric: `Poppins, ${SANS}`,
+  playful: `Nunito, ${SANS}`,
+  elegant: `Lora, ${SERIF}`,
+  classic: `Merriweather, ${SERIF}`,
+};
+
+/** A style whose headings differ from its body text. */
+const HEADING_STACKS: Record<string, string> = {
+  playful: `Fredoka, Nunito, ${SANS}`,
+  elegant: `'Playfair Display', Lora, ${SERIF}`,
 };
 
 export const FONT_OPTIONS = [
-  { value: 'default', label: 'Default', hint: 'The standard Sailix look.' },
-  { value: 'rounded', label: 'Rounded', hint: 'Soft, rounded system fonts.' },
-  { value: 'serif', label: 'Serif', hint: 'Traditional serif fonts for a formal tone.' },
-  { value: 'system', label: 'System', hint: "Each device's own interface font." },
+  { value: 'default', label: 'Default', hint: 'The standard friendly look used by the platform.' },
+  {
+    value: 'rounded',
+    label: 'Rounded',
+    hint: 'Soft, rounded system fonts. No fonts are downloaded.',
+  },
+  { value: 'serif', label: 'Serif', hint: 'Traditional serif system fonts for a formal tone.' },
+  {
+    value: 'system',
+    label: 'System',
+    hint: "Each device's own interface font. Fastest, nothing is downloaded.",
+  },
+  {
+    value: 'modern',
+    label: 'Modern (Inter)',
+    hint: 'Clean, highly readable sans-serif for a contemporary look.',
+  },
+  {
+    value: 'friendly',
+    label: 'Friendly (Nunito)',
+    hint: 'Soft rounded sans-serif that feels warm and approachable.',
+  },
+  {
+    value: 'geometric',
+    label: 'Geometric (Poppins)',
+    hint: 'Round, confident letterforms with a bold, modern feel.',
+  },
+  {
+    value: 'playful',
+    label: 'Playful (Fredoka + Nunito)',
+    hint: 'Chunky, cheerful headings with friendly body text.',
+  },
+  {
+    value: 'elegant',
+    label: 'Elegant (Playfair Display + Lora)',
+    hint: 'Refined serif headings with a graceful serif body, for a premium feel.',
+  },
+  {
+    value: 'classic',
+    label: 'Classic (Merriweather)',
+    hint: 'Sturdy, traditional serif designed to read well on screens.',
+  },
 ] as const;
+
+export const LAYOUT_OPTIONS = [
+  { value: 'comfortable', label: 'Comfortable', hint: 'Roomy cards and spacing.' },
+  {
+    value: 'compact',
+    label: 'Compact',
+    hint: 'Denser cards, smaller gaps and type: more on screen at once.',
+  },
+] as const;
+
+const loaded = new Set<string>();
+
+/** Fetches the web font files of a style, once, and only when somebody chose it. System styles download nothing. */
+export function loadFont(preset: string | null | undefined): void {
+  if (!preset || loaded.has(preset)) return;
+  const files: Record<string, Array<() => Promise<unknown>>> = {
+    modern: [
+      () => import('@fontsource/inter/latin-400.css'),
+      () => import('@fontsource/inter/latin-600.css'),
+      () => import('@fontsource/inter/latin-700.css'),
+    ],
+    friendly: [
+      () => import('@fontsource/nunito/latin-400.css'),
+      () => import('@fontsource/nunito/latin-600.css'),
+      () => import('@fontsource/nunito/latin-700.css'),
+    ],
+    geometric: [
+      () => import('@fontsource/poppins/latin-400.css'),
+      () => import('@fontsource/poppins/latin-600.css'),
+      () => import('@fontsource/poppins/latin-700.css'),
+    ],
+    playful: [
+      () => import('@fontsource/fredoka/latin-500.css'),
+      () => import('@fontsource/fredoka/latin-600.css'),
+      () => import('@fontsource/fredoka/latin-700.css'),
+      () => import('@fontsource/nunito/latin-400.css'),
+      () => import('@fontsource/nunito/latin-600.css'),
+    ],
+    elegant: [
+      () => import('@fontsource/playfair-display/latin-600.css'),
+      () => import('@fontsource/playfair-display/latin-700.css'),
+      () => import('@fontsource/lora/latin-400.css'),
+      () => import('@fontsource/lora/latin-600.css'),
+    ],
+    classic: [
+      () => import('@fontsource/merriweather/latin-400.css'),
+      () => import('@fontsource/merriweather/latin-700.css'),
+    ],
+  };
+  const list = files[preset];
+  if (!list) return;
+  loaded.add(preset);
+  list.forEach((load) => void load().catch(() => loaded.delete(preset)));
+}
 
 const VARS = [
   '--color-brand-50',
@@ -106,12 +213,15 @@ function setTabIcon(href: string): void {
 export function applyLook(look: PublicTenant | null): void {
   const root = document.documentElement;
   VARS.forEach((v) => root.style.removeProperty(v));
+  delete root.dataset.density;
   if (!look) {
     document.title = 'Sailix Portal';
     setTabIcon(DEFAULT_ICON); // leaving an organization puts the Sailix icon back
     return;
   }
   Object.entries(palette(look)).forEach(([k, v]) => root.style.setProperty(k, v));
+  loadFont(look.font_preset);
+  if (look.dashboard_layout === 'compact') root.dataset.density = 'compact';
   document.title = `${look.name} · Sailix Portal`;
   setTabIcon(look.favicon_url ?? DEFAULT_ICON);
 }

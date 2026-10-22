@@ -4038,7 +4038,8 @@ components:
         accent_color: { type: [string, 'null'], pattern: '^#[0-9A-F]{6}$' }
         background_color: { type: [string, 'null'], pattern: '^#[0-9A-F]{6}$' }
         text_color: { type: [string, 'null'], pattern: '^#[0-9A-F]{6}$' }
-        font_preset: { type: [string, 'null'], enum: [default, rounded, serif, system, null] }
+        font_preset: { type: [string, 'null'], enum: [default, rounded, serif, system, modern, friendly, geometric, playful, elegant, classic, null] }
+        dashboard_layout: { type: [string, 'null'], enum: [comfortable, compact, null] }
         version: { type: integer, description: 'Changes with every branding change; already part of the image addresses.' }
     PublicTenantEnvelope:
       type: object
@@ -4061,7 +4062,8 @@ components:
         accent_color: { type: [string, 'null'], maxLength: 7, description: 'Contrast against white of at least 3:1.' }
         background_color: { type: [string, 'null'], maxLength: 7, description: 'The text colour must read on it (4.5:1); an unset side is the Sailix default.' }
         text_color: { type: [string, 'null'], maxLength: 7 }
-        font_preset: { type: [string, 'null'], enum: [default, rounded, serif, system, null], description: 'Fonts every device already has; nothing is downloaded.' }
+        font_preset: { type: [string, 'null'], enum: [default, rounded, serif, system, modern, friendly, geometric, playful, elegant, classic, null], description: 'The first four are fonts every device has; the rest are web fonts fetched only when chosen.' }
+        dashboard_layout: { type: [string, 'null'], enum: [comfortable, compact, null], description: 'How roomy the admin portal is; empty is comfortable.' }
     TenantDomain:
       type: object
       required: [id, domain, verified, verified_at, txt_name, txt_value, cname_target]

@@ -2,6 +2,7 @@
 
 namespace App\Tenancy;
 
+use App\Enums\DashboardLayout;
 use App\Enums\FontPreset;
 use App\Models\Tenant;
 use App\Models\TenantBranding;
@@ -52,6 +53,10 @@ final class TenantBrandingService
         }
         if (array_key_exists('font_preset', $data)) {
             $values['font_preset'] = $data['font_preset'] !== null && $data['font_preset'] !== '' ? FontPreset::from($data['font_preset'])->value : null;
+        }
+
+        if (array_key_exists('dashboard_layout', $data)) {
+            $values['dashboard_layout'] = $data['dashboard_layout'] !== null && $data['dashboard_layout'] !== '' ? DashboardLayout::from($data['dashboard_layout'])->value : null;
         }
 
         // White text sits on the brand colours; the accent only has to be visible (focus rings, links).
@@ -130,6 +135,7 @@ final class TenantBrandingService
             'background_color' => $b->background_color,
             'text_color' => $b->text_color,
             'font_preset' => $b->font_preset,
+            'dashboard_layout' => $b->dashboard_layout,
             'version' => (int) $b->version,
         ];
     }

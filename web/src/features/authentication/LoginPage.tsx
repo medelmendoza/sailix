@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Building2, Lock, Mail } from 'lucide-react';
 import { z } from 'zod';
 import { Button, FormError, TextField } from '../../components/ui';
 import { api, ensureCsrf } from '../../services/api/client';
@@ -118,12 +119,14 @@ export function LoginPage() {
         <FormError message={formError} />
         <TextField
           label="Username or email"
+          icon={<Mail />}
           autoComplete="username"
           error={errors.username?.message}
           {...register('username')}
         />
         <TextField
           label="Password"
+          icon={<Lock />}
           type="password"
           autoComplete="current-password"
           error={errors.password?.message}
@@ -132,6 +135,7 @@ export function LoginPage() {
         {look ? null : (
           <TextField
             label="Agency code (optional)"
+            icon={<Building2 />}
             autoComplete="organization"
             hint="Only needed if you belong to several organizations."
             error={errors.agency_code?.message}

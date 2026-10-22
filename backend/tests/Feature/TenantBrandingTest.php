@@ -223,18 +223,20 @@ class TenantBrandingTest extends TestCase
             'accent_color' => '#0b6e99',
             'background_color' => '#ffffff',
             'text_color' => '#0f172a',
-            'font_preset' => 'serif',
+            'font_preset' => 'elegant',
+            'dashboard_layout' => 'compact',
         ])->assertOk()
+            ->assertJsonPath('data.dashboard_layout', 'compact')
             ->assertJsonPath('data.short_name', 'AAA Crew')
             ->assertJsonPath('data.login_welcome_message', 'Welcome aboard.')
             ->assertJsonPath('data.accent_color', '#0B6E99')
             ->assertJsonPath('data.background_color', '#FFFFFF')
             ->assertJsonPath('data.text_color', '#0F172A')
-            ->assertJsonPath('data.font_preset', 'serif');
+            ->assertJsonPath('data.font_preset', 'elegant');
 
         $this->publicLook('aaa.sailix.test')->assertOk()
             ->assertJsonPath('data.short_name', 'AAA Crew')
-            ->assertJsonPath('data.font_preset', 'serif');
+            ->assertJsonPath('data.font_preset', 'elegant');
         $this->publicLook('bbb.sailix.test')->assertOk()->assertJsonPath('data.short_name', null)->assertJsonPath('data.font_preset', null);
 
         $this->change('adminA', ['short_name' => null, 'font_preset' => null])->assertOk()->assertJsonPath('data.short_name', null)->assertJsonPath('data.font_preset', null);
@@ -242,6 +244,7 @@ class TenantBrandingTest extends TestCase
 
     public function test_the_new_fields_are_checked(): void
     {
+        $this->change('adminA', ['dashboard_layout' => 'huge'])->assertStatus(422)->assertJsonValidationErrors('dashboard_layout');
         $this->change('adminA', ['font_preset' => 'comic'])->assertStatus(422)->assertJsonValidationErrors('font_preset');
         $this->change('adminA', ['short_name' => '<b>x</b>'])->assertStatus(422)->assertJsonValidationErrors('short_name');
         $this->change('adminA', ['login_welcome_message' => str_repeat('a', 201)])->assertStatus(422)->assertJsonValidationErrors('login_welcome_message');

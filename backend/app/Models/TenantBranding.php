@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $background_color
  * @property string|null $text_color
  * @property string|null $font_preset
+ * @property string|null $dashboard_layout
  * @property string|null $logo_path
  * @property string|null $logo_mime
  * @property string|null $favicon_path

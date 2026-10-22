@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Lock, Mail, ShieldCheck } from 'lucide-react';
 import { z } from 'zod';
 import { Button, FormError, TextField } from '../../components/ui';
 import { api, ensureCsrf } from '../../services/api/client';
@@ -80,6 +81,7 @@ export function PlatformLoginPage() {
         <FormError message={formError} />
         <TextField
           label="Email"
+          icon={<Mail />}
           type="email"
           autoComplete="username"
           error={errors.email?.message}
@@ -87,6 +89,7 @@ export function PlatformLoginPage() {
         />
         <TextField
           label="Password"
+          icon={<Lock />}
           type="password"
           autoComplete="current-password"
           error={errors.password?.message}
@@ -95,6 +98,7 @@ export function PlatformLoginPage() {
         {options.isPending ? null : otpRequired ? (
           <TextField
             label="Authenticator code"
+            icon={<ShieldCheck />}
             inputMode="numeric"
             autoComplete="one-time-code"
             maxLength={6}
