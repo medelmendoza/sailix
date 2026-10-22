@@ -596,5 +596,60 @@ export function useDashboardCounts(want: {
     pendingDocs: pendingDocs.data,
     announcements: announcements.data,
     requests: requests.data,
+    /** Still waiting for at least one figure (one that failed is not waiting). */
+    loading: [crew, pendingCrew, pendingDocs, announcements, requests].some(
+      (q) => q.isPending && q.fetchStatus !== 'idle',
+    ),
   };
+}
+
+/** How many rows each dashboard panel shows. */
+export const DASHBOARD_PANEL_SIZE = 5;
+
+/**
+ * Whether everything the dashboard shows has arrived: the four figures and the first page of each panel. It asks for the
+ * panels' first pages under the very keys the panels use, so once this says yes the panels open straight from the cache and
+ * the whole dashboard appears at once instead of piece by piece. Something that failed counts as arrived (it says so itself).
+ */
+export function useDashboardReady(want: {
+  crew: boolean;
+  documents: boolean;
+  announcements: boolean;
+  requests: boolean;
+}) {
+  const counts = useDashboardCounts(want);
+  const first = (path: string, params: Record<string, string | number>) => async () =>
+    (await api.get(path, { params })).data;
+  const panels = useQueries({
+    queries: [
+      {
+        queryKey: [
+          'crew',
+          { 'filter[status]': 'pending', page: 1, per_page: DASHBOARD_PANEL_SIZE },
+        ],
+        queryFn: first('/tenant/crew', {
+          'filter[status]': 'pending',
+          page: 1,
+          per_page: DASHBOARD_PANEL_SIZE,
+        }),
+        enabled: want.crew,
+      },
+      {
+        queryKey: ['documents', { status: 'pending', page: 1, per_page: DASHBOARD_PANEL_SIZE }],
+        queryFn: first('/tenant/documents', {
+          status: 'pending',
+          page: 1,
+          per_page: DASHBOARD_PANEL_SIZE,
+        }),
+        enabled: want.documents,
+      },
+      {
+        queryKey: ['announcements', { page: 1, per_page: DASHBOARD_PANEL_SIZE }],
+        queryFn: first('/tenant/announcements', { page: 1, per_page: DASHBOARD_PANEL_SIZE }),
+        enabled: want.announcements,
+      },
+    ],
+  });
+  const lists = panels.every((q) => !(q.isPending && q.fetchStatus !== 'idle'));
+  return { counts, ready: !counts.loading && lists };
 }

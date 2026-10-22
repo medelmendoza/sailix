@@ -15,9 +15,9 @@ import { describeError } from '../../services/api/errors';
 import type { Announcement } from '../../services/api/types';
 import { formatDateTime } from '../shared/AuditTable';
 import { AnnouncementDetails } from './AnnouncementDetails';
-import { useAnnouncements, useCrewList, useDocuments } from './api';
+import { DASHBOARD_PANEL_SIZE, useAnnouncements, useCrewList, useDocuments } from './api';
 
-const PER_PANEL = 5;
+const PER_PANEL = DASHBOARD_PANEL_SIZE;
 
 /** A working panel of the dashboard: a title with a count and a link to the full list, then a short list and its own paging. */
 function Panel({
@@ -285,5 +285,59 @@ export function AnnouncementsPanel() {
         <AnnouncementDetails announcement={viewing} onClose={() => setViewing(null)} />
       ) : null}
     </Panel>
+  );
+}
+
+/**
+ * The dashboard's panels in their grid. While `loading` they are drawn as empty frames with shimmering rows of the same
+ * shape, so the page does not rearrange itself when the real ones take their place.
+ */
+export function DashboardPanels({
+  loading,
+  crew,
+  documents,
+  announcements,
+}: {
+  loading: boolean;
+  crew: boolean;
+  documents: boolean;
+  announcements: boolean;
+}) {
+  const shell = (title: string, headers: string[], cells: CellKind[]) => (
+    <Panel title={title}>
+      <SkeletonDataTable
+        compact
+        caption={title}
+        headers={headers}
+        cells={cells}
+        rows={PER_PANEL}
+        label={`Loading ${title.toLowerCase()}`}
+      />
+    </Panel>
+  );
+  return (
+    <div className="grid gap-6 xl:grid-cols-2">
+      {crew &&
+        (loading ? (
+          shell('User application', APPLICATION_HEADERS, APPLICATION_CELLS)
+        ) : (
+          <UserApplicationPanel />
+        ))}
+      {documents &&
+        (loading ? (
+          shell('Document approval', DOCUMENT_HEADERS, DOCUMENT_CELLS)
+        ) : (
+          <DocumentApprovalPanel />
+        ))}
+      {announcements && (
+        <div className="xl:col-span-2">
+          {loading ? (
+            shell('Announcements', ANNOUNCEMENT_HEADERS, ANNOUNCEMENT_CELLS)
+          ) : (
+            <AnnouncementsPanel />
+          )}
+        </div>
+      )}
+    </div>
   );
 }

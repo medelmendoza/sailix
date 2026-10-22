@@ -166,8 +166,8 @@ describe('Dashboard', () => {
     dashboardApi();
     renderApp('/app');
 
-    const apps = await screen.findByRole('region', { name: /User application/ });
-    expect(await within(apps).findByLabelText('7 waiting')).toBeInTheDocument();
+    expect(await screen.findByLabelText('7 waiting')).toBeInTheDocument(); // the real panel replaces its placeholder
+    const apps = screen.getByRole('region', { name: /User application/ });
     expect(within(apps).getByText('Bustamante, Jaycob')).toBeInTheDocument();
     expect(within(apps).getByText('09988')).toBeInTheDocument();
     expect(
@@ -202,10 +202,16 @@ describe('Dashboard', () => {
       ),
     ]);
     const { user } = renderApp('/app');
-    const apps = await screen.findByRole('region', { name: /User application/ });
-    await within(apps).findByText('Bustamante, Jaycob');
-    expect(urls[0]?.searchParams.get('filter[status]')).toBe('pending');
-    expect(urls[0]?.searchParams.get('per_page')).toBe('5');
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('region', { name: /User application/ })).getByText(
+          'Bustamante, Jaycob',
+        ),
+      ).toBeInTheDocument(),
+    );
+    const apps = screen.getByRole('region', { name: /User application/ });
+    const list = urls.find((u) => u.searchParams.get('per_page') === '5');
+    expect(list?.searchParams.get('filter[status]')).toBe('pending');
 
     await user.type(within(apps).getByLabelText('Name'), ' maria ');
     await user.click(within(apps).getByRole('button', { name: 'Search' }));
@@ -227,8 +233,8 @@ describe('Dashboard', () => {
     ]);
     renderApp('/app');
     expect(await screen.findByText('Nothing waiting for review')).toBeInTheDocument();
-    expect(urls[0]?.searchParams.get('status')).toBe('pending');
-    expect(urls[0]?.searchParams.get('per_page')).toBe('5');
+    const list = urls.find((u) => u.searchParams.get('per_page') === '5');
+    expect(list?.searchParams.get('status')).toBe('pending');
   });
 
   it('says so when a panel is empty and falls back to the username when there is no name', async () => {

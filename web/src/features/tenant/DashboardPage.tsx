@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom';
 import { Button, PageHero, Skeleton, StatTile } from '../../components/ui';
 import { ICONS } from '../../components/icons';
 import { can, hasFeature, useMe } from '../authentication/session';
-import { useDashboardCounts } from './api';
-import { AnnouncementsPanel, DocumentApprovalPanel, UserApplicationPanel } from './DashboardPanels';
+import { useDashboardReady } from './api';
+import { DashboardPanels } from './DashboardPanels';
 
 /** A figure that has not arrived shimmers; one that has is shown, with a plain hint under it. */
 const figure = (v?: number) => (v === undefined ? <Skeleton className="h-7 w-10" /> : v);
@@ -14,12 +14,14 @@ export function DashboardPage() {
   const showDocuments = can(me, 'documents.manage') && hasFeature(me, 'documents');
   const showAnnouncements = can(me, 'announcements.manage') && hasFeature(me, 'announcements');
   const showRequests = can(me, 'users.manage');
-  const counts = useDashboardCounts({
+  // everything the page shows is fetched together and revealed together, so nothing pops in one piece at a time
+  const { counts: arrived, ready } = useDashboardReady({
     crew: showCrew,
     documents: showDocuments,
     announcements: showAnnouncements,
     requests: showRequests,
   });
+  const counts = ready ? arrived : ({} as typeof arrived);
   const openRequests = counts.requests ?? 0;
   const first = (me.user.display_name ?? me.user.username).split(' ')[0];
 
@@ -113,15 +115,12 @@ export function DashboardPage() {
         </p>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        {showCrew && <UserApplicationPanel />}
-        {showDocuments && <DocumentApprovalPanel />}
-        {showAnnouncements && (
-          <div className="xl:col-span-2">
-            <AnnouncementsPanel />
-          </div>
-        )}
-      </div>
+      <DashboardPanels
+        loading={!ready}
+        crew={showCrew}
+        documents={showDocuments}
+        announcements={showAnnouncements}
+      />
     </>
   );
 }
