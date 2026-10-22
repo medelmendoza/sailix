@@ -116,7 +116,7 @@ export function TodosPage() {
                         Edit
                       </Button>
                       <Button
-                        variant="ghost"
+                        variant="dangerSoft"
                         onClick={() => setDeleting(t)}
                         aria-label={`Delete ${t.description}`}
                       >

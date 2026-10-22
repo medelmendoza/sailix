@@ -126,7 +126,7 @@ export function DomainsEditor({ scope }: { scope: TenantScope }) {
                           </Button>
                         ) : null}
                         <Button
-                          variant="ghost"
+                          variant="dangerSoft"
                           onClick={() => setRemoving(d)}
                           aria-label={`Remove ${d.domain}`}
                         >

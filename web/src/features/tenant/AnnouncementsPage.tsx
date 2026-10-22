@@ -151,7 +151,7 @@ export function AnnouncementsPage() {
                         {a.is_active ? 'Switch off' : 'Switch on'}
                       </Button>
                       <Button
-                        variant="ghost"
+                        variant="dangerSoft"
                         onClick={() => setDeleting(a)}
                         aria-label={`Delete ${a.title}`}
                       >

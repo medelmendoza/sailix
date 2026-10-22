@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from 'react';
 import { cn } from './cn';
 
-type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'dangerSoft';
 
 const VARIANTS: Record<Variant, string> = {
   primary:
@@ -10,7 +10,11 @@ const VARIANTS: Record<Variant, string> = {
     'border border-line bg-surface text-ink hover:border-brand-600 hover:text-brand-800 disabled:text-muted disabled:hover:border-line',
   danger:
     'bg-bad-fg text-white shadow-sm hover:-translate-y-0.5 hover:opacity-90 disabled:opacity-50 disabled:hover:translate-y-0',
-  ghost: 'text-brand-800 hover:bg-brand-50 disabled:text-muted',
+  ghost:
+    'bg-brand-50 text-brand-800 hover:bg-brand-100 disabled:bg-transparent disabled:text-muted',
+  // a quiet red button for removing things: tinted at rest, solid red when pointed at
+  dangerSoft:
+    'bg-bad-bg text-bad-fg hover:bg-bad-fg hover:text-white disabled:bg-transparent disabled:text-muted',
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

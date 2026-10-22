@@ -16,7 +16,9 @@ export function Table({
 }) {
   return (
     <div className="overflow-x-auto rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-soft)]">
-      <table className={`w-full text-left text-sm ${compact ? '' : 'min-w-[40rem]'}`}>
+      <table
+        className={`w-full text-left text-sm [&_td_button]:min-h-8 [&_td_button]:px-3.5 [&_td_button]:text-xs ${compact ? '' : 'min-w-[40rem]'}`}
+      >
         <caption className="sr-only">{caption}</caption>
         <thead className="border-b border-line bg-brand-50 text-xs uppercase tracking-wide text-brand-800">
           <tr>

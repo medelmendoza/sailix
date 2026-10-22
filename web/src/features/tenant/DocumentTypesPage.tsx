@@ -87,7 +87,7 @@ export function DocumentTypesPage() {
                     {t.is_active ? 'Switch off' : 'Switch on'}
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant="dangerSoft"
                     onClick={() => setDeleting(t)}
                     aria-label={`Delete ${t.name}`}
                   >
