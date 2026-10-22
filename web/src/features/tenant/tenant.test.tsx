@@ -1220,34 +1220,35 @@ describe('loading placeholders match the admin pages they stand in for', () => {
     expect(loading.querySelectorAll('.shimmer').length).toBeGreaterThan(8);
   });
 
-  it('Crew profile: the hero, the tabs, and the open section with its real labels and table shapes', async () => {
+  it('Crew profile: everything shimmers while it loads, the back link, hero, tabs and cards alike', async () => {
     asTenantAdmin();
     server.use(http.get(`${V1}/tenant/crew/c1`, never));
     renderApp('/app/crew/c1');
 
     const loading = await screen.findByRole('status', { name: 'Loading crew member' });
-    for (const tab of ['Details', 'Documents', 'To-do list']) {
-      expect(within(loading).getByRole('tab', { name: tab })).toBeInTheDocument();
+    // no real text yet: not the back link, the tab names, the card titles or the field labels
+    for (const text of [
+      'Back to crew',
+      'Details',
+      'Documents',
+      'To-do list',
+      'Personal',
+      'Last name',
+    ]) {
+      expect(within(loading).queryByText(text)).not.toBeInTheDocument();
     }
-    for (const label of ['Last name', 'Crew ID', 'Employment status', 'Birthday', 'Date arrive']) {
-      expect(within(loading).getByText(label)).toBeInTheDocument();
-    }
-    for (const title of ['Personal', 'Employment', 'Dates on board']) {
-      expect(within(loading).getByText(title)).toBeInTheDocument();
-    }
+    // the hero, the three tabs and the fields of three cards are all placeholders
+    expect(loading.querySelectorAll('.shimmer').length).toBeGreaterThan(40);
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
-  it('Crew profile: the tasks tab keeps the shape of the task table', async () => {
+  it('Crew profile: a documents or tasks tab shimmers as a table', async () => {
     asTenantAdmin();
     server.use(http.get(`${V1}/tenant/crew/c1`, never));
     renderApp('/app/crew/c1?tab=todos');
 
     const loading = await screen.findByRole('status', { name: 'Loading crew member' });
-    expect(columns(within(loading).getByRole('table', { name: 'Tasks' }))).toEqual([
-      'Task',
-      'Due date',
-      'Status',
-      '',
-    ]);
+    expect(within(loading).getByRole('status', { name: 'Loading' })).toBeInTheDocument();
+    expect(within(loading).queryByText('Task')).not.toBeInTheDocument();
   });
 });

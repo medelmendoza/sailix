@@ -20,15 +20,15 @@ import {
   TextField,
   useToast,
   Skeleton,
-  SkeletonField,
   SkeletonDataTable,
+  SkeletonTable,
   type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { Crew, Todo } from '../../services/api/types';
 import { applyServerErrors } from '../authentication/forms';
 import { Avatar, BACK_PILL, Fact } from '../shared/Hero';
-import { CHECKLIST_CELLS, CHECKLIST_HEADERS, CrewDocumentsSection } from './CrewDocumentsSection';
+import { CrewDocumentsSection } from './CrewDocumentsSection';
 import {
   useAssignTodo,
   useCrewMember,
@@ -50,68 +50,71 @@ const TABS = [
   { key: 'todos', label: 'To-do list' },
 ] as const;
 
-/** The detail cards, with their real titles and fields: shared with the loading placeholder. */
-const GROUPS = [
-  {
-    title: 'Personal',
-    fields: ['Last name', 'First name', 'Middle name', 'Suffix', 'Birthday', 'Mobile'],
-  },
-  {
-    title: 'Employment',
-    fields: ['Crew ID', 'Rank', 'Fleet', 'Vessel', 'Employment status'],
-  },
-  { title: 'Dates on board', fields: ['Date arrive', 'Date depart'] },
-];
+/** A form field as pure shimmer: the label bar and the box. */
+function ShimmerField() {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Skeleton className="h-3.5 w-24" />
+      <Skeleton className="min-h-10 w-full rounded-xl" />
+    </div>
+  );
+}
+
+/** A card as pure shimmer: its title bar and a grid of fields. */
+function ShimmerCard({ fields, wide }: { fields: number; wide?: boolean }) {
+  return (
+    <section
+      className={`rounded-[var(--radius-card)] border border-line bg-surface p-[var(--card-pad)] shadow-[var(--shadow-soft)] ${wide ? 'lg:col-span-2' : ''}`}
+    >
+      <Skeleton className="mb-4 h-5 w-28" />
+      <div className={`grid gap-4 sm:grid-cols-2 ${wide ? 'lg:grid-cols-3' : ''}`}>
+        {Array.from({ length: fields }, (_, i) => (
+          <ShimmerField key={i} />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 /**
- * The whole crew page while the member loads: the back link, the hero, the tabs with their real names, and the open
- * section with its real headings and the shape of its tables.
+ * The whole crew page while the member loads, as shimmer from top to bottom: the back link, the hero, the tabs and the
+ * open section (cards and fields, or a table). The same frames and spacing as the page, so nothing moves when it arrives.
  */
 function CrewProfileSkeleton({ tab }: { tab: string }) {
   return (
     <div role="status" aria-label="Loading crew member" className="flex flex-col gap-6">
+      <Skeleton className="h-8 w-40 rounded-full" />
       <header className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)]">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
           <Skeleton className="size-16 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1 space-y-3">
-            <Skeleton className="h-8 w-64 max-w-full" />
-            <Skeleton className="h-4 w-96 max-w-full" />
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-8 w-64 max-w-full" />
+              <Skeleton className="h-6 w-16 rounded-full" />
+            </div>
+            <div className="flex flex-wrap gap-x-5 gap-y-2">
+              {['w-28', 'w-40', 'w-20', 'w-36', 'w-24'].map((w) => (
+                <Skeleton key={w} className={`h-4 ${w}`} />
+              ))}
+            </div>
           </div>
           <Skeleton className="h-10 w-36 rounded-full" />
         </div>
       </header>
-      <ProfileTabs label="Crew sections" tabs={[...TABS]} value={tab} onChange={() => {}} />
-      {tab === 'documents' ? (
-        <SkeletonDataTable
-          caption="Documents to assign"
-          headers={CHECKLIST_HEADERS}
-          cells={CHECKLIST_CELLS}
-          rows={5}
-          label="Loading documents"
-        />
-      ) : tab === 'todos' ? (
-        <SkeletonDataTable
-          caption="Tasks"
-          headers={TASK_HEADERS}
-          cells={TASK_CELLS}
-          rows={3}
-          label="Loading tasks"
-        />
+      <div className="flex gap-1 border-b border-line">
+        {['w-20', 'w-24', 'w-28'].map((w) => (
+          <div key={w} className="px-4 py-2.5">
+            <Skeleton className={`h-4 ${w}`} />
+          </div>
+        ))}
+      </div>
+      {tab === 'documents' || tab === 'todos' ? (
+        <SkeletonTable rows={tab === 'documents' ? 5 : 3} columns={4} label="Loading" />
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
-          {GROUPS.map((g) => (
-            <Card
-              key={g.title}
-              title={g.title}
-              className={g.fields.length > 5 ? 'lg:col-span-2' : ''}
-            >
-              <div className="grid gap-4 sm:grid-cols-2">
-                {g.fields.map((label) => (
-                  <SkeletonField key={label} label={label} />
-                ))}
-              </div>
-            </Card>
-          ))}
+          <ShimmerCard fields={6} wide />
+          <ShimmerCard fields={5} />
+          <ShimmerCard fields={2} />
         </div>
       )}
       <span className="sr-only">Loading…</span>
@@ -185,13 +188,15 @@ export function CrewProfilePage() {
 
   return (
     <div className="flex max-w-5xl flex-col gap-6">
-      <Link to="/app/crew" className={BACK_PILL}>
-        ← Back to crew
-      </Link>
       {crew.isPending ? (
         <CrewProfileSkeleton tab={tab} />
       ) : crew.isError ? (
-        <ErrorState message={describeError(crew.error)} onRetry={() => void crew.refetch()} />
+        <>
+          <Link to="/app/crew" className={BACK_PILL}>
+            ← Back to crew
+          </Link>
+          <ErrorState message={describeError(crew.error)} onRetry={() => void crew.refetch()} />
+        </>
       ) : (
         <Profile
           crew={crew.data}
@@ -237,6 +242,9 @@ function Profile({ crew, tab, onTab }: { crew: Crew; tab: string; onTab: (key: s
 
   return (
     <>
+      <Link to="/app/crew" className={BACK_PILL}>
+        ← Back to crew
+      </Link>
       <header className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-soft)]">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
           <Avatar name={name} />
