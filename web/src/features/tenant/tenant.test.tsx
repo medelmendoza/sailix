@@ -1220,35 +1220,67 @@ describe('loading placeholders match the admin pages they stand in for', () => {
     expect(loading.querySelectorAll('.shimmer').length).toBeGreaterThan(8);
   });
 
-  it('Crew profile: everything shimmers while it loads, the back link, hero, tabs and cards alike', async () => {
+  it('Crew profile: the Details placeholder has the real frame (tabs, cards, fields) and a bare hero', async () => {
     asTenantAdmin();
     server.use(http.get(`${V1}/tenant/crew/c1`, never));
     renderApp('/app/crew/c1');
 
     const loading = await screen.findByRole('status', { name: 'Loading crew member' });
-    // no real text yet: not the back link, the tab names, the card titles or the field labels
-    for (const text of [
-      'Back to crew',
-      'Details',
-      'Documents',
-      'To-do list',
-      'Personal',
-      'Last name',
-    ]) {
-      expect(within(loading).queryByText(text)).not.toBeInTheDocument();
+    // the frame is the page's own (its words are drawn as shimmer bars by one CSS rule)
+    for (const tab of ['Details', 'Documents', 'To-do list']) {
+      expect(within(loading).getByRole('tab', { name: tab })).toBeInTheDocument();
     }
-    // the hero, the three tabs and the fields of three cards are all placeholders
-    expect(loading.querySelectorAll('.shimmer').length).toBeGreaterThan(40);
-    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    for (const text of [
+      'Personal',
+      'Employment',
+      'Dates on board',
+      'Last name',
+      'Crew ID',
+      'Date arrive',
+    ]) {
+      expect(within(loading).getByText(text)).toBeInTheDocument();
+    }
+    expect(loading.querySelectorAll('.shimmer').length).toBeGreaterThan(15); // hero and field boxes
   });
 
-  it('Crew profile: a documents or tasks tab shimmers as a table', async () => {
+  it('Crew profile: the Documents placeholder has both sections, the filters and the table shapes', async () => {
+    asTenantAdmin();
+    server.use(http.get(`${V1}/tenant/crew/c1`, never));
+    renderApp('/app/crew/c1?tab=documents');
+
+    const loading = await screen.findByRole('status', { name: 'Loading crew member' });
+    for (const text of [
+      'Assign documents',
+      'Document checklist',
+      'Document name',
+      'Document upload requests',
+    ]) {
+      expect(within(loading).getByText(text)).toBeInTheDocument();
+    }
+    expect(columns(within(loading).getByRole('table', { name: 'Documents to assign' }))).toEqual([
+      'Document',
+      'Number',
+      'Expires',
+      'Status',
+      'Ask',
+    ]);
+    expect(
+      columns(within(loading).getByRole('table', { name: 'Documents waiting for review' })),
+    ).toEqual(['Document', 'Sent', '']);
+  });
+
+  it('Crew profile: the To-do placeholder has its heading, Add task and the task table', async () => {
     asTenantAdmin();
     server.use(http.get(`${V1}/tenant/crew/c1`, never));
     renderApp('/app/crew/c1?tab=todos');
 
     const loading = await screen.findByRole('status', { name: 'Loading crew member' });
-    expect(within(loading).getByRole('status', { name: 'Loading' })).toBeInTheDocument();
-    expect(within(loading).queryByText('Task')).not.toBeInTheDocument();
+    expect(within(loading).getByRole('heading', { name: 'To-do list' })).toBeInTheDocument();
+    expect(columns(within(loading).getByRole('table', { name: 'Tasks' }))).toEqual([
+      'Task',
+      'Due date',
+      'Status',
+      '',
+    ]);
   });
 });

@@ -24,7 +24,7 @@ export function Table({
           <tr>
             {headers.map((h) => (
               <th key={h} scope="col" className="px-4 py-3 font-medium">
-                {h}
+                <span className="inline-block">{h}</span>
               </th>
             ))}
           </tr>

@@ -403,12 +403,12 @@ describe('Crew profile', () => {
     ]);
     renderApp('/app/crew/c1?tab=documents');
 
-    const heading = await screen.findByRole('heading', { name: /Document upload requests/ });
-    expect(await within(heading).findByText('1')).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: "Review Seaman's Book" })).toHaveAttribute(
       'href',
       '/app/documents?member=c1',
     );
+    const heading = screen.getByRole('heading', { name: /Document upload requests/ });
+    expect(within(heading).getByText('1')).toBeInTheDocument();
     expect(urls[0]?.searchParams.get('membership_id')).toBe('c1');
     expect(urls[0]?.searchParams.get('status')).toBe('pending');
   });

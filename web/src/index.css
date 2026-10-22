@@ -201,7 +201,13 @@ body,
   opacity: 0;
 }
 
-:is([role='status'][aria-label^='Loading'], .shimmer-text) *:not(:has(*), :empty, .sr-only, svg *) {
+/* the column headings sit on a tinted band: a slightly stronger bar there */
+:is([role='status'][aria-label^='Loading'], .shimmer-text) thead {
+  --shimmer-bg: color-mix(in srgb, var(--color-brand-700) 16%, white);
+}
+
+:is([role='status'][aria-label^='Loading'], .shimmer-text)
+  *:not(:has(*), :empty, .sr-only, svg *, th, td) {
   position: relative;
   overflow: hidden;
   background-color: var(--shimmer-bg, var(--color-line));
@@ -216,7 +222,7 @@ body,
 }
 
 :is([role='status'][aria-label^='Loading'], .shimmer-text)
-  *:not(:has(*), :empty, .sr-only, svg *)::after {
+  *:not(:has(*), :empty, .sr-only, svg *, th, td)::after {
   content: '';
   position: absolute;
   inset: 0;

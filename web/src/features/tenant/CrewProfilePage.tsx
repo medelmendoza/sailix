@@ -21,14 +21,14 @@ import {
   useToast,
   Skeleton,
   SkeletonDataTable,
-  SkeletonTable,
+  SkeletonField,
   type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { Crew, Todo } from '../../services/api/types';
 import { applyServerErrors } from '../authentication/forms';
 import { Avatar, BACK_PILL, Fact } from '../shared/Hero';
-import { CrewDocumentsSection } from './CrewDocumentsSection';
+import { CrewDocumentsSection, CrewDocumentsSkeleton } from './CrewDocumentsSection';
 import {
   useAssignTodo,
   useCrewMember,
@@ -50,29 +50,36 @@ const TABS = [
   { key: 'todos', label: 'To-do list' },
 ] as const;
 
-/** A form field as pure shimmer: the label bar and the box. */
-function ShimmerField() {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Skeleton className="h-3.5 w-24" />
-      <Skeleton className="min-h-10 w-full rounded-xl" />
-    </div>
-  );
-}
+/** The detail cards with their real titles and fields (the shimmer rule turns the words into bars). */
+const GROUPS = [
+  {
+    title: 'Personal',
+    wide: true,
+    fields: ['Last name', 'First name', 'Middle name', 'Suffix', 'Birthday', 'Mobile'],
+  },
+  {
+    title: 'Employment',
+    fields: ['Crew ID', 'Rank', 'Fleet', 'Vessel', 'Employment status'],
+  },
+  { title: 'Dates on board', fields: ['Date arrive', 'Date depart'] },
+];
 
-/** A card as pure shimmer: its title bar and a grid of fields. */
-function ShimmerCard({ fields, wide }: { fields: number; wide?: boolean }) {
+/** The tasks tab while it loads: its heading and Add task button, then the task table. */
+function CrewTodosSkeleton() {
   return (
-    <section
-      className={`rounded-[var(--radius-card)] border border-line bg-surface p-[var(--card-pad)] shadow-[var(--shadow-soft)] ${wide ? 'lg:col-span-2' : ''}`}
-    >
-      <Skeleton className="mb-4 h-5 w-28" />
-      <div className={`grid gap-4 sm:grid-cols-2 ${wide ? 'lg:grid-cols-3' : ''}`}>
-        {Array.from({ length: fields }, (_, i) => (
-          <ShimmerField key={i} />
-        ))}
+    <div role="status" aria-label="Loading tasks">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-base font-semibold">To-do list</h2>
+        <Skeleton className="h-10 w-28 rounded-full" />
       </div>
-    </section>
+      <SkeletonDataTable
+        caption="Tasks"
+        headers={TASK_HEADERS}
+        cells={TASK_CELLS}
+        rows={3}
+        label="Loading task list"
+      />
+    </div>
   );
 }
 
@@ -101,20 +108,22 @@ function CrewProfileSkeleton({ tab }: { tab: string }) {
           <Skeleton className="h-10 w-36 rounded-full" />
         </div>
       </header>
-      <div className="flex gap-1 border-b border-line">
-        {['w-20', 'w-24', 'w-28'].map((w) => (
-          <div key={w} className="px-4 py-2.5">
-            <Skeleton className={`h-4 ${w}`} />
-          </div>
-        ))}
-      </div>
-      {tab === 'documents' || tab === 'todos' ? (
-        <SkeletonTable rows={tab === 'documents' ? 5 : 3} columns={4} label="Loading" />
+      <ProfileTabs label="Crew sections" tabs={[...TABS]} value={tab} onChange={() => {}} />
+      {tab === 'documents' ? (
+        <CrewDocumentsSkeleton />
+      ) : tab === 'todos' ? (
+        <CrewTodosSkeleton />
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
-          <ShimmerCard fields={6} wide />
-          <ShimmerCard fields={5} />
-          <ShimmerCard fields={2} />
+          {GROUPS.map((g) => (
+            <Card key={g.title} title={g.title} className={g.wide ? 'lg:col-span-2' : ''}>
+              <div className={`grid gap-4 sm:grid-cols-2 ${g.wide ? 'lg:grid-cols-3' : ''}`}>
+                {g.fields.map((label) => (
+                  <SkeletonField key={label} label={label} />
+                ))}
+              </div>
+            </Card>
+          ))}
         </div>
       )}
       <span className="sr-only">Loading…</span>

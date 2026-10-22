@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Badge,
   Card,
+  SkeletonField,
   EmptyState,
   ErrorState,
   SelectField,
@@ -33,6 +34,64 @@ const STATE: Record<State, { label: string; tone: 'success' | 'warning' | 'dange
     rejected: { label: 'Sent back', tone: 'danger' },
     missing: { label: 'Not submitted', tone: 'neutral' },
   };
+
+/** The assign grid while it loads: the checklist card at the left, the two filters and the table at the right. */
+export function AssignDocumentsSkeleton() {
+  return (
+    <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
+      <Card className="self-start">
+        <h3 className="mb-2 text-sm font-semibold">Document checklist</h3>
+        <ul className="list-disc space-y-1 pl-5 text-sm">
+          <li>Seaman&apos;s Book</li>
+          <li>Medical certificate</li>
+        </ul>
+      </Card>
+      <div>
+        <div className="mb-3 flex flex-wrap items-end gap-3">
+          <div className="w-full sm:w-64">
+            <SkeletonField label="Document name" />
+          </div>
+          <div className="w-full sm:w-52">
+            <SkeletonField label="Status" />
+          </div>
+        </div>
+        <SkeletonDataTable
+          caption="Documents to assign"
+          headers={CHECKLIST_HEADERS}
+          cells={CHECKLIST_CELLS}
+          rows={6}
+          label="Loading documents"
+        />
+      </div>
+    </div>
+  );
+}
+
+/** The whole Documents tab while it loads: both sections with their headings, the grid and the upload table. */
+export function CrewDocumentsSkeleton() {
+  return (
+    <div role="status" aria-label="Loading documents">
+      <section className="mb-6">
+        <h2 className="mb-1 text-base font-semibold">Assign documents</h2>
+        <p className="mb-3 text-sm text-muted">
+          Tick a document to ask this member to submit or renew it. It leaves the checklist when
+          they send one in.
+        </p>
+        <AssignDocumentsSkeleton />
+      </section>
+      <section className="mb-6">
+        <h2 className="mb-3 text-base font-semibold">Document upload requests</h2>
+        <SkeletonDataTable
+          caption="Documents waiting for review"
+          headers={UPLOAD_HEADERS}
+          cells={UPLOAD_CELLS}
+          rows={2}
+          label="Loading upload requests"
+        />
+      </section>
+    </div>
+  );
+}
 
 /** What an administrator does about a crew member's paperwork: ask for documents, and see what was just sent in. */
 export function CrewDocumentsSection({ crew }: { crew: Crew }) {
@@ -69,13 +128,7 @@ function AssignDocuments({ crew }: { crew: Crew }) {
         send one in.
       </p>
       {rows.isPending ? (
-        <SkeletonDataTable
-          caption="Documents to assign"
-          headers={CHECKLIST_HEADERS}
-          cells={CHECKLIST_CELLS}
-          rows={6}
-          label="Loading documents"
-        />
+        <AssignDocumentsSkeleton />
       ) : rows.isError ? (
         <ErrorState message={describeError(rows.error)} onRetry={() => void rows.refetch()} />
       ) : all.length === 0 ? (
