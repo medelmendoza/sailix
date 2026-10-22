@@ -75,6 +75,21 @@ describe("sign-in on an organization's own address", () => {
     expect(screen.getByRole('img', { name: 'Sailix' })).toHaveAttribute('src', '/sailix-logo.png');
   });
 
+  it("says Sailix's own words on the shared sign-in, and the organization's own on its address", async () => {
+    asAnonymous();
+    const shared = renderApp('/login'); // no organization at this address
+    expect(await screen.findByText('Keeping every crew on course.')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Sailix' })).toBeInTheDocument();
+    expect(screen.getByText('© Sailix')).toBeInTheDocument();
+    shared.unmount();
+
+    addressedAs({ ...look, tagline: null, login_welcome_message: null });
+    renderApp('/login');
+    expect(await screen.findByText('Southfield Agencies')).toBeInTheDocument(); // with no tagline, its name is the headline
+    expect(screen.getByText('Powered by Sailix')).toBeInTheDocument();
+    expect(screen.queryByText('Keeping every crew on course.')).not.toBeInTheDocument();
+  });
+
   it('sends no agency code: the address names the organization', async () => {
     asAnonymous();
     addressedAs(look);
