@@ -19,7 +19,6 @@ import {
   useToast,
   SkeletonDataTable,
   type CellKind,
-  Loadable,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { Announcement } from '../../services/api/types';
@@ -86,19 +85,14 @@ export function AnnouncementsPage() {
   return (
     <>
       <PageHeader
-        loading={list.isPending}
         title="Announcements"
         description="Messages your members see in the mobile app: everyone, or only chosen fleets."
         actions={<Button onClick={() => setEditing('new')}>New announcement</Button>}
       />
-
-      <Loadable loading={list.isPending}>
-        {' '}
-        <Card className="mb-4 text-sm text-muted">
-          An announcement is plain text and can carry one PDF or image. Choose Everyone, or tick the
-          fleets it is for; a member sees it when their crew record names one of those fleets.
-        </Card>
-      </Loadable>
+      <Card className="mb-4 text-sm text-muted">
+        An announcement is plain text and can carry one PDF or image. Choose Everyone, or tick the
+        fleets it is for; a member sees it when their crew record names one of those fleets.
+      </Card>
       {list.isPending ? (
         <SkeletonDataTable
           caption="Announcements"

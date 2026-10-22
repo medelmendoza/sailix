@@ -24,14 +24,11 @@ function Panel({
   title,
   count,
   action,
-  loading,
   children,
 }: {
   title: string;
   count?: number;
   action?: ReactNode;
-  /** Drawn as shimmer: the title and header are placeholders until the real panel replaces it. */
-  loading?: boolean;
   children: ReactNode;
 }) {
   const id = `panel-${title.replace(/\W+/g, '-').toLowerCase()}`;
@@ -40,9 +37,7 @@ function Panel({
       aria-labelledby={id}
       className="overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-soft)]"
     >
-      <div
-        className={`flex items-center justify-between gap-3 border-b border-line px-5 py-4 ${loading ? 'shimmer-text' : ''}`}
-      >
+      <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
         <h2 id={id} className="flex items-center gap-2 text-lg font-bold">
           {title}
           {count ? (
@@ -309,7 +304,7 @@ export function DashboardPanels({
   announcements: boolean;
 }) {
   const shell = (title: string, headers: string[], cells: CellKind[]) => (
-    <Panel title={title} loading>
+    <Panel title={title}>
       <SkeletonDataTable
         compact
         caption={title}

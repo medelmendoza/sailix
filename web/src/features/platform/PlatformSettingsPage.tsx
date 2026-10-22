@@ -77,11 +77,7 @@ export function PlatformSettingsPage() {
 
   return (
     <>
-      <PageHeader
-        loading={settings.isPending}
-        title="Platform settings"
-        description="Defaults for every organization."
-      />
+      <PageHeader title="Platform settings" description="Defaults for every organization." />
       {settings.isPending ? (
         <SettingsSkeleton />
       ) : settings.isError ? (

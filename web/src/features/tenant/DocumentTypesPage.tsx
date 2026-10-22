@@ -43,7 +43,6 @@ export function DocumentTypesPage() {
   return (
     <>
       <PageHeader
-        loading={list.isPending}
         title="Document types"
         description="The kinds of document your members can submit (passport, seaman's book, medical...)."
         actions={<Button onClick={() => setEditing('new')}>New document type</Button>}

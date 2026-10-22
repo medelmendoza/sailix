@@ -31,7 +31,6 @@ export function DashboardPage() {
   return (
     <>
       <PageHero
-        loading={!ready}
         eyebrow={me.tenant.name}
         title={`Welcome back, ${first}`}
         description={`Overview of ${me.tenant.name}.`}

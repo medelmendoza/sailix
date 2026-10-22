@@ -26,14 +26,9 @@ import {
 
 /** The addresses the organization is reached on: its default one, and its own domains once the DNS proves they are its own. */
 export function DomainsPage() {
-  const list = useDomains(OWN_SCOPE); // the same request the editor below makes, so the header can wait for it too
   return (
     <>
-      <PageHeader
-        loading={list.isPending}
-        title="Domains"
-        description="The addresses your organization is reached on."
-      />
+      <PageHeader title="Domains" description="The addresses your organization is reached on." />
       <DomainsEditor scope={OWN_SCOPE} />
     </>
   );

@@ -87,11 +87,9 @@ function textProblem(value: string, max: number): string | undefined {
 
 /** How the organization looks: names, colours, font style, pictures and the sign-in page, with a live preview. */
 export function BrandingPage() {
-  const branding = useBranding(OWN_SCOPE); // the same request the editor makes, so the header waits for it too
   return (
     <>
       <PageHeader
-        loading={branding.isPending}
         title="Branding"
         description="How your organization looks on the sign-in page and across this portal. Leave a field empty to use the Sailix default."
       />

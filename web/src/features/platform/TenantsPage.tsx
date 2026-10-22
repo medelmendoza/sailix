@@ -19,7 +19,6 @@ import {
   TextField,
   type CellKind,
   useToast,
-  Loadable,
 } from '../../components/ui';
 import { applyServerErrors } from '../authentication/forms';
 import { formatDateTime } from '../shared/AuditTable';
@@ -152,36 +151,31 @@ export function TenantsPage() {
   return (
     <>
       <PageHeader
-        loading={tenants.isPending}
         title="Organizations"
         description="Every organization on the platform."
         actions={<Button onClick={() => setCreating(true)}>New organization</Button>}
       />
-
-      <Loadable loading={tenants.isPending}>
-        {' '}
-        <TenantSummary />
-        <StatusFilter value={status} onChange={(s) => set({ status: s, page: '' })} />
-        <div className="my-4 flex flex-wrap items-center gap-3">
-          <div className="min-w-0 flex-1 sm:max-w-sm">
-            <SearchField
-              label="Search organizations"
-              placeholder="Search by code or name"
-              value={q}
-              onSearch={(v) => set({ q: v, page: '' })}
-            />
-          </div>
-          {anyFilter && (
-            <button
-              type="button"
-              className="text-sm text-accent-600 hover:underline"
-              onClick={() => set({ status: '', q: '', page: '' })}
-            >
-              Clear filters
-            </button>
-          )}
+      <TenantSummary />
+      <StatusFilter value={status} onChange={(s) => set({ status: s, page: '' })} />
+      <div className="my-4 flex flex-wrap items-center gap-3">
+        <div className="min-w-0 flex-1 sm:max-w-sm">
+          <SearchField
+            label="Search organizations"
+            placeholder="Search by code or name"
+            value={q}
+            onSearch={(v) => set({ q: v, page: '' })}
+          />
         </div>
-      </Loadable>
+        {anyFilter && (
+          <button
+            type="button"
+            className="text-sm text-accent-600 hover:underline"
+            onClick={() => set({ status: '', q: '', page: '' })}
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
       {tenants.isPending ? (
         <SkeletonDataTable
           caption="Organizations"

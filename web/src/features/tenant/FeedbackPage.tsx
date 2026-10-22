@@ -9,7 +9,6 @@ import {
   Table,
   SkeletonDataTable,
   type CellKind,
-  Loadable,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import { formatDateTime } from '../shared/AuditTable';
@@ -32,17 +31,12 @@ export function FeedbackPage() {
   return (
     <>
       <PageHeader
-        loading={feedback.isPending}
         title="Feedback"
         description="What members of your organization sent from the mobile app, newest first."
       />
-
-      <Loadable loading={feedback.isPending}>
-        {' '}
-        <Card className="mb-4 text-sm text-muted">
-          Feedback about the Sailix app only. It is not sent to Tala or any other service.
-        </Card>
-      </Loadable>
+      <Card className="mb-4 text-sm text-muted">
+        Feedback about the Sailix app only. It is not sent to Tala or any other service.
+      </Card>
       {feedback.isPending ? (
         <SkeletonDataTable
           caption="Feedback"
