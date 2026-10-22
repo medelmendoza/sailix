@@ -2081,6 +2081,23 @@ paths:
               schema: { $ref: '#/components/schemas/AuditPage' }
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
+  /tenant/dashboard:
+    get:
+      tags: [tenant]
+      operationId: getDashboard
+      summary: Everything the admin dashboard shows, in one answer
+      description: >-
+        The crew figure and first page of waiting applications, the first page of documents waiting for review, the first
+        page of announcements and the number of open deletion requests. Each part is what the ordinary list returns (five
+        rows). A part the caller may not see, or whose feature is switched off for the organization, is left out.
+      responses:
+        '200':
+          description: The dashboard.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Dashboard' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
   /tenant/deletion-requests:
     get:
       tags: [tenant]
@@ -3388,6 +3405,34 @@ components:
               oneOf:
                 - { $ref: '#/components/schemas/Profile' }
                 - { type: 'null' }
+    Dashboard:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          properties:
+            crew:
+              type: object
+              required: [total, pending]
+              properties:
+                total: { type: integer }
+                pending: { $ref: '#/components/schemas/CrewPage' }
+            documents:
+              type: object
+              required: [pending]
+              properties:
+                pending: { $ref: '#/components/schemas/CrewDocumentPage' }
+            announcements:
+              type: object
+              required: [latest]
+              properties:
+                latest: { $ref: '#/components/schemas/AnnouncementPage' }
+            deletion_requests:
+              type: object
+              required: [open]
+              properties:
+                open: { type: integer }
     DeletionRequestPage:
       allOf:
         - $ref: '#/components/schemas/PageEnvelope'

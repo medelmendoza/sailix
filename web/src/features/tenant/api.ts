@@ -1,10 +1,4 @@
-import {
-  keepPreviousData,
-  useMutation,
-  useQueries,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../components/ui';
 import { api } from '../../services/api/client';
 import { describeError } from '../../services/api/errors';
@@ -548,108 +542,37 @@ export function useAuditLogs(params: ListParams) {
   });
 }
 
-/**
- * The figures on the dashboard tiles. Each is a list request for one row that is only read for its total, and is asked only
- * when the signed-in person may see that area. `undefined` while it is on its way. The keys start with the list's own key, so
- * approving a document or answering a request refreshes them.
- */
-export function useDashboardCounts(want: {
-  crew: boolean;
-  documents: boolean;
-  announcements: boolean;
-  requests: boolean;
-}) {
-  const total = async (url: string, params: Record<string, string> = {}) =>
-    (await api.get<Page<unknown>>(url, { params: { ...params, per_page: 1 } })).data.meta.total;
-  const [crew, pendingCrew, pendingDocs, announcements, requests] = useQueries({
-    queries: [
-      {
-        queryKey: ['crew', 'count', 'all'],
-        queryFn: () => total('/tenant/crew'),
-        enabled: want.crew,
-      },
-      {
-        queryKey: ['crew', 'count', 'pending'],
-        queryFn: () => total('/tenant/crew', { 'filter[status]': 'pending' }),
-        enabled: want.crew,
-      },
-      {
-        queryKey: ['documents', 'count', 'pending'],
-        queryFn: () => total('/tenant/documents', { status: 'pending' }),
-        enabled: want.documents,
-      },
-      {
-        queryKey: ['announcements', 'count'],
-        queryFn: () => total('/tenant/announcements'),
-        enabled: want.announcements,
-      },
-      {
-        queryKey: ['deletion-requests', 'count'],
-        queryFn: () => total('/tenant/deletion-requests'),
-        enabled: want.requests,
-      },
-    ],
-  });
-  return {
-    crew: crew.data,
-    pendingCrew: pendingCrew.data,
-    pendingDocs: pendingDocs.data,
-    announcements: announcements.data,
-    requests: requests.data,
-    /** Still waiting for at least one figure (one that failed is not waiting). */
-    loading: [crew, pendingCrew, pendingDocs, announcements, requests].some(
-      (q) => q.isPending && q.fetchStatus !== 'idle',
-    ),
-  };
+/** The dashboard's answer: only the parts the person may see are present. */
+export interface DashboardData {
+  crew?: { total: number; pending: Page<Crew> };
+  documents?: { pending: Page<CrewDocument> };
+  announcements?: { latest: Page<Announcement> };
+  deletion_requests?: { open: number };
 }
 
-/** How many rows each dashboard panel shows. */
+/** How many rows each dashboard panel shows (the server's dashboard answer uses the same number). */
 export const DASHBOARD_PANEL_SIZE = 5;
 
 /**
- * Whether everything the dashboard shows has arrived: the four figures and the first page of each panel. It asks for the
- * panels' first pages under the very keys the panels use, so once this says yes the panels open straight from the cache and
- * the whole dashboard appears at once instead of piece by piece. Something that failed counts as arrived (it says so itself).
+ * Everything the dashboard shows, from one request: the figures and the first page of each panel. The pages are also put
+ * in the cache under the panels' own keys, so the panels open straight from it and nothing is asked twice. A part the
+ * person may not see (or whose feature is off) is absent. Asked again on every visit so the figures are current.
  */
-export function useDashboardReady(want: {
-  crew: boolean;
-  documents: boolean;
-  announcements: boolean;
-  requests: boolean;
-}) {
-  const counts = useDashboardCounts(want);
-  const first = (path: string, params: Record<string, string | number>) => async () =>
-    (await api.get(path, { params })).data;
-  const panels = useQueries({
-    queries: [
-      {
-        queryKey: [
-          'crew',
-          { 'filter[status]': 'pending', page: 1, per_page: DASHBOARD_PANEL_SIZE },
-        ],
-        queryFn: first('/tenant/crew', {
-          'filter[status]': 'pending',
-          page: 1,
-          per_page: DASHBOARD_PANEL_SIZE,
-        }),
-        enabled: want.crew,
-      },
-      {
-        queryKey: ['documents', { status: 'pending', page: 1, per_page: DASHBOARD_PANEL_SIZE }],
-        queryFn: first('/tenant/documents', {
-          status: 'pending',
-          page: 1,
-          per_page: DASHBOARD_PANEL_SIZE,
-        }),
-        enabled: want.documents,
-      },
-      {
-        queryKey: ['announcements', { page: 1, per_page: DASHBOARD_PANEL_SIZE }],
-        queryFn: first('/tenant/announcements', { page: 1, per_page: DASHBOARD_PANEL_SIZE }),
-        enabled: want.announcements,
-      },
-    ],
+export function useDashboard() {
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: ['dashboard'],
+    staleTime: 0,
+    refetchOnMount: 'always',
+    queryFn: async () => {
+      const d = (await api.get<{ data: DashboardData }>('/tenant/dashboard')).data.data;
+      const size = { page: 1, per_page: DASHBOARD_PANEL_SIZE };
+      if (d.crew)
+        qc.setQueryData(['crew', { 'filter[status]': 'pending', ...size }], d.crew.pending);
+      if (d.documents)
+        qc.setQueryData(['documents', { status: 'pending', ...size }], d.documents.pending);
+      if (d.announcements) qc.setQueryData(['announcements', size], d.announcements.latest);
+      return d;
+    },
   });
-  const lists = panels.every((q) => !(q.isPending && q.fetchStatus !== 'idle'));
-  return { counts, ready: !counts.loading && lists };
 }

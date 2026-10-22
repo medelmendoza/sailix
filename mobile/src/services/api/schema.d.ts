@@ -1458,6 +1458,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenant/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Everything the admin dashboard shows, in one answer
+         * @description The crew figure and first page of waiting applications, the first page of documents waiting for review, the first page of announcements and the number of open deletion requests. Each part is what the ordinary list returns (five rows). A part the caller may not see, or whose feature is switched off for the organization, is left out.
+         */
+        get: operations["getDashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenant/deletion-requests": {
         parameters: {
             query?: never;
@@ -2198,6 +2218,23 @@ export interface components {
                     email?: string;
                 };
                 profile?: components["schemas"]["Profile"] | null;
+            };
+        };
+        Dashboard: {
+            data: {
+                crew?: {
+                    total: number;
+                    pending: components["schemas"]["CrewPage"];
+                };
+                documents?: {
+                    pending: components["schemas"]["CrewDocumentPage"];
+                };
+                announcements?: {
+                    latest: components["schemas"]["AnnouncementPage"];
+                };
+                deletion_requests?: {
+                    open: number;
+                };
             };
         };
         DeletionRequestPage: components["schemas"]["PageEnvelope"] & {
@@ -5617,6 +5654,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuditPage"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The dashboard. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Dashboard"];
                 };
             };
             401: components["responses"]["Problem"];

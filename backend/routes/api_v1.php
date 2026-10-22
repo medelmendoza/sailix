@@ -79,6 +79,7 @@ Route::middleware(['auth:sanctum', 'tenant.context', 'throttle:api'])->group(fun
 
     Route::prefix('tenant')->group(function () {
         Route::get('/', [Tenant\TenantController::class, 'show']);
+        Route::get('dashboard', [Tenant\DashboardController::class, 'show']);
         Route::patch('/', [Tenant\TenantController::class, 'update']);
         Route::get('users', [Tenant\UserController::class, 'index']);
         Route::patch('users/{membership}', [Tenant\UserController::class, 'update']);

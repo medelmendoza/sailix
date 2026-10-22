@@ -84,6 +84,24 @@ function dashboardApi(extra: Parameters<typeof server.use> = []) {
       ),
     ),
     http.get(`${V1}/tenant/deletion-requests`, () => HttpResponse.json(pageOf([]))),
+    // the single dashboard answer is put together from the same stubbed lists, so each test describes its data once
+    http.get(`${V1}/tenant/dashboard`, async () => {
+      const list = async (path: string) => (await fetch(`${V1}${path}`)).json();
+      const [crew, documents, announcements, requests] = await Promise.all([
+        list('/tenant/crew?filter[status]=pending&page=1&per_page=5'),
+        list('/tenant/documents?status=pending&page=1&per_page=5'),
+        list('/tenant/announcements?page=1&per_page=5'),
+        list('/tenant/deletion-requests?page=1&per_page=5'),
+      ]);
+      return HttpResponse.json({
+        data: {
+          crew: { total: crew.meta.total, pending: crew },
+          documents: { pending: documents },
+          announcements: { latest: announcements },
+          deletion_requests: { open: requests.meta.total },
+        },
+      });
+    }),
   );
 }
 
@@ -220,6 +238,33 @@ describe('Dashboard', () => {
 
     await user.click(within(apps).getByRole('button', { name: 'Clear' }));
     await waitFor(() => expect(urls.at(-1)?.searchParams.has('filter[name]')).toBe(false));
+  });
+
+  it('asks for the whole dashboard in one request and for no separate counts', async () => {
+    asTenantAdmin();
+    const dashboards: string[] = [];
+    const crew: URL[] = [];
+    dashboardApi([
+      http.get(
+        `${V1}/tenant/crew`,
+        ({ request }) => (
+          crew.push(new URL(request.url)),
+          HttpResponse.json(pageOf([pendingCrew('c1', 'Jaycob', 'Bustamante')], { total: 7 }))
+        ),
+      ),
+    ]);
+    server.events.on('request:start', ({ request }) => {
+      if (request.url.includes('/tenant/dashboard')) dashboards.push(request.url);
+    });
+    renderApp('/app');
+    await screen.findByLabelText('7 waiting');
+    await screen.findByText('February allotment is out');
+
+    expect(dashboards).toHaveLength(1);
+    // no separate one-row count requests: the figures come in the dashboard answer (the test client treats cached
+    // data as stale at once, so a panel may still refresh itself in the background; the real client waits 30 s)
+    expect(crew.filter((u) => u.searchParams.get('per_page') === '1')).toHaveLength(0);
+    server.events.removeAllListeners();
   });
 
   it('asks only for documents waiting for review', async () => {

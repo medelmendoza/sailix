@@ -333,6 +333,7 @@ class ApiContractTest extends TestCase
 
         $admin = $this->bearer($this->tokenFor('admin1'));
         $this->ok($this->fresh()->getJson('/api/v1/tenant/deletion-requests', $admin), '/tenant/deletion-requests', 'get', 200);
+        $this->ok($this->fresh()->getJson('/api/v1/tenant/dashboard', $admin), '/tenant/dashboard', 'get', 200);
         $this->ok($this->fresh()->getJson('/api/v1/tenant/users?filter[status]=pending', $admin), '/tenant/users', 'get', 200);
         $this->ok($this->fresh()->getJson('/api/v1/me', $admin), '/me', 'get', 200);
     }

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button, PageHero, Skeleton, StatTile } from '../../components/ui';
 import { ICONS } from '../../components/icons';
 import { can, hasFeature, useMe } from '../authentication/session';
-import { useDashboardReady } from './api';
+import { useDashboard } from './api';
 import { DashboardPanels } from './DashboardPanels';
 
 /** A figure that has not arrived shimmers; one that has is shown, with a plain hint under it. */
@@ -14,14 +14,17 @@ export function DashboardPage() {
   const showDocuments = can(me, 'documents.manage') && hasFeature(me, 'documents');
   const showAnnouncements = can(me, 'announcements.manage') && hasFeature(me, 'announcements');
   const showRequests = can(me, 'users.manage');
-  // everything the page shows is fetched together and revealed together, so nothing pops in one piece at a time
-  const { counts: arrived, ready } = useDashboardReady({
-    crew: showCrew,
-    documents: showDocuments,
-    announcements: showAnnouncements,
-    requests: showRequests,
-  });
-  const counts = ready ? arrived : ({} as typeof arrived);
+  // everything the page shows comes in one request and is revealed together, so nothing pops in one piece at a time
+  const dashboard = useDashboard();
+  const ready = !dashboard.isPending;
+  const d = dashboard.data;
+  const counts = {
+    crew: d?.crew?.total,
+    pendingCrew: d?.crew?.pending.meta.total,
+    pendingDocs: d?.documents?.pending.meta.total,
+    announcements: d?.announcements?.latest.meta.total,
+    requests: d?.deletion_requests?.open,
+  };
   const openRequests = counts.requests ?? 0;
   const first = (me.user.display_name ?? me.user.username).split(' ')[0];
 

@@ -212,7 +212,7 @@ class TenantRouteSweepTest extends TestCase
         $lists = [
             ['adminA', 'tenant/todos'], ['adminA', 'tenant/announcements'], ['adminA', 'tenant/documents'], ['adminA', 'tenant/document-types'],
             ['adminA', 'tenant/users'], ['adminA', 'tenant/crew'], ['adminA', 'tenant/domains'], ['adminA', 'tenant/audit-logs'], ['adminA', 'tenant/feedback'],
-            ['adminA', 'tenant/callit/reports'], ['adminA', 'tenant/deletion-requests'], ['adminA', 'tenant/crew/fleets'],
+            ['adminA', 'tenant/callit/reports'], ['adminA', 'tenant/deletion-requests'], ['adminA', 'tenant/crew/fleets'], ['adminA', 'tenant/dashboard'],
             ['crewA', 'todos'], ['crewA', 'announcements'], ['crewA', 'documents'], ['crewA', 'documents?status=review'], ['crewA', 'document-types'],
             ['crewA', 'document-requests'], ['crewA', 'callit/reports'], ['crewA', 'loans'], ['crewA', 'me'],
         ];
