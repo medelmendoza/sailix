@@ -166,14 +166,14 @@ class TenantAddressingTest extends TestCase
     {
         $this->member('onlyb', $this->b);
 
-        $this->signIn('http://aaa.sailix.test/api/v1/auth/token', ['username' => 'onlyb'])->assertStatus(403);
+        $this->signIn('http://aaa.sailix.test/api/v1/auth/token', ['username' => 'onlyb'])->assertStatus(401)->assertJsonPath('code', 'invalid_credentials'); // same answer as a wrong password
         $this->signIn('http://bbb.sailix.test/api/v1/auth/token', ['username' => 'onlyb'])->assertOk();
     }
 
     public function test_the_same_username_in_two_organizations_is_two_logins_by_address(): void
     {
         $this->member('maria', $this->a);
-        $this->signIn('http://bbb.sailix.test/api/v1/auth/token', ['username' => 'maria'])->assertStatus(403); // her account is not a member of B
+        $this->signIn('http://bbb.sailix.test/api/v1/auth/token', ['username' => 'maria'])->assertStatus(401)->assertJsonPath('code', 'invalid_credentials'); // her account is not a member of B
     }
 
     public function test_a_token_is_good_only_on_its_own_organizations_address(): void

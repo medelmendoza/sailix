@@ -30,7 +30,7 @@ final class LoginFlow
             ->values();
 
         if ($usable->isEmpty()) {
-            throw $this->noAccess($all, $channel);
+            throw $this->noAccess($all, $channel, $agencyCode);
         }
 
         if ($usable->count() === 1) {
@@ -81,8 +81,13 @@ final class LoginFlow
     }
 
     /** @param Collection<int, Membership> $all */
-    private function noAccess(Collection $all, string $channel): ApiProblem
+    private function noAccess(Collection $all, string $channel, ?string $agencyCode): ApiProblem
     {
+        // Signing in to one organization with an account that is not a member of it: the same answer as a wrong password,
+        // so the form never says which organizations an account belongs to.
+        if ($agencyCode !== null && $all->isEmpty()) {
+            return new ApiProblem(401, 'invalid_credentials', 'The credentials are incorrect.');
+        }
         if ($all->contains(fn (Membership $m) => $m->status === MembershipStatus::Pending)) {
             return ApiProblem::forbidden('membership_pending', 'Your account is awaiting activation by your organization.');
         }
