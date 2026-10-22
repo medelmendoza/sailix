@@ -13,6 +13,7 @@ import {
   useToast,
   SkeletonDataTable,
   type CellKind,
+  Loadable,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { CallItReport } from '../../services/api/types';
@@ -62,24 +63,29 @@ export function CallItPage() {
   return (
     <>
       <PageHeader
+        loading={list.isPending}
         title="Call-it reports"
         description="Safety observations and incidents your members sent. Drafts stay private to the member."
       />
-      <div className="mb-4 max-w-xs">
-        <SelectField
-          label="Show"
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
-            setPage(1);
-          }}
-          options={[
-            { value: 'submitted', label: 'Waiting for review' },
-            { value: 'reviewed', label: 'Reviewed' },
-            { value: '', label: 'All' },
-          ]}
-        />
-      </div>
+
+      <Loadable loading={list.isPending}>
+        {' '}
+        <div className="mb-4 max-w-xs">
+          <SelectField
+            label="Show"
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
+            options={[
+              { value: 'submitted', label: 'Waiting for review' },
+              { value: 'reviewed', label: 'Reviewed' },
+              { value: '', label: 'All' },
+            ]}
+          />
+        </div>
+      </Loadable>
       {list.isPending ? (
         <SkeletonDataTable
           caption="Reports"

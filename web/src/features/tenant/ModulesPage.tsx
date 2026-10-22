@@ -41,6 +41,7 @@ export function ModulesPage() {
   return (
     <>
       <PageHeader
+        loading={modules.isPending}
         title="Modules"
         description="Services your organization can offer to its members."
       />

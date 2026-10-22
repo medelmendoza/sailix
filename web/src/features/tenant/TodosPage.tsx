@@ -17,6 +17,7 @@ import {
   useToast,
   SkeletonDataTable,
   type CellKind,
+  Loadable,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { Membership, Todo } from '../../services/api/types';
@@ -55,25 +56,30 @@ export function TodosPage() {
   return (
     <>
       <PageHeader
+        loading={list.isPending}
         title="To-dos"
         description="Tasks you assign to members of your organization. They tick them off in the mobile app."
         actions={<Button onClick={() => setEditing('new')}>New to-do</Button>}
       />
-      <div className="mb-4 max-w-xs">
-        <SelectField
-          label="Show"
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
-            setPage(1);
-          }}
-          options={[
-            { value: '', label: 'All' },
-            { value: 'open', label: 'Open' },
-            { value: 'done', label: 'Done' },
-          ]}
-        />
-      </div>
+
+      <Loadable loading={list.isPending}>
+        {' '}
+        <div className="mb-4 max-w-xs">
+          <SelectField
+            label="Show"
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
+            options={[
+              { value: '', label: 'All' },
+              { value: 'open', label: 'Open' },
+              { value: 'done', label: 'Done' },
+            ]}
+          />
+        </div>
+      </Loadable>
       {list.isPending ? (
         <SkeletonDataTable
           caption="To-dos"

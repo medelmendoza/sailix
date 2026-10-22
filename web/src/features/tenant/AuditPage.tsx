@@ -5,6 +5,7 @@ import {
   Pagination,
   TextField,
   SkeletonDataTable,
+  Loadable,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import { AUDIT_CELLS, AUDIT_HEADERS, AuditTable } from '../shared/AuditTable';
@@ -17,18 +18,26 @@ export function AuditPage() {
 
   return (
     <>
-      <PageHeader title="Audit log" description="Who changed what in your organization." />
-      <div className="mb-4 max-w-sm">
-        <TextField
-          label="Filter by action"
-          placeholder="e.g. membership.updated"
-          value={action}
-          onChange={(e) => {
-            setAction(e.target.value.trim());
-            setPage(1);
-          }}
-        />
-      </div>
+      <PageHeader
+        loading={logs.isPending}
+        title="Audit log"
+        description="Who changed what in your organization."
+      />
+
+      <Loadable loading={logs.isPending}>
+        {' '}
+        <div className="mb-4 max-w-sm">
+          <TextField
+            label="Filter by action"
+            placeholder="e.g. membership.updated"
+            value={action}
+            onChange={(e) => {
+              setAction(e.target.value.trim());
+              setPage(1);
+            }}
+          />
+        </div>
+      </Loadable>
       {logs.isPending ? (
         <SkeletonDataTable
           caption="Audit log"

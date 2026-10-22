@@ -13,6 +13,7 @@ import {
   TextField,
   SkeletonDataTable,
   type CellKind,
+  Loadable,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { Membership } from '../../services/api/types';
@@ -141,28 +142,33 @@ export function MembersPage() {
   return (
     <>
       <PageHeader
+        loading={members.isPending}
         title="Members"
         description="Approve registrations and manage who can use your organization's account."
       />
-      <div className="mb-4 grid gap-3 sm:grid-cols-3">
-        <SelectField
-          label="Status"
-          options={STATUS_OPTIONS}
-          value={status}
-          onChange={(e) => setParams(merge(params, { status: e.target.value, page: '' }))}
-        />
-        <SelectField
-          label="Role"
-          options={ROLE_OPTIONS}
-          value={role}
-          onChange={(e) => setParams(merge(params, { role: e.target.value, page: '' }))}
-        />
-        <TextField
-          label="Search by username"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+
+      <Loadable loading={members.isPending}>
+        {' '}
+        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+          <SelectField
+            label="Status"
+            options={STATUS_OPTIONS}
+            value={status}
+            onChange={(e) => setParams(merge(params, { status: e.target.value, page: '' }))}
+          />
+          <SelectField
+            label="Role"
+            options={ROLE_OPTIONS}
+            value={role}
+            onChange={(e) => setParams(merge(params, { role: e.target.value, page: '' }))}
+          />
+          <TextField
+            label="Search by username"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </Loadable>
 
       {members.isPending ? (
         <SkeletonDataTable

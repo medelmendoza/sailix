@@ -16,6 +16,7 @@ import {
   useToast,
   SkeletonDataTable,
   type CellKind,
+  Loadable,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { CrewDocument } from '../../services/api/types';
@@ -66,33 +67,38 @@ export function DocumentsPage() {
   return (
     <>
       <PageHeader
+        loading={list.isPending}
         title="Documents"
         description="Documents your members submitted. Check the file, then approve it or send it back with a reason."
       />
-      {member ? (
-        <p className="mb-4 text-sm">
-          Showing one member's documents.{' '}
-          <Link to="/app/documents" className="text-brand underline-offset-2 hover:underline">
-            Show everyone
-          </Link>
-        </p>
-      ) : null}
-      <div className="mb-4 max-w-xs">
-        <SelectField
-          label="Show"
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value);
-            setPage(1);
-          }}
-          options={[
-            { value: 'pending', label: 'Waiting for review' },
-            { value: 'rejected', label: 'Sent back' },
-            { value: 'approved', label: 'Approved' },
-            { value: '', label: 'All' },
-          ]}
-        />
-      </div>
+
+      <Loadable loading={list.isPending}>
+        {' '}
+        {member ? (
+          <p className="mb-4 text-sm">
+            Showing one member's documents.{' '}
+            <Link to="/app/documents" className="text-brand underline-offset-2 hover:underline">
+              Show everyone
+            </Link>
+          </p>
+        ) : null}
+        <div className="mb-4 max-w-xs">
+          <SelectField
+            label="Show"
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
+            options={[
+              { value: 'pending', label: 'Waiting for review' },
+              { value: 'rejected', label: 'Sent back' },
+              { value: 'approved', label: 'Approved' },
+              { value: '', label: 'All' },
+            ]}
+          />
+        </div>
+      </Loadable>
       {list.isPending ? (
         <SkeletonDataTable
           caption="Documents"

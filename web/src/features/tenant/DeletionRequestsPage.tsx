@@ -8,6 +8,7 @@ import {
   Table,
   SkeletonDataTable,
   type CellKind,
+  Loadable,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import { formatDateTime } from '../shared/AuditTable';
@@ -24,13 +25,18 @@ export function DeletionRequestsPage() {
   return (
     <>
       <PageHeader
+        loading={requests.isPending}
         title="Deletion requests"
         description="Members who asked for their account to be deleted."
       />
-      <Card className="mb-4 bg-warn-bg text-sm text-warn-fg">
-        Requests are recorded and listed here. Nothing is deleted automatically and the member keeps
-        access until your organization and the platform decide how deletion is handled.
-      </Card>
+
+      <Loadable loading={requests.isPending}>
+        {' '}
+        <Card className="mb-4 bg-warn-bg text-sm text-warn-fg">
+          Requests are recorded and listed here. Nothing is deleted automatically and the member
+          keeps access until your organization and the platform decide how deletion is handled.
+        </Card>
+      </Loadable>
       {requests.isPending ? (
         <SkeletonDataTable
           caption="Deletion requests"

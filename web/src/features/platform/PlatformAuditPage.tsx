@@ -6,6 +6,7 @@ import {
   Pagination,
   SkeletonDataTable,
   TextField,
+  Loadable,
 } from '../../components/ui';
 import { AUDIT_CELLS, AUDIT_HEADERS, AuditTable } from '../shared/AuditTable';
 import { describeError, usePlatformAudit } from './api';
@@ -24,30 +25,35 @@ export function PlatformAuditPage() {
   return (
     <>
       <PageHeader
+        loading={logs.isPending}
         title="Audit log"
         description="Security and administrative events across the platform."
       />
-      <Card className="mb-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <TextField
-            label="Filter by action"
-            placeholder="e.g. tenant.suspend"
-            value={action}
-            onChange={(e) => {
-              setAction(e.target.value.trim());
-              setPage(1);
-            }}
-          />
-          <TextField
-            label="Filter by organization ID"
-            value={tenantId}
-            onChange={(e) => {
-              setTenantId(e.target.value.trim());
-              setPage(1);
-            }}
-          />
-        </div>
-      </Card>
+
+      <Loadable loading={logs.isPending}>
+        {' '}
+        <Card className="mb-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <TextField
+              label="Filter by action"
+              placeholder="e.g. tenant.suspend"
+              value={action}
+              onChange={(e) => {
+                setAction(e.target.value.trim());
+                setPage(1);
+              }}
+            />
+            <TextField
+              label="Filter by organization ID"
+              value={tenantId}
+              onChange={(e) => {
+                setTenantId(e.target.value.trim());
+                setPage(1);
+              }}
+            />
+          </div>
+        </Card>
+      </Loadable>
       {logs.isPending ? (
         <SkeletonDataTable
           caption="Audit log"

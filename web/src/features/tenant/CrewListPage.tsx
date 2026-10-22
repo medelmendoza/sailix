@@ -12,6 +12,7 @@ import {
   TextField,
   SkeletonDataTable,
   type CellKind,
+  Loadable,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import { useCrewList } from './api';
@@ -57,46 +58,51 @@ export function CrewListPage() {
   return (
     <>
       <PageHeader
+        loading={list.isPending}
         title="Crew"
         description="Everyone in your organization's crew and where they serve."
       />
-      <Card className="mb-4">
-        <form
-          onSubmit={search}
-          role="search"
-          aria-label="Search crew"
-          className="flex flex-wrap items-end gap-3"
-        >
-          <div className="w-full sm:w-56">
-            <TextField
-              label="Last name"
-              value={form.last_name}
-              onChange={set('last_name')}
-              maxLength={100}
-            />
-          </div>
-          <div className="w-full sm:w-56">
-            <TextField
-              label="First name"
-              value={form.first_name}
-              onChange={set('first_name')}
-              maxLength={100}
-            />
-          </div>
-          <div className="w-full sm:w-40">
-            <TextField
-              label="Crew ID"
-              value={form.crew_number}
-              onChange={set('crew_number')}
-              maxLength={30}
-            />
-          </div>
-          <Button type="submit">Search</Button>
-          <Button variant="secondary" onClick={clear}>
-            Clear
-          </Button>
-        </form>
-      </Card>
+
+      <Loadable loading={list.isPending}>
+        {' '}
+        <Card className="mb-4">
+          <form
+            onSubmit={search}
+            role="search"
+            aria-label="Search crew"
+            className="flex flex-wrap items-end gap-3"
+          >
+            <div className="w-full sm:w-56">
+              <TextField
+                label="Last name"
+                value={form.last_name}
+                onChange={set('last_name')}
+                maxLength={100}
+              />
+            </div>
+            <div className="w-full sm:w-56">
+              <TextField
+                label="First name"
+                value={form.first_name}
+                onChange={set('first_name')}
+                maxLength={100}
+              />
+            </div>
+            <div className="w-full sm:w-40">
+              <TextField
+                label="Crew ID"
+                value={form.crew_number}
+                onChange={set('crew_number')}
+                maxLength={30}
+              />
+            </div>
+            <Button type="submit">Search</Button>
+            <Button variant="secondary" onClick={clear}>
+              Clear
+            </Button>
+          </form>
+        </Card>
+      </Loadable>
 
       {list.isPending ? (
         <SkeletonDataTable

@@ -105,7 +105,11 @@ export function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Settings" description="Organization profile and security." />
+      <PageHeader
+        loading={tenant.isPending}
+        title="Settings"
+        description="Organization profile and security."
+      />
       {tenant.isPending ? (
         <SettingsSkeleton />
       ) : tenant.isError ? (

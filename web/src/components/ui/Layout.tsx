@@ -36,17 +36,47 @@ export function Card({
   );
 }
 
+/**
+ * Wraps something that is part of a page's frame but whose page is still waiting for data (a toolbar, a filter row): while
+ * `loading` its text shimmers as bars, its icons are hidden and nothing in it can be used. Otherwise it is just its children.
+ */
+export function Loadable({
+  loading,
+  className,
+  children,
+}: {
+  loading?: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  if (!loading) return <div className={className}>{children}</div>;
+  return (
+    <div className={cn('shimmer-text', className)} inert aria-busy="true">
+      {children}
+    </div>
+  );
+}
+
 export function PageHeader({
   title,
   description,
   actions,
+  loading,
 }: {
   title: string;
   description?: string;
   actions?: ReactNode;
+  /** The page is still waiting for its data: the title, line and actions shimmer. */
+  loading?: boolean;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+    <div
+      className={cn(
+        'mb-6 flex flex-wrap items-start justify-between gap-3',
+        loading && 'shimmer-text',
+      )}
+      inert={loading || undefined}
+    >
       <div>
         <h1 className="title-bar text-3xl font-bold leading-tight">{title}</h1>
         {description && <p className="mt-1 text-sm text-muted">{description}</p>}
@@ -66,14 +96,23 @@ export function PageHero({
   title,
   description,
   actions,
+  loading,
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
   actions?: ReactNode;
+  /** The page is still waiting for its data: the text shimmers (in white on the banner). */
+  loading?: boolean;
 }) {
   return (
-    <section className="relative mb-6 overflow-hidden rounded-[var(--radius-card)] bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700 p-6 text-white shadow-[var(--shadow-lift)] sm:p-8">
+    <section
+      inert={loading || undefined}
+      className={cn(
+        'relative mb-6 overflow-hidden rounded-[var(--radius-card)] bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700 p-6 text-white shadow-[var(--shadow-lift)] sm:p-8',
+        loading && 'shimmer-text [--shimmer-bg:rgb(255_255_255/0.28)]',
+      )}
+    >
       <div aria-hidden="true" className="bg-dots absolute inset-0" />
       <div
         aria-hidden="true"
