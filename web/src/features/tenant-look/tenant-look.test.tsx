@@ -201,7 +201,7 @@ describe('shared-address demo switcher', () => {
 });
 
 describe('inside the portal', () => {
-  it('puts the Sailix logo in the menu bar when the organization has none, with its name under it', async () => {
+  it('puts the Sailix logo in the side bar when the organization has none, with its name under it', async () => {
     asTenantAdmin();
     addressedAs({ ...look, logo_url: null });
     renderApp('/app/account');
@@ -209,15 +209,12 @@ describe('inside the portal', () => {
     const nav = await screen.findByRole('navigation', { name: 'Main' });
     expect(nav).toBeInTheDocument();
     await waitFor(() =>
-      expect(document.querySelector('header img, aside img')).toHaveAttribute(
-        'src',
-        '/sailix-logo.png',
-      ),
+      expect(document.querySelector('aside img')).toHaveAttribute('src', '/sailix-logo.png'),
     );
-    expect(document.querySelector('header img, aside img')).toHaveAttribute('alt', 'Sailix');
+    expect(document.querySelector('aside img')).toHaveAttribute('alt', 'Sailix');
   });
 
-  it("shows the organization's name and logo in the menu bar", async () => {
+  it("shows the organization's name and logo in the side bar", async () => {
     asTenantAdmin();
     addressedAs(look);
     server.use(
@@ -235,7 +232,7 @@ describe('inside the portal', () => {
     expect(nav).toBeInTheDocument();
     expect(screen.getAllByText('Southfield Agencies').length).toBeGreaterThan(0);
     await waitFor(() =>
-      expect(document.querySelector('header img, aside img')).toHaveAttribute('src', look.logo_url),
+      expect(document.querySelector('aside img')).toHaveAttribute('src', look.logo_url),
     );
   });
 });
