@@ -247,3 +247,23 @@ html[data-density='compact'] {
   --page-pad: 1rem;
   --radius-card: 0.75rem;
 }
+
+/* Printing the crew account sheet: only the sheet is printed, from the top-left of the page. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #crew-account-sheet,
+  #crew-account-sheet * {
+    visibility: visible;
+  }
+
+  #crew-account-sheet {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white;
+  }
+}

@@ -12,9 +12,10 @@ import {
   type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
-import type { Announcement } from '../../services/api/types';
+import type { Announcement, Crew } from '../../services/api/types';
 import { formatDateTime } from '../shared/AuditTable';
 import { AnnouncementDetails } from './AnnouncementDetails';
+import { CreateCrewAccountDialog } from './CreateCrewAccount';
 import { DASHBOARD_PANEL_SIZE, useAnnouncements, useCrewList, useDocuments } from './api';
 
 const PER_PANEL = DASHBOARD_PANEL_SIZE;
@@ -77,6 +78,7 @@ export function UserApplicationPanel() {
   const [typed, setTyped] = useState('');
   const [name, setName] = useState('');
   const [page, setPage] = useState(1);
+  const [applicant, setApplicant] = useState<Crew | null>(null);
   const list = useCrewList({
     'filter[status]': 'pending',
     page,
@@ -142,7 +144,16 @@ export function UserApplicationPanel() {
           <Table compact caption="Applications waiting" headers={APPLICATION_HEADERS}>
             {list.data.data.map((c) => (
               <tr key={c.id}>
-                <td className="px-4 py-3 font-medium">{nameOf(c, c.username)}</td>
+                <td className="px-4 py-3 font-medium">
+                  {/* opens the Create Crew Account screens for this applicant */}
+                  <button
+                    type="button"
+                    onClick={() => setApplicant(c)}
+                    className="text-left text-brand-800 underline-offset-2 hover:underline"
+                  >
+                    {nameOf(c, c.username)}
+                  </button>
+                </td>
                 <td className="px-4 py-3">{c.crew_number ?? '—'}</td>
                 <td className="px-4 py-3">{c.rank ?? '—'}</td>
                 <td className="px-4 py-3">{c.fleet ?? '—'}</td>
@@ -161,6 +172,12 @@ export function UserApplicationPanel() {
           <Pagination meta={list.data.meta} onPage={setPage} />
         </>
       )}
+      {applicant ? (
+        <CreateCrewAccountDialog
+          applicant={{ firstName: applicant.first_name ?? '', lastName: applicant.last_name ?? '' }}
+          onClose={() => setApplicant(null)}
+        />
+      ) : null}
     </Panel>
   );
 }
