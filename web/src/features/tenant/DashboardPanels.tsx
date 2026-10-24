@@ -35,7 +35,7 @@ function Panel({
   return (
     <section
       aria-labelledby={id}
-      className="overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-soft)]"
+      className="h-full overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-soft)]"
     >
       <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
         <h2 id={id} className="flex items-center gap-2 text-lg font-bold">
