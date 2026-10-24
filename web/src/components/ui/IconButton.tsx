@@ -22,16 +22,16 @@ interface Common {
 }
 
 const BASE =
-  'group relative inline-flex size-8 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-50';
+  'group relative inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-50';
 
 function Face({ icon: Icon, label, tip }: Pick<Common, 'icon' | 'label' | 'tip'>) {
   return (
     <>
-      <Icon className="size-4" aria-hidden="true" />
+      <Icon className="size-5" aria-hidden="true" />
       {/* shown above the button on hover and keyboard focus; hidden from screen readers, which have the label */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-xs font-medium text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2.5 py-1.5 text-sm font-medium text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
       >
         {tip ?? label}
       </span>
@@ -50,12 +50,7 @@ export function IconButton({
   ...rest
 }: Common & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'children'>) {
   return (
-    <button
-      type={type}
-      aria-label={label}
-      className={cn(BASE, TONES[tone], className)}
-      {...rest}
-    >
+    <button type={type} aria-label={label} className={cn(BASE, TONES[tone], className)} {...rest}>
       <Face icon={icon} label={label} tip={tip} />
     </button>
   );
