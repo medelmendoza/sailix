@@ -289,7 +289,7 @@ export function AnnouncementsPanel() {
 }
 
 /**
- * The dashboard's panels in their grid. While `loading` they are drawn as empty frames with shimmering rows of the same
+ * The dashboard's panels in their grid: applications across the top, documents and announcements side by side below. While `loading` they are drawn as empty frames with shimmering rows of the same
  * shape, so the page does not rearrange itself when the real ones take their place.
  */
 export function DashboardPanels({
@@ -316,21 +316,28 @@ export function DashboardPanels({
     </Panel>
   );
   return (
+    // applications get a whole row; documents and announcements share the next one (each takes it alone when the other is off)
     <div className="grid gap-6 xl:grid-cols-2">
-      {crew &&
-        (loading ? (
-          shell('User application', APPLICATION_HEADERS, APPLICATION_CELLS)
-        ) : (
-          <UserApplicationPanel />
-        ))}
-      {documents &&
-        (loading ? (
-          shell('Document approval', DOCUMENT_HEADERS, DOCUMENT_CELLS)
-        ) : (
-          <DocumentApprovalPanel />
-        ))}
+      {crew && (
+        <div className="min-w-0 xl:col-span-2">
+          {loading ? (
+            shell('User application', APPLICATION_HEADERS, APPLICATION_CELLS)
+          ) : (
+            <UserApplicationPanel />
+          )}
+        </div>
+      )}
+      {documents && (
+        <div className={`min-w-0 ${announcements ? '' : 'xl:col-span-2'}`}>
+          {loading ? (
+            shell('Document approval', DOCUMENT_HEADERS, DOCUMENT_CELLS)
+          ) : (
+            <DocumentApprovalPanel />
+          )}
+        </div>
+      )}
       {announcements && (
-        <div className="xl:col-span-2">
+        <div className={`min-w-0 ${documents ? '' : 'xl:col-span-2'}`}>
           {loading ? (
             shell('Announcements', ANNOUNCEMENT_HEADERS, ANNOUNCEMENT_CELLS)
           ) : (
