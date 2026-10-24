@@ -28,7 +28,7 @@ const BASE =
 function Face({ icon: Icon, label, tip }: Pick<Common, 'icon' | 'label' | 'tip'>) {
   return (
     <>
-      <Icon className="size-[1.125rem]" aria-hidden="true" />
+      <Icon className="size-[1.125rem] shrink-0" aria-hidden="true" />
       {/* shown above the button on hover and keyboard focus; hidden from screen readers, which have the label */}
       <span
         aria-hidden="true"
@@ -51,7 +51,13 @@ export function IconButton({
   ...rest
 }: Common & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'children'>) {
   return (
-    <button type={type} aria-label={label} className={cn(BASE, TONES[tone], className)} {...rest}>
+    <button
+      type={type}
+      aria-label={label}
+      data-icon // tells a table not to give it the padding of a text button
+      className={cn(BASE, TONES[tone], className)}
+      {...rest}
+    >
       <Face icon={icon} label={label} tip={tip} />
     </button>
   );
