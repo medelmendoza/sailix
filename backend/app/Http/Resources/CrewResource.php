@@ -14,7 +14,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class CrewResource extends JsonResource
 {
-    /** @return array<string, mixed> */
+    /** @return array<int|string, mixed> */
     public function toArray(Request $request): array
     {
         $p = $this->profile;

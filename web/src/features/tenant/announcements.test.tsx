@@ -269,6 +269,16 @@ describe('Announcement details', () => {
       http.get(`${V1}/tenant/documents`, () => HttpResponse.json(pageOf([]))),
       http.get(`${V1}/tenant/deletion-requests`, () => HttpResponse.json(pageOf([]))),
       http.get(`${V1}/tenant/audit-logs`, () => HttpResponse.json(pageOf([]))),
+      http.get(`${V1}/tenant/dashboard`, () =>
+        HttpResponse.json({
+          data: {
+            crew: { total: 0, pending: pageOf([]) },
+            documents: { pending: pageOf([]) },
+            announcements: { latest: pageOf([note()]) },
+            deletion_requests: { open: 0 },
+          },
+        }),
+      ),
     );
     const { user } = renderApp('/app');
     await user.click(await screen.findByRole('button', { name: /^View February/ }));

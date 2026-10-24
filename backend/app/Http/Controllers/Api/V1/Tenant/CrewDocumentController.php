@@ -119,7 +119,7 @@ class CrewDocumentController extends Controller
         }
         $approved = $documents->where('status', CrewDocument::APPROVED);
         if ($approved->isNotEmpty()) {
-            return $approved->sortByDesc(fn (CrewDocument $d) => $d->expires_on?->timestamp ?? PHP_INT_MAX)->first();
+            return $approved->sortByDesc(fn (CrewDocument $d) => $d->expires_on->timestamp ?? PHP_INT_MAX)->first();
         }
 
         return $documents->sortByDesc('submitted_at')->first();

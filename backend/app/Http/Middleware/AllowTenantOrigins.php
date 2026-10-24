@@ -32,7 +32,7 @@ class AllowTenantOrigins
         $parts = parse_url($origin);
         $scheme = $parts['scheme'] ?? null;
         $host = $parts['host'] ?? null;
-        if (! is_string($host) || ! in_array($scheme, ['https', 'http'], true) || ($parts['path'] ?? '') !== '' && ($parts['path'] ?? '') !== '/') {
+        if (! is_string($host) || ! in_array($scheme, ['https', 'http'], true) || ! in_array(parse_url($origin, PHP_URL_PATH) ?? '', ['', '/'], true)) {
             return;
         }
         // Plain http is for development machines only.
@@ -48,6 +48,7 @@ class AllowTenantOrigins
         }
 
         $origin = $scheme.'://'.$host.(isset($parts['port']) ? ':'.$parts['port'] : '');
+        // shortcut: per-request config change (fine under PHP-FPM, would accumulate in a long-lived worker such as Octane), move before using one
         config(['cors.allowed_origins' => [...$known, $origin]]);
         // The browser session (cookie) login of that address must count as the first-party web portal too.
         config(['sanctum.stateful' => [...(array) config('sanctum.stateful', []), $host.(isset($parts['port']) ? ':'.$parts['port'] : '')]]);

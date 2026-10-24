@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Button, PageHero, Skeleton, StatTile } from '../../components/ui';
+import { Button, ErrorState, PageHero, Skeleton, StatTile } from '../../components/ui';
+import { describeError } from '../../services/api/errors';
 import { ICONS } from '../../components/icons';
 import { can, hasFeature, useMe } from '../authentication/session';
 import { useDashboard } from './api';
@@ -28,27 +29,44 @@ export function DashboardPage() {
   const openRequests = counts.requests ?? 0;
   const first = (me.user.display_name ?? me.user.username).split(' ')[0];
 
+  const hero = (
+    <PageHero
+      eyebrow={me.tenant.name}
+      title={`Welcome back, ${first}`}
+      description={`Overview of ${me.tenant.name}.`}
+      actions={
+        <div className="flex flex-wrap gap-2">
+          {showDocuments && (
+            <Link to="/app/documents">
+              <Button variant="secondary">Review documents</Button>
+            </Link>
+          )}
+          {showAnnouncements && (
+            <Link to="/app/announcements">
+              <Button variant="secondary">Write an announcement</Button>
+            </Link>
+          )}
+        </div>
+      }
+    />
+  );
+
+  // one failed request must not leave the page shimmering for ever: say so, and offer to try again
+  if (dashboard.isError) {
+    return (
+      <>
+        {hero}
+        <ErrorState
+          message={describeError(dashboard.error)}
+          onRetry={() => void dashboard.refetch()}
+        />
+      </>
+    );
+  }
+
   return (
     <>
-      <PageHero
-        eyebrow={me.tenant.name}
-        title={`Welcome back, ${first}`}
-        description={`Overview of ${me.tenant.name}.`}
-        actions={
-          <div className="flex flex-wrap gap-2">
-            {showDocuments && (
-              <Link to="/app/documents">
-                <Button variant="secondary">Review documents</Button>
-              </Link>
-            )}
-            {showAnnouncements && (
-              <Link to="/app/announcements">
-                <Button variant="secondary">Write an announcement</Button>
-              </Link>
-            )}
-          </div>
-        }
-      />
+      {hero}
 
       {(showCrew || showDocuments || showAnnouncements || showRequests) && (
         <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property string $id
  * @property string $code
- * @property string $slug
+ * @property string|null $slug
  * @property string $name
  * @property list<string>|null $disabled_features
  * @property TenantStatus $status

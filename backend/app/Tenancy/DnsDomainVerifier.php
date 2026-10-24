@@ -11,6 +11,6 @@ final class DnsDomainVerifier implements DomainVerifier
             return [];
         }
 
-        return array_values(array_map(fn ($r) => trim((string) ($r['txt'] ?? implode('', $r['entries'] ?? []))), $records));
+        return array_map(fn ($r) => trim((string) ($r['txt'] ?? implode('', $r['entries'] ?? []))), $records);
     }
 }

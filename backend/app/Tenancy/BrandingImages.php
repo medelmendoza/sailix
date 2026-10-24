@@ -36,11 +36,15 @@ final class BrandingImages
         $mime = (string) $file->getMimeType();
         abort_unless(isset(self::TYPES[$mime]) && isset(self::KINDS[$kind]), 422, 'Use a JPEG or PNG image.');
 
+        // Judge the size from the header BEFORE decoding: a tiny file can unpack to a huge picture (decompression bomb).
+        $size = @getimagesize($file->getRealPath());
+        abort_if($size === false, 422, 'That image could not be read.');
+        abort_if($size[0] * $size[1] > 16_000_000, 422, 'That image is too large.');
+
         $source = @imagecreatefromstring((string) file_get_contents($file->getRealPath()));
         abort_if($source === false, 422, 'That image could not be read.');
 
         [$w, $h] = [imagesx($source), imagesy($source)];
-        abort_if($w * $h > 40_000_000, 422, 'That image is too large.'); // never decode a decompression bomb
         $scale = min(1, self::KINDS[$kind][1] / max($w, $h));
         $image = $scale < 1
             ? imagescale($source, max(1, (int) round($w * $scale)), max(1, (int) round($h * $scale)))

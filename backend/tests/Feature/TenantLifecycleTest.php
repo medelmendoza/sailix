@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\PersonalAccessToken;
 use App\Models\Tenant;
 use App\Support\Tenancy\TenantContext;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -68,6 +69,17 @@ class TenantLifecycleTest extends TestCase
         $this->assertContains('tenant.admin_invited', $actions);
         $this->assertContains('tenant.admin_activated', $actions);
         $this->assertContains('tenant.activate', $actions);
+    }
+
+    public function test_the_invitation_token_is_never_returned_outside_development(): void
+    {
+        Mail::fake();
+        $this->platformLogin();
+        $id = $this->createTenant();
+        $this->app['env'] = 'production'; // the switch stays on (as copied from .env.example); the environment decides
+
+        $this->p()->withoutMiddleware(ValidateCsrfToken::class)->postJson("/api/v1/platform/tenants/$id/admins", ['email' => 'boss@example.test'])
+            ->assertCreated()->assertJsonMissingPath('meta.invitation_token');
     }
 
     public function test_invalid_and_expired_invitations_are_rejected(): void

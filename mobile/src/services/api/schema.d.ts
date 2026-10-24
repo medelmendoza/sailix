@@ -2220,6 +2220,7 @@ export interface components {
                 profile?: components["schemas"]["Profile"] | null;
             };
         };
+        /** @description The `links` inside the embedded pages are not meaningful here; use `meta` only. */
         Dashboard: {
             data: {
                 crew?: {

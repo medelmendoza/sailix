@@ -59,6 +59,18 @@ class TenantBrandingTest extends TestCase
         return $this->getJson("http://$host/api/v1/public/tenant");
     }
 
+    public function test_a_small_file_that_unpacks_to_a_huge_picture_is_refused_before_it_is_decoded(): void
+    {
+        $img = imagecreate(5000, 4000); // 20 megapixels (over the 16 limit), yet a few KB as a PNG
+        imagecolorallocate($img, 255, 255, 255);
+        ob_start();
+        imagepng($img, null, 9);
+        $bytes = (string) ob_get_clean();
+        $this->assertLessThan(200_000, strlen($bytes));
+
+        $this->upload('adminA', 'logo', $this->realUpload('big.png', $bytes))->assertStatus(422);
+    }
+
     public function test_without_any_branding_the_public_look_is_the_platform_default(): void
     {
         $data = $this->publicLook('aaa.sailix.test')->assertOk()->json('data');

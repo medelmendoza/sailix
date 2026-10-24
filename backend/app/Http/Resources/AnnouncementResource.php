@@ -30,7 +30,7 @@ class AnnouncementResource extends JsonResource
             'fleets' => $this->whenLoaded('fleets', fn () => $this->fleets->pluck('fleet')->sort()->values()->all()),
             // who wrote it: only where the query loaded it (the administrators' list), never in the members' view
             'author' => $this->whenLoaded('creator', fn () => $this->creator ? [
-                'name' => trim(($this->creator->profile?->first_name ?? '').' '.($this->creator->profile?->last_name ?? '')) ?: $this->creator->user->username,
+                'name' => trim(($this->creator->profile->first_name ?? '').' '.($this->creator->profile->last_name ?? '')) ?: $this->creator->user->username,
             ] : null),
             ...(array_key_exists('is_read', $this->resource->getAttributes()) ? ['is_read' => (bool) $this->resource->getAttribute('is_read')] : []),
         ];

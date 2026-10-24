@@ -25,8 +25,7 @@ export const BACK_PILL =
   'inline-flex w-fit items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm font-medium transition-colors hover:border-brand-600 hover:text-brand-800';
 
 /** A round avatar with the initials, in the brand colours. */
-export function Avatar({ name, size = 'lg' }: { name: string; size?: 'lg' }) {
-  void size;
+export function Avatar({ name }: { name: string }) {
   const initials =
     name
       .split(/\s+/)

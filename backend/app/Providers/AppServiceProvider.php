@@ -49,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
         ]);
         RateLimiter::for('platform-login', fn (Request $r) => [
             Limit::perMinute(5)->by('plogin:'.mb_strtolower((string) $r->input('email')).'|'.$r->ip()),
+            Limit::perMinute(20)->by('plogin-ip:'.$r->ip()), // trying many emails from one address is capped too
         ]);
         RateLimiter::for('register', fn (Request $r) => [
             Limit::perHour(5)->by('register-ip:'.$r->ip()),

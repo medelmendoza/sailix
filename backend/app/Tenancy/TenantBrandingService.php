@@ -73,7 +73,7 @@ final class TenantBrandingService
             $row = $this->row($tenant);
             $text = array_key_exists('text_color', $values) ? $values['text_color'] : $row->text_color;
             $background = array_key_exists('background_color', $values) ? $values['background_color'] : $row->background_color;
-            if (ColorContrast::between($text ?? '#12243D', $background ?? '#F4F7FB') < 4.5) {
+            if (ColorContrast::between($text ?? '#0F2036', $background ?? '#F4F8FC') < 4.5) {
                 $field = array_key_exists('text_color', $values) ? 'text_color' : 'background_color';
                 throw ValidationException::withMessages([$field => 'The text colour does not read well on that background. Choose colours that contrast more.']);
             }
@@ -112,7 +112,11 @@ final class TenantBrandingService
         }
     }
 
-    /** What anybody may see before signing in. */
+    /**
+     * What anybody may see before signing in.
+     *
+     * @return array<string, mixed>
+     */
     public function publicPayload(Tenant $tenant): array
     {
         $b = $this->row($tenant);
@@ -140,13 +144,20 @@ final class TenantBrandingService
         ];
     }
 
-    /** The settings an administrator edits (the same fields, plus whether the images are set). */
+    /**
+     * The settings an administrator edits (the same fields, plus whether the images are set).
+     *
+     * @return array<string, mixed>
+     */
     public function adminPayload(Tenant $tenant): array
     {
         return $this->publicPayload($tenant);
     }
 
-    /** @param  array<string, mixed>  $values  @param  list<string>  $fields */
+    /**
+     * @param  array<string, mixed>  $values
+     * @param  list<string>  $fields
+     */
     private function save(Tenant $tenant, array $values, string $audit, array $fields): TenantBranding
     {
         $row = $this->row($tenant);

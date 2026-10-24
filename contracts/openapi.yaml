@@ -3407,6 +3407,7 @@ components:
                 - { type: 'null' }
     Dashboard:
       type: object
+      description: 'The `links` inside the embedded pages are not meaningful here; use `meta` only.'
       required: [data]
       properties:
         data:

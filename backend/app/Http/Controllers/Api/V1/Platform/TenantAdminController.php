@@ -25,7 +25,7 @@ class TenantAdminController extends Controller
         $result = $inviter->invite($tenant, $request->string('email')->toString(), $request->input('username'), $request->input('display_name'));
 
         $body = ['data' => (new MembershipResource($result['membership']->load('user')))->resolve()];
-        if (config('sailix.expose_invitation_token')) {
+        if (config('sailix.expose_invitation_token') && app()->environment(['local', 'testing'])) {
             $body['meta'] = ['invitation_token' => $result['token']]; // local/testing only
         }
 

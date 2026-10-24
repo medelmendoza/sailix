@@ -551,7 +551,7 @@ export interface DashboardData {
 }
 
 /** How many rows each dashboard panel shows (the server's dashboard answer uses the same number). */
-export const DASHBOARD_PANEL_SIZE = 5;
+export const DASHBOARD_PANEL_SIZE = 5; // keep equal to PANEL in backend DashboardController
 
 /**
  * Everything the dashboard shows, from one request: the figures and the first page of each panel. The pages are also put

@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Gate;
  */
 class DashboardController extends Controller
 {
-    private const PANEL = 5;
+    private const PANEL = 5; // keep equal to DASHBOARD_PANEL_SIZE in web/src/features/tenant/api.ts (the panels' cache keys)
 
     public function show(Request $request, TenantContext $context): JsonResponse
     {

@@ -117,9 +117,10 @@ export function pageOf<T>(
   };
 }
 
-export function renderApp(path: string) {
+/** `staleTime` defaults to 0 (data is stale at once); pass the real client's 30 000 to see what a page does with its cache. */
+export function renderApp(path: string, staleTime = 0) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 } } });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime } } });
   const user = userEvent.setup();
   const utils = render(
     <AppProviders client={client}>

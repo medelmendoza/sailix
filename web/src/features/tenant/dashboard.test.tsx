@@ -1,6 +1,14 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { asTenantAdmin, capture, makeMe, pageOf, renderApp, V1 } from '../../../tests/helpers';
+import {
+  asTenantAdmin,
+  capture,
+  makeMe,
+  pageOf,
+  problem,
+  renderApp,
+  V1,
+} from '../../../tests/helpers';
 import { server } from '../../../tests/server';
 import type { Crew } from '../../services/api/types';
 
@@ -240,7 +248,7 @@ describe('Dashboard', () => {
     await waitFor(() => expect(urls.at(-1)?.searchParams.has('filter[name]')).toBe(false));
   });
 
-  it('asks for the whole dashboard in one request and for no separate counts', async () => {
+  it('asks for the whole dashboard in one request, and the panels open from it without asking again', async () => {
     asTenantAdmin();
     const dashboards: string[] = [];
     const crew: URL[] = [];
@@ -256,15 +264,25 @@ describe('Dashboard', () => {
     server.events.on('request:start', ({ request }) => {
       if (request.url.includes('/tenant/dashboard')) dashboards.push(request.url);
     });
-    renderApp('/app');
+    renderApp('/app', 30_000); // the real client keeps fresh data for 30 s
     await screen.findByLabelText('7 waiting');
     await screen.findByText('February allotment is out');
 
     expect(dashboards).toHaveLength(1);
-    // no separate one-row count requests: the figures come in the dashboard answer (the test client treats cached
-    // data as stale at once, so a panel may still refresh itself in the background; the real client waits 30 s)
-    expect(crew.filter((u) => u.searchParams.get('per_page') === '1')).toHaveLength(0);
+    // the only crew request is the one the stubbed dashboard answer is built from: the panel's own cache key matched
+    expect(crew).toHaveLength(1);
+    expect(crew[0]!.searchParams.get('per_page')).toBe('5');
     server.events.removeAllListeners();
+  });
+
+  it('says so, with a way to try again, when the dashboard cannot be loaded', async () => {
+    asTenantAdmin();
+    dashboardApi([http.get(`${V1}/tenant/dashboard`, () => problem(500, 'server_error'))]);
+    renderApp('/app');
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: /User application/ })).not.toBeInTheDocument();
   });
 
   it('asks only for documents waiting for review', async () => {

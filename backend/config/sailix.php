@@ -37,7 +37,7 @@ return [
         'dev_mode' => filter_var(env('SAILIX_TENANT_DEV_MODE', false), FILTER_VALIDATE_BOOLEAN),
         // When the web portal and the API are on different hosts, the portal says which host it is on (X-Tenant-Host).
         // Used only when the API's own host matches no organization.
-        'allow_host_header' => filter_var(env('SAILIX_TENANT_ALLOW_HOST_HEADER', true), FILTER_VALIDATE_BOOLEAN),
+        'allow_host_header' => filter_var(env('SAILIX_TENANT_ALLOW_HOST_HEADER', false), FILTER_VALIDATE_BOOLEAN),
         // Shared-address demos: `?tenant=<slug>` on the sign-in page becomes X-Tenant-Slug. DEMO ONLY: anyone can pick
         // an organization by slug. It chooses what a request addresses; it never authorizes anything.
         'allow_slug_header' => filter_var(env('SAILIX_TENANT_ALLOW_SLUG_HEADER', false), FILTER_VALIDATE_BOOLEAN),

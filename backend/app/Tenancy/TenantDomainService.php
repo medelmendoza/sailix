@@ -76,7 +76,11 @@ final class TenantDomainService
         Audit::record('tenant.domain_removed', $row->tenant_id, $row, ['domain' => $row->domain]);
     }
 
-    /** What the organization has to do, shown beside the domain. @return array<string, mixed> */
+    /**
+     * What the organization has to do, shown beside the domain.
+     *
+     * @return array<string, mixed>
+     */
     public function describe(TenantDomain $row): array
     {
         $base = (string) config('sailix.tenancy.base_domain');
