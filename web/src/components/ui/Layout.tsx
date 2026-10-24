@@ -67,15 +67,12 @@ export function PageHero({
   title,
   description,
   actions,
-  footer,
   mark: Mark,
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
   actions?: ReactNode;
-  /** A row under the text (summary chips, say). */
-  footer?: ReactNode;
   /** A large, faint drawing behind the right side of the banner. */
   mark?: LucideIcon;
 }) {
@@ -94,20 +91,19 @@ export function PageHero({
         <Mark
           aria-hidden="true"
           strokeWidth={1.1}
-          className="pointer-events-none absolute -bottom-10 right-6 hidden size-64 -rotate-12 text-white/[0.08] md:block"
+          className="pointer-events-none absolute -bottom-12 right-6 hidden size-52 -rotate-12 text-white/[0.08] md:block"
         />
       )}
-      <div className="relative flex flex-wrap items-end justify-between gap-5">
+      <div className="relative flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           {eyebrow && (
-            <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white/90 ring-1 ring-white/20">
+            <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-0.5 text-xs font-semibold uppercase tracking-widest text-white/90 ring-1 ring-white/20">
               <span aria-hidden="true" className="size-1.5 rounded-full bg-accent-500" />
               {eyebrow}
             </p>
           )}
-          <h1 className="text-3xl font-bold leading-tight sm:text-4xl">{title}</h1>
-          {description && <p className="mt-2 max-w-xl text-sm text-white/80">{description}</p>}
-          {footer && <div className="mt-5 flex flex-wrap items-center gap-2">{footer}</div>}
+          <h1 className="text-2xl font-bold leading-tight sm:text-3xl">{title}</h1>
+          {description && <p className="mt-1 max-w-xl text-sm text-white/80">{description}</p>}
         </div>
         {actions}
       </div>

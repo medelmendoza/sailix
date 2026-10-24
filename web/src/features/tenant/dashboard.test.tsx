@@ -248,33 +248,6 @@ describe('Dashboard', () => {
     await waitFor(() => expect(urls.at(-1)?.searchParams.has('filter[name]')).toBe(false));
   });
 
-  it('sums up what is waiting in the banner, with a link to each', async () => {
-    asTenantAdmin();
-    dashboardApi();
-    renderApp('/app');
-
-    expect(await screen.findByRole('link', { name: '7 applications waiting' })).toHaveAttribute(
-      'href',
-      '/app/members?status=pending',
-    );
-    expect(screen.getByRole('link', { name: '3 documents to review' })).toHaveAttribute(
-      'href',
-      '/app/documents',
-    );
-    expect(screen.queryByText("You're all caught up")).not.toBeInTheDocument();
-  });
-
-  it('says so in the banner when nothing is waiting', async () => {
-    asTenantAdmin();
-    dashboardApi([
-      http.get(`${V1}/tenant/crew`, () => HttpResponse.json(pageOf([]))),
-      http.get(`${V1}/tenant/documents`, () => HttpResponse.json(pageOf([]))),
-    ]);
-    renderApp('/app');
-
-    expect(await screen.findByText("You're all caught up")).toBeInTheDocument();
-  });
-
   it('asks for the whole dashboard in one request, and the panels open from it without asking again', async () => {
     asTenantAdmin();
     const dashboards: string[] = [];

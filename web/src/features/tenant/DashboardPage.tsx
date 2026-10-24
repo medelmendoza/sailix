@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Anchor, CircleCheck, FileCheck2, Megaphone, ShieldAlert, UserPlus } from 'lucide-react';
+import { Anchor, FileCheck2, Megaphone } from 'lucide-react';
 import { ErrorState, PageHero, Skeleton, StatTile } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import { ICONS } from '../../components/icons';
@@ -35,31 +35,6 @@ export function DashboardPage() {
     month: 'long',
     day: 'numeric',
   });
-  const waiting = [
-    showCrew && counts.pendingCrew
-      ? {
-          to: '/app/members?status=pending',
-          icon: UserPlus,
-          text: `${counts.pendingCrew} ${counts.pendingCrew === 1 ? 'application' : 'applications'} waiting`,
-        }
-      : null,
-    showDocuments && counts.pendingDocs
-      ? {
-          to: '/app/documents',
-          icon: FileCheck2,
-          text: `${counts.pendingDocs} ${counts.pendingDocs === 1 ? 'document' : 'documents'} to review`,
-        }
-      : null,
-    showRequests && openRequests > 0
-      ? {
-          to: '/app/deletion-requests',
-          icon: ShieldAlert,
-          text: `${openRequests} deletion ${openRequests === 1 ? 'request' : 'requests'} open`,
-        }
-      : null,
-  ].filter((c) => c !== null);
-  const CHIP =
-    'inline-flex min-h-8 items-center gap-1.5 rounded-full bg-white/15 px-3.5 text-sm font-medium text-white ring-1 ring-white/25 backdrop-blur transition-colors';
   const GLASS =
     'inline-flex min-h-10 items-center gap-2 rounded-full bg-white/10 px-5 text-sm font-semibold text-white ring-1 ring-white/30 transition-colors hover:bg-white/20';
 
@@ -69,37 +44,6 @@ export function DashboardPage() {
       title={`Welcome back, ${first}`}
       description={`${today} · Overview of ${me.tenant.name}.`}
       mark={Anchor}
-      footer={
-        ready ? (
-          waiting.length > 0 ? (
-            waiting.map((c) => (
-              <Link key={c.to} to={c.to} className={`${CHIP} hover:bg-white/25`}>
-                <c.icon className="size-4" aria-hidden="true" />
-                {c.text}
-              </Link>
-            ))
-          ) : (
-            <span className={CHIP}>
-              <CircleCheck className="size-4" aria-hidden="true" />
-              You&apos;re all caught up
-            </span>
-          )
-        ) : (
-          // the same height as the chips, so the banner does not grow when the counts arrive
-          <>
-            <div
-              aria-hidden="true"
-              className="shimmer h-8 w-44 rounded-full"
-              style={{ backgroundColor: 'rgb(255 255 255 / 0.2)' }}
-            />
-            <div
-              aria-hidden="true"
-              className="shimmer h-8 w-40 rounded-full"
-              style={{ backgroundColor: 'rgb(255 255 255 / 0.2)' }}
-            />
-          </>
-        )
-      }
       actions={
         <div className="flex flex-wrap gap-2">
           {showDocuments && (
