@@ -26,8 +26,13 @@ class AnnouncementController extends Controller
     {
         Gate::authorize('announcements.manage');
 
+        $title = is_string($request->input('filter.title')) && trim($request->input('filter.title')) !== ''
+            ? '%'.addcslashes(trim($request->input('filter.title')), '%_\\').'%' : null;
+
         return AnnouncementResource::collection(
-            Announcement::with(['creator.user', 'creator.profile', 'fleets'])->orderByDesc('created_at')->orderBy('id')
+            Announcement::with(['creator.user', 'creator.profile', 'fleets'])
+                ->when($title, fn ($q, $v) => $q->where('title', 'like', $v))
+                ->orderByDesc('created_at')->orderBy('id')
                 ->paginate(min((int) $request->input('per_page', 20), 100)),
         );
     }

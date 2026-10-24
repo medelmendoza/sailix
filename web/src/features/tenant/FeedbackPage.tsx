@@ -72,7 +72,7 @@ export function FeedbackPage() {
               </tr>
             ))}
           </Table>
-          <Pagination meta={feedback.data.meta} onPage={setPage} />
+          <Pagination meta={feedback.data.meta} loading={feedback.isFetching} onPage={setPage} />
         </>
       )}
     </>

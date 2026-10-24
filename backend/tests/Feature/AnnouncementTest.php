@@ -47,6 +47,24 @@ class AnnouncementTest extends TestCase
         }
     }
 
+    public function test_the_administrators_list_can_be_narrowed_by_title_and_paged_on_the_server(): void
+    {
+        $this->setUpTwoOrganizations();
+        $this->create('adminA', ['title' => 'February allotment']);
+        $this->create('adminA', ['title' => 'Training for COP']);
+        $this->create('adminA', ['title' => 'Holiday notice']);
+
+        $one = $this->getJson('/api/v1/tenant/announcements?filter[title]=allot', $this->as('adminA'))->assertOk();
+        $this->assertSame(['February allotment'], array_column($one->json('data'), 'title'));
+        $this->assertSame(1, $one->json('meta.total'));
+        $this->assertSame([], $this->getJson('/api/v1/tenant/announcements?filter[title]=%25', $this->as('adminA'))->json('data'), 'a percent sign is text');
+
+        $page = $this->getJson('/api/v1/tenant/announcements?per_page=2&page=2', $this->as('adminA'))->assertOk();
+        $this->assertCount(1, $page->json('data'));
+        $this->assertSame(3, $page->json('meta.total'));
+        $this->assertSame(2, $page->json('meta.current_page'));
+    }
+
     public function test_the_organization_and_author_come_from_the_session_never_the_body(): void
     {
         $this->setUpTwoOrganizations();

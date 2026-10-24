@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { PageMeta } from '../../services/api/types';
 import { Button } from './Button';
@@ -35,28 +36,63 @@ export function Table({
   );
 }
 
-export function Pagination({ meta, onPage }: { meta: PageMeta; onPage: (page: number) => void }) {
+/**
+ * The one pagination bar of every table: "Showing a-b of n", Previous and Next, and "Page x of y". It shows whenever there
+ * are results (the buttons are off on a single page). While `loading` (the next page is being fetched from the server) it
+ * shows a spinner and the buttons are off, so a second click cannot race the first.
+ */
+export function Pagination({
+  meta,
+  onPage,
+  loading = false,
+}: {
+  meta: PageMeta;
+  onPage: (page: number) => void;
+  loading?: boolean;
+}) {
+  if (meta.total <= 0) return null;
   const last = meta.last_page ?? Math.max(1, Math.ceil(meta.total / meta.per_page));
-  if (last <= 1) return <p className="mt-3 text-xs text-muted">{meta.total} total</p>;
+  const from = (meta.current_page - 1) * meta.per_page + 1;
+  const to = Math.min(meta.current_page * meta.per_page, meta.total);
   return (
-    <nav aria-label="Pagination" className="mt-3 flex items-center justify-between text-sm">
-      <span className="text-muted">
-        Page {meta.current_page} of {last} · {meta.total} total
+    <nav
+      aria-label="Pagination"
+      aria-busy={loading}
+      className="mt-3 flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between"
+    >
+      <span className="flex items-center gap-2 text-muted" aria-live="polite">
+        {loading && (
+          <span
+            role="status"
+            aria-label="Loading"
+            className="size-4 animate-spin rounded-full border-2 border-brand-700 border-t-transparent motion-reduce:animate-[spin_2s_linear_infinite]"
+          />
+        )}
+        Showing {from}-{to} of {meta.total}
       </span>
-      <span className="flex gap-2">
+      <span className="flex items-center justify-between gap-3 sm:justify-end">
         <Button
           variant="secondary"
-          disabled={meta.current_page <= 1}
+          className="min-h-9 px-3"
+          disabled={meta.current_page <= 1 || loading}
+          title="Go to the previous page"
           onClick={() => onPage(meta.current_page - 1)}
         >
+          <ChevronLeft className="size-4" aria-hidden="true" />
           Previous
         </Button>
+        <span aria-current="page" className="whitespace-nowrap text-muted">
+          Page {meta.current_page} of {Math.max(last, 1)}
+        </span>
         <Button
           variant="secondary"
-          disabled={meta.current_page >= last}
+          className="min-h-9 px-3"
+          disabled={meta.current_page >= last || loading}
+          title="Go to the next page"
           onClick={() => onPage(meta.current_page + 1)}
         >
           Next
+          <ChevronRight className="size-4" aria-hidden="true" />
         </Button>
       </span>
     </nav>

@@ -172,7 +172,7 @@ export function UserApplicationPanel() {
               </tr>
             ))}
           </Table>
-          <Pagination meta={list.data.meta} onPage={setPage} />
+          <Pagination meta={list.data.meta} loading={list.isFetching} onPage={setPage} />
         </>
       )}
       {applicant ? (
@@ -273,7 +273,7 @@ export function DocumentApprovalPanel() {
               );
             })}
           </Table>
-          <Pagination meta={list.data.meta} onPage={setPage} />
+          <Pagination meta={list.data.meta} loading={list.isFetching} onPage={setPage} />
         </>
       )}
       {reviewing ? (
@@ -285,9 +285,15 @@ export function DocumentApprovalPanel() {
 
 /** The latest announcements, newest first. */
 export function AnnouncementsPanel() {
+  const [typed, setTyped] = useState('');
+  const [title, setTitle] = useState('');
   const [page, setPage] = useState(1);
   const [viewing, setViewing] = useState<Announcement | null>(null);
-  const list = useAnnouncements({ page, per_page: PER_PANEL });
+  const list = useAnnouncements({
+    page,
+    per_page: PER_PANEL,
+    ...(title ? { 'filter[title]': title } : {}),
+  });
 
   return (
     <Panel
@@ -298,6 +304,36 @@ export function AnnouncementsPanel() {
         </Link>
       }
     >
+      <form
+        role="search"
+        aria-label="Search announcements"
+        className="mb-3 flex items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setTitle(typed.trim());
+          setPage(1);
+        }}
+      >
+        <div className="flex-1">
+          <TextField
+            label="Title"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            maxLength={100}
+          />
+        </div>
+        <Button type="submit">Search</Button>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setTyped('');
+            setTitle('');
+            setPage(1);
+          }}
+        >
+          Clear
+        </Button>
+      </form>
       {list.isPending ? (
         <SkeletonDataTable
           compact
@@ -310,7 +346,7 @@ export function AnnouncementsPanel() {
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
-        <EmptyState title="No announcements yet" />
+        <EmptyState title={title ? 'No announcement matches' : 'No announcements yet'} />
       ) : (
         <>
           <Table compact caption="Latest announcements" headers={ANNOUNCEMENT_HEADERS}>
@@ -336,7 +372,7 @@ export function AnnouncementsPanel() {
               </tr>
             ))}
           </Table>
-          <Pagination meta={list.data.meta} onPage={setPage} />
+          <Pagination meta={list.data.meta} loading={list.isFetching} onPage={setPage} />
         </>
       )}
       {viewing ? (

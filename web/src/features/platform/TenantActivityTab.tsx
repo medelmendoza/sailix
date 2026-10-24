@@ -30,7 +30,7 @@ export function TenantActivityTab({ tenantId }: { tenantId: string }) {
   return (
     <>
       <AuditTable entries={logs.data.data} />
-      <Pagination meta={logs.data.meta} onPage={setPage} />
+      <Pagination meta={logs.data.meta} loading={logs.isFetching} onPage={setPage} />
     </>
   );
 }

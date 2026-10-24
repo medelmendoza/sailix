@@ -61,7 +61,7 @@ export function PlatformAuditPage() {
       ) : (
         <>
           <AuditTable entries={logs.data.data} />
-          <Pagination meta={logs.data.meta} onPage={setPage} />
+          <Pagination meta={logs.data.meta} loading={logs.isFetching} onPage={setPage} />
         </>
       )}
     </>

@@ -233,7 +233,11 @@ export function TenantsPage() {
               </tr>
             ))}
           </Table>
-          <Pagination meta={tenants.data.meta} onPage={(p) => set({ page: String(p) })} />
+          <Pagination
+            meta={tenants.data.meta}
+            loading={tenants.isFetching}
+            onPage={(p) => set({ page: String(p) })}
+          />
         </>
       )}
       <CreateDialog open={creating} onClose={() => setCreating(false)} />

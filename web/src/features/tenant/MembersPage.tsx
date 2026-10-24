@@ -250,6 +250,7 @@ export function MembersPage() {
           </Table>
           <Pagination
             meta={members.data.meta}
+            loading={members.isFetching}
             onPage={(p) => setParams(merge(params, { page: String(p) }))}
           />
         </>

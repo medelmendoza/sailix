@@ -592,6 +592,7 @@ paths:
       summary: Every announcement of the caller's organization, including switched-off and expired ones
       description: Requires `announcements.manage`.
       parameters:
+        - { name: 'filter[title]', in: query, description: 'The title contains this (a percent sign or underscore is text, not a wildcard).', schema: { type: string } }
         - { name: page, in: query, schema: { type: integer, minimum: 1 } }
         - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
       responses:

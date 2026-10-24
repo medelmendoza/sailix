@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
+  SearchField,
   IconButton,
   FileDrop,
   FileTile,
@@ -69,7 +70,12 @@ function dateInput(iso: string | null): string {
 
 export function AnnouncementsPage() {
   const [page, setPage] = useState(1);
-  const list = useAnnouncements({ page, per_page: 20 });
+  const [title, setTitle] = useState('');
+  const list = useAnnouncements({
+    page,
+    per_page: 20,
+    ...(title ? { 'filter[title]': title } : {}),
+  });
   const save = useSaveAnnouncement();
   const remove = useDeleteAnnouncement();
   const toast = useToast();
@@ -99,6 +105,17 @@ export function AnnouncementsPage() {
         An announcement is plain text and can carry one PDF or image. Choose Everyone, or tick the
         fleets it is for; a member sees it when their crew record names one of those fleets.
       </Card>
+      <div className="mb-4 max-w-sm">
+        <SearchField
+          label="Search announcements"
+          placeholder="Search by title"
+          value={title}
+          onSearch={(v) => {
+            setTitle(v);
+            setPage(1);
+          }}
+        />
+      </div>
       {list.isPending ? (
         <SkeletonDataTable
           caption="Announcements"
@@ -110,7 +127,7 @@ export function AnnouncementsPage() {
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
-        <EmptyState title="No announcements yet" />
+        <EmptyState title={title ? 'No announcement matches' : 'No announcements yet'} />
       ) : (
         <>
           <Table caption="Announcements" headers={ANNOUNCEMENT_HEADERS}>
@@ -166,7 +183,7 @@ export function AnnouncementsPage() {
               );
             })}
           </Table>
-          <Pagination meta={list.data.meta} onPage={setPage} />
+          <Pagination meta={list.data.meta} loading={list.isFetching} onPage={setPage} />
         </>
       )}
 

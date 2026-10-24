@@ -289,3 +289,40 @@ describe('Announcement details', () => {
     expect(within(dialog).queryByRole('button', { name: /^Open / })).not.toBeInTheDocument();
   });
 });
+
+describe('Announcements: search and server-side paging', () => {
+  it('searches by title on the server and pages with Previous and Next', async () => {
+    asTenantAdmin();
+    const asked: URL[] = [];
+    server.use(
+      http.get(`${V1}/tenant/announcements`, ({ request }) => {
+        const url = new URL(request.url);
+        asked.push(url);
+        const page = Number(url.searchParams.get('page') ?? 1);
+        return HttpResponse.json(
+          pageOf([note({ id: `a${page}`, title: `Notice ${page}` })], {
+            current_page: page,
+            per_page: 1,
+            total: 2,
+            last_page: 2,
+          }),
+        );
+      }),
+    );
+    const { user } = renderApp('/app/announcements');
+
+    expect(await screen.findByText('Notice 1')).toBeInTheDocument();
+    expect(screen.getByText('Showing 1-1 of 2')).toBeInTheDocument();
+    expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByText('Notice 2')).toBeInTheDocument();
+    expect(asked.at(-1)?.searchParams.get('page')).toBe('2');
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+
+    await user.type(screen.getByLabelText('Search announcements'), 'allot');
+    await waitFor(() => expect(asked.at(-1)?.searchParams.get('filter[title]')).toBe('allot'));
+    expect(asked.at(-1)?.searchParams.get('page')).toBe('1'); // a new search starts from the first page
+  });
+});

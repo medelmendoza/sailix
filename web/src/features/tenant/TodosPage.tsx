@@ -130,7 +130,7 @@ export function TodosPage() {
               );
             })}
           </Table>
-          <Pagination meta={list.data.meta} onPage={setPage} />
+          <Pagination meta={list.data.meta} loading={list.isFetching} onPage={setPage} />
         </>
       )}
 

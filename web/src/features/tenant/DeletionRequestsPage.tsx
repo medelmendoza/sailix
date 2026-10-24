@@ -64,7 +64,7 @@ export function DeletionRequestsPage() {
               </tr>
             ))}
           </Table>
-          <Pagination meta={requests.data.meta} onPage={setPage} />
+          <Pagination meta={requests.data.meta} loading={requests.isFetching} onPage={setPage} />
         </>
       )}
     </>

@@ -248,6 +248,26 @@ describe('Dashboard', () => {
     await waitFor(() => expect(urls.at(-1)?.searchParams.has('filter[name]')).toBe(false));
   });
 
+  it('searches the announcements panel by title on the server', async () => {
+    asTenantAdmin();
+    const asked: URL[] = [];
+    dashboardApi([
+      http.get(`${V1}/tenant/announcements`, ({ request }) => {
+        asked.push(new URL(request.url));
+        return HttpResponse.json(pageOf([announcement('a1', 'February allotment is out')]));
+      }),
+    ]);
+    const { user } = renderApp('/app');
+    await screen.findByText('February allotment is out');
+
+    const news = screen.getByRole('region', { name: 'Announcements' });
+    await user.type(within(news).getByLabelText('Title'), ' allot ');
+    await user.click(within(news).getByRole('button', { name: 'Search' }));
+    await waitFor(() =>
+      expect(asked.some((u) => u.searchParams.get('filter[title]') === 'allot')).toBe(true),
+    );
+  });
+
   it('asks for the whole dashboard in one request, and the panels open from it without asking again', async () => {
     asTenantAdmin();
     const dashboards: string[] = [];
