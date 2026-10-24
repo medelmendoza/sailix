@@ -40,11 +40,18 @@ class SessionAuthTest extends TestCase
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
-    public function test_crew_cannot_use_the_web_portal(): void
+    public function test_crew_can_sign_in_to_the_client_portal_but_never_reach_the_admin_endpoints(): void
     {
         $this->makeMember($this->makeTenant(), Role::Crew, 'crew1');
 
-        $this->login('crew1')->assertStatus(403)->assertJsonPath('code', 'web_access_denied');
+        $this->login('crew1')->assertOk()->assertJsonPath('data.membership.role', 'crew');
+        $this->getJson('/api/v1/me')->assertOk()->assertJsonPath('data.membership.role', 'crew');
+        $this->getJson('/api/v1/announcements')->assertOk();
+        // the abilities, not the way of signing in, decide: a crew session is refused on every admin endpoint
+        $this->getJson('/api/v1/tenant')->assertForbidden();
+        $this->getJson('/api/v1/tenant/crew')->assertForbidden();
+        $this->getJson('/api/v1/tenant/dashboard')->assertForbidden();
+        $this->getJson('/api/v1/tenant/documents')->assertForbidden();
     }
 
     public function test_logout_ends_the_session(): void

@@ -24,7 +24,8 @@ interface Selection {
   memberships: Array<{ id: string; role: string; tenant: { code: string; name: string } }>;
 }
 
-export function LoginPage() {
+/** The sign-in of an organization's people: administrators at `/login`, crew at `/portal/login`. */
+export function LoginPage({ variant = 'admin' }: { variant?: 'admin' | 'crew' }) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -39,7 +40,8 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<Values>({ resolver: zodResolver(schema) });
 
-  const from = (location.state as { from?: string } | null)?.from ?? '/app';
+  const crew = variant === 'crew';
+  const from = (location.state as { from?: string } | null)?.from ?? (crew ? '/portal' : '/app');
 
   async function done() {
     queryClient.clear(); // never reuse another session's cached data
@@ -112,8 +114,12 @@ export function LoginPage() {
 
   return (
     <PublicLayout
-      title="Administrator sign in"
-      subtitle="Organization administrators only. Crew members use the mobile app."
+      title={crew ? 'Crew sign in' : 'Administrator sign in'}
+      subtitle={
+        crew
+          ? 'Your documents, announcements, to-dos and payslips.'
+          : 'Organization administrators only. Crew members sign in to the client portal.'
+      }
     >
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
         <FormError message={formError} />
@@ -147,6 +153,12 @@ export function LoginPage() {
         </Button>
         <Link to="/forgot-password" className="text-center text-sm text-accent-600 hover:underline">
           Forgot your password?
+        </Link>
+        <Link
+          to={crew ? '/login' : '/portal/login'}
+          className="text-center text-sm text-muted hover:underline"
+        >
+          {crew ? 'Administrator? Sign in here' : 'Crew member? Sign in to the client portal'}
         </Link>
       </form>
     </PublicLayout>

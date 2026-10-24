@@ -4,7 +4,13 @@ import type { ReactNode } from 'react';
 import { ForgotPasswordPage } from '../../features/authentication/ForgotPasswordPage';
 import { LoginPage } from '../../features/authentication/LoginPage';
 import { PlatformLoginPage } from '../../features/authentication/PlatformLoginPage';
-import { can, RequirePlatform, RequireTenant, useMe } from '../../features/authentication/session';
+import {
+  can,
+  RequirePlatform,
+  RequireRole,
+  RequireTenant,
+  useMe,
+} from '../../features/authentication/session';
 import { TokenPasswordPage } from '../../features/authentication/TokenPasswordPage';
 import { PlatformShell } from '../../features/platform/PlatformShell';
 import { AccountPage } from '../../features/tenant/AccountPage';
@@ -23,6 +29,13 @@ import { CrewListPage } from '../../features/tenant/CrewListPage';
 import { CrewProfilePage } from '../../features/tenant/CrewProfilePage';
 import { BrandingPage } from '../../features/tenant/BrandingPage';
 import { DomainsPage } from '../../features/tenant/DomainsPage';
+import { PortalAccountPage } from '../../features/portal/PortalAccountPage';
+import { PortalAnnouncementsPage } from '../../features/portal/PortalAnnouncementsPage';
+import { PortalDashboardPage } from '../../features/portal/PortalDashboardPage';
+import { PortalFilesPage } from '../../features/portal/PortalFilesPage';
+import { PortalFinancePage } from '../../features/portal/PortalFinancePage';
+import { PortalShell } from '../../features/portal/PortalShell';
+import { PortalTodosPage } from '../../features/portal/PortalTodosPage';
 import { TenantLookLayout } from '../../features/tenant-look/TenantLookProvider';
 import { MembersPage } from '../../features/tenant/MembersPage';
 import { ModulesPage } from '../../features/tenant/ModulesPage';
@@ -55,6 +68,7 @@ export const routes: RouteObject[] = [
     element: <TenantLookLayout />,
     children: [
       { path: '/login', element: <LoginPage /> },
+      { path: '/portal/login', element: <LoginPage variant="crew" /> },
       { path: '/forgot-password', element: <ForgotPasswordPage /> },
       { path: '/reset-password', element: <TokenPasswordPage kind="reset" /> },
       { path: '/accept-invitation', element: <TokenPasswordPage kind="invitation" /> },
@@ -62,7 +76,9 @@ export const routes: RouteObject[] = [
         path: '/app',
         element: (
           <RequireTenant>
-            <AppShell />
+            <RequireRole role="tenant_admin" home="/portal">
+              <AppShell />
+            </RequireRole>
           </RequireTenant>
         ),
         children: [
@@ -84,6 +100,25 @@ export const routes: RouteObject[] = [
           { path: 'domains', element: guard('tenant.manage', <DomainsPage />) },
           { path: 'audit', element: guard('audit.view', <AuditPage />) },
           { path: 'account', element: <AccountPage /> },
+        ],
+      },
+      // the crew's client portal: their own records, in the organization's colours
+      {
+        path: '/portal',
+        element: (
+          <RequireTenant loginPath="/portal/login">
+            <RequireRole role="crew" home="/app">
+              <PortalShell />
+            </RequireRole>
+          </RequireTenant>
+        ),
+        children: [
+          { index: true, element: <PortalDashboardPage /> },
+          { path: 'files', element: <PortalFilesPage /> },
+          { path: 'announcements', element: <PortalAnnouncementsPage /> },
+          { path: 'todos', element: <PortalTodosPage /> },
+          { path: 'finance', element: <PortalFinancePage /> },
+          { path: 'account', element: <PortalAccountPage /> },
         ],
       },
     ],

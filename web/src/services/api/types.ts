@@ -29,6 +29,20 @@ export type MyModule = Schemas['MyModule'];
 export type PublicTenant = Schemas['PublicTenant'];
 export type BrandingInput = Schemas['BrandingInput'];
 export type TenantDomain = Schemas['TenantDomain'];
+export type DocumentRequestItem = Schemas['DocumentRequestItem'];
+export type FinanceStatus = Schemas['FinanceStatus'];
+export type PayslipSummary = Schemas['PayslipSummary'];
+export type PayslipDetail = Schemas['PayslipDetail'];
+export type Loan = Schemas['Loan'];
+export type LoanList = Omit<Schemas['LoanList'], 'data'> & { data: Loan[] };
+/** The generated pages keep `data` as unknown[] (allOf with the generic envelope), so it is narrowed here. */
+export type MemberDocumentList = Omit<Schemas['MemberDocumentList'], 'data'> & {
+  data: CrewDocument[];
+};
+export type MemberTodoPage = Omit<Schemas['MemberTodoPage'], 'data'> & { data: Todo[] };
+export type MemberAnnouncementPage = Omit<Schemas['MemberAnnouncementPage'], 'data'> & {
+  data: Announcement[];
+};
 
 export interface Envelope<T> {
   data: T;

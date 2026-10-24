@@ -81,17 +81,26 @@ function BlockedAccess({
   );
 }
 
-/** Tenant-admin area guard. Anonymous → /login; blocked credentials get an explanation, never the app. */
-export function RequireTenant({ children }: { children?: ReactNode }) {
+/**
+ * Signed-in area guard of an organization. Anonymous → its sign-in page (`/login`, or the crew's `/portal/login`); blocked
+ * credentials get an explanation, never the app.
+ */
+export function RequireTenant({
+  children,
+  loginPath = '/login',
+}: {
+  children?: ReactNode;
+  loginPath?: string;
+}) {
   const location = useLocation();
   const query = useTenantSessionQuery();
-  const logout = useLogout('tenant');
+  const logout = useLogout('tenant', loginPath);
 
   if (query.isPending) return <SkeletonShell />;
   if (query.isError) {
     const error = toApiError(query.error);
     if (error.status === 401)
-      return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+      return <Navigate to={loginPath} replace state={{ from: location.pathname }} />;
     if (BLOCKING_CODES.includes(error.code))
       return (
         <BlockedAccess error={error} onLogout={() => logout.mutate()} loading={logout.isPending} />
@@ -99,6 +108,25 @@ export function RequireTenant({ children }: { children?: ReactNode }) {
     return <ErrorState message={describeError(error)} onRetry={() => void query.refetch()} />;
   }
   return <MeContext.Provider value={query.data}>{children ?? <Outlet />}</MeContext.Provider>;
+}
+
+/**
+ * Sends a signed-in person to the portal of their own role: administrators to the admin portal, crew to the client portal.
+ * Cosmetic like the other route guards: the API refuses what a role may not do.
+ */
+export function RequireRole({
+  role,
+  home,
+  children,
+}: {
+  role: 'tenant_admin' | 'crew';
+  /** Where the other role belongs. */
+  home: string;
+  children?: ReactNode;
+}) {
+  const me = useMe();
+  if (me.membership.role !== role) return <Navigate to={home} replace />;
+  return children ?? <Outlet />;
 }
 
 /** Superadmin area guard. A tenant session is NOT a platform session: it lands on the platform login. */
@@ -117,7 +145,7 @@ export function RequirePlatform({ children }: { children?: ReactNode }) {
 }
 
 /** Ends the session on the server, then wipes every cached record (one person's data must not outlive their login). */
-export function useLogout(kind: 'tenant' | 'platform') {
+export function useLogout(kind: 'tenant' | 'platform', loginPath = '/login') {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
@@ -126,7 +154,7 @@ export function useLogout(kind: 'tenant' | 'platform') {
     },
     onSettled: () => {
       queryClient.clear();
-      window.location.assign(kind === 'tenant' ? '/login' : '/platform/login');
+      window.location.assign(kind === 'tenant' ? loginPath : '/platform/login');
     },
   });
 }

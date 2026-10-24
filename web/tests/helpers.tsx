@@ -81,6 +81,25 @@ export function asTenantAdmin(me: Me = makeMe()) {
   );
 }
 
+/** Wire a signed-in crew member (the client portal's person). */
+export function asCrew(over: Partial<Me> = {}) {
+  asTenantAdmin(
+    makeMe({
+      user: { id: 'u2', username: 'maria.santos', email: 'maria@example.test', display_name: null },
+      membership: { id: 'm-crew', role: 'crew', status: 'active' },
+      profile: {
+        first_name: 'Maria',
+        last_name: 'Santos',
+        crew_number: '10041',
+        rank: 'AB',
+        fleet: 'Fleet A',
+      },
+      abilities: [],
+      ...over,
+    }),
+  );
+}
+
 export function asPlatformAdmin() {
   server.use(
     http.get(`${API}/sanctum/csrf-cookie`, () => new HttpResponse(null, { status: 204 })),

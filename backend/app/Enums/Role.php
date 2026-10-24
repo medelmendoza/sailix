@@ -22,9 +22,10 @@ enum Role: string
         };
     }
 
+    /** Administrators use the admin portal and crew the client portal; what each may do is still decided by `abilities()`. */
     public function canUseWeb(): bool
     {
-        return $this === self::TenantAdmin;
+        return true;
     }
 
     /** @return list<string> */

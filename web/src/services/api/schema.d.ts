@@ -2203,6 +2203,9 @@ export interface components {
             last_name: string;
             suffix?: string | null;
             mobile?: string | null;
+            crew_number?: string | null;
+            rank?: string | null;
+            fleet?: string | null;
         };
         DeletionRequest: {
             id: string;

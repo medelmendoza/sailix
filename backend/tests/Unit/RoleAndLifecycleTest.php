@@ -63,7 +63,7 @@ class RoleAndLifecycleTest extends TestCase
         $this->assertTrue(Role::TenantAdmin->can('module.tala.manage'));
         $this->assertGreaterThan(Role::Crew->rank(), Role::TenantAdmin->rank());
         $this->assertTrue(Role::TenantAdmin->canUseWeb());
-        $this->assertFalse(Role::Crew->canUseWeb());
+        $this->assertTrue(Role::Crew->canUseWeb()); // the client portal
     }
 
     public function test_no_role_grants_platform_abilities(): void

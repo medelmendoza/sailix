@@ -18,6 +18,9 @@ class ProfileResource extends JsonResource
             'last_name' => $this->last_name,
             'suffix' => $this->suffix,
             'mobile' => $this->mobile,
+            'crew_number' => $this->crew_number,
+            'rank' => $this->rank,
+            'fleet' => $this->fleet,
         ];
     }
 }

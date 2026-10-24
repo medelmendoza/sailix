@@ -3386,6 +3386,9 @@ components:
         last_name: { type: string }
         suffix: { type: [string, 'null'] }
         mobile: { type: [string, 'null'] }
+        crew_number: { type: [string, 'null'] }
+        rank: { type: [string, 'null'] }
+        fleet: { type: [string, 'null'] }
     DeletionRequest:
       type: object
       required: [id, status, requested_at]
