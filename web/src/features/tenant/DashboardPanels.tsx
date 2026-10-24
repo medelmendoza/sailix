@@ -6,6 +6,7 @@ import {
   IconLink,
   Badge,
   Button,
+  cn,
   EmptyState,
   ErrorState,
   Pagination,
@@ -24,16 +25,26 @@ import { DASHBOARD_PANEL_SIZE, useAnnouncements, useCrewList, useDocuments } fro
 
 const PER_PANEL = DASHBOARD_PANEL_SIZE;
 
+/**
+ * The body of a panel with a search box, a table of five rows and its paging bar: 40px padding, the search (about 76px), the
+ * table (41px header and five rows of 61px with a 36px icon button) and the bar (48px). Whether the panel shows its loading
+ * rows, three rows or an empty message, it keeps this height, so the page does not jump when the data arrives.
+ */
+export const PANEL_BODY = 'min-h-[512px]';
+
 /** A working panel of the dashboard: a title with a count and a link to the full list, then a short list and its own paging. */
 export function Panel({
   title,
   count,
   action,
+  bodyClass,
   children,
 }: {
   title: string;
   count?: number;
   action?: ReactNode;
+  /** Pins the height of the body (see `PANEL_BODY`) so the panel is as tall while it loads as when its rows are shown. */
+  bodyClass?: string;
   children: ReactNode;
 }) {
   const id = `panel-${title.replace(/\W+/g, '-').toLowerCase()}`;
@@ -56,7 +67,7 @@ export function Panel({
         </h2>
         {action}
       </div>
-      <div className="p-5">{children}</div>
+      <div className={cn('p-5', bodyClass)}>{children}</div>
     </section>
   );
 }
@@ -92,6 +103,7 @@ export function UserApplicationPanel() {
 
   return (
     <Panel
+      bodyClass={PANEL_BODY}
       title="User application"
       count={name ? undefined : list.data?.meta.total}
       action={
@@ -200,6 +212,7 @@ export function DocumentApprovalPanel() {
 
   return (
     <Panel
+      bodyClass={PANEL_BODY}
       title="Document approval"
       count={name ? undefined : list.data?.meta.total}
       action={
@@ -297,6 +310,7 @@ export function AnnouncementsPanel() {
 
   return (
     <Panel
+      bodyClass={PANEL_BODY}
       title="Announcements"
       action={
         <Link to="/app/announcements" className={headerLink}>
@@ -398,7 +412,7 @@ export function DashboardPanels({
   announcements: boolean;
 }) {
   const shell = (title: string, headers: string[], cells: CellKind[]) => (
-    <Panel title={title}>
+    <Panel title={title} bodyClass={PANEL_BODY}>
       <SkeletonDataTable
         compact
         caption={title}

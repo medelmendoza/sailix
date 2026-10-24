@@ -1,10 +1,12 @@
 import { Anchor, Eye, FileUp } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Badge,
   EmptyState,
   IconLink,
   PageHero,
+  Pagination,
   Skeleton,
   SkeletonDataTable,
   StatTile,
@@ -13,6 +15,9 @@ import {
 import { ICONS } from '../../components/icons';
 import { hasFeature, useMe } from '../authentication/session';
 import { Panel, headerLink } from '../tenant/DashboardPanels';
+
+/** A panel with a table of five rows and its paging bar: 40px padding, 41px header, five rows of 61px, the bar (48px). */
+const BODY = 'min-h-[436px]';
 import { useMyAnnouncements, useMyDocumentRequests, useMyDocuments, useMyTodos } from './api';
 import { isOverdue, showDay } from './format';
 
@@ -24,8 +29,10 @@ export function PortalDashboardPage() {
   const showAnnouncements = hasFeature(me, 'announcements');
   const showDocuments = hasFeature(me, 'documents');
   const showTodos = hasFeature(me, 'todos');
-  const announcements = useMyAnnouncements({ per_page: 3 });
-  const todos = useMyTodos('open', { per_page: 3 });
+  const [announcementPage, setAnnouncementPage] = useState(1);
+  const [todoPage, setTodoPage] = useState(1);
+  const announcements = useMyAnnouncements({ page: announcementPage, per_page: 5 });
+  const todos = useMyTodos('open', { page: todoPage, per_page: 5 });
   const documents = useMyDocuments('approved');
   const requests = useMyDocumentRequests();
   const first = (me.profile?.first_name ?? me.user.display_name ?? me.user.username).split(' ')[0];
@@ -111,6 +118,7 @@ export function PortalDashboardPage() {
         {showAnnouncements && (
           <div className="min-w-0">
             <Panel
+              bodyClass={BODY}
               title="Latest announcements"
               action={
                 <Link to="/portal/announcements" className={headerLink}>
@@ -124,36 +132,43 @@ export function PortalDashboardPage() {
                   caption="Latest announcements"
                   headers={['Title', 'Date', '']}
                   cells={['strong', 'date', 'actions1']}
-                  rows={3}
+                  rows={5}
                   label="Loading announcements"
                 />
               ) : announcements.data && announcements.data.data.length > 0 ? (
-                <Table compact caption="Latest announcements" headers={['Title', 'Date', '']}>
-                  {announcements.data.data.map((a) => (
-                    <tr key={a.id}>
-                      <td className="px-4 py-3 font-medium">
-                        <span className="flex items-center gap-2">
-                          {a.is_read === false && (
-                            <span
-                              aria-label="Unread"
-                              className="size-2.5 shrink-0 rounded-full bg-accent-600"
-                            />
-                          )}
-                          {a.title}
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3">{showDay(a.created_at)}</td>
-                      <td className="px-4 py-3 text-right">
-                        <IconLink
-                          to="/portal/announcements"
-                          icon={Eye}
-                          label={`Read ${a.title}`}
-                          tip="Read"
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </Table>
+                <>
+                  <Table compact caption="Latest announcements" headers={['Title', 'Date', '']}>
+                    {announcements.data.data.map((a) => (
+                      <tr key={a.id}>
+                        <td className="px-4 py-3 font-medium">
+                          <span className="flex items-center gap-2">
+                            {a.is_read === false && (
+                              <span
+                                aria-label="Unread"
+                                className="size-2.5 shrink-0 rounded-full bg-accent-600"
+                              />
+                            )}
+                            {a.title}
+                          </span>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3">{showDay(a.created_at)}</td>
+                        <td className="px-4 py-3 text-right">
+                          <IconLink
+                            to="/portal/announcements"
+                            icon={Eye}
+                            label={`Read ${a.title}`}
+                            tip="Read"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </Table>
+                  <Pagination
+                    meta={announcements.data.meta}
+                    loading={announcements.isFetching}
+                    onPage={setAnnouncementPage}
+                  />
+                </>
               ) : (
                 <EmptyState title="Nothing new from your organization" />
               )}
@@ -163,6 +178,7 @@ export function PortalDashboardPage() {
         {showTodos && (
           <div className="min-w-0">
             <Panel
+              bodyClass={BODY}
               title="Next to do"
               action={
                 <Link to="/portal/todos" className={headerLink}>
@@ -176,32 +192,39 @@ export function PortalDashboardPage() {
                   caption="Next to do"
                   headers={['Task', 'Due date', '']}
                   cells={['strong', 'date', 'actions1']}
-                  rows={3}
+                  rows={5}
                   label="Loading to-dos"
                 />
               ) : todos.data && todos.data.data.length > 0 ? (
-                <Table compact caption="Next to do" headers={['Task', 'Due date', '']}>
-                  {todos.data.data.map((t) => (
-                    <tr key={t.id}>
-                      <td className="px-4 py-3 font-medium">{t.description}</td>
-                      <td className="whitespace-nowrap px-4 py-3">
-                        {isOverdue(t.due_date, t.is_done) ? (
-                          <Badge tone="warning">Overdue</Badge>
-                        ) : (
-                          showDay(t.due_date)
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <IconLink
-                          to="/portal/todos"
-                          icon={Eye}
-                          label={`Open ${t.description}`}
-                          tip="Open"
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </Table>
+                <>
+                  <Table compact caption="Next to do" headers={['Task', 'Due date', '']}>
+                    {todos.data.data.map((t) => (
+                      <tr key={t.id}>
+                        <td className="px-4 py-3 font-medium">{t.description}</td>
+                        <td className="whitespace-nowrap px-4 py-3">
+                          {isOverdue(t.due_date, t.is_done) ? (
+                            <Badge tone="warning">Overdue</Badge>
+                          ) : (
+                            showDay(t.due_date)
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <IconLink
+                            to="/portal/todos"
+                            icon={Eye}
+                            label={`Open ${t.description}`}
+                            tip="Open"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </Table>
+                  <Pagination
+                    meta={todos.data.meta}
+                    loading={todos.isFetching}
+                    onPage={setTodoPage}
+                  />
+                </>
               ) : (
                 <EmptyState title="Nothing to do right now" />
               )}
