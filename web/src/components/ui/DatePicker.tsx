@@ -68,8 +68,7 @@ export function DatePicker({
   const today = todayIso();
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
-  // inside a dialog the calendar must live in the dialog (it blocks everything outside it), whose own transform becomes the
-  // origin of `fixed` positions; anywhere else it goes to the page body
+  // inside a dialog the calendar must live in the dialog (it blocks everything outside it); anywhere else it goes to the page body
   const [host, setHost] = useState<HTMLElement>(document.body);
   const box = useRef<HTMLDivElement>(null);
   const pop = useRef<HTMLDivElement>(null);
@@ -107,7 +106,11 @@ export function DatePicker({
     if (!open || !box.current || !pop.current) return;
     const t = box.current.getBoundingClientRect();
     const p = pop.current.getBoundingClientRect();
-    const o = host === document.body ? { left: 0, top: 0 } : host.getBoundingClientRect();
+    // a host with a transform becomes the origin of `fixed` positions; otherwise they start at the window
+    const o =
+      host !== document.body && getComputedStyle(host).transform !== 'none'
+        ? host.getBoundingClientRect()
+        : { left: 0, top: 0 };
     setCoords({
       left:
         (t.left + p.width > window.innerWidth ? Math.max(8, t.right - p.width) : t.left) - o.left,
