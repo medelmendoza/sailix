@@ -234,7 +234,7 @@ export function SkeletonDataTable({
 }) {
   return (
     <div role="status" aria-label={label}>
-      <Table caption={caption} headers={headers} compact={compact}>
+      <Table caption={caption} headers={headers} compact={compact} shimmerHeaders>
         {Array.from({ length: rows }, (_, r) => (
           <tr key={r}>
             {cells.map((kind, c) => (

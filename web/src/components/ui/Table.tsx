@@ -8,12 +8,15 @@ export function Table({
   headers,
   children,
   compact = false,
+  shimmerHeaders = false,
 }: {
   caption: string;
   headers: string[];
   children: ReactNode;
   /** For a table inside a narrow panel: no minimum width, so it fits instead of scrolling sideways. */
   compact?: boolean;
+  /** A loading table: the column headings are drawn as shimmering bars of their own length (the words stay for screen readers). */
+  shimmerHeaders?: boolean;
 }) {
   return (
     <div className="overflow-x-auto rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-soft)]">
@@ -25,7 +28,19 @@ export function Table({
           <tr>
             {headers.map((h) => (
               <th key={h} scope="col" className="px-4 py-3 font-medium">
-                {h}
+                {shimmerHeaders ? (
+                  // a bar the length of the word, inside the cell's own padding so the bars never touch
+                  <span
+                    className="shimmer inline-block select-none align-middle text-transparent"
+                    style={{
+                      backgroundColor: 'color-mix(in srgb, var(--color-brand-700) 16%, white)',
+                    }}
+                  >
+                    {h}
+                  </span>
+                ) : (
+                  h
+                )}
               </th>
             ))}
           </tr>
