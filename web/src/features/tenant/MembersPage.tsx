@@ -1,7 +1,8 @@
+import { Ban, Check, RotateCcw, ShieldMinus, ShieldPlus, X, type LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  Button,
+  IconButton,
   ConfirmDialog,
   EmptyState,
   ErrorState,
@@ -36,6 +37,16 @@ export function displayName(m: Membership): string {
   if (m.profile) return [m.profile.first_name, m.profile.last_name].filter(Boolean).join(' ');
   return m.user?.display_name ?? m.user?.username ?? 'Unknown';
 }
+
+/** The icon of each row action, by its key. */
+const ACTION_ICON: Record<string, LucideIcon> = {
+  approve: Check,
+  reject: X,
+  promote: ShieldPlus,
+  demote: ShieldMinus,
+  suspend: Ban,
+  reactivate: RotateCcw,
+};
 
 function actionsFor(m: Membership): Action[] {
   const name = displayName(m);
@@ -212,18 +223,23 @@ export function MembersPage() {
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         {actionsFor(m).map((a) => (
-                          <Button
+                          <IconButton
                             key={a.key}
-                            variant={a.key === 'approve' ? 'primary' : 'secondary'}
-                            className="min-h-8 px-3"
-                            aria-label={`${a.label} ${name}`}
+                            icon={ACTION_ICON[a.key] ?? Check}
+                            tone={
+                              a.key === 'approve'
+                                ? 'primary'
+                                : a.key === 'reject' || a.key === 'suspend'
+                                  ? 'danger'
+                                  : 'neutral'
+                            }
+                            label={`${a.label} ${name}`}
+                            tip={a.label}
                             disabled={update.isPending}
                             onClick={() =>
                               a.confirm ? setPending({ member: m, action: a }) : run(m, a)
                             }
-                          >
-                            {a.label}
-                          </Button>
+                          />
                         ))}
                       </div>
                     )}

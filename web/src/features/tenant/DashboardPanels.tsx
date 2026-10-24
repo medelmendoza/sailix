@@ -1,6 +1,9 @@
+import { ArrowUpRight, ClipboardCheck, Eye } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  IconButton,
+  IconLink,
   Badge,
   Button,
   EmptyState,
@@ -158,13 +161,12 @@ export function UserApplicationPanel() {
                 <td className="px-4 py-3">{c.rank ?? '—'}</td>
                 <td className="px-4 py-3">{c.fleet ?? '—'}</td>
                 <td className="px-4 py-3 text-right">
-                  <Link
+                  <IconLink
                     to={`/app/crew/${c.id}`}
-                    aria-label={`See details of ${nameOf(c, c.username)}`}
-                    className="text-brand-700 underline-offset-2 hover:underline"
-                  >
-                    See details
-                  </Link>
+                    icon={ArrowUpRight}
+                    label={`See details of ${nameOf(c, c.username)}`}
+                    tip="See details"
+                  />
                 </td>
               </tr>
             ))}
@@ -221,13 +223,12 @@ export function DocumentApprovalPanel() {
                   <td className="px-4 py-3">{d.owner?.profile?.crew_number ?? '—'}</td>
                   <td className="px-4 py-3">{d.type.name}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link
+                    <IconLink
                       to={`/app/documents?member=${d.owner?.id ?? ''}`}
-                      aria-label={`Review ${d.type.name} of ${who}`}
-                      className="text-brand-700 underline-offset-2 hover:underline"
-                    >
-                      Review
-                    </Link>
+                      icon={ClipboardCheck}
+                      label={`Review ${d.type.name} of ${who}`}
+                      tip="Review"
+                    />
                   </td>
                 </tr>
               );
@@ -283,14 +284,12 @@ export function AnnouncementsPanel() {
                   </Badge>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button
-                    type="button"
-                    aria-label={`View ${a.title}`}
+                  <IconButton
+                    icon={Eye}
+                    label={`View ${a.title}`}
+                    tip="View"
                     onClick={() => setViewing(a)}
-                    className="text-brand-700 underline-offset-2 hover:underline"
-                  >
-                    View
-                  </button>
+                  />
                 </td>
               </tr>
             ))}

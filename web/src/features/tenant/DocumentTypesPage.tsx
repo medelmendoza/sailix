@@ -1,5 +1,7 @@
+import { Pencil, Power, PowerOff, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
+  IconButton,
   Badge,
   Button,
   ConfirmDialog,
@@ -72,27 +74,25 @@ export function DocumentTypesPage() {
               </td>
               <td className="whitespace-nowrap px-4 py-3 text-right">
                 <div className="flex justify-end gap-1">
-                  <Button
-                    variant="ghost"
+                  <IconButton
+                    icon={Pencil}
+                    label={`Edit ${t.name}`}
+                    tip="Edit"
                     onClick={() => setEditing(t)}
-                    aria-label={`Edit ${t.name}`}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
+                  />
+                  <IconButton
+                    icon={t.is_active ? PowerOff : Power}
+                    label={`${t.is_active ? 'Switch off' : 'Switch on'} ${t.name}`}
+                    tip={t.is_active ? 'Switch off' : 'Switch on'}
                     onClick={() => toggle(t)}
-                    aria-label={`${t.is_active ? 'Switch off' : 'Switch on'} ${t.name}`}
-                  >
-                    {t.is_active ? 'Switch off' : 'Switch on'}
-                  </Button>
-                  <Button
-                    variant="dangerSoft"
+                  />
+                  <IconButton
+                    icon={Trash2}
+                    label={`Delete ${t.name}`}
+                    tip="Delete"
+                    tone="danger"
                     onClick={() => setDeleting(t)}
-                    aria-label={`Delete ${t.name}`}
-                  >
-                    Delete
-                  </Button>
+                  />
                 </div>
               </td>
             </tr>

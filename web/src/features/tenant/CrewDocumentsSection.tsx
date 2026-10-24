@@ -1,6 +1,7 @@
+import { ClipboardCheck } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
+  IconLink,
   Badge,
   Card,
   SkeletonField,
@@ -256,13 +257,12 @@ function UploadRequests({ crew }: { crew: Crew }) {
               </td>
               <td className="whitespace-nowrap px-4 py-3">{formatDateTime(d.submitted_at)}</td>
               <td className="px-4 py-3 text-right">
-                <Link
+                <IconLink
                   to={`/app/documents?member=${crew.id}`}
-                  aria-label={`Review ${d.type.name}`}
-                  className="text-brand underline-offset-2 hover:underline"
-                >
-                  Review
-                </Link>
+                  icon={ClipboardCheck}
+                  label={`Review ${d.type.name}`}
+                  tip="Review"
+                />
               </td>
             </tr>
           ))}

@@ -1,4 +1,4 @@
-import { Printer } from 'lucide-react';
+import { Link2, Printer } from 'lucide-react';
 import { useState } from 'react';
 import {
   Badge,
@@ -6,6 +6,7 @@ import {
   DateField,
   EmptyState,
   FormDialog,
+  IconButton,
   Table,
   TextField,
   useToast,
@@ -238,9 +239,13 @@ export function CreateCrewAccountDialog({
                 <td className="whitespace-nowrap px-4 py-3">{c.fleet}</td>
                 <td className="whitespace-nowrap px-4 py-3">{c.employmentStatus}</td>
                 <td className="px-4 py-3">
-                  <Button aria-label={`Link account of ${fullName(c)}`} onClick={() => link(c)}>
-                    Link Account
-                  </Button>
+                  <IconButton
+                    icon={Link2}
+                    tone="primary"
+                    label={`Link account of ${fullName(c)}`}
+                    tip="Link Account"
+                    onClick={() => link(c)}
+                  />
                 </td>
               </tr>
             ))}

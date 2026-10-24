@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Anchor, Cake, Hash, Mail, Phone, Ship, User } from 'lucide-react';
+import { Anchor, Cake, Hash, Mail, Phone, Ship, User, Pencil, Trash2 } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import {
+  IconButton,
   DateField,
   Badge,
   Button,
@@ -446,20 +447,19 @@ function CrewTodos({ crew }: { crew: Crew }) {
                   <Badge tone={s.tone}>{s.label}</Badge>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
-                  <Button
-                    variant="ghost"
+                  <IconButton
+                    icon={Pencil}
+                    label={`Edit ${t.description}`}
+                    tip="Edit"
                     onClick={() => setEditing(t)}
-                    aria-label={`Edit ${t.description}`}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="dangerSoft"
+                  />
+                  <IconButton
+                    icon={Trash2}
+                    label={`Delete ${t.description}`}
+                    tip="Delete"
+                    tone="danger"
                     onClick={() => setDeleting(t)}
-                    aria-label={`Delete ${t.description}`}
-                  >
-                    Delete
-                  </Button>
+                  />
                 </td>
               </tr>
             );

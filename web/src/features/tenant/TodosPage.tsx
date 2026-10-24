@@ -1,5 +1,7 @@
+import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
+  IconButton,
   DateField,
   Badge,
   Button,
@@ -109,20 +111,19 @@ export function TodosPage() {
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
+                      <IconButton
+                        icon={Pencil}
+                        label={`Edit ${t.description}`}
+                        tip="Edit"
                         onClick={() => setEditing(t)}
-                        aria-label={`Edit ${t.description}`}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="dangerSoft"
+                      />
+                      <IconButton
+                        icon={Trash2}
+                        label={`Delete ${t.description}`}
+                        tip="Delete"
+                        tone="danger"
                         onClick={() => setDeleting(t)}
-                        aria-label={`Delete ${t.description}`}
-                      >
-                        Delete
-                      </Button>
+                      />
                     </div>
                   </td>
                 </tr>

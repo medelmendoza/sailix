@@ -1,9 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { X } from 'lucide-react';
+import { X, Eye, Pencil, Power, PowerOff, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
+  IconButton,
   FileDrop,
   FileTile,
   fileSize,
@@ -134,34 +135,31 @@ export function AnnouncementsPage() {
                   <td className="whitespace-nowrap px-4 py-3">{formatDateTime(a.created_at)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
+                      <IconButton
+                        icon={Eye}
+                        label={`View ${a.title}`}
+                        tip="View"
                         onClick={() => setViewing(a)}
-                        aria-label={`View ${a.title}`}
-                      >
-                        View
-                      </Button>
-                      <Button
-                        variant="ghost"
+                      />
+                      <IconButton
+                        icon={Pencil}
+                        label={`Edit ${a.title}`}
+                        tip="Edit"
                         onClick={() => setEditing(a)}
-                        aria-label={`Edit ${a.title}`}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
+                      />
+                      <IconButton
+                        icon={a.is_active ? PowerOff : Power}
+                        label={`${a.is_active ? 'Switch off' : 'Switch on'} ${a.title}`}
+                        tip={a.is_active ? 'Switch off' : 'Switch on'}
                         onClick={() => toggle(a)}
-                        aria-label={`${a.is_active ? 'Switch off' : 'Switch on'} ${a.title}`}
-                      >
-                        {a.is_active ? 'Switch off' : 'Switch on'}
-                      </Button>
-                      <Button
-                        variant="dangerSoft"
+                      />
+                      <IconButton
+                        icon={Trash2}
+                        label={`Delete ${a.title}`}
+                        tip="Delete"
+                        tone="danger"
                         onClick={() => setDeleting(a)}
-                        aria-label={`Delete ${a.title}`}
-                      >
-                        Delete
-                      </Button>
+                      />
                     </div>
                   </td>
                 </tr>

@@ -1,5 +1,7 @@
+import { FileSearch } from 'lucide-react';
 import { useState } from 'react';
 import {
+  IconButton,
   Badge,
   Button,
   Card,
@@ -119,13 +121,12 @@ export function CallItPage() {
                   </Badge>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
-                  <Button
-                    variant="ghost"
+                  <IconButton
+                    icon={FileSearch}
+                    label={`Open the report from ${r.reporter?.user?.username}`}
+                    tip="Open"
                     onClick={() => setOpen(r)}
-                    aria-label={`Open the report from ${r.reporter?.user?.username}`}
-                  >
-                    Open
-                  </Button>
+                  />
                 </td>
               </tr>
             ))}

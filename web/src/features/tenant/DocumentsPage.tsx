@@ -1,6 +1,8 @@
+import { Check, Eye, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
+  IconButton,
   Badge,
   Button,
   ConfirmDialog,
@@ -135,29 +137,27 @@ export function DocumentsPage() {
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
+                      <IconButton
+                        icon={Eye}
+                        label={`View file of ${d.type.name} for ${d.owner?.user?.username}`}
+                        tip="View file"
                         onClick={() => void view(d)}
-                        aria-label={`View file of ${d.type.name} for ${d.owner?.user?.username}`}
-                      >
-                        View file
-                      </Button>
+                      />
                       {d.status === 'pending' ? (
                         <>
-                          <Button
-                            variant="ghost"
+                          <IconButton
+                            icon={Check}
+                            label={`Approve ${d.type.name} for ${d.owner?.user?.username}`}
+                            tip="Approve"
+                            tone="primary"
                             onClick={() => setApproving(d)}
-                            aria-label={`Approve ${d.type.name} for ${d.owner?.user?.username}`}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            variant="ghost"
+                          />
+                          <IconButton
+                            icon={Undo2}
+                            label={`Send back ${d.type.name} for ${d.owner?.user?.username}`}
+                            tip="Send back"
                             onClick={() => setRejecting(d)}
-                            aria-label={`Send back ${d.type.name} for ${d.owner?.user?.username}`}
-                          >
-                            Send back
-                          </Button>
+                          />
                         </>
                       ) : null}
                     </div>
