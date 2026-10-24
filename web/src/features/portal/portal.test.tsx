@@ -298,6 +298,45 @@ describe('Client portal: files', () => {
     expect(screen.getByText('Scan is blurry')).toBeInTheDocument();
   });
 
+  it('lets the kind of document be searched when there are many', async () => {
+    asCrew();
+    const many = [
+      'Seaman Book',
+      'US Visa',
+      'Passport',
+      'Medical Certificate',
+      'Yellow Fever Card',
+      'HACCP',
+      'Anchor Handling',
+    ];
+    portalApi([
+      http.get(`${V1}/document-types`, () =>
+        HttpResponse.json({
+          data: many.map((name, i) => ({ id: `dt${i}`, name, short_name: null })),
+        }),
+      ),
+    ]);
+    const { user } = renderApp('/portal/files');
+
+    await user.click(await screen.findByRole('button', { name: 'Add a document' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Add a document' });
+    await user.click(within(dialog).getByLabelText('Kind of document'));
+    expect(await screen.findAllByRole('option')).toHaveLength(7);
+
+    await user.type(screen.getByRole('combobox', { name: 'Search kind of document' }), 'pass');
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Passport']);
+    await user.keyboard('{Enter}');
+    expect(within(dialog).getByLabelText('Kind of document')).toHaveTextContent('Passport');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+
+    // Escape closes the list and leaves the dialog open
+    await user.click(within(dialog).getByLabelText('Kind of document'));
+    await screen.findByRole('listbox');
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
+    expect(screen.getByRole('dialog', { name: 'Add a document' })).toBeInTheDocument();
+  });
+
   it('sends a document in with its file', async () => {
     asCrew();
     const sent = capture<unknown>();
@@ -314,7 +353,8 @@ describe('Client portal: files', () => {
 
     await user.click(within(dialog).getByRole('button', { name: 'Send in' }));
     expect(await within(dialog).findByText('Choose the kind of document.')).toBeInTheDocument();
-    await user.selectOptions(within(dialog).getByLabelText('Kind of document'), 'dt2');
+    await user.click(within(dialog).getByLabelText('Kind of document'));
+    await user.click(await screen.findByRole('option', { name: 'US Visa' }));
     await user.type(within(dialog).getByLabelText('Number'), 'V-9');
     await pickDate(user, within(dialog).getByLabelText('Date it expires'), '2031-01-01');
     await user.click(within(dialog).getByRole('button', { name: 'Send in' }));

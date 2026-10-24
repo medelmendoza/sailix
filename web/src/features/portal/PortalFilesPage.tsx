@@ -11,6 +11,7 @@ import {
   FormError,
   IconButton,
   PageHeader,
+  SearchableSelectField,
   SelectField,
   SkeletonDataTable,
   Table,
@@ -86,15 +87,13 @@ function DocumentFormDialog({
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
         <FormError message={error} />
-        <SelectField
+        <SearchableSelectField
           label="Kind of document"
           value={v.document_type_id}
           disabled={!!doc}
-          onChange={(e) => set({ document_type_id: e.target.value })}
-          options={[
-            { value: '', label: types.isPending ? 'Loading…' : 'Choose…' },
-            ...(types.data ?? []).map((t) => ({ value: t.id, label: t.name })),
-          ]}
+          placeholder={types.isPending ? 'Loading…' : 'Choose…'}
+          onChange={(id) => set({ document_type_id: id })}
+          options={(types.data ?? []).map((t) => ({ value: t.id, label: t.name }))}
         />
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField

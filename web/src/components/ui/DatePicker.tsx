@@ -87,15 +87,20 @@ export function DatePicker({
       const t = e.target as Node;
       if (!box.current?.contains(t) && !pop.current?.contains(t)) close();
     };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
+    // caught before it reaches the dialog around the picker, which would close as well
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      close();
+    };
     // the calendar is positioned once, so it closes if anything scrolls rather than drifting from its box
     const onScroll = (e: Event) => !pop.current?.contains(e.target as Node) && close();
     document.addEventListener('mousedown', onDown);
-    window.addEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, true);
     window.addEventListener('scroll', onScroll, true);
     return () => {
       document.removeEventListener('mousedown', onDown);
-      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('scroll', onScroll, true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

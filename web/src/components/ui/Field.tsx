@@ -9,6 +9,7 @@ import type {
 } from 'react';
 import { cn } from './cn';
 import { DatePicker } from './DatePicker';
+import { SearchableSelect, type SelectOption } from './SearchableSelect';
 
 interface FieldFrameProps {
   label: string;
@@ -155,6 +156,46 @@ export function DateField({
         disabled={disabled}
         min={min}
         max={max}
+        invalid={!!error}
+        describedBy={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+      />
+    </FieldFrame>
+  );
+}
+
+interface SearchableSelectFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: SelectOption[];
+  error?: string;
+  hint?: string;
+  disabled?: boolean;
+  placeholder?: string;
+}
+
+/** A labelled dropdown you can search (the search box shows once the list is longer than five). */
+export function SearchableSelectField({
+  label,
+  value,
+  onChange,
+  options,
+  error,
+  hint,
+  disabled,
+  placeholder,
+}: SearchableSelectFieldProps) {
+  const id = useId();
+  return (
+    <FieldFrame label={label} error={error} hint={hint} id={id}>
+      <SearchableSelect
+        id={id}
+        value={value}
+        onChange={onChange}
+        options={options}
+        disabled={disabled}
+        placeholder={placeholder}
+        searchLabel={`Search ${label.toLowerCase()}`}
         invalid={!!error}
         describedBy={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
       />

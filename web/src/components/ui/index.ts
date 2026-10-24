@@ -2,7 +2,8 @@ export { ProfileTabs, SaveBar, SearchField, StatTile, StatusTabs } from './Admin
 export { Badge, StatusBadge } from './Badge';
 export { Button } from './Button';
 export { ConfirmDialog, FormDialog } from './Dialog';
-export { DateField, SelectField, TextAreaField, TextField } from './Field';
+export { DateField, SearchableSelectField, SelectField, TextAreaField, TextField } from './Field';
+export { SearchableSelect } from './SearchableSelect';
 export { DatePicker } from './DatePicker';
 export { IconButton, IconLink } from './IconButton';
 export { DropZone, FileDrop, FileTile, fileSize } from './FileDrop';
