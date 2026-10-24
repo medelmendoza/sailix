@@ -3,9 +3,10 @@ import * as Dialog from '@radix-ui/react-dialog';
 import type { ReactNode } from 'react';
 import { Button } from './Button';
 
-const OVERLAY = 'fixed inset-0 bg-black/40';
+// above the sticky page header (z-30) and its menus (z-40)
+const OVERLAY = 'fixed inset-0 z-50 bg-black/40';
 const PANEL =
-  'fixed left-1/2 top-1/2 w-[min(32rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-surface p-6 shadow-xl';
+  'fixed left-1/2 top-1/2 z-50 w-[min(32rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-surface p-6 shadow-xl';
 
 interface ConfirmDialogProps {
   open: boolean;
