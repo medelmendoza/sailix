@@ -5,10 +5,11 @@ import { cn } from './cn';
 
 type Tone = 'neutral' | 'primary' | 'danger';
 
+// Plain at rest, a soft tint on hover: the same quiet look as the schoolhub row actions.
 const TONES: Record<Tone, string> = {
-  neutral: 'bg-brand-50 text-brand-800 hover:bg-brand-100',
-  primary: 'bg-brand-700 text-white hover:bg-brand-800',
-  danger: 'bg-bad-bg text-bad-fg hover:bg-bad-fg hover:text-white',
+  neutral: 'text-muted hover:bg-brand-50 hover:text-brand-700',
+  primary: 'text-brand-700 hover:bg-brand-50 hover:text-brand-800',
+  danger: 'text-bad-fg hover:bg-bad-bg hover:text-bad-fg',
 };
 
 interface Common {
@@ -22,12 +23,12 @@ interface Common {
 }
 
 const BASE =
-  'group relative inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-50';
+  'group relative inline-flex size-9 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-50';
 
 function Face({ icon: Icon, label, tip }: Pick<Common, 'icon' | 'label' | 'tip'>) {
   return (
     <>
-      <Icon className="size-5" aria-hidden="true" />
+      <Icon className="size-[1.125rem]" aria-hidden="true" />
       {/* shown above the button on hover and keyboard focus; hidden from screen readers, which have the label */}
       <span
         aria-hidden="true"
