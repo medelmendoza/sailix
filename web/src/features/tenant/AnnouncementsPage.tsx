@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
+  DateField,
   Badge,
   Button,
   Card,
@@ -220,6 +221,7 @@ function AnnouncementForm({
   );
   const {
     register,
+    control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
@@ -322,12 +324,19 @@ function AnnouncementForm({
           error={errors.body?.message}
           {...register('body')}
         />
-        <TextField
-          label="Show until (optional)"
-          type="date"
-          hint="It disappears from the app after this day. Leave empty to keep it up."
-          error={errors.show_until?.message}
-          {...register('show_until')}
+        <Controller
+          name="show_until"
+          control={control}
+          render={({ field }) => (
+            <DateField
+              label="Show until (optional)"
+              hint="It disappears from the app after this day. Leave empty to keep it up."
+              error={errors.show_until?.message}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )}
         />
         <div className="flex flex-col gap-1">
           <label htmlFor="announcement-file" className="text-sm font-medium">

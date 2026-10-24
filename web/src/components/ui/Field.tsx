@@ -8,6 +8,7 @@ import type {
   TextareaHTMLAttributes,
 } from 'react';
 import { cn } from './cn';
+import { DatePicker } from './DatePicker';
 
 interface FieldFrameProps {
   label: string;
@@ -114,6 +115,49 @@ export function TextField({
       ) : (
         input
       )}
+    </FieldFrame>
+  );
+}
+
+interface DateFieldProps {
+  label: string;
+  /** `YYYY-MM-DD`, or empty. */
+  value: string;
+  onChange: (value: string) => void;
+  onBlur?: () => void;
+  error?: string;
+  hint?: string;
+  disabled?: boolean;
+  min?: string;
+  max?: string;
+}
+
+/** A labelled date box with the calendar picker. Controlled: the value is `YYYY-MM-DD` or empty. */
+export function DateField({
+  label,
+  value,
+  onChange,
+  onBlur,
+  error,
+  hint,
+  disabled,
+  min,
+  max,
+}: DateFieldProps) {
+  const id = useId();
+  return (
+    <FieldFrame label={label} error={error} hint={hint} id={id}>
+      <DatePicker
+        id={id}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        disabled={disabled}
+        min={min}
+        max={max}
+        invalid={!!error}
+        describedBy={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
+      />
     </FieldFrame>
   );
 }

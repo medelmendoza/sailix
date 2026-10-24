@@ -1,6 +1,14 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { asTenantAdmin, capture, pageOf, problem, renderApp, V1 } from '../../../tests/helpers';
+import {
+  asTenantAdmin,
+  capture,
+  pageOf,
+  problem,
+  renderApp,
+  V1,
+  pickDate,
+} from '../../../tests/helpers';
 import { server } from '../../../tests/server';
 import type { Crew } from '../../services/api/types';
 
@@ -143,7 +151,7 @@ describe('Crew profile', () => {
     expect(await screen.findByRole('heading', { name: 'Jaycob Bustamante' })).toBeInTheDocument();
     expect(screen.getByText(/user-c1/)).toBeInTheDocument();
     expect(screen.getByLabelText('Crew ID')).toHaveValue('09977');
-    expect(screen.getByLabelText('Birthday')).toHaveValue('1990-05-04');
+    expect(screen.getByLabelText('Birthday')).toHaveTextContent('May 4, 1990');
     await user.click(await screen.findByRole('tab', { name: 'To-do list' }));
     expect(await screen.findByText('Renew your passport')).toBeInTheDocument();
     expect(screen.getByText('Overdue')).toBeInTheDocument();
@@ -202,8 +210,8 @@ describe('Crew profile', () => {
     await user.clear(screen.getByLabelText('Last name'));
     await user.clear(screen.getByLabelText('Crew ID'));
     await user.type(screen.getByLabelText('Crew ID'), 'bad id!');
-    await user.type(screen.getByLabelText('Date arrive'), '2026-05-10');
-    await user.type(screen.getByLabelText('Date depart'), '2026-05-01');
+    await pickDate(user, screen.getByLabelText('Date arrive'), '2026-05-10');
+    await pickDate(user, screen.getByLabelText('Date depart'), '2026-05-01');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     expect(await screen.findByText('Required.')).toBeInTheDocument();
@@ -286,7 +294,7 @@ describe('Crew profile', () => {
     await user.click(await screen.findByRole('button', { name: 'Add task' }));
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText('Task name'), 'Sign the form');
-    await user.type(within(dialog).getByLabelText('Due date (optional)'), '2030-05-06');
+    await pickDate(user, within(dialog).getByLabelText('Due date (optional)'), '2030-05-06');
     await user.click(within(dialog).getByRole('button', { name: 'Add' }));
     await waitFor(() => expect(created.calls).toHaveLength(1));
     expect(created.calls[0]!.body).toEqual({

@@ -2,7 +2,8 @@ export { ProfileTabs, SaveBar, SearchField, StatTile, StatusTabs } from './Admin
 export { Badge, StatusBadge } from './Badge';
 export { Button } from './Button';
 export { ConfirmDialog, FormDialog } from './Dialog';
-export { SelectField, TextAreaField, TextField } from './Field';
+export { DateField, SelectField, TextAreaField, TextField } from './Field';
+export { DatePicker } from './DatePicker';
 export { Card, EmptyState, ErrorState, FormError, PageHeader, PageHero, Spinner } from './Layout';
 export {
   Skeleton,

@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { Anchor, Cake, Hash, Mail, Phone, Ship, User } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import {
+  DateField,
   Badge,
   Button,
   Card,
@@ -227,6 +228,7 @@ function Profile({ crew, tab, onTab }: { crew: Crew; tab: string; onTab: (key: s
   const [confirmReset, setConfirmReset] = useState(false);
   const {
     register,
+    control,
     handleSubmit,
     reset: resetForm,
     setError,
@@ -247,6 +249,21 @@ function Profile({ crew, tab, onTab }: { crew: Crew; tab: string; onTab: (key: s
 
   const name = [crew.first_name, crew.last_name].filter(Boolean).join(' ') || crew.username;
   const field = (f: (typeof FIELDS)[number]) => ({ error: errors[f]?.message, ...register(f) });
+  const dateField = (f: 'birthday' | 'date_arrive' | 'date_depart', label: string) => (
+    <Controller
+      name={f}
+      control={control}
+      render={({ field: c }) => (
+        <DateField
+          label={label}
+          error={errors[f]?.message}
+          value={c.value}
+          onChange={c.onChange}
+          onBlur={c.onBlur}
+        />
+      )}
+    />
+  );
   const post = [crew.rank, crew.fleet, crew.vessel].filter(Boolean).join(' · ');
 
   return (
@@ -323,7 +340,7 @@ function Profile({ crew, tab, onTab }: { crew: Crew; tab: string; onTab: (key: s
                   <TextField label="First name" {...field('first_name')} />
                   <TextField label="Middle name" {...field('middle_name')} />
                   <TextField label="Suffix" {...field('suffix')} />
-                  <TextField label="Birthday" type="date" {...field('birthday')} />
+                  {dateField('birthday', 'Birthday')}
                   <TextField label="Mobile" type="tel" {...field('mobile')} />
                 </div>
               </Card>
@@ -340,8 +357,8 @@ function Profile({ crew, tab, onTab }: { crew: Crew; tab: string; onTab: (key: s
               </Card>
               <Card title="Dates on board">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <TextField label="Date arrive" type="date" {...field('date_arrive')} />
-                  <TextField label="Date depart" type="date" {...field('date_depart')} />
+                  {dateField('date_arrive', 'Date arrive')}
+                  {dateField('date_depart', 'Date depart')}
                 </div>
               </Card>
             </div>
@@ -523,12 +540,7 @@ function TaskForm({ crew, todo, onClose }: { crew: Crew; todo: Todo | null; onCl
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-        <TextField
-          label="Due date (optional)"
-          type="date"
-          value={due}
-          onChange={(e) => setDue(e.target.value)}
-        />
+        <DateField label="Due date (optional)" value={due} onChange={setDue} />
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>
             Cancel

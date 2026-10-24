@@ -8,6 +8,7 @@ import {
   problem,
   renderApp,
   V1,
+  pickDate,
 } from '../../../tests/helpers';
 import { server } from '../../../tests/server';
 import type { Membership } from '../../services/api/types';
@@ -889,7 +890,7 @@ describe('settings and account', () => {
       await user.click(await screen.findByRole('button', { name: 'New to-do' }));
       const dialog = await screen.findByRole('dialog');
       await user.type(within(dialog).getByLabelText('Task'), 'Sign the form');
-      await user.type(within(dialog).getByLabelText('Due date (optional)'), '2030-05-06');
+      await pickDate(user, within(dialog).getByLabelText('Due date (optional)'), '2030-05-06');
       await user.click(await within(dialog).findByLabelText(/user-m1/));
       await user.click(within(dialog).getByRole('button', { name: 'Assign' }));
 

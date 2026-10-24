@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  DateField,
   Badge,
   Button,
   Card,
@@ -225,12 +226,7 @@ function TodoForm({ todo, onClose }: { todo: Todo | null; onClose: () => void })
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-        <TextField
-          label="Due date (optional)"
-          type="date"
-          value={due}
-          onChange={(e) => setDue(e.target.value)}
-        />
+        <DateField label="Due date (optional)" value={due} onChange={setDue} />
         {todo ? (
           <Card className="text-sm text-muted">
             Assigned to {who(todo.assignee as never)}. To give it to someone else, delete it and

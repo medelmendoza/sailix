@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { render } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
@@ -145,4 +145,29 @@ export function capture<T = unknown>() {
       calls.push({ body: body as T, url: new URL(request.url) });
     },
   };
+}
+
+/** Chooses a day in the date picker whose box is `box`: opens it, picks the month and year, then the day. */
+export async function pickDate(
+  user: ReturnType<typeof userEvent.setup>,
+  box: HTMLElement,
+  iso: string,
+) {
+  await user.click(box);
+  const dialog = await screen.findByRole('dialog', { name: 'Choose a date' });
+  await user.selectOptions(
+    within(dialog).getByLabelText('Month'),
+    String(Number(iso.slice(5, 7)) - 1),
+  );
+  await user.selectOptions(within(dialog).getByLabelText('Year'), iso.slice(0, 4));
+  const day = new Date(
+    Number(iso.slice(0, 4)),
+    Number(iso.slice(5, 7)) - 1,
+    Number(iso.slice(8, 10)),
+  );
+  await user.click(
+    within(dialog).getByRole('button', {
+      name: day.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' }),
+    }),
+  );
 }
