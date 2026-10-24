@@ -1,8 +1,18 @@
-import { Anchor, FileUp } from 'lucide-react';
+import { Anchor, Eye, FileUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Badge, Card, PageHero, Skeleton, StatTile } from '../../components/ui';
+import {
+  Badge,
+  EmptyState,
+  IconLink,
+  PageHero,
+  Skeleton,
+  SkeletonDataTable,
+  StatTile,
+  Table,
+} from '../../components/ui';
 import { ICONS } from '../../components/icons';
 import { hasFeature, useMe } from '../authentication/session';
+import { Panel, headerLink } from '../tenant/DashboardPanels';
 import { useMyAnnouncements, useMyDocumentRequests, useMyDocuments, useMyTodos } from './api';
 import { isOverdue, showDay } from './format';
 
@@ -99,76 +109,104 @@ export function PortalDashboardPage() {
 
       <div className="grid gap-6 xl:grid-cols-2">
         {showAnnouncements && (
-          <Card
-            title="Latest announcements"
-            actions={
-              <Link to="/portal/announcements" className="text-sm text-accent-600 hover:underline">
-                See all
-              </Link>
-            }
-          >
-            {announcements.isPending ? (
-              <div role="status" aria-label="Loading announcements" className="space-y-3">
-                {[0, 1, 2].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
-              </div>
-            ) : announcements.data && announcements.data.data.length > 0 ? (
-              <ul className="divide-y divide-line">
-                {announcements.data.data.map((a) => (
-                  <li key={a.id} className="flex items-center gap-3 py-2.5">
-                    {a.is_read === false && (
-                      <span
-                        aria-label="Unread"
-                        className="size-2.5 shrink-0 rounded-full bg-accent-600"
-                      />
-                    )}
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{a.title}</span>
-                    <span className="shrink-0 text-xs text-muted">{showDay(a.created_at)}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted">Nothing new from your organization.</p>
-            )}
-          </Card>
+          <div className="min-w-0">
+            <Panel
+              title="Latest announcements"
+              action={
+                <Link to="/portal/announcements" className={headerLink}>
+                  See all
+                </Link>
+              }
+            >
+              {announcements.isPending ? (
+                <SkeletonDataTable
+                  compact
+                  caption="Latest announcements"
+                  headers={['Title', 'Date', '']}
+                  cells={['strong', 'date', 'actions1']}
+                  rows={3}
+                  label="Loading announcements"
+                />
+              ) : announcements.data && announcements.data.data.length > 0 ? (
+                <Table compact caption="Latest announcements" headers={['Title', 'Date', '']}>
+                  {announcements.data.data.map((a) => (
+                    <tr key={a.id}>
+                      <td className="px-4 py-3 font-medium">
+                        <span className="flex items-center gap-2">
+                          {a.is_read === false && (
+                            <span
+                              aria-label="Unread"
+                              className="size-2.5 shrink-0 rounded-full bg-accent-600"
+                            />
+                          )}
+                          {a.title}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3">{showDay(a.created_at)}</td>
+                      <td className="px-4 py-3 text-right">
+                        <IconLink
+                          to="/portal/announcements"
+                          icon={Eye}
+                          label={`Read ${a.title}`}
+                          tip="Read"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </Table>
+              ) : (
+                <EmptyState title="Nothing new from your organization" />
+              )}
+            </Panel>
+          </div>
         )}
         {showTodos && (
-          <Card
-            title="Next to do"
-            actions={
-              <Link to="/portal/todos" className="text-sm text-accent-600 hover:underline">
-                See all
-              </Link>
-            }
-          >
-            {todos.isPending ? (
-              <div role="status" aria-label="Loading to-dos" className="space-y-3">
-                {[0, 1, 2].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
-              </div>
-            ) : todos.data && todos.data.data.length > 0 ? (
-              <ul className="divide-y divide-line">
-                {todos.data.data.map((t) => (
-                  <li key={t.id} className="flex items-center gap-3 py-2.5">
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                      {t.description}
-                    </span>
-                    {isOverdue(t.due_date, t.is_done) ? (
-                      <Badge tone="warning">Overdue</Badge>
-                    ) : (
-                      <span className="shrink-0 text-xs text-muted">
-                        {t.due_date ? `Due ${showDay(t.due_date)}` : ''}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted">Nothing to do right now.</p>
-            )}
-          </Card>
+          <div className="min-w-0">
+            <Panel
+              title="Next to do"
+              action={
+                <Link to="/portal/todos" className={headerLink}>
+                  See all
+                </Link>
+              }
+            >
+              {todos.isPending ? (
+                <SkeletonDataTable
+                  compact
+                  caption="Next to do"
+                  headers={['Task', 'Due date', '']}
+                  cells={['strong', 'date', 'actions1']}
+                  rows={3}
+                  label="Loading to-dos"
+                />
+              ) : todos.data && todos.data.data.length > 0 ? (
+                <Table compact caption="Next to do" headers={['Task', 'Due date', '']}>
+                  {todos.data.data.map((t) => (
+                    <tr key={t.id}>
+                      <td className="px-4 py-3 font-medium">{t.description}</td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        {isOverdue(t.due_date, t.is_done) ? (
+                          <Badge tone="warning">Overdue</Badge>
+                        ) : (
+                          showDay(t.due_date)
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <IconLink
+                          to="/portal/todos"
+                          icon={Eye}
+                          label={`Open ${t.description}`}
+                          tip="Open"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </Table>
+              ) : (
+                <EmptyState title="Nothing to do right now" />
+              )}
+            </Panel>
+          </div>
         )}
       </div>
     </>

@@ -65,6 +65,17 @@ class AnnouncementTest extends TestCase
         $this->assertSame(2, $page->json('meta.current_page'));
     }
 
+    public function test_a_member_can_search_the_announcements_by_title(): void
+    {
+        $this->setUpTwoOrganizations();
+        $this->create('adminA', ['title' => 'February allotment']);
+        $this->create('adminA', ['title' => 'Training for COP']);
+
+        $hit = $this->getJson('/api/v1/announcements?filter[title]=train', $this->as('crewA'))->assertOk();
+        $this->assertSame(['Training for COP'], array_column($hit->json('data'), 'title'));
+        $this->assertSame([], $this->getJson('/api/v1/announcements?filter[title]=%25', $this->as('crewA'))->json('data'), 'a percent sign is text');
+    }
+
     public function test_the_organization_and_author_come_from_the_session_never_the_body(): void
     {
         $this->setUpTwoOrganizations();

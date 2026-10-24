@@ -3641,6 +3641,8 @@ export interface operations {
     listAnnouncements: {
         parameters: {
             query?: {
+                /** @description The title contains this (a percent sign or underscore is text, not a wildcard). */
+                "filter[title]"?: string;
                 page?: number;
                 per_page?: number;
             };

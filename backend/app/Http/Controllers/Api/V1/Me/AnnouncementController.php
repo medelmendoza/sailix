@@ -21,7 +21,10 @@ class AnnouncementController extends Controller
     public function index(Request $request, TenantContext $context): JsonResponse
     {
         $member = $context->membershipId();
+        $title = is_string($request->input('filter.title')) && trim($request->input('filter.title')) !== ''
+            ? '%'.addcslashes(trim($request->input('filter.title')), '%_\\').'%' : null;
         $page = $this->visible($member)
+            ->when($title, fn ($q, $v) => $q->where('title', 'like', $v))
             ->orderByDesc('created_at')->orderBy('id')
             ->paginate(min((int) $request->input('per_page', 20), 100));
 

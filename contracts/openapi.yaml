@@ -516,6 +516,7 @@ paths:
         Shows only announcements that are switched on and not past their end date. `is_read` is the caller's own read
         state. `unread_count` counts every unread visible announcement, not only this page.
       parameters:
+        - { name: 'filter[title]', in: query, description: 'The title contains this (a percent sign or underscore is text, not a wildcard).', schema: { type: string } }
         - { name: page, in: query, schema: { type: integer, minimum: 1 } }
         - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
       responses:

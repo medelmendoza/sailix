@@ -1,4 +1,4 @@
-import { Paperclip } from 'lucide-react';
+import { Eye, Paperclip } from 'lucide-react';
 import { useState } from 'react';
 import {
   Button,
@@ -6,11 +6,15 @@ import {
   ErrorState,
   FileTile,
   FormDialog,
+  IconButton,
   PageHeader,
   Pagination,
-  Skeleton,
+  SearchField,
+  SkeletonDataTable,
+  Table,
   fileSize,
   useToast,
+  type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { Announcement } from '../../services/api/types';
@@ -18,6 +22,8 @@ import { openMyFile, useMarkAnnouncementRead, useMyAnnouncements } from './api';
 import { showDay } from './format';
 
 const PER_PAGE = 10;
+const HEADERS = ['Title', 'Date', ''];
+const CELLS: CellKind[] = ['strong', 'date', 'actions1'];
 
 /** One announcement, read in full. Opening it marks it read. */
 export function AnnouncementDialog({
@@ -66,10 +72,15 @@ export function AnnouncementDialog({
   );
 }
 
-/** What the organization told its crew: newest first, the unread ones marked. */
+/** What the organization told its crew, as the same kind of table the admin portal uses: newest first, unread ones marked, searched and paged on the server. */
 export function PortalAnnouncementsPage() {
   const [page, setPage] = useState(1);
-  const list = useMyAnnouncements({ page, per_page: PER_PAGE });
+  const [title, setTitle] = useState('');
+  const list = useMyAnnouncements({
+    page,
+    per_page: PER_PAGE,
+    ...(title ? { 'filter[title]': title } : {}),
+  });
   const markRead = useMarkAnnouncementRead();
   const [open, setOpen] = useState<Announcement | null>(null);
 
@@ -81,64 +92,63 @@ export function PortalAnnouncementsPage() {
   return (
     <>
       <PageHeader title="Announcements" description="Messages from your organization." />
+      <div className="mb-4 max-w-sm">
+        <SearchField
+          label="Search announcements"
+          placeholder="Search by title"
+          value={title}
+          onSearch={(v) => {
+            setTitle(v);
+            setPage(1);
+          }}
+        />
+      </div>
       {list.isPending ? (
-        <div role="status" aria-label="Loading announcements" className="flex flex-col gap-3">
-          {Array.from({ length: 4 }, (_, i) => (
-            <div
-              key={i}
-              className="rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-[var(--shadow-soft)]"
-            >
-              <div className="flex h-5 items-center">
-                <Skeleton className="h-4 w-1/3" />
-              </div>
-              <div className="mt-1 flex h-4 items-center">
-                <Skeleton className="h-3 w-24" />
-              </div>
-              <div className="mt-2 space-y-1.5">
-                <Skeleton className="h-3.5 w-full" />
-                <Skeleton className="h-3.5 w-2/3" />
-              </div>
-            </div>
-          ))}
-        </div>
+        <SkeletonDataTable
+          caption="Announcements"
+          headers={HEADERS}
+          cells={CELLS}
+          rows={5}
+          label="Loading announcements"
+        />
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
         <EmptyState
-          title="No announcements yet"
-          description="Messages from your organization show up here."
+          title={title ? 'No announcement matches' : 'No announcements yet'}
+          description={title ? undefined : 'Messages from your organization show up here.'}
         />
       ) : (
         <>
-          <ul className="flex flex-col gap-3">
+          <Table caption="Announcements" headers={HEADERS}>
             {list.data.data.map((a) => (
-              <li key={a.id}>
-                <button
-                  type="button"
-                  onClick={() => view(a)}
-                  aria-label={`Read ${a.title}`}
-                  className="card-hover w-full rounded-[var(--radius-card)] border border-line bg-surface p-4 text-left shadow-[var(--shadow-soft)]"
-                >
-                  <span className="flex items-center gap-2">
+              <tr key={a.id}>
+                <td className="px-4 py-3">
+                  <span className="flex items-center gap-2 font-medium">
                     {a.is_read === false && (
                       <span
                         aria-label="Unread"
                         className="size-2.5 shrink-0 rounded-full bg-accent-600"
                       />
                     )}
-                    <span className="min-w-0 flex-1 truncate font-heading text-base font-bold">
-                      {a.title}
-                    </span>
+                    {a.title}
                     {a.attachment ? (
                       <Paperclip className="size-4 shrink-0 text-muted" aria-label="Has a file" />
                     ) : null}
                   </span>
-                  <span className="mt-0.5 block text-xs text-muted">{showDay(a.created_at)}</span>
-                  <span className="mt-2 line-clamp-2 block text-sm">{a.body}</span>
-                </button>
-              </li>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3">{showDay(a.created_at)}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-right">
+                  <IconButton
+                    icon={Eye}
+                    label={`Read ${a.title}`}
+                    tip="Read"
+                    onClick={() => view(a)}
+                  />
+                </td>
+              </tr>
             ))}
-          </ul>
+          </Table>
           <Pagination meta={list.data.meta} loading={list.isFetching} onPage={setPage} />
         </>
       )}

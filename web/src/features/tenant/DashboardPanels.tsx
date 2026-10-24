@@ -25,7 +25,7 @@ import { DASHBOARD_PANEL_SIZE, useAnnouncements, useCrewList, useDocuments } fro
 const PER_PANEL = DASHBOARD_PANEL_SIZE;
 
 /** A working panel of the dashboard: a title with a count and a link to the full list, then a short list and its own paging. */
-function Panel({
+export function Panel({
   title,
   count,
   action,
@@ -61,7 +61,7 @@ function Panel({
   );
 }
 
-const headerLink =
+export const headerLink =
   'rounded-full border border-line px-3 py-1 text-xs font-medium transition-colors hover:border-brand-600 hover:text-brand-800';
 
 /** The panels' columns, shared with their loading placeholders so the two always have the same shape. */

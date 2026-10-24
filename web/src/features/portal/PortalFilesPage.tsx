@@ -1,9 +1,8 @@
-import { Eye, Pencil } from 'lucide-react';
+import { Eye, FileUp, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import {
   Badge,
   Button,
-  Card,
   DateField,
   EmptyState,
   ErrorState,
@@ -14,7 +13,6 @@ import {
   PageHeader,
   SelectField,
   SkeletonDataTable,
-  StatusTabs,
   Table,
   TextField,
   useToast,
@@ -191,35 +189,43 @@ export function PortalFilesPage() {
       )}
 
       {requests.data && requests.data.length > 0 && (
-        <Card title="Your organization asked for" className="mb-4">
-          <ul className="divide-y divide-line text-sm">
+        <section aria-labelledby="asked-for" className="mb-6">
+          <h2 id="asked-for" className="mb-3 text-base font-semibold">
+            Your organization asked for
+          </h2>
+          <Table caption="Documents asked for" headers={['Document', 'Asked on', '']} compact>
             {requests.data.map((r) => (
-              <li key={r.type.id} className="flex items-center justify-between gap-3 py-2">
-                <span className="font-medium">{r.type.name}</span>
-                <Button variant="secondary" onClick={() => setForm({ type: r.type.id })}>
-                  Send it in
-                </Button>
-              </li>
+              <tr key={r.type.id}>
+                <td className="px-4 py-3 font-medium">{r.type.name}</td>
+                <td className="whitespace-nowrap px-4 py-3">{showDay(r.requested_at)}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-right">
+                  <IconButton
+                    icon={FileUp}
+                    tone="primary"
+                    label={`Send in ${r.type.name}`}
+                    tip="Send it in"
+                    onClick={() => setForm({ type: r.type.id })}
+                  />
+                </td>
+              </tr>
             ))}
-          </ul>
-        </Card>
+          </Table>
+        </section>
       )}
 
-      <div className="mb-4">
-        <StatusTabs
-          label="Documents"
+      <div className="mb-4 max-w-xs">
+        <SelectField
+          label="Show"
           value={view}
-          onChange={(k) => setView(k as DocumentView)}
-          tabs={[
+          onChange={(e) => setView(e.target.value as DocumentView)}
+          options={[
             {
-              key: 'approved',
-              label: 'Approved',
-              count: approved.data ? approved.data.data.length : null,
+              value: 'approved',
+              label: `Approved${approved.data ? ` (${approved.data.data.length})` : ''}`,
             },
             {
-              key: 'review',
-              label: 'Under review',
-              count: review.data ? review.data.data.length : null,
+              value: 'review',
+              label: `Under review${review.data ? ` (${review.data.data.length})` : ''}`,
             },
           ]}
         />

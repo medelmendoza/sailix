@@ -177,6 +177,56 @@ describe('Client portal: announcements', () => {
   });
 });
 
+describe('Client portal: tables like the admin portal', () => {
+  it('shows announcements and to-dos as tables with column headings and icon buttons', async () => {
+    asCrew();
+    portalApi();
+    const { user } = renderApp('/portal/announcements');
+
+    await screen.findByRole('button', { name: 'Read February allotment is out' }); // the data is here
+    const table = screen.getByRole('table', { name: 'Announcements' });
+    expect(
+      within(table)
+        .getAllByRole('columnheader')
+        .map((h) => h.textContent),
+    ).toEqual(['Title', 'Date', '']);
+    expect(
+      within(table).getByRole('button', { name: 'Read February allotment is out' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Showing 1-2 of 2/)).toBeInTheDocument(); // the same paging bar as the admin tables
+
+    await user.click(screen.getByRole('link', { name: 'To-do list' }));
+    await screen.findByRole('button', { name: 'Mark as done: Renew your passport' });
+    const todos = screen.getByRole('table', { name: 'To-dos' });
+    expect(
+      within(todos)
+        .getAllByRole('columnheader')
+        .map((h) => h.textContent),
+    ).toEqual(['Task', 'Due date', 'Status', '']);
+    expect(within(todos).getByText('Overdue')).toBeInTheDocument();
+  });
+
+  it('searches the announcements by title on the server', async () => {
+    asCrew();
+    const asked: URL[] = [];
+    portalApi([
+      http.get(`${V1}/announcements`, ({ request }) => {
+        asked.push(new URL(request.url));
+        return HttpResponse.json({
+          ...pageOf([note('a1', 'February allotment is out')]),
+          unread_count: 0,
+        });
+      }),
+    ]);
+    const { user } = renderApp('/portal/announcements');
+    await screen.findByText('February allotment is out');
+
+    await user.type(screen.getByLabelText('Search announcements'), 'allot');
+    await waitFor(() => expect(asked.at(-1)?.searchParams.get('filter[title]')).toBe('allot'));
+    expect(asked.at(-1)?.searchParams.get('page')).toBe('1');
+  });
+});
+
 describe('Client portal: files', () => {
   it('lists approved documents with their expiry, warns, and shows what is under review', async () => {
     asCrew();
@@ -203,7 +253,7 @@ describe('Client portal: files', () => {
     expect(screen.getByRole('status')).toHaveTextContent('1 document expires soon.');
     expect(screen.getByText('US Visa')).toBeInTheDocument(); // what the organization asked for
 
-    await user.click(screen.getByRole('tab', { name: /Under review/ }));
+    await user.selectOptions(screen.getByLabelText('Show'), 'review');
     expect(await screen.findByText('Sent back')).toBeInTheDocument();
     expect(screen.getByText('Scan is blurry')).toBeInTheDocument();
   });
@@ -254,7 +304,7 @@ describe('Client portal: to-dos', () => {
 
     expect(await screen.findByText('Renew your passport')).toBeInTheDocument();
     expect(screen.getByText('Overdue')).toBeInTheDocument();
-    await user.click(screen.getByRole('checkbox', { name: 'Mark as done: Renew your passport' }));
+    await user.click(screen.getByRole('button', { name: 'Mark as done: Renew your passport' }));
     await waitFor(() => expect(patched.calls).toHaveLength(1));
     expect(patched.calls[0]!.body).toEqual({ is_done: true });
   });
