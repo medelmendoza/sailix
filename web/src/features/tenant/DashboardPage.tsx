@@ -7,7 +7,7 @@ import { useDashboard } from './api';
 import { DashboardPanels } from './DashboardPanels';
 
 /** A figure that has not arrived shimmers; one that has is shown, with a plain hint under it. */
-const figure = (v?: number) => (v === undefined ? <Skeleton className="h-7 w-10" /> : v);
+const figure = (v?: number) => (v === undefined ? <Skeleton className="h-[30px] w-10" /> : v);
 
 export function DashboardPage() {
   const me = useMe();

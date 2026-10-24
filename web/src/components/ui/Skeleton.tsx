@@ -34,9 +34,16 @@ export function SkeletonStatTiles({ count = 4 }: { count?: number }) {
           key={i}
           className="rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-[var(--shadow-soft)]"
         >
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="mt-3 h-7 w-12" />
-          <Skeleton className="mt-2 h-3 w-28" />
+          {/* the real StatTile's lines: label 16px, figure 30px (mt-1), hint 16px (mt-0.5) */}
+          <div className="flex h-4 items-center">
+            <Skeleton className="h-3 w-20" />
+          </div>
+          <div className="mt-1 flex h-[30px] items-center">
+            <Skeleton className="h-6 w-12" />
+          </div>
+          <div className="mt-0.5 flex h-4 items-center">
+            <Skeleton className="h-3 w-28" />
+          </div>
         </div>
       ))}
     </div>
@@ -112,8 +119,8 @@ export function SkeletonCard({ lines = 4, label = 'Loading' }: { lines?: number;
 
 /**
  * One kind of cell in a loading table: the shape of what the real cell holds, at the same height.
- * `stack` is a name over a small grey line (two lines), `stack3` has a third; `actions1` to `actions3` are that many ghost
- * buttons at the end of the row.
+ * `stack` is a name over a small grey line (two lines), `stack3` has a third; `actions1` to `actions3` are that many round
+ * icon buttons at the end of the row.
  */
 export type CellKind =
   | 'identity'
@@ -127,15 +134,14 @@ export type CellKind =
   | 'chevron'
   | 'actions1'
   | 'actions2'
-  | 'actions3';
+  | 'actions3'
+  | 'actions4';
 
 const WIDTHS = ['w-40', 'w-32', 'w-44', 'w-36'];
-const SHORT = ['w-20', 'w-16', 'w-24', 'w-14'];
 const TEXT = ['w-24', 'w-28', 'w-20', 'w-32'];
 
 function SkeletonCell({ kind, row }: { kind: CellKind; row: number }) {
   const w = WIDTHS[row % WIDTHS.length] ?? 'w-36';
-  const short = SHORT[row % SHORT.length] ?? 'w-16';
   const line = (cls: string, h = 'h-5') => (
     <div className={cn('flex items-center', h)}>
       <Skeleton className={cn('h-3.5', cls)} />
@@ -189,12 +195,14 @@ function SkeletonCell({ kind, row }: { kind: CellKind; row: number }) {
       );
     case 'actions1':
     case 'actions2':
-    case 'actions3': {
+    case 'actions3':
+    case 'actions4': {
+      // the real row actions are round 36px icon buttons
       const n = Number(kind.slice(-1));
       return (
         <div className="flex justify-end gap-1">
           {Array.from({ length: n }, (_, i) => (
-            <Skeleton key={i} className={cn('h-10 rounded-full', i === 0 ? 'w-16' : short)} />
+            <Skeleton key={i} className="size-9 shrink-0 rounded-full" />
           ))}
         </div>
       );

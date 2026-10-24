@@ -22,7 +22,7 @@ import { useCrewDocuments, useDocuments, useSetDocumentRequest } from './api';
 export const CHECKLIST_HEADERS = ['Document', 'Number', 'Expires', 'Status', 'Ask'];
 export const CHECKLIST_CELLS: CellKind[] = ['strong', 'text', 'date', 'pill', 'text'];
 const UPLOAD_HEADERS = ['Document', 'Sent', ''];
-const UPLOAD_CELLS: CellKind[] = ['stack', 'date', 'actions2'];
+const UPLOAD_CELLS: CellKind[] = ['stack', 'date', 'actions1'];
 
 type State = CrewDocumentRow['state'];
 const STATE: Record<State, { label: string; tone: 'success' | 'warning' | 'danger' | 'neutral' }> =

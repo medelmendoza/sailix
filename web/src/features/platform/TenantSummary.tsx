@@ -8,7 +8,7 @@ const sum = (...v: (number | undefined)[]) =>
 /** The summary row: how many organizations, how many are live, how many need attention, how many are closed. */
 export function TenantSummary() {
   const c = useTenantCounts();
-  const figure = (v?: number) => (v === undefined ? <Skeleton className="h-7 w-10" /> : v);
+  const figure = (v?: number) => (v === undefined ? <Skeleton className="h-[30px] w-10" /> : v);
   const hint = (ready: boolean, text: string) =>
     ready ? text : <Skeleton className="mt-1 h-3 w-32" />;
   const attention = c.provisioning !== undefined && c.suspended !== undefined;

@@ -44,7 +44,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 /** This table's columns, shared with its loading placeholder so the two always have the same shape. */
 const ANNOUNCEMENT_HEADERS = ['Title', 'Recipients', 'Status', 'Shown until', 'Written', ''];
-const ANNOUNCEMENT_CELLS: CellKind[] = ['stack', 'text', 'pill', 'date', 'date', 'actions3'];
+const ANNOUNCEMENT_CELLS: CellKind[] = ['stack', 'text', 'pill', 'date', 'date', 'actions4'];
 
 const schema = z.object({
   title: z.string().trim().min(1, 'Enter a title.').max(150, 'At most 150 characters.'),

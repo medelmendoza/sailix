@@ -66,11 +66,11 @@ const headerLink =
 
 /** The panels' columns, shared with their loading placeholders so the two always have the same shape. */
 const APPLICATION_HEADERS = ['Name', 'Crew ID', 'Rank', 'Fleet', ''];
-const APPLICATION_CELLS: CellKind[] = ['strong', 'text', 'text', 'text', 'text'];
+const APPLICATION_CELLS: CellKind[] = ['strong', 'text', 'text', 'text', 'actions1'];
 const DOCUMENT_HEADERS = ['Name', 'Crew ID', 'Document', ''];
-const DOCUMENT_CELLS: CellKind[] = ['strong', 'text', 'text', 'text'];
+const DOCUMENT_CELLS: CellKind[] = ['strong', 'text', 'text', 'actions1'];
 const ANNOUNCEMENT_HEADERS = ['Title', 'Date', 'Author', 'Status', ''];
-const ANNOUNCEMENT_CELLS: CellKind[] = ['strong', 'date', 'text', 'pill', 'text'];
+const ANNOUNCEMENT_CELLS: CellKind[] = ['strong', 'date', 'text', 'pill', 'actions1'];
 
 const nameOf = (
   profile: { first_name?: string | null; last_name?: string | null } | null | undefined,
