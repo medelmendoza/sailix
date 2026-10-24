@@ -1,8 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { X } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
+  FileDrop,
+  FileTile,
+  fileSize,
   DateField,
   Badge,
   Button,
@@ -338,34 +342,55 @@ function AnnouncementForm({
             />
           )}
         />
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
           <label htmlFor="announcement-file" className="text-sm font-medium">
             Attached file (optional)
           </label>
-          {announcement?.attachment && !file ? (
-            <p className="text-xs text-muted">
-              {dropFile
-                ? 'The current file will be removed.'
-                : `Current file: ${announcement.attachment.name}.`}{' '}
+          {announcement?.attachment && !file && !dropFile ? (
+            // the file it already has: shown as a card, with a way to take it off
+            <div className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-3">
+              <FileTile contentType={announcement.attachment.type} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold leading-5">
+                  {announcement.attachment.name}
+                </p>
+                <p className="text-xs leading-4 text-muted">
+                  Current file · {fileSize(announcement.attachment.size)}
+                </p>
+              </div>
               <button
                 type="button"
-                className="text-brand-700 underline"
-                onClick={() => setDropFile((v) => !v)}
+                title="Remove the current file"
+                aria-label="Remove the current file"
+                onClick={() => setDropFile(true)}
+                className="rounded-full p-2 text-muted transition-colors hover:bg-bad-bg hover:text-bad-fg"
               >
-                {dropFile ? 'Keep it' : 'Remove it'}
+                <X className="size-4" aria-hidden="true" />
               </button>
-            </p>
-          ) : null}
-          <input
-            id="announcement-file"
-            type="file"
-            accept="application/pdf,image/jpeg,image/png"
-            className="text-sm"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
-          <p className="text-xs text-muted">
-            A PDF, JPEG or PNG. Choosing a file replaces the current one.
-          </p>
+            </div>
+          ) : (
+            <>
+              {dropFile ? (
+                <p className="text-xs text-muted">
+                  The current file will be removed.{' '}
+                  <button
+                    type="button"
+                    className="text-brand-700 underline"
+                    onClick={() => setDropFile(false)}
+                  >
+                    Keep it
+                  </button>
+                </p>
+              ) : null}
+              <FileDrop
+                id="announcement-file"
+                file={file}
+                onFile={setFile}
+                accept="application/pdf,image/jpeg,image/png"
+                hint="A PDF, JPEG or PNG."
+              />
+            </>
+          )}
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>

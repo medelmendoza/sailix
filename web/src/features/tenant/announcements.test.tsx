@@ -205,8 +205,10 @@ describe('Announcements: attached file', () => {
     const { user } = renderApp('/app/announcements');
     await user.click(await screen.findByRole('button', { name: /^Edit February/ }));
     const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText(/Current file: old.pdf/)).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: 'Remove it' }));
+    expect(within(dialog).getByText('old.pdf')).toBeInTheDocument();
+    expect(within(dialog).getByText(/Current file · 2 KB/)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Remove the current file' }));
+    expect(within(dialog).getByText(/The current file will be removed/)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(removed.calls).toHaveLength(1));

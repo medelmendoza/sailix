@@ -4,6 +4,7 @@ export { Button } from './Button';
 export { ConfirmDialog, FormDialog } from './Dialog';
 export { DateField, SelectField, TextAreaField, TextField } from './Field';
 export { DatePicker } from './DatePicker';
+export { DropZone, FileDrop, FileTile, fileSize } from './FileDrop';
 export { Card, EmptyState, ErrorState, FormError, PageHeader, PageHero, Spinner } from './Layout';
 export {
   Skeleton,

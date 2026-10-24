@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { Button, Card, FormError, PageHeader, Table, useToast } from '../../components/ui';
+import {
+  Button,
+  Card,
+  FileDrop,
+  FormError,
+  PageHeader,
+  Table,
+  useToast,
+} from '../../components/ui';
 import { describeError } from '../../services/api/errors';
 import type { FinanceImportResult } from '../../services/api/types';
 import { downloadImportTemplate, useFinanceImport, type ImportKind } from './api';
@@ -40,7 +48,6 @@ function ImportSection({ kind, title, note }: { kind: ImportKind; title: string;
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<FinanceImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [input, setInput] = useState(0); // changing the key empties the file field
 
   function choose(f: File | null) {
     setFile(f);
@@ -67,7 +74,6 @@ function ImportSection({ kind, title, note }: { kind: ImportKind; title: string;
       if (done.imported) {
         toast.success(`Loaded ${done.rows} row(s): ${done.created} new, ${done.updated} updated.`);
         choose(null);
-        setInput((n) => n + 1);
       } else {
         setResult(done); // something changed since the check
       }
@@ -83,6 +89,18 @@ function ImportSection({ kind, title, note }: { kind: ImportKind; title: string;
       <p className="mb-3 text-sm text-muted">{note}</p>
       <div className="flex flex-col gap-3">
         <FormError message={error} />
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`import-${kind}`} className="text-sm font-medium">
+            {title} CSV file
+          </label>
+          <FileDrop
+            id={`import-${kind}`}
+            file={file}
+            onFile={choose}
+            accept=".csv,.txt,text/csv"
+            hint="A CSV exported from your payroll system."
+          />
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="secondary"
@@ -92,16 +110,6 @@ function ImportSection({ kind, title, note }: { kind: ImportKind; title: string;
           >
             Download the template
           </Button>
-          <label className="text-sm font-medium">
-            {title} CSV file
-            <input
-              key={input}
-              type="file"
-              accept=".csv,.txt,text/csv"
-              className="mt-1 block text-sm"
-              onChange={(e) => choose(e.target.files?.[0] ?? null)}
-            />
-          </label>
           <Button loading={check.isPending} onClick={() => void runCheck()}>
             Check the file
           </Button>
