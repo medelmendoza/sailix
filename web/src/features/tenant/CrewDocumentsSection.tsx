@@ -193,15 +193,24 @@ function AssignDocuments({ crew }: { crew: Crew }) {
                         <Badge tone={s.tone}>{s.label}</Badge>
                       </td>
                       <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          aria-label={`Ask for ${r.type.name}`}
-                          checked={r.requested}
-                          disabled={!canAsk || set.isPending}
-                          onChange={(e) =>
-                            set.mutate({ typeId: r.type.id, requested: e.target.checked })
-                          }
-                        />
+                        {set.isPending && set.variables?.typeId === r.type.id ? (
+                          // this row's request is on its way: a small ring where the box was
+                          <span
+                            role="status"
+                            aria-label={`Saving ${r.type.name}`}
+                            className="block size-4 animate-spin rounded-full border-2 border-brand-700 border-t-transparent motion-reduce:animate-[spin_2s_linear_infinite]"
+                          />
+                        ) : (
+                          <input
+                            type="checkbox"
+                            aria-label={`Ask for ${r.type.name}`}
+                            checked={r.requested}
+                            disabled={!canAsk || set.isPending}
+                            onChange={(e) =>
+                              set.mutate({ typeId: r.type.id, requested: e.target.checked })
+                            }
+                          />
+                        )}
                       </td>
                     </tr>
                   );

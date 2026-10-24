@@ -364,6 +364,27 @@ describe('Crew profile', () => {
     await waitFor(() => expect(withdrawn.calls).toHaveLength(1));
   });
 
+  it('shows a ring in that row while the request is on its way, then the box again', async () => {
+    asTenantAdmin();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    profileApi([
+      http.put(`${V1}/tenant/crew/c1/document-requests/dt2`, async () => {
+        await gate;
+        return HttpResponse.json({ data: { requested: true } }, { status: 201 });
+      }),
+    ]);
+    const { user } = renderApp('/app/crew/c1?tab=documents');
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Ask for US Visa' }));
+    expect(await screen.findByRole('status', { name: 'Saving US Visa' })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'Ask for US Visa' })).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: "Ask for Seaman's Book" })).toBeDisabled(); // no second request meanwhile
+
+    release();
+    expect(await screen.findByRole('checkbox', { name: 'Ask for US Visa' })).toBeInTheDocument();
+  });
+
   it('cannot ask a member who is not active', async () => {
     asTenantAdmin();
     profileApi([
