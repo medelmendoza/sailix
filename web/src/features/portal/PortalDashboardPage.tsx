@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Badge,
+  Button,
   EmptyState,
   IconLink,
   PageHero,
@@ -11,13 +12,12 @@ import {
   SkeletonDataTable,
   StatTile,
   Table,
+  TextField,
 } from '../../components/ui';
 import { ICONS } from '../../components/icons';
 import { hasFeature, useMe } from '../authentication/session';
-import { Panel, headerLink } from '../tenant/DashboardPanels';
+import { PANEL_BODY, Panel, headerLink } from '../tenant/DashboardPanels';
 
-/** A panel with a table of five rows and its paging bar: 40px padding, 41px header, five rows of 61px, the bar (48px). */
-const BODY = 'min-h-[436px]';
 import { useMyAnnouncements, useMyDocumentRequests, useMyDocuments, useMyTodos } from './api';
 import { isOverdue, showDay } from './format';
 
@@ -31,8 +31,18 @@ export function PortalDashboardPage() {
   const showTodos = hasFeature(me, 'todos');
   const [announcementPage, setAnnouncementPage] = useState(1);
   const [todoPage, setTodoPage] = useState(1);
-  const announcements = useMyAnnouncements({ page: announcementPage, per_page: 5 });
-  const todos = useMyTodos('open', { page: todoPage, per_page: 5 });
+  const [announcementSearch, setAnnouncementSearch] = useState({ typed: '', applied: '' });
+  const [todoSearch, setTodoSearch] = useState({ typed: '', applied: '' });
+  const announcements = useMyAnnouncements({
+    page: announcementPage,
+    per_page: 5,
+    ...(announcementSearch.applied ? { 'filter[title]': announcementSearch.applied } : {}),
+  });
+  const todos = useMyTodos('open', {
+    page: todoPage,
+    per_page: 5,
+    ...(todoSearch.applied ? { 'filter[description]': todoSearch.applied } : {}),
+  });
   const documents = useMyDocuments('approved');
   const requests = useMyDocumentRequests();
   const first = (me.profile?.first_name ?? me.user.display_name ?? me.user.username).split(' ')[0];
@@ -118,7 +128,7 @@ export function PortalDashboardPage() {
         {showAnnouncements && (
           <div className="min-w-0">
             <Panel
-              bodyClass={BODY}
+              bodyClass={PANEL_BODY}
               title="Latest announcements"
               action={
                 <Link to="/portal/announcements" className={headerLink}>
@@ -126,6 +136,37 @@ export function PortalDashboardPage() {
                 </Link>
               }
             >
+              <form
+                role="search"
+                aria-label="Search announcements"
+                className="mb-3 flex items-end gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setAnnouncementSearch((cur) => ({ ...cur, applied: cur.typed.trim() }));
+                  setAnnouncementPage(1);
+                }}
+              >
+                <div className="flex-1">
+                  <TextField
+                    label="Title"
+                    value={announcementSearch.typed}
+                    onChange={(e) =>
+                      setAnnouncementSearch((cur) => ({ ...cur, typed: e.target.value }))
+                    }
+                    maxLength={100}
+                  />
+                </div>
+                <Button type="submit">Search</Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setAnnouncementSearch({ typed: '', applied: '' });
+                    setAnnouncementPage(1);
+                  }}
+                >
+                  Clear
+                </Button>
+              </form>
               {announcements.isPending ? (
                 <SkeletonDataTable
                   compact
@@ -170,7 +211,13 @@ export function PortalDashboardPage() {
                   />
                 </>
               ) : (
-                <EmptyState title="Nothing new from your organization" />
+                <EmptyState
+                  title={
+                    announcementSearch.applied
+                      ? 'No announcement matches'
+                      : 'Nothing new from your organization'
+                  }
+                />
               )}
             </Panel>
           </div>
@@ -178,7 +225,7 @@ export function PortalDashboardPage() {
         {showTodos && (
           <div className="min-w-0">
             <Panel
-              bodyClass={BODY}
+              bodyClass={PANEL_BODY}
               title="Next to do"
               action={
                 <Link to="/portal/todos" className={headerLink}>
@@ -186,6 +233,35 @@ export function PortalDashboardPage() {
                 </Link>
               }
             >
+              <form
+                role="search"
+                aria-label="Search to-dos"
+                className="mb-3 flex items-end gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setTodoSearch((cur) => ({ ...cur, applied: cur.typed.trim() }));
+                  setTodoPage(1);
+                }}
+              >
+                <div className="flex-1">
+                  <TextField
+                    label="Task"
+                    value={todoSearch.typed}
+                    onChange={(e) => setTodoSearch((cur) => ({ ...cur, typed: e.target.value }))}
+                    maxLength={100}
+                  />
+                </div>
+                <Button type="submit">Search</Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setTodoSearch({ typed: '', applied: '' });
+                    setTodoPage(1);
+                  }}
+                >
+                  Clear
+                </Button>
+              </form>
               {todos.isPending ? (
                 <SkeletonDataTable
                   compact
@@ -226,7 +302,9 @@ export function PortalDashboardPage() {
                   />
                 </>
               ) : (
-                <EmptyState title="Nothing to do right now" />
+                <EmptyState
+                  title={todoSearch.applied ? 'No task matches' : 'Nothing to do right now'}
+                />
               )}
             </Panel>
           </div>

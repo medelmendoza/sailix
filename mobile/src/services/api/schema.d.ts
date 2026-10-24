@@ -3945,6 +3945,8 @@ export interface operations {
         parameters: {
             query?: {
                 status?: "open" | "done";
+                /** @description The task text contains this (a percent sign or underscore is text, not a wildcard). */
+                "filter[description]"?: string;
                 page?: number;
                 per_page?: number;
             };

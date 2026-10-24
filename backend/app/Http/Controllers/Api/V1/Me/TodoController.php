@@ -26,6 +26,12 @@ class TodoController extends Controller
             $query->where('is_done', true);
         }
 
+        // search by the words of the task (a percent sign or underscore is text, not a wildcard)
+        $text = $request->input('filter.description');
+        if (is_string($text) && trim($text) !== '') {
+            $query->where('description', 'like', '%'.addcslashes(trim($text), '%_\\').'%');
+        }
+
         // Open first, soonest due first (no date last), then the newest.
         $page = $query->orderBy('is_done')
             ->orderByRaw('due_date is null')->orderBy('due_date')

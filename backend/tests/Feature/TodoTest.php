@@ -44,6 +44,18 @@ class TodoTest extends TestCase
         $this->assertSame([], $this->getJson('/api/v1/todos', $this->as('adminA'))->json('data')); // the admin was not assigned
     }
 
+    public function test_a_member_can_search_their_tasks_by_their_words(): void
+    {
+        $this->setUpOrganizations();
+        $this->assign('adminA', ['crewA'], ['description' => 'Renew your passport'])->assertCreated();
+        $this->assign('adminA', ['crewA'], ['description' => 'Sign the contract'])->assertCreated();
+
+        $hit = $this->getJson('/api/v1/todos?filter[description]=passp', $this->as('crewA'))->assertOk();
+        $this->assertSame(['Renew your passport'], array_column($hit->json('data'), 'description'));
+        $this->assertSame(2, $hit->json('open_count')); // the counts still cover every task
+        $this->assertSame([], $this->getJson('/api/v1/todos?filter[description]=%25', $this->as('crewA'))->json('data'), 'a percent sign is text');
+    }
+
     public function test_the_organization_author_and_state_come_from_the_session_never_the_body(): void
     {
         $this->setUpOrganizations();

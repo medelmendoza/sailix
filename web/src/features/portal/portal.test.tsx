@@ -145,6 +145,46 @@ describe('Client portal: dashboard', () => {
     expect(screen.queryByRole('link', { name: 'Services' })).not.toBeInTheDocument();
   });
 
+  it('searches its two panels on the server, like the admin dashboard panels', async () => {
+    asCrew();
+    const announcements: URL[] = [];
+    const todos: URL[] = [];
+    portalApi([
+      http.get(`${V1}/announcements`, ({ request }) => {
+        announcements.push(new URL(request.url));
+        return HttpResponse.json({
+          ...pageOf([note('a1', 'February allotment is out')]),
+          unread_count: 1,
+        });
+      }),
+      http.get(`${V1}/todos`, ({ request }) => {
+        todos.push(new URL(request.url));
+        return HttpResponse.json({
+          ...pageOf([todo('t1', 'Renew your passport')]),
+          open_count: 1,
+          overdue_count: 0,
+        });
+      }),
+    ]);
+    const { user } = renderApp('/portal');
+    await screen.findByText('February allotment is out');
+
+    const news = screen.getByRole('region', { name: 'Latest announcements' });
+    await user.type(within(news).getByLabelText('Title'), ' allot ');
+    await user.click(within(news).getByRole('button', { name: 'Search' }));
+    await waitFor(() =>
+      expect(announcements.some((u) => u.searchParams.get('filter[title]') === 'allot')).toBe(true),
+    );
+
+    const next = screen.getByRole('region', { name: 'Next to do' });
+    await user.type(within(next).getByLabelText('Task'), 'passp');
+    await user.click(within(next).getByRole('button', { name: 'Search' }));
+    await waitFor(() =>
+      expect(todos.some((u) => u.searchParams.get('filter[description]') === 'passp')).toBe(true),
+    );
+    expect(within(next).getByText(/Showing 1-1 of 1/)).toBeInTheDocument();
+  });
+
   it('leaves out what the platform switched off for the organization', async () => {
     asCrew({ feature_access: { finance: false, todos: false } });
     portalApi();
