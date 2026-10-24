@@ -26,6 +26,15 @@ class DocumentController extends Controller
         if (in_array($request->input('status'), [CrewDocument::PENDING, CrewDocument::APPROVED, CrewDocument::REJECTED], true)) {
             $query->where('status', $request->input('status'));
         }
+        // one box for "who": the first or last name, both together as typed, or the username
+        $name = is_string($request->input('filter.name')) && trim($request->input('filter.name')) !== ''
+            ? '%'.addcslashes(trim($request->input('filter.name')), '%_\\').'%' : null;
+        if ($name) {
+            $query->whereHas('membership', fn ($m) => $m
+                ->whereHas('profile', fn ($p) => $p->where(fn ($n) => $n->where('first_name', 'like', $name)->orWhere('last_name', 'like', $name)
+                    ->orWhereRaw("concat(first_name, ' ', last_name) like ?", [$name])))
+                ->orWhereHas('user', fn ($u) => $u->where('username', 'like', $name)));
+        }
         $member = $request->input('membership_id');
         if (is_string($member) && preg_match('/^[0-9a-f-]{36}$/i', $member)) {
             $query->where('membership_id', $member);

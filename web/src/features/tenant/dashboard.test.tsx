@@ -205,8 +205,8 @@ describe('Dashboard', () => {
     expect(within(docs).getByText('Bustamante, Jaycob')).toBeInTheDocument();
     expect(within(docs).getByText("Seaman's Book")).toBeInTheDocument();
     expect(
-      within(docs).getByRole('link', { name: "Review Seaman's Book of Bustamante, Jaycob" }),
-    ).toHaveAttribute('href', '/app/documents?member=c1');
+      within(docs).getByRole('button', { name: "Review Seaman's Book of Bustamante, Jaycob" }),
+    ).toBeInTheDocument();
 
     const news = screen.getByRole('region', { name: 'Announcements' });
     expect(await within(news).findByText('February allotment is out')).toBeInTheDocument();

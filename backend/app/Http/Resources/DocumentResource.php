@@ -43,6 +43,7 @@ class DocumentResource extends JsonResource
                     'first_name' => $this->membership->profile->first_name,
                     'last_name' => $this->membership->profile->last_name,
                     'crew_number' => $this->membership->profile->crew_number,
+                    'rank' => $this->membership->profile->rank,
                 ] : null,
             ]),
         ];

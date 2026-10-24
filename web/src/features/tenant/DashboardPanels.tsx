@@ -1,4 +1,4 @@
-import { ArrowUpRight, ClipboardCheck, Eye } from 'lucide-react';
+import { ArrowUpRight, Eye } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -15,10 +15,11 @@ import {
   type CellKind,
 } from '../../components/ui';
 import { describeError } from '../../services/api/errors';
-import type { Announcement, Crew } from '../../services/api/types';
+import type { Announcement, Crew, CrewDocument } from '../../services/api/types';
 import { formatDateTime } from '../shared/AuditTable';
 import { AnnouncementDetails } from './AnnouncementDetails';
 import { CreateCrewAccountDialog } from './CreateCrewAccount';
+import { DocumentApprovalDialog } from './DocumentApprovalDialog';
 import { DASHBOARD_PANEL_SIZE, useAnnouncements, useCrewList, useDocuments } from './api';
 
 const PER_PANEL = DASHBOARD_PANEL_SIZE;
@@ -186,19 +187,57 @@ export function UserApplicationPanel() {
 
 /** Documents members sent in, waiting for the agency's decision. */
 export function DocumentApprovalPanel() {
+  const [typed, setTyped] = useState('');
+  const [name, setName] = useState('');
   const [page, setPage] = useState(1);
-  const list = useDocuments({ status: 'pending', page, per_page: PER_PANEL });
+  const [reviewing, setReviewing] = useState<CrewDocument | null>(null);
+  const list = useDocuments({
+    status: 'pending',
+    page,
+    per_page: PER_PANEL,
+    ...(name ? { 'filter[name]': name } : {}),
+  });
 
   return (
     <Panel
       title="Document approval"
-      count={list.data?.meta.total}
+      count={name ? undefined : list.data?.meta.total}
       action={
         <Link to="/app/documents" className={headerLink}>
           Open full list
         </Link>
       }
     >
+      <form
+        role="search"
+        aria-label="Search documents"
+        className="mb-3 flex items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setName(typed.trim());
+          setPage(1);
+        }}
+      >
+        <div className="flex-1">
+          <TextField
+            label="Name"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            maxLength={100}
+          />
+        </div>
+        <Button type="submit">Search</Button>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setTyped('');
+            setName('');
+            setPage(1);
+          }}
+        >
+          Clear
+        </Button>
+      </form>
       {list.isPending ? (
         <SkeletonDataTable
           compact
@@ -211,7 +250,7 @@ export function DocumentApprovalPanel() {
       ) : list.isError ? (
         <ErrorState message={describeError(list.error)} onRetry={() => void list.refetch()} />
       ) : list.data.data.length === 0 ? (
-        <EmptyState title="Nothing waiting for review" />
+        <EmptyState title={name ? 'No one matches' : 'Nothing waiting for review'} />
       ) : (
         <>
           <Table compact caption="Documents waiting" headers={DOCUMENT_HEADERS}>
@@ -223,11 +262,11 @@ export function DocumentApprovalPanel() {
                   <td className="px-4 py-3">{d.owner?.profile?.crew_number ?? '—'}</td>
                   <td className="px-4 py-3">{d.type.name}</td>
                   <td className="px-4 py-3 text-right">
-                    <IconLink
-                      to={`/app/documents?member=${d.owner?.id ?? ''}`}
-                      icon={ClipboardCheck}
+                    <IconButton
+                      icon={Eye}
                       label={`Review ${d.type.name} of ${who}`}
                       tip="Review"
+                      onClick={() => setReviewing(d)}
                     />
                   </td>
                 </tr>
@@ -237,6 +276,9 @@ export function DocumentApprovalPanel() {
           <Pagination meta={list.data.meta} onPage={setPage} />
         </>
       )}
+      {reviewing ? (
+        <DocumentApprovalDialog doc={reviewing} onClose={() => setReviewing(null)} />
+      ) : null}
     </Panel>
   );
 }

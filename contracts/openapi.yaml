@@ -789,6 +789,7 @@ paths:
       parameters:
         - { name: status, in: query, schema: { type: string, enum: [open, done] } }
         - { name: membership_id, in: query, schema: { type: string } }
+        - { name: 'filter[name]', in: query, description: 'The owner''s first or last name (or both, as typed) or username contains this.', schema: { type: string } }
         - { name: page, in: query, schema: { type: integer, minimum: 1 } }
         - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
       responses:
@@ -3588,6 +3589,7 @@ components:
                     first_name: { type: [string, 'null'] }
                     last_name: { type: [string, 'null'] }
                     crew_number: { type: [string, 'null'] }
+                    rank: { type: [string, 'null'] }
                 - { type: 'null' }
     MemberDocumentList:
       type: object

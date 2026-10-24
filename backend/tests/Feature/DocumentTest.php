@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Enums\Role;
 use App\Models\AuditLog;
 use App\Models\CrewDocument;
+use App\Models\CrewProfile;
 use App\Models\DocumentType;
+use App\Models\Membership;
 use App\Support\Tenancy\TenantContext;
 use Database\Seeders\CrewPortalDemoSeeder;
 use Illuminate\Http\UploadedFile;
@@ -173,6 +175,23 @@ class DocumentTest extends TestCase
         $this->get("/api/v1/tenant/documents/$c/file", $this->as('adminB'))->assertNotFound();
         $this->assertSame([], $this->getJson('/api/v1/tenant/documents', $this->as('adminB'))->json('data'));
         $this->assertSame('pending', CrewDocument::withoutTenantScope()->findOrFail($c)->status);
+    }
+
+    public function test_the_document_list_can_be_narrowed_by_the_owner_name_and_shows_the_rank(): void
+    {
+        $this->setUpOrganizations();
+        $this->submit('crewA');
+        (new CrewProfile)->forceFill([
+            'tenant_id' => Membership::withoutTenantScope()->findOrFail($this->m['crewA'])->tenant_id,
+            'membership_id' => $this->m['crewA'], 'first_name' => 'Maria', 'last_name' => 'Santos', 'rank' => 'AB',
+        ])->save();
+
+        $hit = $this->getJson('/api/v1/tenant/documents?filter[name]=maria%20santos', $this->as('adminA'))->assertOk();
+        $this->assertCount(1, $hit->json('data'));
+        $this->assertSame('AB', $hit->json('data.0.owner.profile.rank'));
+        $this->assertCount(1, $this->getJson('/api/v1/tenant/documents?filter[name]=sant', $this->as('adminA'))->json('data'));
+        $this->assertSame([], $this->getJson('/api/v1/tenant/documents?filter[name]=nobody', $this->as('adminA'))->json('data'));
+        $this->assertSame([], $this->getJson('/api/v1/tenant/documents?filter[name]=%25', $this->as('adminA'))->json('data'), 'a percent sign is text, not a wildcard');
     }
 
     public function test_crew_cannot_review_or_manage_types(): void

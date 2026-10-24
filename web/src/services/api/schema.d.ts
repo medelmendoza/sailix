@@ -2378,6 +2378,7 @@ export interface components {
                     first_name?: string | null;
                     last_name?: string | null;
                     crew_number?: string | null;
+                    rank?: string | null;
                 } | null;
             };
         };
@@ -3998,6 +3999,8 @@ export interface operations {
             query?: {
                 status?: "open" | "done";
                 membership_id?: string;
+                /** @description The owner's first or last name (or both, as typed) or username contains this. */
+                "filter[name]"?: string;
                 page?: number;
                 per_page?: number;
             };
