@@ -97,7 +97,11 @@ export function TalaRoot({ host, extraTabs = [] }: { host: TalaHost; extraTabs?:
   }, [host]);
 
   if (!rt) {
-    return <Notice title="Tala is not available" description="Tala is not set up for this app." />;
+    return (
+      <HostContext.Provider value={host}>
+        <Notice title="Tala is not available" description="Tala is not set up for this app." />
+      </HostContext.Provider>
+    );
   }
   return (
     <HostContext.Provider value={host}>

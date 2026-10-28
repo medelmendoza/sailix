@@ -1,7 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { talaModule } from '@sailix/tala';
-import Constants from 'expo-constants';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
 import { AppText, Button, Card, EmptyState, FormError, Screen } from '@/components';
@@ -10,6 +9,7 @@ import { describeError } from '@/services/api/errors';
 import { ServiceLogo, hasLogo } from '@/features/services/ServiceLogo';
 import { useSessionStore } from '@/store/sessionStore';
 import { STATUS_DESCRIPTION, STATUS_LABEL } from './availability';
+import { talaPackageEnabled, useTalaHost } from './talaHost';
 import { useUnlinkTala } from './tala/api';
 import { TalaCourseList } from './tala/TalaCourseList';
 import { TalaLinkForm } from './tala/TalaLinkForm';
@@ -21,6 +21,8 @@ export function ModuleScreen({ route, navigation }: Props) {
   const me = useSessionStore((s) => s.me);
   const module = me?.modules.find((m) => m.code === route.params.code);
   const unlink = useUnlinkTala();
+  const goBack = useCallback(() => navigation.goBack(), [navigation]);
+  const host = useTalaHost(goBack);
   const [error, setError] = useState<string | null>(null);
 
   if (!module) {
@@ -34,20 +36,8 @@ export function ModuleScreen({ route, navigation }: Props) {
     );
   }
 
-  if (module.code === 'tala' && Constants.expoConfig?.extra?.talaPackage) {
-    return (
-      <talaModule.Root
-        host={{
-          scope: `org:${me?.tenant.id}`,
-          theme: { background: colors.background, text: colors.text, primary: colors.primary },
-          config: {
-            talaBaseUrl: String(Constants.expoConfig.extra.talaBaseUrl ?? ''),
-            progressWrites: !!Constants.expoConfig.extra.talaProgressWrites,
-          },
-          onExit: navigation.goBack,
-        }}
-      />
-    );
+  if (module.code === 'tala' && module.enabled && talaPackageEnabled() && host) {
+    return <talaModule.Root host={host} />;
   }
 
   const statusCard = (
