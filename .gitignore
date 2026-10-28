@@ -22,3 +22,6 @@ web/e2e/.auth/
 .superpowers/
 packages/*/node_modules
 apps/*/node_modules
+apps/tala/android/
+apps/tala/ios/
+apps/tala/.expo/
