@@ -1,12 +1,14 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, renderHook, screen } from '@testing-library/react-native';
 import Constants from 'expo-constants';
+import * as SecureStore from 'expo-secure-store';
 import { brandPalette } from '@/theme/brand';
 import { makeMe, TALA } from '@/test-utils/fixtures';
 import { mockApi } from '@/test-utils/mockApi';
 import { renderApp } from '@/test-utils/render';
 import { signedInAs } from '@/test-utils/session';
+import { useSessionStore } from '@/store/sessionStore';
 import { openTala } from '@/test-utils/steps';
-import { buildTalaHost } from '../talaHost';
+import { buildTalaHost, useTalaHost } from '../talaHost';
 
 const extra = () => Constants.expoConfig!.extra as Record<string, unknown>;
 afterEach(() => {
@@ -81,5 +83,32 @@ describe('the host Sailix gives the package', () => {
 
   it('keeps progress writes off unless the build turns them on', () => {
     expect(buildTalaHost({ ...base, extra: {} }).config).toMatchObject({ talaBaseUrl: '', progressWrites: false });
+  });
+});
+
+describe('the host stays the same object', () => {
+  it('while only the session token or the look object is renewed (each app foreground does that)', async () => {
+    signedInAs(makeMe({ modules: [TALA('linked')] }));
+    const onExit = jest.fn();
+    const { result } = await renderHook(() => useTalaHost(onExit));
+    const first = result.current;
+    expect(first).not.toBeNull();
+    await act(async () => {
+      const c = useSessionStore.getState().credential!;
+      useSessionStore.setState({ credential: { ...c, token: 'renewed' }, me: { ...useSessionStore.getState().me! } });
+    });
+    expect(result.current).toBe(first);
+  });
+});
+
+describe('signing out of Sailix', () => {
+  it('also forgets the Tala tokens kept for that member', async () => {
+    mockApi({ 'DELETE /auth/token': { status: 204 } } as never);
+    signedInAs(makeMe({ modules: [TALA('linked')] }));
+    const c = useSessionStore.getState().credential!;
+    const key = `tala.org_${c.tenantId}_member_${c.membershipId}.session`;
+    await SecureStore.setItemAsync(key, '{"accessToken":"a","userId":"u"}');
+    await useSessionStore.getState().signOut();
+    expect(await SecureStore.getItemAsync(key)).toBeNull();
   });
 });

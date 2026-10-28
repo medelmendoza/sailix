@@ -87,8 +87,10 @@ export function createTalaClient(cfg: TalaClientConfig, getToken: () => Promise<
   const transport = cfg.transport ?? axiosTransport;
   const delay = cfg.retryDelayMs ?? 200;
 
-  const unauthorized = () => {
-    cfg.onUnauthorized?.();
+  /** Tells the session only when the token that was refused is still the current one: an answer that comes back after
+   *  sign-out (no token) or after a new sign-in (another token) must not end the session the user has now. */
+  const unauthorized = async (sent: string | null) => {
+    if (sent && (await getToken()) === sent) cfg.onUnauthorized?.();
     return new TalaError('unauthorized');
   };
 
@@ -115,7 +117,7 @@ export function createTalaClient(cfg: TalaClientConfig, getToken: () => Promise<
         await new Promise((r) => setTimeout(r, delay));
       }
     }
-    if (res.status >= 500 && token && isJwtExpired(token)) throw unauthorized();
+    if (res.status >= 500 && token && isJwtExpired(token)) throw await unauthorized(token);
     if ((res.status >= 300 && res.status < 400) || res.status >= 500) throw new TalaError('unavailable');
     if (res.body.length > MAX_BYTES) throw new TalaError('unavailable');
     return res;
@@ -135,7 +137,7 @@ export function createTalaClient(cfg: TalaClientConfig, getToken: () => Promise<
   async function authed(method: 'GET' | 'POST', path: string, body?: unknown): Promise<TalaResponse> {
     const token = await getToken();
     const res = await send(method, path, token, body);
-    if (res.status === 401 || res.status === 403) throw unauthorized();
+    if (res.status === 401 || res.status === 403) throw await unauthorized(token);
     return res;
   }
 

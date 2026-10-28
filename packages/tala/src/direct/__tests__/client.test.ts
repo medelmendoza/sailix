@@ -123,6 +123,24 @@ describe('tala client', () => {
     expect(onUnauthorized).toHaveBeenCalledTimes(2);
   });
 
+  it('does not sign anyone out for a request that went out without a token, or with one that has since changed', async () => {
+    const onUnauthorized = jest.fn();
+    const none = fakeTransport({ status: 401, body: '' });
+    expect(await kindOf(make(none.transport, null, { onUnauthorized }).courses('u', 't'))).toBe('unauthorized');
+    expect(onUnauthorized).not.toHaveBeenCalled();
+
+    let current: string | null = 'old';
+    const late = fakeTransport({ status: 401, body: '' });
+    const c = createTalaClient(
+      { baseUrl: 'https://tala.example.test', transport: late.transport, retryDelayMs: 0, onUnauthorized },
+      async () => current,
+    );
+    const pending = c.courses('u', 't');
+    current = 'new'; // the user signed out and in again while the request was away
+    expect(await kindOf(pending)).toBe('unauthorized');
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
   it('answers a 500 as unauthorized only when the token has expired, otherwise as unavailable', async () => {
     const expired = fakeTransport({ status: 500, body: '' });
     expect(await kindOf(make(expired.transport, jwt(PAST)).courses('u', 't'))).toBe('unauthorized');

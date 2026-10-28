@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import type { Credential } from '@/models/session';
 import { useSessionStore } from '@/store/sessionStore';
 import { useBrand, useBrandStore, type Brand } from '@/theme/brand';
+import { talaScopeOf } from './talaTokens';
 
 /** True while the Tala package (packages/tala) replaces Sailix's own Tala screens: build flag `TALA_PACKAGE=1`. */
 export const talaPackageEnabled = (): boolean => Boolean(Constants.expoConfig?.extra?.talaPackage);
@@ -18,7 +19,7 @@ export function buildTalaHost(input: {
 }): TalaHost {
   const { credential, brand, fontPreset, extra, onExit } = input;
   return {
-    scope: `org:${credential.tenantId}:member:${credential.membershipId}`,
+    scope: talaScopeOf(credential),
     theme: {
       background: brand.background,
       text: brand.text,
@@ -34,22 +35,28 @@ export function buildTalaHost(input: {
   };
 }
 
-/** A stable host for the signed-in member (the package restarts when its host changes). Null when nobody is signed in. */
+/**
+ * A stable host for the signed-in member: the package restarts when its host changes, and the session token and `me` are
+ * renewed every time the app returns to the foreground, so the host is rebuilt only when what it carries changes.
+ * Null when nobody is signed in.
+ */
 export function useTalaHost(onExit: () => void): TalaHost | null {
-  const credential = useSessionStore((s) => s.credential);
+  const tenantId = useSessionStore((s) => s.credential?.tenantId);
+  const membershipId = useSessionStore((s) => s.credential?.membershipId);
   const brand = useBrand();
   const fontPreset = useBrandStore((s) => s.look?.font_preset);
+  const { background, text, primary, accent } = brand;
   return useMemo(
     () =>
-      credential
-        ? buildTalaHost({
-            credential,
-            brand,
+      tenantId === undefined || membershipId === undefined
+        ? null
+        : buildTalaHost({
+            credential: { tenantId, membershipId },
+            brand: { background, text, primary, accent } as Brand,
             fontPreset,
             extra: Constants.expoConfig?.extra,
             onExit,
-          })
-        : null,
-    [credential, brand, fontPreset, onExit],
+          }),
+    [tenantId, membershipId, background, text, primary, accent, fontPreset, onExit],
   );
 }

@@ -21,3 +21,4 @@ web/e2e/.auth/
 # subagent-driven workspace scratch
 .superpowers/
 packages/*/node_modules
+apps/*/node_modules

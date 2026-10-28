@@ -4,6 +4,7 @@ import { configureApi, api } from '@/services/api/client';
 import { describeError, toApiError } from '@/services/api/errors';
 import type { Envelope, Me, TokenGrant } from '@/services/api/types';
 import { queryClient } from '@/services/queryClient';
+import { forgetTalaTokens } from '@/features/modules/talaTokens';
 import { wipeOfflineData } from '@/features/modules/tala/offline/wipe';
 import { clearCredential, loadCredential, saveCredential } from '@/services/storage/secureStore';
 
@@ -134,6 +135,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     set({ status: 'bootstrapping', switchError: null });
     await queryClient.cancelQueries();
     queryClient.clear();
+    await forgetTalaTokens(get().credential); // the Tala package's tokens for the old organization
     await wipeOfflineData(); // the old organization's saved Tala data must not outlive the switch
 
     let grant: TokenGrant;
@@ -187,11 +189,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   async signOut(options = {}) {
     const { notice = null, revoke = true } = options;
     const token = get().credential?.token;
+    const leaving = get().credential;
     // 1. The UI leaves the authenticated area immediately and nothing from this session can be read again.
     set({ status: 'unauthenticated', credential: null, me: null, notice, switchError: null });
     await queryClient.cancelQueries();
     queryClient.clear();
     await clearCredential();
+    await forgetTalaTokens(leaving); // the Tala package's tokens for this member
     await wipeOfflineData(); // saved courses, downloaded files and unsent completions belong to this session
     // 2. Best effort: ask the server to revoke this device's token (never blocks or fails the sign-out).
     if (revoke && token) {

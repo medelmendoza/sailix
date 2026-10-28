@@ -21,13 +21,19 @@ interface Stored {
   teamId: string | null;
 }
 
+/** SecureStore keys allow only letters, digits, '.', '-' and '_'. */
+const sessionKey = (scope: string) => `tala.${scope.replace(/[^A-Za-z0-9._-]/g, '_')}.session`;
+
+/** Forgets the Tala tokens kept for a host scope, from outside the package (the host signed the member out). */
+export const forgetTalaSession = (hostScope: string): Promise<void> =>
+  secureStoreStorage.remove(sessionKey(hostScope));
+
 /**
  * The Tala session of one scope (a Sailix member, or the standalone app). Tala has no refresh endpoint, so when it stops
  * accepting the token the only way on is to sign in again: `expire` wipes the tokens and tells the listeners.
  */
 export function createTalaSession(storage: TalaStorage, scope: string) {
-  // SecureStore keys allow only letters, digits, '.', '-' and '_'
-  const key = `tala.${scope.replace(/[^A-Za-z0-9._-]/g, '_')}.session`;
+  const key = sessionKey(scope);
   const listeners = new Set<() => void>();
 
   async function current(): Promise<Stored | null> {
