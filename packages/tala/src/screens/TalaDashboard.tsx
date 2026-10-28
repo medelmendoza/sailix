@@ -94,7 +94,7 @@ export function TalaDashboard() {
       value: c.left,
       color: palette[i]!,
       label: `${c.name} ${c.left}`,
-      onPress: () => navigation.navigate('TalaCourseStats', { assignId: c.id, name: c.name }),
+      onPress: () => navigation.navigate('TalaCourse', { assignId: c.id, name: c.name }),
     })),
     ...(rest > 0
       ? [{ value: rest, color: colors.border, label: `Other ${rest}`, onPress: drill('Other courses', left.slice(5).map((c) => c.id)) }]
@@ -139,7 +139,7 @@ export function TalaDashboard() {
                 label: c.name,
                 value: c.percent,
                 text: `${c.percent}%`,
-                onPress: () => navigation.navigate('TalaCourseStats', { assignId: c.id, name: c.name }),
+                onPress: () => navigation.navigate('TalaCourse', { assignId: c.id, name: c.name }),
               }))}
               max={100}
               color={brand.primary}

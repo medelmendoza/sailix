@@ -202,30 +202,30 @@ describe('the dashboard', () => {
     expect(await screen.findByText('No courses yet')).toBeTruthy();
   });
 
-  it('opens the courses behind a part of the donut, and from there a course record', async () => {
+  it('opens the courses behind a part of the donut, and from there the course', async () => {
     fakeTala();
     await renderTala();
     await signIn();
     await press('In progress 1');
     expect(await screen.findByText('Safety at sea')).toBeTruthy();
     await press(/Safety at sea/);
-    expect(await screen.findByText('Intro video')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /^Take quiz/ })).toBeTruthy(); // the real course, not its record
   });
 
-  it('opens a course record from its bar', async () => {
+  it('opens the course from its bar', async () => {
     fakeTala();
     await renderTala();
     await signIn();
     await press('Safety at sea, 40%');
-    expect(await screen.findByText('Intro video')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /^Take quiz/ })).toBeTruthy();
   });
 
-  it('opens a course record from its slice of the pie', async () => {
+  it('opens the course from its slice of the pie', async () => {
     fakeTala();
     await renderTala();
     await signIn();
     await press('Safety at sea 3');
-    expect(await screen.findByText('Intro video')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /^Take quiz/ })).toBeTruthy();
   });
 
   it('lists the courses due in a week from that week on the line', async () => {

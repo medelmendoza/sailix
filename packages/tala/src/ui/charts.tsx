@@ -149,7 +149,7 @@ export function BarRows({
             key={r.label}
             accessibilityRole="button"
             accessibilityLabel={`${r.label}, ${r.text}`}
-            accessibilityHint="Shows what is recorded for this course"
+            accessibilityHint="Opens this course"
             onPress={r.onPress}
             style={({ pressed }) => [{ gap: spacing.xs }, pressed && { opacity: 0.6 }]}
           >

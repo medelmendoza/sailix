@@ -12,10 +12,7 @@ import { byUrgency } from './stats';
 
 type Props = NativeStackScreenProps<TalaRoutes, 'TalaDrill'>;
 
-/**
- * The courses behind one number on the dashboard (a slice of a chart, a week on the line). Read-only: a course opens its
- * record (what was recorded for it), never the course itself.
- */
+/** The courses behind one number on the dashboard (a slice of a chart, a week on the line); each opens the course. */
 export function TalaDrillScreen({ route }: Props) {
   const { ids } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<TalaRoutes>>();
@@ -36,8 +33,8 @@ export function TalaDrillScreen({ route }: Props) {
             key={c.id}
             accessibilityRole="button"
             accessibilityLabel={`${c.name}, ${c.completed} of ${c.total} items completed`}
-            accessibilityHint="Shows what is recorded for this course"
-            onPress={() => navigation.navigate('TalaCourseStats', { assignId: c.id, name: c.name })}
+            accessibilityHint="Opens this course"
+            onPress={() => navigation.navigate('TalaCourse', { assignId: c.id, name: c.name })}
             style={({ pressed }) => (pressed ? { opacity: 0.6 } : undefined)}
           >
             <Card variant="flat" style={styles.row}>
