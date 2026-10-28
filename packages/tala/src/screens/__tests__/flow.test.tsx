@@ -191,9 +191,8 @@ describe('the dashboard', () => {
     fakeTala();
     await renderTala();
     await signIn();
-    expect(await screen.findByText('Courses by state')).toBeTruthy();
-    // the donut: courses by state, with the overall percentage in its middle
-    expect(screen.getByLabelText('Courses by state: 0 completed, 1 in progress, 0 not started')).toBeTruthy();
+    // the donut: courses by state (the tile title is also in the placeholder, so wait for the chart itself)
+    expect(await screen.findByLabelText('Courses by state: 0 completed, 1 in progress, 0 not started')).toBeTruthy();
     expect(screen.getAllByText('40%').length).toBeGreaterThan(0);
     expect(screen.getByText('2 of 5 items completed')).toBeTruthy();
     // the pie: where the items still to do are
