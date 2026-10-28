@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as SecureStore from 'expo-secure-store';
 import { Alert } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { talaModule } from '../../index';
 import { assignment, snapshot } from '../../direct/testing/fixtures';
 import { HostContext } from '../../host';
@@ -49,6 +50,14 @@ describe('signing in', () => {
     expect(await showCourses()).toBeTruthy();
   });
 
+  it('presents itself: the Lodestar banner, a welcome and the form', async () => {
+    fakeTala();
+    await renderTala();
+    expect(await screen.findByText('Sign in to continue your courses.')).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Lodestar' })).toBeTruthy();
+    expect(screen.getByText('Welcome back')).toBeTruthy();
+  });
+
   it('says so when Tala does not accept the credentials, and clears the password', async () => {
     fakeTala({ 'POST /api/v1/login': { status: 401 } });
     await renderTala();
@@ -64,7 +73,11 @@ describe('signing in', () => {
     const view = await renderTala(host);
     await signIn();
     await showCourses();
-    await view.rerender(<talaModule.Root host={{ ...host }} />);
+    await view.rerender(
+      <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } }}>
+        <talaModule.Root host={{ ...host }} />
+      </SafeAreaProvider>,
+    );
     expect(await showCourses()).toBeTruthy();
   });
 

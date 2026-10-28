@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react-native';
 import axios from 'axios';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { talaModule, type TalaHost } from '../index';
 import { assignment, deckDoc, quizDoc, snapshot } from '../direct/testing/fixtures';
 
@@ -56,5 +57,13 @@ export const hostOf = (over: Partial<TalaHost> = {}): TalaHost => ({
   ...over,
 });
 
-export const renderTala = (host: TalaHost = hostOf()) => render(<talaModule.Root host={host} />);
+const METRICS = { frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } };
+
+/** The host app provides the safe area; so do the tests. */
+export const renderTala = (host: TalaHost = hostOf()) =>
+  render(
+    <SafeAreaProvider initialMetrics={METRICS}>
+      <talaModule.Root host={host} />
+    </SafeAreaProvider>,
+  );
 export const paths = { U, T };
