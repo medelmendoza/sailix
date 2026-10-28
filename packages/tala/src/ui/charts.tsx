@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Stop } from 'react-native-svg';
 import { AppText } from './AppText';
 import { colors, spacing } from './theme';
@@ -9,7 +9,7 @@ import { colors, spacing } from './theme';
  * drawing inside is decoration.
  */
 
-export type Segment = { value: number; color: string; label: string };
+export type Segment = { value: number; color: string; label: string; onPress?: () => void };
 
 const hidden = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' } as const;
 
@@ -42,14 +42,14 @@ export function Donut({
           .filter((s) => s.value > 0)
           .map((s) => {
             const len = (s.value / total) * circumference;
-            const arc = { key: s.label, color: s.color, dash: Math.max(0, len - gap), at: offset };
+            const arc = { key: s.label, color: s.color, dash: Math.max(0, len - gap), at: offset, onPress: s.onPress };
             offset += len;
             return arc;
           })
       : [];
   return (
     <View accessible accessibilityRole="image" accessibilityLabel={summary} style={{ width: size, height: size }}>
-      <View {...hidden} style={StyleSheet.absoluteFill}>
+      <View style={StyleSheet.absoluteFill}>
         <Svg width={size} height={size}>
           <G rotation={-90} origin={`${size / 2}, ${size / 2}`}>
             {total === 0 ? (
@@ -66,6 +66,7 @@ export function Donut({
                   strokeDasharray={`${a.dash} ${circumference - a.dash}`}
                   strokeDashoffset={-a.at}
                   fill="none"
+                  onPress={a.onPress}
                 />
               ))
             )}
@@ -77,54 +78,89 @@ export function Donut({
   );
 }
 
-/** Colour key for a chart: a dot and a label per segment. */
-export function Legend({ items }: { items: { color: string; label: string }[] }) {
+/** Colour key for a chart: a dot and a label per segment; an item with `onPress` is a button that opens what it counts. */
+export function Legend({ items }: { items: { color: string; label: string; onPress?: () => void }[] }) {
   return (
     <View style={styles.legend}>
-      {items.map((i) => (
-        <View key={i.label} style={styles.legendItem}>
-          <View style={[styles.dot, { backgroundColor: i.color }]} />
-          <AppText variant="caption">{i.label}</AppText>
-        </View>
-      ))}
+      {items.map((i) => {
+        const inner = (
+          <>
+            <View style={[styles.dot, { backgroundColor: i.color }]} />
+            <AppText variant="caption">{i.label}</AppText>
+          </>
+        );
+        return i.onPress ? (
+          <Pressable
+            key={i.label}
+            accessibilityRole="button"
+            accessibilityLabel={i.label}
+            accessibilityHint="Shows these courses"
+            onPress={i.onPress}
+            hitSlop={6}
+            style={styles.legendItem}
+          >
+            {inner}
+          </Pressable>
+        ) : (
+          <View key={i.label} style={styles.legendItem}>
+            {inner}
+          </View>
+        );
+      })}
     </View>
   );
 }
 
-/** Horizontal bars, one per row, each with its value at the end. `max` is the full width of a bar. */
+/** Horizontal bars, one per row, each with its value at the end; a row with `onPress` is a button. `max` is a full bar. */
 export function BarRows({
   rows,
   max,
   color,
-  summary,
 }: {
-  rows: { label: string; value: number; text: string }[];
+  rows: { label: string; value: number; text: string; onPress?: () => void }[];
   max: number;
   color: string;
-  summary: string;
 }) {
   return (
-    <View accessible accessibilityRole="image" accessibilityLabel={summary} style={{ gap: spacing.md }}>
-      {rows.map((r) => (
-        <View key={r.label} {...hidden} style={{ gap: spacing.xs }}>
-          <View style={styles.barHead}>
-            <AppText variant="caption" numberOfLines={1} style={{ flex: 1 }}>
-              {r.label}
-            </AppText>
-            <AppText variant="caption" style={{ fontFamily: 'Nunito_700Bold' }}>
-              {r.text}
-            </AppText>
+    <View style={{ gap: spacing.md }}>
+      {rows.map((r) => {
+        const inner = (
+          <>
+            <View style={styles.barHead}>
+              <AppText variant="caption" numberOfLines={1} style={{ flex: 1 }}>
+                {r.label}
+              </AppText>
+              <AppText variant="caption" style={{ fontFamily: 'Nunito_700Bold' }}>
+                {r.text}
+              </AppText>
+            </View>
+            <View style={styles.track}>
+              <View
+                style={[
+                  styles.fill,
+                  { backgroundColor: color, width: `${Math.max(0, Math.min(1, max > 0 ? r.value / max : 0)) * 100}%` },
+                ]}
+              />
+            </View>
+          </>
+        );
+        return r.onPress ? (
+          <Pressable
+            key={r.label}
+            accessibilityRole="button"
+            accessibilityLabel={`${r.label}, ${r.text}`}
+            accessibilityHint="Shows what is recorded for this course"
+            onPress={r.onPress}
+            style={({ pressed }) => [{ gap: spacing.xs }, pressed && { opacity: 0.6 }]}
+          >
+            {inner}
+          </Pressable>
+        ) : (
+          <View key={r.label} accessible accessibilityLabel={`${r.label}, ${r.text}`} style={{ gap: spacing.xs }}>
+            {inner}
           </View>
-          <View style={styles.track}>
-            <View
-              style={[
-                styles.fill,
-                { backgroundColor: color, width: `${Math.max(0, Math.min(1, max > 0 ? r.value / max : 0)) * 100}%` },
-              ]}
-            />
-          </View>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }
@@ -158,12 +194,15 @@ export function LineChart({
   color,
   height = 130,
   summary,
+  columns,
 }: {
   values: number[];
   labels: string[];
   color: string;
   height?: number;
   summary: string;
+  /** One entry per step: what a tap on that step says and does. Steps without one are not tappable. */
+  columns?: ({ label: string; onPress: () => void } | null)[];
 }) {
   const [w, setW] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width);
@@ -177,8 +216,8 @@ export function LineChart({
   const line = curve(pts);
   const area = pts.length > 1 ? `${line} L ${pts[pts.length - 1]!.x} ${height - padBottom} L ${pts[0]!.x} ${height - padBottom} Z` : '';
   return (
-    <View accessible accessibilityRole="image" accessibilityLabel={summary} style={{ gap: spacing.xs }}>
-      <View {...hidden} onLayout={onLayout} style={{ height }}>
+    <View style={{ gap: spacing.xs }}>
+      <View accessible accessibilityRole="image" accessibilityLabel={summary} onLayout={onLayout} style={{ height }}>
         {w > 0 ? (
           <Svg width={w} height={height}>
             <Defs>
@@ -206,6 +245,24 @@ export function LineChart({
           </Svg>
         ) : null}
       </View>
+      {columns ? (
+        <View style={[styles.columns, { height }]}>
+          {columns.map((c, i) =>
+            c ? (
+              <Pressable
+                key={i}
+                accessibilityRole="button"
+                accessibilityLabel={c.label}
+                accessibilityHint="Shows these courses"
+                onPress={c.onPress}
+                style={{ flex: 1 }}
+              />
+            ) : (
+              <View key={i} style={{ flex: 1 }} />
+            ),
+          )}
+        </View>
+      ) : null}
       <View {...hidden} style={styles.labels}>
         {labels.map((l, i) => {
           if (l === '') return null;
@@ -232,5 +289,6 @@ const styles = StyleSheet.create({
   track: { height: 10, borderRadius: 5, backgroundColor: colors.surfaceSunken, overflow: 'hidden' },
   fill: { height: 10, borderRadius: 5 },
   labels: { flexDirection: 'row' },
+  columns: { position: 'absolute', left: 0, right: 0, top: 0, flexDirection: 'row' },
   axis: { fontSize: 11 },
 });

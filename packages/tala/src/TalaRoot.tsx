@@ -31,6 +31,7 @@ import { TalaAccountScreen } from './screens/TalaAccountScreen';
 import { TalaCourseScreen } from './screens/TalaCourseScreen';
 import { TalaCourseStatsScreen } from './screens/TalaCourseStatsScreen';
 import { TalaDashboard } from './screens/TalaDashboard';
+import { TalaDrillScreen } from './screens/TalaDrillScreen';
 import { TalaFlashcardsScreen } from './screens/TalaFlashcardsScreen';
 import { TalaJoinCourseScreen } from './screens/TalaJoinCourseScreen';
 import { TalaQuizScreen } from './screens/TalaQuizScreen';
@@ -436,6 +437,7 @@ function Navigation({
               )}
             </Stack.Screen>
             <Stack.Screen name="TalaJoinCourse" component={TalaJoinCourseScreen} options={{ title: 'Join a course' }} />
+            <Stack.Screen name="TalaDrill" component={TalaDrillScreen} options={({ route }) => ({ title: route.params.title })} />
             <Stack.Screen name="TalaCourseStats" component={TalaCourseStatsScreen} options={({ route }) => ({ title: route.params.name })} />
             <Stack.Screen name="TalaCourse" component={TalaCourseScreen} options={({ route }) => ({ title: route.params.name })} />
             <Stack.Screen name="TalaFlashcards" component={TalaFlashcardsScreen} options={({ route }) => ({ title: route.params.name })} />

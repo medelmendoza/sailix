@@ -4,6 +4,8 @@ export type TalaRoutes = {
   TalaAccount: undefined;
   TalaStats: undefined;
   TalaJoinCourse: undefined;
+  /** The courses behind one number on the dashboard. */
+  TalaDrill: { title: string; ids: string[] };
   TalaCourseStats: { assignId: string; name: string };
   TalaCourse: { assignId: string; name: string };
   TalaFlashcards: { assignId: string; cardId: string; name: string };

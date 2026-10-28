@@ -178,7 +178,7 @@ describe('studying', () => {
 });
 
 describe('the dashboard', () => {
-  it('opens first with charts of the courses, and opens nothing', async () => {
+  it('opens first with charts of the courses, and opens nothing by itself', async () => {
     fakeTala();
     await renderTala();
     await signIn();
@@ -187,16 +187,12 @@ describe('the dashboard', () => {
     expect(screen.getByLabelText('Courses by state: 0 completed, 1 in progress, 0 not started')).toBeTruthy();
     expect(screen.getAllByText('40%').length).toBeGreaterThan(0);
     expect(screen.getByText('2 of 5 items completed')).toBeTruthy();
-    // the bars: progress of each course
-    expect(screen.getByLabelText('Progress by course: Safety at sea 40%')).toBeTruthy();
     // the pie: where the items still to do are
     expect(screen.getByLabelText('Items still to do: Safety at sea 3')).toBeTruthy();
     // the line: courses due in the coming weeks
     expect(screen.getByLabelText(/^Courses due per week/)).toBeTruthy();
-    // what is due, as a list
-    expect(screen.getByText('Due Dates')).toBeTruthy();
-    expect(screen.getByText(/due 2026-12-31/)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Safety at sea/ })).toBeNull(); // read-only
+    expect(screen.queryByText('Due Dates')).toBeNull(); // the line chart replaces the list
+    expect(screen.queryByRole('button', { name: /^Safety at sea$/ })).toBeNull();
   });
 
   it('says so when nothing is assigned', async () => {
@@ -204,6 +200,40 @@ describe('the dashboard', () => {
     await renderTala();
     await signIn();
     expect(await screen.findByText('No courses yet')).toBeTruthy();
+  });
+
+  it('opens the courses behind a part of the donut, and from there a course record', async () => {
+    fakeTala();
+    await renderTala();
+    await signIn();
+    await press('In progress 1');
+    expect(await screen.findByText('Safety at sea')).toBeTruthy();
+    await press(/Safety at sea/);
+    expect(await screen.findByText('Intro video')).toBeTruthy();
+  });
+
+  it('opens a course record from its bar', async () => {
+    fakeTala();
+    await renderTala();
+    await signIn();
+    await press('Safety at sea, 40%');
+    expect(await screen.findByText('Intro video')).toBeTruthy();
+  });
+
+  it('opens a course record from its slice of the pie', async () => {
+    fakeTala();
+    await renderTala();
+    await signIn();
+    await press('Safety at sea 3');
+    expect(await screen.findByText('Intro video')).toBeTruthy();
+  });
+
+  it('lists the courses due in a week from that week on the line', async () => {
+    fakeTala();
+    await renderTala();
+    await signIn();
+    await press(/^Due week of .*: 1 course$/);
+    expect(await screen.findByText('Safety at sea')).toBeTruthy();
   });
 });
 
