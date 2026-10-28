@@ -183,6 +183,13 @@ export function createTalaClient(cfg: TalaClientConfig, getToken: () => Promise<
       return (await this.teams(userId)).map((t) => t.id);
     },
 
+    /** The learner's name. The profile also carries a team code and roles: none of that is read. */
+    async profile(userId: string): Promise<{ firstName: string | null; lastName: string | null }> {
+      const d = await getObject(`/api/v1/auth/users/${seg(userId)}`);
+      const name = (v: unknown) => (typeof v === 'string' && v.trim() !== '' ? v.trim().slice(0, 80) : null);
+      return { firstName: name(d.firstName), lastName: name(d.lastName) };
+    },
+
     courses: (userId: string, teamId: string) => getList(`${user(userId, teamId)}/courses`),
 
     /** Tala answers 404 for a course never synced: nothing stored yet, not an outage. */

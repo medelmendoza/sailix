@@ -32,6 +32,15 @@ function usable(e: unknown): boolean {
   return err.kind === 'network' || (err.status !== undefined && err.status >= 500);
 }
 
+/** The learner's name for the welcome. Not essential: when it cannot be read the welcome simply has no name. */
+export function useTalaProfile() {
+  return useQuery({
+    queryKey: scopedKey('tala', 'profile'),
+    staleTime: 60 * 60 * 1000,
+    queryFn: () => source().profile(),
+  });
+}
+
 export function useTalaCourses() {
   return useQuery({
     queryKey: scopedKey('tala', 'courses'),

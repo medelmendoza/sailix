@@ -76,6 +76,16 @@ describe('tala client', () => {
     ]);
   });
 
+  it('reads only the name from the profile, never the team code or roles it also carries', async () => {
+    const { transport, seen } = fakeTransport(
+      ok({ firstName: 'Maria', lastName: 'Santos', email: 'm@x.test', teamDetails: [{ teamCode: 'SECRET', roleName: 'admin' }] }),
+    );
+    const out = await make(transport).profile('u 1');
+    expect(out).toEqual({ firstName: 'Maria', lastName: 'Santos' });
+    expect(JSON.stringify(out)).not.toMatch(/SECRET|admin|m@x/);
+    expect(seen[0]?.url).toBe('https://tala.example.test/api/v1/auth/users/u%201');
+  });
+
   it('builds the course, progress, deck, quiz and material paths', async () => {
     const { transport, seen } = fakeTransport(ok([]), ok({}), ok({ a: 1 }), ok({ a: 1 }), ok({ a: 1 }));
     const c = make(transport);

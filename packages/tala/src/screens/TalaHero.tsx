@@ -1,16 +1,44 @@
 import { StyleSheet, View } from 'react-native';
 import { AppText, ShimmerBlock } from '../ui';
 import { useBrand } from '../ui/brand';
+import { LodestarLogo } from '../ui/LodestarLogo';
 import { colors, spacing } from '../ui/theme';
 
-/** The banner at the top: how far the learner is overall, in a few numbers, on the organization's gradient. */
-export function Hero({ percent, done, total, courses, next }: { percent: number; done: number; total: number; courses: number; next: string | null }) {
+/**
+ * The banner at the top: a welcome with the learner's first name and the Lodestar logo, then how far they are overall, in a
+ * few numbers, on the organization's gradient. `name` is undefined while it loads and null when it cannot be read.
+ */
+export function Hero({
+  name,
+  percent,
+  done,
+  total,
+  courses,
+  next,
+}: {
+  name: string | null | undefined;
+  percent: number;
+  done: number;
+  total: number;
+  courses: number;
+  next: string | null;
+}) {
   const brand = useBrand();
   return (
     <View
       key={brand.gradients.header} // the gradient is rebuilt, not changed, when the look changes
       style={[styles.hero, { backgroundColor: brand.primary, experimental_backgroundImage: brand.gradients.header }]}
     >
+      <View style={styles.welcomeRow}>
+        <View style={{ flex: 1 }}>
+          <AppText style={styles.white}>Welcome,</AppText>
+          <AppText variant="title" accessibilityRole="header" style={styles.white} numberOfLines={1}>
+            {name === undefined ? ' ' : (name ?? 'Lodestar')}
+          </AppText>
+        </View>
+        <LodestarLogo size={60} />
+      </View>
+      <View style={styles.divider} />
       <AppText variant="caption" style={styles.heroLabel}>
         Your progress
       </AppText>
@@ -37,10 +65,18 @@ export function Hero({ percent, done, total, courses, next }: { percent: number;
   );
 }
 
-/** The banner while the numbers load: the same shape and size, with shimmer where the numbers will be. */
+/** The banner while the numbers load: the same shape and size; the welcome and the logo are fixed, so they are real. */
 export function HeroSkeleton() {
   return (
     <View style={[styles.hero, { backgroundColor: colors.surfaceSunken }]}>
+      <View style={styles.welcomeRow}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <AppText>Welcome,</AppText>
+          <ShimmerBlock style={{ width: 160, height: 36, borderRadius: 8 }} />
+        </View>
+        <LodestarLogo size={60} />
+      </View>
+      <View style={[styles.divider, { backgroundColor: colors.borderSoft }]} />
       <ShimmerBlock style={{ width: 110, height: 18, borderRadius: 6 }} />
       <View style={styles.heroRow}>
         <ShimmerBlock style={{ width: 120, height: 50, borderRadius: 10 }} />
@@ -56,6 +92,9 @@ export function HeroSkeleton() {
 }
 
 const styles = StyleSheet.create({
+  welcomeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  white: { color: '#FFFFFF' },
+  divider: { height: StyleSheet.hairlineWidth * 2, backgroundColor: 'rgba(255,255,255,0.3)' },
   hero: { borderRadius: 24, padding: spacing.xl, gap: spacing.md },
   heroLabel: { color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: 1 },
   heroRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.md },

@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { useTalaCourses } from '../data/api';
+import { useTalaCourses, useTalaProfile } from '../data/api';
 import { describeError } from '../errors';
 import type { TalaRoutes } from '../routes';
 import type { TalaCourse } from '../types';
@@ -60,6 +60,7 @@ export function TalaDashboard() {
   const brand = useBrand();
   const navigation = useNavigation<NativeStackNavigationProp<TalaRoutes>>();
   const courses = useTalaCourses();
+  const profile = useTalaProfile();
   const [refreshing, setRefreshing] = useState(false);
 
   async function refresh() {
@@ -119,7 +120,7 @@ export function TalaDashboard() {
         <EmptyState title="No courses yet" description="Nothing has been assigned to you in Lodestar yet." />
       ) : (
         <>
-          <Hero percent={o.percent} done={o.itemsDone} total={o.itemsTotal} courses={o.courses} next={nextDue} />
+          <Hero name={profile.isPending ? undefined : (profile.data?.firstName ?? null)} percent={o.percent} done={o.itemsDone} total={o.itemsTotal} courses={o.courses} next={nextDue} />
 
           <Dashlet title="Courses by state" subtitle="Tap a part to see the courses" icon="grid">
             <View style={styles.center}>

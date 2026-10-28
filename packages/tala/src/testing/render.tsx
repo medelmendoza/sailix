@@ -21,6 +21,7 @@ export const stopFakeTala = () => spy?.mockRestore();
 export function fakeTala(over: Record<string, Reply> = {}) {
   const routes: Record<string, Reply> = {
     'POST /api/v1/login': { status: 200, data: { accessToken: jwt(), refreshToken: 'r', userId: 'tala-user-1' } },
+    [`GET ${U}`]: { status: 200, data: { firstName: 'Maria', lastName: 'Santos', teamDetails: [{ teamCode: 'SECRET', roleName: 'admin' }] } },
     [`GET ${U}/teams`]: { status: 200, data: [{ teamId: 'TEAM-1', teamName: 'Deck crew' }] },
     [`GET ${T}/courses`]: { status: 200, data: [assignment()] },
     [`GET ${T}/courses/C1/sync/A1/data`]: { status: 200, data: snapshot() },

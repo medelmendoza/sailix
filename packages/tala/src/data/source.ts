@@ -15,6 +15,8 @@ import type {
 
 /** Everything the screens ask of Tala. One implementation today (straight to the Tala server). */
 export interface TalaDataSource {
+  /** The signed-in learner's name, for the welcome. */
+  profile(): Promise<{ firstName: string | null; lastName: string | null }>;
   courses(): Promise<TalaCourse[]>;
   course(assignId: string): Promise<TalaCourseDetail>;
   material(assignId: string, materialId: string): Promise<TalaMaterial>;
@@ -44,6 +46,7 @@ export function createDirectSource(
   }
   const cast = <T>(v: unknown) => v as T;
   return {
+    profile: async () => client.profile((await ctx()).userId),
     courses: async () => cast<TalaCourse[]>(await courses(await ctx())),
     course: async (a) => cast<TalaCourseDetail>(await courseDetail(await ctx(), a)),
     material: async (a, m) => cast<TalaMaterial>(await material(await ctx(), a, m)),

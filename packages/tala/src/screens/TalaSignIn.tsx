@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 import { AppText, Button, FormError, Notice, TextField } from '../ui';
 import { useBrand } from '../ui/brand';
+import { LodestarLogo } from '../ui/LodestarLogo';
 import { colors, shadows, spacing } from '../ui/theme';
 import { describeError } from '../errors';
 
@@ -14,8 +15,6 @@ const schema = z.object({
   password: z.string().min(1, 'Enter your Lodestar password.'),
 });
 type Values = z.infer<typeof schema>;
-
-const LOGO = require('../assets/lodestar-logo.png');
 
 /**
  * Signs in to an EXISTING Lodestar account. The password goes once, over HTTPS, straight to the server; only the tokens it
@@ -70,9 +69,7 @@ export function TalaSignIn({
             },
           ]}
         >
-          <View style={styles.logoWrap} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <Image source={LOGO} style={styles.logo} />
-          </View>
+          <LodestarLogo size={88} />
           <AppText style={styles.name} accessibilityRole="header">
             Lodestar
           </AppText>
@@ -131,14 +128,6 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 36,
     borderBottomRightRadius: 36,
   },
-  logoWrap: {
-    width: 88,
-    height: 88,
-    borderRadius: 24,
-    overflow: 'hidden',
-    boxShadow: '0 10px 24px rgba(0, 0, 0, 0.28)',
-  },
-  logo: { width: 88, height: 88 },
   name: { color: '#FFFFFF', fontFamily: 'Quicksand_700Bold', fontSize: 34, lineHeight: 40 },
   tagline: { color: 'rgba(255,255,255,0.88)' },
   card: {

@@ -216,6 +216,23 @@ describe('the dashboard', () => {
     expect(screen.queryByRole('button', { name: /^Safety at sea$/ })).toBeNull();
   });
 
+  it('welcomes the learner by first name, and shows nothing else from the profile', async () => {
+    fakeTala();
+    await renderTala();
+    await signIn();
+    expect(await screen.findByText('Welcome,')).toBeTruthy();
+    expect(await screen.findByText('Maria')).toBeTruthy();
+    expect(screen.queryByText(/SECRET/)).toBeNull();
+  });
+
+  it('still welcomes (without a name) when the profile cannot be read', async () => {
+    fakeTala({ [`GET ${paths.U}`]: { status: 404 } });
+    await renderTala();
+    await signIn();
+    expect(await screen.findByText('Welcome,')).toBeTruthy();
+    expect(await screen.findByLabelText(/^Courses by state: /)).toBeTruthy();
+  });
+
   it('says so when nothing is assigned', async () => {
     fakeTala({ [`GET ${paths.T}/courses`]: { status: 200, data: [] } });
     await renderTala();
