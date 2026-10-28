@@ -10,7 +10,7 @@ const T = `${U}/teams/TEAM-1`;
 export const jwt = (secondsFromNow = 3600) =>
   `h.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + secondsFromNow }))}.s`;
 
-type Reply = { status: number; data?: unknown };
+type Reply = { status: number; data?: unknown; delayMs?: number };
 
 let spy: jest.SpyInstance | null = null;
 /** Puts the real axios back (jest.restoreAllMocks would also reset the setup's own mocks). */
@@ -38,6 +38,7 @@ export function fakeTala(over: Record<string, Reply> = {}) {
     const method = String(cfg.method ?? 'GET').toUpperCase();
     requests.push({ method, path, body: cfg.data });
     const reply = routes[`${method} ${path}`] ?? { status: 404 };
+    if (reply.delayMs) await new Promise((r) => setTimeout(r, reply.delayMs));
     return { status: reply.status, data: JSON.stringify(reply.data ?? {}) } as never;
   });
   return {

@@ -6,8 +6,10 @@ import { useTalaCourses } from '../data/api';
 import { describeError } from '../errors';
 import type { TalaRoutes } from '../routes';
 import type { TalaCourse } from '../types';
-import { AppText, EmptyState, ErrorState, Notice, SkeletonList } from '../ui';
+import { AppText, EmptyState, ErrorState, Notice } from '../ui';
 import { Dashlet } from '../ui/Dashlet';
+import { Hero } from './TalaHero';
+import { DashboardSkeleton } from './TalaSkeletons';
 import { useBrand } from '../ui/brand';
 import { BarRows, Donut, Legend, LineChart, type Segment } from '../ui/charts';
 import { onTabScroll } from '../ui/tabBarCollapse';
@@ -50,40 +52,6 @@ export function dueByWeek(courses: readonly TalaCourse[], today: Date = new Date
   return { counts, ids, starts, labels, overdue, later, dated };
 }
 
-/** The banner at the top: how far the learner is overall, in a few numbers, on the organization's gradient. */
-function Hero({ percent, done, total, courses, next }: { percent: number; done: number; total: number; courses: number; next: string | null }) {
-  const brand = useBrand();
-  return (
-    <View
-      key={brand.gradients.header} // the gradient is rebuilt, not changed, when the look changes
-      style={[styles.hero, { backgroundColor: brand.primary, experimental_backgroundImage: brand.gradients.header }]}
-    >
-      <AppText variant="caption" style={styles.heroLabel}>
-        Your progress
-      </AppText>
-      <View style={styles.heroRow}>
-        <AppText style={styles.heroPercent}>{percent}%</AppText>
-        <AppText style={styles.heroSub}>
-          {done} of {total} items completed
-        </AppText>
-      </View>
-      <View style={styles.heroTrack}>
-        <View style={[styles.heroFill, { width: `${Math.min(100, Math.max(0, percent))}%` }]} />
-      </View>
-      <View style={styles.heroChips}>
-        <View style={styles.heroChip}>
-          <AppText style={styles.heroChipText}>{courses} course{courses === 1 ? '' : 's'}</AppText>
-        </View>
-        {next ? (
-          <View style={styles.heroChip}>
-            <AppText style={styles.heroChipText}>Next due: {next}</AppText>
-          </View>
-        ) : null}
-      </View>
-    </View>
-  );
-}
-
 /**
  * The home tab of the Tala app: charts of how the learner is doing, from Tala's own counters (so it also works offline from
  * the saved copy). Read-only: it opens nothing; courses are opened from My Courses.
@@ -100,7 +68,7 @@ export function TalaDashboard() {
     setRefreshing(false);
   }
 
-  if (courses.isPending) return <SkeletonList />;
+  if (courses.isPending) return <DashboardSkeleton />;
   if (courses.isError) {
     return <ErrorState message={describeError(courses.error)} onRetry={() => void courses.refetch()} />;
   }
@@ -249,14 +217,4 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
   center: { alignItems: 'center' },
   big: { fontFamily: 'Quicksand_700Bold', fontSize: 32, lineHeight: 38 },
-  hero: { borderRadius: 24, padding: spacing.xl, gap: spacing.md },
-  heroLabel: { color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: 1 },
-  heroRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.md },
-  heroPercent: { color: '#FFFFFF', fontFamily: 'Quicksand_700Bold', fontSize: 44, lineHeight: 50 },
-  heroSub: { color: '#FFFFFF', flex: 1 },
-  heroTrack: { height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
-  heroFill: { height: 8, borderRadius: 4, backgroundColor: '#FFFFFF' },
-  heroChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  heroChip: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 999, paddingVertical: 4, paddingHorizontal: 12 },
-  heroChipText: { color: '#FFFFFF', fontSize: 13, lineHeight: 18 },
 });

@@ -1,6 +1,8 @@
-import { StyleSheet, View } from 'react-native';
-import { Card, ShimmerBlock } from '../ui';
-import { radius, spacing } from '../ui/theme';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { AppText, Card, ShimmerBlock } from '../ui';
+import { Dashlet } from '../ui/Dashlet';
+import { colors, radius, spacing } from '../ui/theme';
+import { HeroSkeleton } from './TalaHero';
 
 /** Loading placeholders drawn in the shape of the real thing, so nothing jumps when the content arrives. */
 function Loading({ children }: { children: React.ReactNode }) {
@@ -117,8 +119,175 @@ export function CourseDetailSkeleton() {
   );
 }
 
+/** A ring (donut) placeholder: a shimmering disc with the hole cut out, the size of the real chart. */
+function RingSkeleton({ size = 176, thickness = 18 }: { size?: number; thickness?: number }) {
+  return (
+    <View style={{ width: size, height: size, alignSelf: 'center' }}>
+      <ShimmerBlock style={{ width: size, height: size, borderRadius: size / 2 }} />
+      <View
+        style={{
+          position: 'absolute',
+          left: thickness,
+          top: thickness,
+          width: size - 2 * thickness,
+          height: size - 2 * thickness,
+          borderRadius: (size - 2 * thickness) / 2,
+          backgroundColor: colors.surface,
+        }}
+      />
+    </View>
+  );
+}
+
+const LegendSkeleton = ({ widths }: { widths: number[] }) => (
+  <View style={styles.legend}>
+    {widths.map((w, i) => (
+      <ShimmerBlock key={i} style={[styles.pill, { width: w, height: 18 }]} />
+    ))}
+  </View>
+);
+
+/**
+ * The dashboard while it loads: the banner and the same tiles (their icon, title and hint are fixed text, so they are real),
+ * with shimmer where each chart will be.
+ */
+export function DashboardSkeleton() {
+  return (
+    <ScrollView
+      contentContainerStyle={styles.dash}
+      accessible
+      accessibilityLabel="Loading"
+      accessibilityRole="progressbar"
+      importantForAccessibility="yes"
+    >
+      <HeroSkeleton />
+      <Dashlet title="Courses by state" subtitle="Tap a part to see the courses" icon="grid">
+        <RingSkeleton />
+        <LegendSkeleton widths={[104, 116, 116]} />
+      </Dashlet>
+      <Dashlet title="Progress by course" subtitle="Tap a course to open it" icon="chart">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <View key={i} style={{ gap: spacing.xs }}>
+            <ShimmerBlock style={[styles.line, { width: `${72 - i * 8}%`, height: 14 }]} />
+            <ShimmerBlock style={styles.slim} />
+          </View>
+        ))}
+      </Dashlet>
+      <Dashlet title="Items still to do" subtitle="Where the remaining work is" icon="list">
+        <RingSkeleton thickness={22} />
+        <LegendSkeleton widths={[150, 140, 130, 120]} />
+      </Dashlet>
+      <Dashlet title="Due in the coming weeks" subtitle="Tap a week to see its courses" icon="clock">
+        <ShimmerBlock style={{ height: 170, borderRadius: radius.md }} />
+        <View style={styles.axis}>
+          {[0, 1, 2, 3].map((i) => (
+            <ShimmerBlock key={i} style={[styles.line, { width: 44, height: 12 }]} />
+          ))}
+        </View>
+      </Dashlet>
+    </ScrollView>
+  );
+}
+
+/** My Stats while it loads: the Overall card (its heading is fixed text) and the course rows. */
+export function StatsSkeleton() {
+  return (
+    <ScrollView
+      contentContainerStyle={styles.dash}
+      accessible
+      accessibilityLabel="Loading"
+      accessibilityRole="progressbar"
+      importantForAccessibility="yes"
+    >
+      <Card variant="flat" style={styles.info}>
+        <AppText variant="heading">Overall</AppText>
+        <View style={styles.facts}>
+          <ShimmerBlock style={{ width: 84, height: 48, borderRadius: radius.md }} />
+          <View style={{ flex: 1, gap: spacing.xs }}>
+            <ShimmerBlock style={styles.slim} />
+            <ShimmerBlock style={[styles.line, { width: '60%', height: 14 }]} />
+          </View>
+        </View>
+        <View style={styles.facts}>
+          {[0, 1, 2].map((i) => (
+            <ShimmerBlock key={i} style={[styles.tile, { flex: 1 }]} />
+          ))}
+        </View>
+      </Card>
+      <AppText variant="heading">Courses</AppText>
+      <CourseRowsSkeleton count={4} />
+    </ScrollView>
+  );
+}
+
+/** Rows that show a course: its name, a progress bar and a line under it. */
+function CourseRowsSkeleton({ count }: { count: number }) {
+  return (
+    <>
+      {Array.from({ length: count }, (_, i) => (
+        <Card key={i} variant="flat" style={styles.rowCard}>
+          <View style={{ flex: 1, gap: spacing.xs }}>
+            <ShimmerBlock style={[styles.line, { width: '70%', height: 20 }]} />
+            <ShimmerBlock style={styles.slim} />
+            <ShimmerBlock style={[styles.line, { width: '55%', height: 12 }]} />
+          </View>
+        </Card>
+      ))}
+    </>
+  );
+}
+
+/** The list of courses behind a number on the dashboard. */
+export function DrillSkeleton() {
+  return (
+    <ScrollView
+      contentContainerStyle={styles.drill}
+      accessible
+      accessibilityLabel="Loading"
+      accessibilityRole="progressbar"
+      importantForAccessibility="yes"
+    >
+      <CourseRowsSkeleton count={4} />
+    </ScrollView>
+  );
+}
+
+/** The record of one course: its summary card, the "Items" heading (fixed text) and a card per item. */
+export function CourseStatsSkeleton() {
+  return (
+    <ScrollView
+      contentContainerStyle={styles.drill}
+      accessible
+      accessibilityLabel="Loading"
+      accessibilityRole="progressbar"
+      importantForAccessibility="yes"
+    >
+      <Card variant="flat" style={styles.info}>
+        <ShimmerBlock style={[styles.line, { width: '65%', height: 24 }]} />
+        <ShimmerBlock style={[styles.line, { width: '40%', height: 14 }]} />
+        <ShimmerBlock style={styles.slim} />
+        <ShimmerBlock style={[styles.line, { width: '55%', height: 12 }]} />
+      </Card>
+      <AppText variant="heading">Items</AppText>
+      {[0, 1, 2].map((i) => (
+        <Card key={i} variant="flat" style={styles.info}>
+          <ShimmerBlock style={[styles.line, { width: '60%', height: 18 }]} />
+          <ShimmerBlock style={[styles.line, { width: '35%', height: 12 }]} />
+          <ShimmerBlock style={[styles.line, { width: '70%', height: 12 }]} />
+        </Card>
+      ))}
+    </ScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
   stack: { gap: spacing.lg },
+  dash: { padding: spacing.lg, gap: spacing.lg },
+  drill: { padding: spacing.lg, gap: spacing.md },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  axis: { flexDirection: 'row', justifyContent: 'space-between' },
+  slim: { height: 12, borderRadius: 6, width: '100%' },
+  rowCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   card: { padding: 0, borderRadius: radius.lg, overflow: 'hidden' },
   picture: { height: 150, width: '100%' },
   body: { padding: spacing.lg, gap: spacing.md },

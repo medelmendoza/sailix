@@ -11,12 +11,12 @@ import {
   ErrorState,
   Notice,
   ProgressBar,
-  SkeletonList,
 } from '../ui';
 import { colors, fonts, minTouchTarget, radius, spacing } from '../ui/theme';
 import { describeError } from '../errors';
 import { useTalaCourses } from '../data/api';
 import { TalaCourseProgress } from './TalaCourseProgress';
+import { StatsSkeleton } from './TalaSkeletons';
 import { savedCopyText } from './TalaCourseList';
 import { byUrgency, dueInfo, overall } from './stats';
 import { useBrand } from '../ui/brand';
@@ -37,7 +37,7 @@ export function TalaStatsScreen() {
     setRefreshing(false);
   }
 
-  if (courses.isPending) return <SkeletonList />;
+  if (courses.isPending) return <StatsSkeleton />;
   if (courses.isError) {
     return (
       <ErrorState message={describeError(courses.error)} onRetry={() => void courses.refetch()} />

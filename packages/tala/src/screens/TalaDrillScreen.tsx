@@ -4,8 +4,9 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTalaCourses } from '../data/api';
 import { describeError } from '../errors';
 import type { TalaRoutes } from '../routes';
-import { AppText, Card, EmptyState, ErrorState, Notice, SkeletonList } from '../ui';
+import { AppText, Card, EmptyState, ErrorState, Notice } from '../ui';
 import { spacing } from '../ui/theme';
+import { DrillSkeleton } from './TalaSkeletons';
 import { savedCopyText } from './TalaCourseList';
 import { TalaCourseProgress } from './TalaCourseProgress';
 import { byUrgency } from './stats';
@@ -17,7 +18,7 @@ export function TalaDrillScreen({ route }: Props) {
   const { ids } = route.params;
   const navigation = useNavigation<NativeStackNavigationProp<TalaRoutes>>();
   const courses = useTalaCourses();
-  if (courses.isPending) return <SkeletonList />;
+  if (courses.isPending) return <DrillSkeleton />;
   if (courses.isError) {
     return <ErrorState message={describeError(courses.error)} onRetry={() => void courses.refetch()} />;
   }

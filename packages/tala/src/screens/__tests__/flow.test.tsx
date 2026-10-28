@@ -1,9 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as SecureStore from 'expo-secure-store';
 import { Alert } from 'react-native';
 import { talaModule } from '../../index';
-import { snapshot } from '../../direct/testing/fixtures';
+import { assignment, snapshot } from '../../direct/testing/fixtures';
+import { HostContext } from '../../host';
+import { CourseStatsSkeleton, DrillSkeleton, StatsSkeleton } from '../TalaSkeletons';
 import { fakeTala, hostOf, paths, renderTala, stopFakeTala } from '../../testing/render';
 
 const store = () => (SecureStore as unknown as { __store: Map<string, string> }).__store;
@@ -234,6 +236,33 @@ describe('the dashboard', () => {
     await signIn();
     await press(/^Due week of .*: 1 course$/);
     expect(await screen.findByText('Safety at sea')).toBeTruthy();
+  });
+});
+
+describe('loading placeholders', () => {
+  it('draw the dashboard in its own shape (the tile titles are real) and give way to the data', async () => {
+    fakeTala({ [`GET ${paths.T}/courses`]: { status: 200, data: [assignment()], delayMs: 250 } });
+    await renderTala();
+    await signIn();
+    expect(await screen.findByRole('progressbar', { name: 'Loading' })).toBeTruthy();
+    expect(screen.getByText('Courses by state')).toBeTruthy();
+    expect(screen.getByText('Due in the coming weeks')).toBeTruthy();
+    expect(await screen.findByLabelText(/^Courses by state: /)).toBeTruthy();
+    expect(screen.queryByRole('progressbar', { name: 'Loading' })).toBeNull();
+  });
+
+  it.each([
+    ['My Stats', StatsSkeleton, ['Overall', 'Courses']],
+    ['the courses behind a number', DrillSkeleton, []],
+    ['a course record', CourseStatsSkeleton, ['Items']],
+  ])('exist for %s', async (_name, Skeleton, headings) => {
+    await render(
+      <HostContext.Provider value={hostOf()}>
+        <Skeleton />
+      </HostContext.Provider>,
+    );
+    expect(screen.getByRole('progressbar', { name: 'Loading' })).toBeTruthy();
+    headings.forEach((h) => expect(screen.getByText(h)).toBeTruthy());
   });
 });
 

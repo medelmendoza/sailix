@@ -3,8 +3,9 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useTalaCourse } from '../data/api';
 import { describeError } from '../errors';
 import type { TalaRoutes } from '../routes';
-import { AppText, Card, ErrorState, Notice, SkeletonList } from '../ui';
+import { AppText, Card, ErrorState, Notice } from '../ui';
 import { spacing } from '../ui/theme';
+import { CourseStatsSkeleton } from './TalaSkeletons';
 import { savedCopyText } from './TalaCourseList';
 import { TalaCourseProgress } from './TalaCourseProgress';
 import { materialStatsLine, statusWord, TYPE_LABEL } from './materials';
@@ -19,7 +20,7 @@ type Props = NativeStackScreenProps<TalaRoutes, 'TalaCourseStats'>;
 export function TalaCourseStatsScreen({ route }: Props) {
   const { assignId } = route.params;
   const query = useTalaCourse(assignId);
-  if (query.isPending) return <SkeletonList />;
+  if (query.isPending) return <CourseStatsSkeleton />;
   if (query.isError) {
     return <ErrorState message={describeError(query.error)} onRetry={() => void query.refetch()} />;
   }
