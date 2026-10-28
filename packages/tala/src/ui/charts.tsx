@@ -1,22 +1,26 @@
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Stop } from 'react-native-svg';
 import { AppText } from './AppText';
 import { colors, spacing } from './theme';
 
 /**
- * Small charts drawn with plain views, so the app needs no native chart or SVG library. Every chart is one element for
- * screen readers (`summary` says what it shows); the pieces inside are decoration.
+ * Charts drawn with react-native-svg. Every chart is one element for screen readers (`summary` says what it shows); the
+ * drawing inside is decoration.
  */
 
 export type Segment = { value: number; color: string; label: string };
 
-const SPOKES = 120; // a ring or pie is drawn as this many thin spokes
+const hidden = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' } as const;
 
-/** A donut (ring) or, with `thickness` equal to half the size, a pie. */
+/**
+ * A donut (ring) or, with `thickness` equal to half the size, a pie: one circle per segment, stroked with a dash that is
+ * as long as the segment's share, with a hairline gap between segments.
+ */
 export function Donut({
   segments,
   size = 160,
-  thickness = 26,
+  thickness = 22,
   summary,
   children,
 }: {
@@ -28,53 +32,45 @@ export function Donut({
   children?: ReactNode;
 }) {
   const total = segments.reduce((n, s) => n + Math.max(0, s.value), 0);
-  const r = size / 2;
-  const mid = r - thickness / 2; // radius of the spokes' centres
-  const width = ((2 * Math.PI * r) / SPOKES) * 1.4; // a little overlap hides the seams
-  const spokes = Array.from({ length: SPOKES }, (_, i) => {
-    const turn = (i + 0.5) / SPOKES;
-    let acc = 0;
-    let color: string = colors.surfaceSunken;
-    if (total > 0) {
-      for (const s of segments) {
-        acc += Math.max(0, s.value) / total;
-        if (turn <= acc + 1e-9) {
-          color = s.color;
-          break;
-        }
-      }
-    }
-    const angle = turn * 2 * Math.PI;
-    return {
-      key: i,
-      color,
-      left: r + mid * Math.sin(angle) - width / 2,
-      top: r - mid * Math.cos(angle) - thickness / 2,
-      deg: turn * 360,
-    };
-  });
+  const radius = (size - thickness) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const gap = total > 0 && segments.filter((s) => s.value > 0).length > 1 ? 2 : 0;
+  let offset = 0;
+  const arcs =
+    total > 0
+      ? segments
+          .filter((s) => s.value > 0)
+          .map((s) => {
+            const len = (s.value / total) * circumference;
+            const arc = { key: s.label, color: s.color, dash: Math.max(0, len - gap), at: offset };
+            offset += len;
+            return arc;
+          })
+      : [];
   return (
-    <View
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={summary}
-      style={{ width: size, height: size }}
-    >
-      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
-        {spokes.map((s) => (
-          <View
-            key={s.key}
-            style={{
-              position: 'absolute',
-              left: s.left,
-              top: s.top,
-              width,
-              height: thickness,
-              backgroundColor: s.color,
-              transform: [{ rotate: `${s.deg}deg` }],
-            }}
-          />
-        ))}
+    <View accessible accessibilityRole="image" accessibilityLabel={summary} style={{ width: size, height: size }}>
+      <View {...hidden} style={StyleSheet.absoluteFill}>
+        <Svg width={size} height={size}>
+          <G rotation={-90} origin={`${size / 2}, ${size / 2}`}>
+            {total === 0 ? (
+              <Circle cx={size / 2} cy={size / 2} r={radius} stroke={colors.surfaceSunken} strokeWidth={thickness} fill="none" />
+            ) : (
+              arcs.map((a) => (
+                <Circle
+                  key={a.key}
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={radius}
+                  stroke={a.color}
+                  strokeWidth={thickness}
+                  strokeDasharray={`${a.dash} ${circumference - a.dash}`}
+                  strokeDashoffset={-a.at}
+                  fill="none"
+                />
+              ))
+            )}
+          </G>
+        </Svg>
       </View>
       {children ? <View style={[StyleSheet.absoluteFill, styles.center]}>{children}</View> : null}
     </View>
@@ -110,7 +106,7 @@ export function BarRows({
   return (
     <View accessible accessibilityRole="image" accessibilityLabel={summary} style={{ gap: spacing.md }}>
       {rows.map((r) => (
-        <View key={r.label} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ gap: spacing.xs }}>
+        <View key={r.label} {...hidden} style={{ gap: spacing.xs }}>
           <View style={styles.barHead}>
             <AppText variant="caption" numberOfLines={1} style={{ flex: 1 }}>
               {r.label}
@@ -133,12 +129,34 @@ export function BarRows({
   );
 }
 
-/** A line through one value per step, with a dot at each and a label under each step. */
+/** A smooth curve through one value per step (monotone: it never dips below a point or overshoots one). */
+function curve(points: { x: number; y: number }[]): string {
+  if (points.length === 0) return '';
+  if (points.length === 1) return `M ${points[0]!.x} ${points[0]!.y}`;
+  const n = points.length;
+  const dx = points.slice(1).map((p, i) => p.x - points[i]!.x);
+  const slope = points.slice(1).map((p, i) => (p.y - points[i]!.y) / dx[i]!);
+  const tangent = points.map((_, i) => {
+    if (i === 0) return slope[0]!;
+    if (i === n - 1) return slope[n - 2]!;
+    return slope[i - 1]! * slope[i]! <= 0 ? 0 : (slope[i - 1]! + slope[i]!) / 2;
+  });
+  let d = `M ${points[0]!.x} ${points[0]!.y}`;
+  for (let i = 0; i < n - 1; i++) {
+    const a = points[i]!;
+    const b = points[i + 1]!;
+    const h = dx[i]! / 3;
+    d += ` C ${a.x + h} ${a.y + tangent[i]! * h}, ${b.x - h} ${b.y - tangent[i + 1]! * h}, ${b.x} ${b.y}`;
+  }
+  return d;
+}
+
+/** A smooth line with a soft fill under it, light grid lines, a dot on each point and a label under some steps. */
 export function LineChart({
   values,
   labels,
   color,
-  height = 120,
+  height = 130,
   summary,
 }: {
   values: number[];
@@ -150,61 +168,45 @@ export function LineChart({
   const [w, setW] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width);
   const max = Math.max(1, ...values);
-  const pad = 8;
-  const x = (i: number) => pad + (values.length > 1 ? (i * (w - 2 * pad)) / (values.length - 1) : (w - 2 * pad) / 2);
-  const y = (v: number) => pad + (1 - v / max) * (height - 2 * pad);
+  const padX = 10;
+  const padTop = 12;
+  const padBottom = 8;
+  const x = (i: number) => padX + (values.length > 1 ? (i * (w - 2 * padX)) / (values.length - 1) : (w - 2 * padX) / 2);
+  const y = (v: number) => padTop + (1 - v / max) * (height - padTop - padBottom);
+  const pts = values.map((v, i) => ({ x: x(i), y: y(v) }));
+  const line = curve(pts);
+  const area = pts.length > 1 ? `${line} L ${pts[pts.length - 1]!.x} ${height - padBottom} L ${pts[0]!.x} ${height - padBottom} Z` : '';
   return (
     <View accessible accessibilityRole="image" accessibilityLabel={summary} style={{ gap: spacing.xs }}>
-      <View
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        onLayout={onLayout}
-        style={{ height, borderBottomWidth: 1, borderBottomColor: colors.borderSoft }}
-      >
-        {w > 0
-          ? values.map((v, i) => {
-              const next = values[i + 1];
-              const segment =
-                next === undefined
-                  ? null
-                  : (() => {
-                      const dx = x(i + 1) - x(i);
-                      const dy = y(next) - y(v);
-                      const len = Math.hypot(dx, dy);
-                      return (
-                        <View
-                          style={{
-                            position: 'absolute',
-                            left: (x(i) + x(i + 1)) / 2 - len / 2,
-                            top: (y(v) + y(next)) / 2 - 1,
-                            width: len,
-                            height: 2,
-                            backgroundColor: color,
-                            transform: [{ rotate: `${Math.atan2(dy, dx)}rad` }],
-                          }}
-                        />
-                      );
-                    })();
-              return (
-                <View key={i} style={StyleSheet.absoluteFill}>
-                  {segment}
-                  <View
-                    style={{
-                      position: 'absolute',
-                      left: x(i) - 4,
-                      top: y(v) - 4,
-                      width: 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: color,
-                    }}
-                  />
-                </View>
-              );
-            })
-          : null}
+      <View {...hidden} onLayout={onLayout} style={{ height }}>
+        {w > 0 ? (
+          <Svg width={w} height={height}>
+            <Defs>
+              <LinearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={color} stopOpacity="0.28" />
+                <Stop offset="1" stopColor={color} stopOpacity="0" />
+              </LinearGradient>
+            </Defs>
+            {[0, 0.5, 1].map((t) => (
+              <Line
+                key={t}
+                x1={0}
+                x2={w}
+                y1={padTop + t * (height - padTop - padBottom)}
+                y2={padTop + t * (height - padTop - padBottom)}
+                stroke={colors.borderSoft}
+                strokeWidth={1}
+              />
+            ))}
+            {area ? <Path d={area} fill="url(#fade)" /> : null}
+            <Path d={line} stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            {pts.map((p, i) =>
+              values[i]! > 0 ? <Circle key={i} cx={p.x} cy={p.y} r={4} fill={colors.surface} stroke={color} strokeWidth={2} /> : null,
+            )}
+          </Svg>
+        ) : null}
       </View>
-      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.labels}>
+      <View {...hidden} style={styles.labels}>
         {labels.map((l, i) => {
           if (l === '') return null;
           // a label spans its own step and the blank steps after it, so it has room to stay on one line
@@ -229,6 +231,6 @@ const styles = StyleSheet.create({
   barHead: { flexDirection: 'row', gap: spacing.sm, alignItems: 'baseline' },
   track: { height: 10, borderRadius: 5, backgroundColor: colors.surfaceSunken, overflow: 'hidden' },
   fill: { height: 10, borderRadius: 5 },
-  labels: { flexDirection: 'row', justifyContent: 'space-between' },
+  labels: { flexDirection: 'row' },
   axis: { fontSize: 11 },
 });

@@ -3,7 +3,8 @@ import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useTalaCourses } from '../data/api';
 import { describeError } from '../errors';
 import type { TalaCourse } from '../types';
-import { AppText, Card, EmptyState, ErrorState, Notice, SkeletonList } from '../ui';
+import { AppText, EmptyState, ErrorState, Notice, SkeletonList } from '../ui';
+import { Dashlet } from '../ui/Dashlet';
 import { useBrand } from '../ui/brand';
 import { BarRows, Donut, Legend, LineChart, type Segment } from '../ui/charts';
 import { onTabScroll } from '../ui/tabBarCollapse';
@@ -94,9 +95,8 @@ export function TalaDashboard() {
     ...(rest > 0 ? [{ value: rest, color: colors.border, label: `Other ${rest}` }] : []),
   ];
 
-  const bars = list.slice(0, 8);
   const weeks = dueByWeek(list);
-  const due = list.filter((c) => c.state !== 'completed' && dueInfo(c) !== null && c.date_to !== null).slice(0, 5);
+  const due = list.filter((c) => c.state !== 'completed' && dueInfo(c) !== null && c.date_to !== null);
 
   return (
     <ScrollView
@@ -110,10 +110,7 @@ export function TalaDashboard() {
         <EmptyState title="No courses yet" description="Nothing has been assigned to you in Lodestar yet." />
       ) : (
         <>
-          <Card variant="flat" style={styles.card}>
-            <AppText variant="heading" accessibilityRole="header">
-              Overall
-            </AppText>
+          <Dashlet title="Overall">
             <View style={styles.center}>
               <Donut
                 segments={states}
@@ -129,29 +126,18 @@ export function TalaDashboard() {
             <AppText variant="caption" muted>
               {o.itemsDone} of {o.itemsTotal} items completed
             </AppText>
-          </Card>
+          </Dashlet>
 
-          <Card variant="flat" style={styles.card}>
-            <AppText variant="heading" accessibilityRole="header">
-              Progress by course
-            </AppText>
+          <Dashlet title="Progress by course">
             <BarRows
-              rows={bars.map((c) => ({ label: c.name, value: c.percent, text: `${c.percent}%` }))}
+              rows={list.map((c) => ({ label: c.name, value: c.percent, text: `${c.percent}%` }))}
               max={100}
               color={brand.primary}
-              summary={`Progress by course: ${bars.map((c) => `${c.name} ${c.percent}%`).join(', ')}`}
+              summary={`Progress by course: ${list.map((c) => `${c.name} ${c.percent}%`).join(', ')}`}
             />
-            {list.length > bars.length ? (
-              <AppText variant="caption" muted>
-                Showing {bars.length} of {list.length} courses; the Stats tab has them all.
-              </AppText>
-            ) : null}
-          </Card>
+          </Dashlet>
 
-          <Card variant="flat" style={styles.card}>
-            <AppText variant="heading" accessibilityRole="header">
-              Items still to do
-            </AppText>
+          <Dashlet title="Items still to do">
             {pie.length === 0 ? (
               <AppText muted>Everything is done.</AppText>
             ) : (
@@ -159,25 +145,23 @@ export function TalaDashboard() {
                 <View style={styles.center}>
                   <Donut
                     segments={pie}
-                    thickness={80}
-                    size={160}
+                    thickness={75}
+                    size={150}
                     summary={`Items still to do: ${pie.map((s) => s.label).join(', ')}`}
                   />
                 </View>
                 <Legend items={pie.map((s) => ({ color: s.color, label: s.label }))} />
               </>
             )}
-          </Card>
+          </Dashlet>
 
           {weeks.dated > 0 ? (
-            <Card variant="flat" style={styles.card}>
-              <AppText variant="heading" accessibilityRole="header">
-                Due in the coming weeks
-              </AppText>
+            <Dashlet title="Due in the coming weeks">
               <LineChart
                 values={weeks.counts}
                 labels={weeks.labels}
                 color={brand.primary}
+                height={170}
                 summary={`Courses due per week, next ${WEEKS} weeks: ${weeks.counts.join(', ')}${
                   weeks.overdue ? `; ${weeks.overdue} overdue` : ''
                 }${weeks.later ? `; ${weeks.later} later` : ''}`}
@@ -187,13 +171,10 @@ export function TalaDashboard() {
                 {weeks.overdue ? ` · ${weeks.overdue} overdue` : ''}
                 {weeks.later ? ` · ${weeks.later} later` : ''}
               </AppText>
-            </Card>
+            </Dashlet>
           ) : null}
 
-          <Card variant="flat" style={styles.card}>
-            <AppText variant="heading" accessibilityRole="header">
-              Due Dates
-            </AppText>
+          <Dashlet title="Due Dates">
             {due.length === 0 ? (
               <AppText muted>Nothing is due.</AppText>
             ) : (
@@ -209,7 +190,7 @@ export function TalaDashboard() {
                 );
               })
             )}
-          </Card>
+          </Dashlet>
         </>
       )}
     </ScrollView>
@@ -218,7 +199,6 @@ export function TalaDashboard() {
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
-  card: { gap: spacing.md },
   center: { alignItems: 'center' },
   big: { fontFamily: 'Quicksand_700Bold', fontSize: 32, lineHeight: 38 },
   name: { fontFamily: 'Nunito_700Bold' },
