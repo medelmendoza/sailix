@@ -26,7 +26,7 @@ describe('Tala from Services', () => {
     await renderApp();
     await openTala();
     expect(await screen.findByRole('button', { name: 'My stats' })).toBeTruthy();
-    expect(screen.queryByLabelText('Tala username or email')).toBeNull();
+    expect(screen.queryByLabelText('Lodestar username or email')).toBeNull();
   });
 
   it('opens the Tala package, with its own sign-in, while the flag is on', async () => {
@@ -36,7 +36,7 @@ describe('Tala from Services', () => {
     signedInAs(makeMe({ modules: [TALA('not_linked')] }));
     await renderApp();
     await openTala();
-    expect(await screen.findByLabelText('Tala username or email')).toBeTruthy();
+    expect(await screen.findByLabelText('Lodestar username or email')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'My stats' })).toBeNull();
   });
 
@@ -46,7 +46,7 @@ describe('Tala from Services', () => {
     signedInAs(makeMe({ modules: [TALA('not_linked')] }));
     await renderApp();
     await openTala();
-    expect(await screen.findByText('Tala is not available')).toBeTruthy();
+    expect(await screen.findByText('Lodestar is not available')).toBeTruthy();
   });
 
   it('still shows a service the organization has turned off, even with the flag on', async () => {
@@ -57,7 +57,7 @@ describe('Tala from Services', () => {
     await renderApp();
     await openTala();
     expect(await screen.findByText('Turned off')).toBeTruthy();
-    expect(screen.queryByLabelText('Tala username or email')).toBeNull();
+    expect(screen.queryByLabelText('Lodestar username or email')).toBeNull();
     void fireEvent;
   });
 });

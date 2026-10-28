@@ -9,8 +9,8 @@ const press = async (name: string | RegExp, role = 'button') =>
   fireEvent.press(await screen.findByRole(role as 'button', { name }));
 
 async function signIn(user = 'ann', pw = 'pw') {
-  await fireEvent.changeText(await screen.findByLabelText('Tala username or email'), user);
-  await fireEvent.changeText(screen.getByLabelText('Tala password'), pw);
+  await fireEvent.changeText(await screen.findByLabelText('Lodestar username or email'), user);
+  await fireEvent.changeText(screen.getByLabelText('Lodestar password'), pw);
   await press('Sign in');
 }
 
@@ -37,8 +37,8 @@ describe('signing in', () => {
     fakeTala({ 'POST /api/v1/login': { status: 401 } });
     await renderTala();
     await signIn('ann', 'wrong');
-    expect(await screen.findByText('Tala did not accept those credentials.')).toBeTruthy();
-    expect(screen.getByLabelText('Tala password').props.value).toBe('');
+    expect(await screen.findByText('Lodestar did not accept those credentials.')).toBeTruthy();
+    expect(screen.getByLabelText('Lodestar password').props.value).toBe('');
     expect(store().size).toBe(0);
   });
 
@@ -50,7 +50,7 @@ describe('signing in', () => {
     await first.unmount();
     await renderTala();
     expect(await screen.findByRole('button', { name: /Safety at sea/ })).toBeTruthy();
-    expect(screen.queryByLabelText('Tala password')).toBeNull();
+    expect(screen.queryByLabelText('Lodestar password')).toBeNull();
   });
 
   it('lets only the organization\'s own team in, and keeps nothing otherwise', async () => {
@@ -109,7 +109,7 @@ describe('the host', () => {
     await press('Account menu');
     const out = jest.mocked(Alert.alert).mock.calls.at(-1)![2]!.find((b) => b.text === 'Sign out')!;
     await act(async () => out.onPress!());
-    expect(await screen.findByLabelText('Tala password')).toBeTruthy();
+    expect(await screen.findByLabelText('Lodestar password')).toBeTruthy();
     expect(store().size).toBe(0);
     expect((await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('tala:'))).toEqual([]);
   });

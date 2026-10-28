@@ -263,7 +263,7 @@ function Study({
           </AppText>
           <AppText muted>
             {rated === deck.cards.length
-              ? 'Your results are sent to Tala. If you are offline they are sent when you are back online.'
+              ? 'Your results are sent to Lodestar. If you are offline they are sent when you are back online.'
               : `${rated} of ${deck.cards.length} cards rated. Rate every card to record this set.`}
           </AppText>
         </Card>

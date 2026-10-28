@@ -34,8 +34,8 @@ afterEach(() => {
 });
 
 async function signIn() {
-  await fireEvent.changeText(await screen.findByLabelText('Tala username or email'), 'ann');
-  await fireEvent.changeText(screen.getByLabelText('Tala password'), 'pw');
+  await fireEvent.changeText(await screen.findByLabelText('Lodestar username or email'), 'ann');
+  await fireEvent.changeText(screen.getByLabelText('Lodestar password'), 'pw');
   await fireEvent.press(await screen.findByRole('button', { name: 'Sign in' }));
 }
 
@@ -43,7 +43,7 @@ describe('the standalone Tala app', () => {
   it('shows sign-in when there is no session', async () => {
     fakeTala();
     await render(<App />);
-    expect(await screen.findByLabelText('Tala username or email')).toBeTruthy();
+    expect(await screen.findByLabelText('Lodestar username or email')).toBeTruthy();
   });
 
   it('shows the course list after sign-in, with Tala\'s own tabs', async () => {
@@ -65,7 +65,7 @@ describe('the standalone Tala app', () => {
     const buttons = jest.mocked(Alert.alert).mock.calls.at(-1)![2]!;
     expect(buttons.map((b) => b.text)).toEqual(['Sign out', 'Cancel']);
     await act(async () => buttons.find((b) => b.text === 'Sign out')!.onPress!());
-    expect(await screen.findByLabelText('Tala password')).toBeTruthy();
+    expect(await screen.findByLabelText('Lodestar password')).toBeTruthy();
     expect(store().size).toBe(0);
     void paths;
   });
@@ -73,7 +73,7 @@ describe('the standalone Tala app', () => {
   it('refuses an address that is not https', async () => {
     extra().talaBaseUrl = 'http://tala.example.test';
     await render(<App />);
-    expect(await screen.findByText('Tala is not available')).toBeTruthy();
+    expect(await screen.findByText('Lodestar is not available')).toBeTruthy();
   });
 });
 

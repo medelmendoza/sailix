@@ -8,8 +8,8 @@ import { spacing } from '../ui/theme';
 import { describeError } from '../errors';
 
 const schema = z.object({
-  username: z.string().trim().min(1, 'Enter your Tala username or email.'),
-  password: z.string().min(1, 'Enter your Tala password.'),
+  username: z.string().trim().min(1, 'Enter your Lodestar username or email.'),
+  password: z.string().min(1, 'Enter your Lodestar password.'),
 });
 type Values = z.infer<typeof schema>;
 
@@ -49,21 +49,21 @@ export function TalaSignIn({
     <FormScreen>
       <Card style={{ gap: spacing.md }}>
         <AppText variant="heading" accessibilityRole="header">
-          Sign in to Tala
+          Sign in to Lodestar
         </AppText>
         {expired ? (
-          <Notice tone="warning" message="Your Tala session ended. Sign in again to continue." />
+          <Notice tone="warning" message="Your Lodestar session ended. Sign in again to continue." />
         ) : null}
         <AppText muted>
-          Use the username and password you already have for Tala. Your password is not stored.
-          New Tala accounts cannot be created here.
+          Use the username and password you already have for Lodestar. Your password is not stored.
+          New Lodestar accounts cannot be created here.
         </AppText>
         <FormError message={error} />
         <View style={{ gap: spacing.md }}>
           <TextField
             control={control}
             name="username"
-            label="Tala username or email"
+            label="Lodestar username or email"
             autoCapitalize="none"
             autoCorrect={false}
             autoComplete="off"
@@ -72,7 +72,7 @@ export function TalaSignIn({
           <TextField
             control={control}
             name="password"
-            label="Tala password"
+            label="Lodestar password"
             secure
             autoCapitalize="none"
             autoCorrect={false}

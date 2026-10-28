@@ -140,7 +140,7 @@ export function TalaCourseList({
           {all.length === 0 ? (
             <EmptyState
               title="No courses assigned"
-              description="Nothing has been assigned to you in Tala yet."
+              description="Nothing has been assigned to you in Lodestar yet."
             />
           ) : (
             <>

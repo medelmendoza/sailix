@@ -20,11 +20,11 @@ export class ApiError extends Error {
 }
 
 export const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
-export const NETWORK_ERROR_MESSAGE = 'Tala is not reachable right now. Check your connection and try again.';
+export const NETWORK_ERROR_MESSAGE = 'Lodestar is not reachable right now. Check your connection and try again.';
 
 const MESSAGES: Record<string, string> = {
-  relink_required: 'Please sign in to Tala again.',
-  link_failed: 'Tala did not accept those credentials.',
+  relink_required: 'Please sign in to Lodestar again.',
+  link_failed: 'Lodestar did not accept those credentials.',
   course_code_rejected: 'That course code was not accepted.',
   feature_disabled: 'This is not enabled yet.',
   progress_busy: 'Another update is in progress. Try again.',

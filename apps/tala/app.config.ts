@@ -6,7 +6,7 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
  */
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'Tala',
+  name: 'Lodestar',
   slug: 'tala',
   version: '0.1.0',
   orientation: 'portrait',

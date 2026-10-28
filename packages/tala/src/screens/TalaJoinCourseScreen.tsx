@@ -54,7 +54,7 @@ export function TalaJoinCourseScreen() {
   return (
     <FormScreen>
       <AppText muted>
-        Ask your course creator for the course code. Your request is sent to Tala for your Tala
+        Ask your course creator for the course code. Your request is sent to Lodestar for your Lodestar
         account.
       </AppText>
       {requested ? (

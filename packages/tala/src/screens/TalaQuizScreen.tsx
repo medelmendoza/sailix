@@ -98,7 +98,7 @@ export function TalaQuizScreen({ route, navigation }: Props) {
   function confirmSubmit() {
     Alert.alert(
       'Submit your answers?',
-      'Your score is recorded in Tala. You can retake the quiz later.',
+      'Your score is recorded in Lodestar. You can retake the quiz later.',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Submit', onPress: () => void submit() },
@@ -118,7 +118,7 @@ export function TalaQuizScreen({ route, navigation }: Props) {
             {result.correct} correct, {result.wrong} wrong, {result.total} questions
           </AppText>
         </Card>
-        <Notice message="Your score was calculated by Sailix and recorded in Tala." />
+        <Notice message="Your score was calculated on this device and recorded in Lodestar." />
         <Button
           title="Retake quiz"
           variant="secondary"

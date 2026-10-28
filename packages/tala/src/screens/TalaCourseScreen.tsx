@@ -114,7 +114,7 @@ export function TalaCourseScreen({ route }: Props) {
       if (r.stopped === 'offline')
         throw new Error('Still offline. It will be sent when you are back online.');
       if (r.stopped === 'relink')
-        throw new Error('Link your Tala account again to send your progress.');
+        throw new Error('Link your Lodestar account again to send your progress.');
       if (r.stopped === 'disabled') throw new Error('Sending progress is not enabled.');
     });
 
@@ -199,7 +199,7 @@ export function TalaCourseScreen({ route }: Props) {
       >
         {course.data.fromCache ? <Notice message={savedCopyText(course.data.fetchedAt)} /> : null}
         {c.progress_submission ? (
-          <TalaHowItWorks message="Download a video or a document to open it. A video is completed after you watch it and send your feedback. Quiz scores and flashcard results are recorded in Tala." />
+          <TalaHowItWorks message="Download a video or a document to open it. A video is completed after you watch it and send your feedback. Quiz scores and flashcard results are recorded in Lodestar." />
         ) : (
           <Notice message="You can view your courses here. Taking quizzes and recording progress is not available in this version of the app." />
         )}

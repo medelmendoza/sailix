@@ -99,7 +99,7 @@ export function TalaRoot({ host, extraTabs = [] }: { host: TalaHost; extraTabs?:
   if (!rt) {
     return (
       <HostContext.Provider value={host}>
-        <Notice title="Tala is not available" description="Tala is not set up for this app." />
+        <Notice title="Lodestar is not available" description="Lodestar is not set up for this app." />
       </HostContext.Provider>
     );
   }
@@ -143,8 +143,8 @@ function Gate({ rt, extraTabs }: { rt: TalaRuntime; extraTabs: ExtraTab[] }) {
         await session.signOut();
         setMessage(
           host.config.teamId
-            ? "This Tala account does not belong to your organization's team."
-            : 'This Tala account is not in any team.',
+            ? "This Lodestar account does not belong to your organization's team."
+            : 'This Lodestar account is not in any team.',
         );
         setState({ step: 'signedOut', expired: false });
       } else if (saved && teams.some((t) => t.id === saved)) {
@@ -306,13 +306,13 @@ function Navigation({
             <Stack.Screen
               name="TalaTabs"
               options={{
-                title: 'Tala',
+                title: 'Lodestar',
                 headerRight: () => (
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel="Account menu"
                     onPress={() =>
-                      Alert.alert('Tala', undefined, [
+                      Alert.alert('Lodestar', undefined, [
                         ...(canSwitchTeam ? [{ text: 'Switch team', onPress: onSwitchTeam }] : []),
                         { text: 'Sign out', style: 'destructive' as const, onPress: onSignOut },
                         ...(h.onExit ? [{ text: 'Back', onPress: h.onExit }] : []),

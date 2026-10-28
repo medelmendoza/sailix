@@ -7,6 +7,6 @@ export { forgetTalaSession } from './direct/auth';
 /** The standard shape of a service package: a descriptor and one root component. */
 export const talaModule = {
   code: 'tala' as const,
-  title: 'Tala',
+  title: 'Lodestar',
   Root: TalaRoot,
 };

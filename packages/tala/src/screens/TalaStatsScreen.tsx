@@ -55,7 +55,7 @@ export function TalaStatsScreen() {
       {list.length === 0 ? (
         <EmptyState
           title="No courses yet"
-          description="Nothing has been assigned to you in Tala yet."
+          description="Nothing has been assigned to you in Lodestar yet."
         />
       ) : (
         <>
