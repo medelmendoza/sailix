@@ -143,7 +143,7 @@ mobile/src/features/services/            Services mounts the package when TALA_P
 ### Task 5: Standalone app shell (`apps/tala`)
 
 **Files:**
-- Create: `apps/tala/package.json`, `apps/tala/app.config.ts` (name "Tala", slug `tala`, scheme `tala`, bundle `com.btsolve.tala`), `apps/tala/eas.json` (profiles `development`, `staging`, `production`), `apps/tala/index.ts`, `apps/tala/src/App.tsx`
+- Create: `apps/tala/package.json`, `apps/tala/app.config.ts` (name "Tala", slug `tala`, scheme `tala`, bundle `com.btsolve.lodestar`), `apps/tala/eas.json` (profiles `development`, `staging`, `production`), `apps/tala/index.ts`, `apps/tala/src/App.tsx`
 - Test: `apps/tala/src/__tests__/app.test.tsx`
 
 **Interfaces:**

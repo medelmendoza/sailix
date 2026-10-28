@@ -131,7 +131,7 @@ relevant ones are ported to Jest with the same raw Tala fixtures and expected ou
 - **Tabs**: My Courses (home), Stats, Join a course, and the new tab through `extraTabs`. No Account tab: a header avatar opens a
   small sheet with Switch team and Sign out. Sign-out wipes tokens and offline data.
 - **Look**: the same theme tokens; the Tala logo from `assets/brand`. App icon and splash are design assets still to be supplied.
-- **Build**: its own `app.config.ts` (name, slug, scheme, bundle id such as `com.btsolve.tala`) and `eas.json` profiles
+- **Build**: its own `app.config.ts` (name, slug, scheme, bundle id such as `com.btsolve.lodestar`) and `eas.json` profiles
   (`development`, `staging`, `production`) with its own EAS project, so it is a separate store record.
 
 ## 5. Sailix during the trial

@@ -12,8 +12,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   userInterfaceStyle: 'light',
   scheme: 'tala',
-  ios: { supportsTablet: true, bundleIdentifier: 'com.btsolve.tala', infoPlist: { ITSAppUsesNonExemptEncryption: false } },
-  android: { package: 'com.btsolve.tala', allowBackup: false, predictiveBackGestureEnabled: false },
+  ios: { supportsTablet: true, bundleIdentifier: 'com.btsolve.lodestar', infoPlist: { ITSAppUsesNonExemptEncryption: false } },
+  android: { package: 'com.btsolve.lodestar', allowBackup: false, predictiveBackGestureEnabled: false },
   plugins: [['expo-secure-store', { faceIDPermission: false }], 'expo-font', 'expo-video'],
   extra: {
     appEnv: process.env.APP_ENV ?? 'development',
