@@ -3,6 +3,7 @@ export type TalaRoutes = {
   TalaTabs: undefined;
   TalaStats: undefined;
   TalaJoinCourse: undefined;
+  TalaCourseStats: { assignId: string; name: string };
   TalaCourse: { assignId: string; name: string };
   TalaFlashcards: { assignId: string; cardId: string; name: string };
   TalaQuiz: { assignId: string; quizId: string; name: string };

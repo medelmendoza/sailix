@@ -10,6 +10,8 @@ import type { TalaDataSource } from './data/source';
  * module-level value rather than context; give each mount its own if two ever run side by side.
  */
 export interface TalaRuntime {
+  /** Changes with every runtime built: screens mounted under an older one must start over, not read a scope that is gone. */
+  id: number;
   host: TalaHost;
   session: TalaSession;
   client: TalaClient;

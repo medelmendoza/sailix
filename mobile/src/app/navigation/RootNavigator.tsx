@@ -61,6 +61,7 @@ import { TalaQuizScreen } from '@/features/modules/tala/TalaQuizScreen';
 import { TalaPdfScreen, TalaVideoScreen } from '@/features/modules/tala/TalaViewers';
 import { useFeature } from '@/store/featureAccess';
 import { ModuleScreen } from '@/features/modules/ModuleScreen';
+import { usesTalaPackage } from '@/features/modules/talaHost';
 import { useSessionStore } from '@/store/sessionStore';
 import type { AppStackParamList, AuthStackParamList, MainTabParamList } from './types';
 import { resetTabBar, tabBarCollapse } from './tabBarCollapse';
@@ -320,7 +321,13 @@ export function RootNavigator() {
         <AppStack.Screen
           name="Module"
           component={ModuleScreen}
-          options={({ route }) => ({ title: route.params.code === 'tala' ? 'Lodestar' : 'Service' })}
+          options={({ route }) => ({
+            title: route.params.code === 'tala' ? 'Lodestar' : 'Service',
+            // the Tala package draws its own header
+            headerShown: !usesTalaPackage(
+              useSessionStore.getState().me?.modules.find((m) => m.code === route.params.code),
+            ),
+          })}
         />
         <AppStack.Screen
           name="TalaStats"

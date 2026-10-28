@@ -1,3 +1,4 @@
+import { onTabScroll } from '../ui/tabBarCollapse';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
@@ -48,6 +49,8 @@ export function TalaStatsScreen() {
 
   return (
     <ScrollView
+      onScroll={onTabScroll}
+      scrollEventThrottle={16}
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}
     >
@@ -103,7 +106,7 @@ export function TalaStatsScreen() {
               key={c.id}
               accessibilityRole="button"
               accessibilityLabel={`${c.name}, ${c.completed} of ${c.total} items completed`}
-              onPress={() => navigation.navigate('TalaCourse', { assignId: c.id, name: c.name })}
+              onPress={() => navigation.navigate('TalaCourseStats', { assignId: c.id, name: c.name })}
               style={({ pressed }) => (pressed ? styles.pressed : undefined)}
             >
               <Card variant="flat" style={styles.row}>

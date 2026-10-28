@@ -50,8 +50,10 @@ describe('the standalone Tala app', () => {
     fakeTala();
     await render(<App />);
     await signIn();
+    expect(await screen.findByText('My Stats')).toBeTruthy(); // the app opens on the dashboard
+    await fireEvent.press(screen.getByLabelText(/^My Courses/));
     expect(await screen.findByRole('button', { name: /Safety at sea/ })).toBeTruthy();
-    for (const tab of ['My Courses', 'Stats', 'Join a course']) {
+    for (const tab of ['Dashboard', 'My Courses', 'Stats', 'Join a course']) {
       expect(screen.getByLabelText(new RegExp(`^${tab}`))).toBeTruthy();
     }
   });
@@ -60,7 +62,7 @@ describe('the standalone Tala app', () => {
     fakeTala();
     await render(<App />);
     await signIn();
-    await screen.findByRole('button', { name: /Safety at sea/ });
+    await screen.findByText('My Stats');
     await fireEvent.press(await screen.findByRole('button', { name: 'Account menu' }));
     const buttons = jest.mocked(Alert.alert).mock.calls.at(-1)![2]!;
     expect(buttons.map((b) => b.text)).toEqual(['Sign out', 'Cancel']);

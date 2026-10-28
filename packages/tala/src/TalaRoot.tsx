@@ -8,8 +8,17 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react';
-import { ActivityIndicator, Alert, AppState, BackHandler, Pressable, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  AppState,
+  BackHandler,
+  Pressable,
+  View,
+  type PressableProps,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createDirectSource } from './data/source';
 import { createTalaSession, secureStoreStorage } from './direct/auth';
 import { TalaError, createTalaClient } from './direct/client';
@@ -20,6 +29,8 @@ import type { TalaRoutes } from './routes';
 import { makeScope, setRuntime, setScope, type TalaRuntime } from './runtime';
 import { TalaCourseList } from './screens/TalaCourseList';
 import { TalaCourseScreen } from './screens/TalaCourseScreen';
+import { TalaCourseStatsScreen } from './screens/TalaCourseStatsScreen';
+import { TalaDashboard } from './screens/TalaDashboard';
 import { TalaFlashcardsScreen } from './screens/TalaFlashcardsScreen';
 import { TalaJoinCourseScreen } from './screens/TalaJoinCourseScreen';
 import { TalaQuizScreen } from './screens/TalaQuizScreen';
@@ -28,6 +39,7 @@ import { TalaStatsScreen } from './screens/TalaStatsScreen';
 import { TalaPdfScreen, TalaVideoScreen } from './screens/TalaViewers';
 import { AppText, Button, Card, EmptyState, FormScreen, GlyphIcon, type GlyphName } from './ui';
 import { useBrand } from './ui/brand';
+import { resetTabBar, tabBarCollapse } from './ui/tabBarCollapse';
 import { spacing } from './ui/theme';
 
 /** A tab the app that mounts Tala adds after Tala's own (the standalone app's extra tab). */
@@ -45,6 +57,7 @@ type State =
   | { step: 'pickTeam'; teams: Team[] }
   | { step: 'ready'; teams: Team[] };
 
+let runtimes = 0;
 const Stack = createNativeStackNavigator<TalaRoutes>();
 const Tabs = createBottomTabNavigator<Record<string, undefined>>();
 const navRef = createNavigationContainerRef<ParamListBase>();
@@ -82,6 +95,7 @@ export function TalaRoot({ host, extraTabs = [] }: { host: TalaHost; extraTabs?:
         () => session.token(),
       );
       const runtime: TalaRuntime = {
+        id: ++runtimes,
         host,
         session,
         client,
@@ -106,7 +120,7 @@ export function TalaRoot({ host, extraTabs = [] }: { host: TalaHost; extraTabs?:
   return (
     <HostContext.Provider value={host}>
       <QueryClientProvider client={rt.queryClient}>
-        <Gate rt={rt} extraTabs={extraTabs} />
+        <Gate key={rt.id} rt={rt} extraTabs={extraTabs} />
       </QueryClientProvider>
     </HostContext.Provider>
   );
@@ -260,16 +274,76 @@ function Gate({ rt, extraTabs }: { rt: TalaRuntime; extraTabs: ExtraTab[] }) {
 
 const Courses = () => <TalaCourseList />;
 
+const TAB_BAR_HEIGHT = 60;
+
+/** The tab's icon on a light pill while its tab is open (the same floating bar as Sailix's own tabs). */
+function TabPill({ focused, children }: { focused: boolean; children: ReactNode }) {
+  const brand = useBrand();
+  return (
+    <View
+      style={{
+        width: 52,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: focused ? brand.infoBg : 'transparent',
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
 function TabsScreen({ extraTabs }: { extraTabs: ExtraTab[] }) {
   const brand = useBrand();
+  const insets = useSafeAreaInsets();
+  const bottom = Math.max(insets.bottom, 8) + 8; // the bar floats this far above the bottom edge
   const own: { name: string; title: string; icon: GlyphName; component: ComponentType }[] = [
+    { name: 'TalaDashboard', title: 'Dashboard', icon: 'grid', component: TalaDashboard },
     { name: 'TalaCourses', title: 'My Courses', icon: 'video', component: Courses },
     { name: 'TalaStats', title: 'Stats', icon: 'chart', component: TalaStatsScreen },
     { name: 'TalaJoinCourse', title: 'Join a course', icon: 'cards', component: TalaJoinCourseScreen },
   ];
   return (
     <Tabs.Navigator
-      screenOptions={{ headerShown: false, tabBarActiveTintColor: brand.primary }}
+      screenListeners={{ focus: resetTabBar }}
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+        tabBarActiveTintColor: brand.primary,
+        tabBarInactiveTintColor: brand.textMuted,
+        tabBarShowLabel: false, // icons only; each tab still has its name for screen readers
+        tabBarHideOnKeyboard: true,
+        tabBarButton: (props) => (
+          <Pressable
+            {...(props as PressableProps)}
+            android_ripple={{ color: 'transparent' }}
+            style={[props.style, { justifyContent: 'center', alignItems: 'center' }]}
+          />
+        ),
+        tabBarItemStyle: { justifyContent: 'center' },
+        tabBarStyle: {
+          position: 'absolute',
+          start: 28,
+          end: 28,
+          bottom,
+          elevation: 0,
+          height: TAB_BAR_HEIGHT,
+          paddingBottom: 0,
+          paddingHorizontal: 4,
+          borderRadius: 34,
+          borderTopWidth: 0,
+          backgroundColor: '#FFFFFF',
+          boxShadow: '0 8px 24px rgba(18, 36, 61, 0.14)',
+          // shrinks toward the bottom while you scroll down, grows back when you scroll up (as Sailix's bar does)
+          transform: [
+            { translateY: tabBarCollapse.interpolate({ inputRange: [0, 1], outputRange: [0, 12] }) },
+            { scale: tabBarCollapse.interpolate({ inputRange: [0, 1], outputRange: [1, 0.78] }) },
+          ],
+        },
+        sceneStyle: { backgroundColor: brand.background, paddingBottom: TAB_BAR_HEIGHT + bottom + 8 },
+      }}
     >
       {[...own, ...extraTabs].map((t) => (
         <Tabs.Screen
@@ -278,7 +352,11 @@ function TabsScreen({ extraTabs }: { extraTabs: ExtraTab[] }) {
           component={t.component}
           options={{
             title: t.title,
-            tabBarIcon: ({ color }) => <GlyphIcon name={t.icon} color={color} size={22} />,
+            tabBarIcon: ({ color, focused }) => (
+              <TabPill focused={focused}>
+                <GlyphIcon name={t.icon} color={color} size={22} />
+              </TabPill>
+            ),
           }}
         />
       ))}
@@ -307,6 +385,20 @@ function Navigation({
               name="TalaTabs"
               options={{
                 title: 'Lodestar',
+                headerBackVisible: false,
+                headerLeft: h.onExit
+                  ? () => (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Back"
+                        onPress={h.onExit}
+                        hitSlop={12}
+                        style={{ paddingRight: 16 }}
+                      >
+                        <AppText style={{ fontSize: 24 }}>←</AppText>
+                      </Pressable>
+                    )
+                  : undefined,
                 headerRight: () => (
                   <Pressable
                     accessibilityRole="button"
@@ -327,6 +419,7 @@ function Navigation({
             >
               {() => <TabsScreen extraTabs={extraTabs} />}
             </Stack.Screen>
+            <Stack.Screen name="TalaCourseStats" component={TalaCourseStatsScreen} options={({ route }) => ({ title: route.params.name })} />
             <Stack.Screen name="TalaCourse" component={TalaCourseScreen} options={({ route }) => ({ title: route.params.name })} />
             <Stack.Screen name="TalaFlashcards" component={TalaFlashcardsScreen} options={({ route }) => ({ title: route.params.name })} />
             <Stack.Screen name="TalaQuiz" component={TalaQuizScreen} options={({ route }) => ({ title: route.params.name })} />

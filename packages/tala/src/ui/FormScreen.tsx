@@ -1,3 +1,4 @@
+import { onTabScroll } from './tabBarCollapse';
 import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +13,8 @@ export function FormScreen({ children }: { children: ReactNode }) {
         style={styles.flex}
       >
         <ScrollView
+          onScroll={onTabScroll}
+          scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}

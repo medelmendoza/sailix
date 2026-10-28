@@ -60,3 +60,7 @@ export function useTalaHost(onExit: () => void): TalaHost | null {
     [tenantId, membershipId, background, text, primary, accent, fontPreset, onExit],
   );
 }
+
+/** True when Services opens the Tala package for this module (flag on and the organization has it on). */
+export const usesTalaPackage = (module: { code: string; enabled: boolean } | undefined): boolean =>
+  module?.code === 'tala' && module.enabled && talaPackageEnabled();

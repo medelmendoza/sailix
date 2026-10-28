@@ -2,11 +2,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import * as SecureStore from 'expo-secure-store';
 import { Alert } from 'react-native';
+import { talaModule } from '../../index';
+import { snapshot } from '../../direct/testing/fixtures';
 import { fakeTala, hostOf, paths, renderTala, stopFakeTala } from '../../testing/render';
 
 const store = () => (SecureStore as unknown as { __store: Map<string, string> }).__store;
 const press = async (name: string | RegExp, role = 'button') =>
   fireEvent.press(await screen.findByRole(role as 'button', { name }));
+
+/** The app opens on the Dashboard: go to My Courses and return the first course card. */
+const showCourses = async () => {
+  await fireEvent.press(await screen.findByLabelText(/^My Courses/));
+  return screen.findByRole('button', { name: /Safety at sea/ });
+};
 
 async function signIn(user = 'ann', pw = 'pw') {
   await fireEvent.changeText(await screen.findByLabelText('Lodestar username or email'), user);
@@ -30,7 +38,7 @@ describe('signing in', () => {
     fakeTala();
     await renderTala();
     await signIn();
-    expect(await screen.findByRole('button', { name: /Safety at sea/ })).toBeTruthy();
+    expect(await showCourses()).toBeTruthy();
   });
 
   it('says so when Tala does not accept the credentials, and clears the password', async () => {
@@ -42,14 +50,24 @@ describe('signing in', () => {
     expect(store().size).toBe(0);
   });
 
+  it('starts over from the saved session, without a crash, when the host is replaced while it is open', async () => {
+    fakeTala();
+    const host = hostOf();
+    const view = await renderTala(host);
+    await signIn();
+    await showCourses();
+    await view.rerender(<talaModule.Root host={{ ...host }} />);
+    expect(await showCourses()).toBeTruthy();
+  });
+
   it('keeps the session across a restart', async () => {
     fakeTala();
     const first = await renderTala();
     await signIn();
-    await screen.findByRole('button', { name: /Safety at sea/ });
+    await showCourses();
     await first.unmount();
     await renderTala();
-    expect(await screen.findByRole('button', { name: /Safety at sea/ })).toBeTruthy();
+    expect(await showCourses()).toBeTruthy();
     expect(screen.queryByLabelText('Lodestar password')).toBeNull();
   });
 
@@ -68,14 +86,14 @@ describe('signing in', () => {
     await renderTala();
     await signIn();
     await press('Engine crew');
-    expect(await screen.findByText(/No courses|My Courses/)).toBeTruthy();
+    expect(await screen.findByLabelText(/^Dashboard/)).toBeTruthy(); // the chosen team's app opened
   });
 
   it('goes back to sign-in, saying why, when Tala stops accepting the token', async () => {
     const tala = fakeTala();
     await renderTala();
     await signIn();
-    await screen.findByRole('button', { name: /Safety at sea/ });
+    await showCourses();
     tala.set(`GET ${paths.T}/courses`, { status: 401 });
     await act(async () => {
       await fireEvent.press(await screen.findByRole('button', { name: /My Courses/ }));
@@ -104,7 +122,7 @@ describe('the host', () => {
     fakeTala();
     await renderTala();
     await signIn();
-    await screen.findByRole('button', { name: /Safety at sea/ });
+    await showCourses();
     await waitFor(async () => expect((await AsyncStorage.getAllKeys()).some((k) => k.startsWith('tala:'))).toBe(true));
     await press('Account menu');
     const out = jest.mocked(Alert.alert).mock.calls.at(-1)![2]!.find((b) => b.text === 'Sign out')!;
@@ -118,7 +136,7 @@ describe('the host', () => {
     fakeTala();
     await renderTala(hostOf({ scope: 'org:1' }));
     await signIn();
-    await screen.findByRole('button', { name: /Safety at sea/ });
+    await showCourses();
     const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('tala:'));
     expect(keys.every((k) => k.includes('org-1'))).toBe(true);
     expect(store().has('tala.org_1.session')).toBe(true);
@@ -130,6 +148,7 @@ describe('studying', () => {
   async function openCourse() {
     await renderTala();
     await signIn();
+    await showCourses();
     await press(/Safety at sea/);
   }
 
@@ -171,6 +190,43 @@ describe('studying', () => {
   });
 });
 
+describe('the dashboard', () => {
+  it('opens first, with My Stats and Due Dates for each course, and opens nothing', async () => {
+    fakeTala();
+    await renderTala();
+    await signIn();
+    expect(await screen.findByText('My Stats')).toBeTruthy();
+    expect(screen.getByText('Due Dates')).toBeTruthy();
+    expect(screen.getAllByText('Safety at sea').length).toBe(2); // once in each card
+    expect(screen.getByText(/due 2026-12-31/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Safety at sea/ })).toBeNull(); // read-only
+  });
+});
+
+describe('a course in Stats', () => {
+  it('shows what was recorded for it and offers nothing to watch, take or study', async () => {
+    const snap = snapshot();
+    (snap.materials as Record<string, unknown[]>).quizzes = [
+      { quizId: 'q1', status: 'COMPLETED', correct: 1, wrong: 1, average: 50, remarks: 'FAILED' },
+    ];
+    (snap.materials as Record<string, unknown[]>).cards = [
+      { cardId: 'c1', status: 'COMPLETED', easy: 1, medium: 0, hard: 1, notseen: 0 },
+    ];
+    (snap.materials as Record<string, unknown[]>).videos = [{ videoId: 'v1', status: 'COMPLETED', feedback: 4.5 }];
+    fakeTala({ [`GET ${paths.T}/courses/C1/sync/A1/data`]: { status: 200, data: snap } });
+    await renderTala();
+    await signIn();
+    await fireEvent.press(await screen.findByLabelText(/^Stats/));
+    await press(/Safety at sea/);
+    expect(await screen.findByText('Intro video')).toBeTruthy();
+    expect(screen.getByText('Your rating: 4.5 of 5')).toBeTruthy();
+    expect(screen.getByText('Score 50% · Not passed (1 correct, 1 wrong)')).toBeTruthy();
+    expect(screen.getByText('Easy 1 · Medium 0 · Hard 1')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Take quiz|^Retake|^Study flashcards|Download|Continue/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Intro video|Quiz|Knots/ })).toBeNull();
+  });
+});
+
 describe('joining a course', () => {
   it('says the request was sent, never that the course was joined', async () => {
     const tala = fakeTala();
@@ -199,11 +255,11 @@ describe('offline', () => {
     const tala = fakeTala();
     const first = await renderTala();
     await signIn();
-    await screen.findByRole('button', { name: /Safety at sea/ });
+    await showCourses();
     await first.unmount();
     tala.set(`GET ${paths.T}/courses`, { status: 503 });
     await renderTala();
-    expect(await screen.findByRole('button', { name: /Safety at sea/ })).toBeTruthy();
+    expect(await showCourses()).toBeTruthy();
     expect(await screen.findByText(/copy saved on this device/)).toBeTruthy();
   });
 });

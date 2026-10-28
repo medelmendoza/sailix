@@ -9,7 +9,7 @@ import { describeError } from '@/services/api/errors';
 import { ServiceLogo, hasLogo } from '@/features/services/ServiceLogo';
 import { useSessionStore } from '@/store/sessionStore';
 import { STATUS_DESCRIPTION, STATUS_LABEL } from './availability';
-import { talaPackageEnabled, useTalaHost } from './talaHost';
+import { usesTalaPackage, useTalaHost } from './talaHost';
 import { useUnlinkTala } from './tala/api';
 import { TalaCourseList } from './tala/TalaCourseList';
 import { TalaLinkForm } from './tala/TalaLinkForm';
@@ -36,7 +36,7 @@ export function ModuleScreen({ route, navigation }: Props) {
     );
   }
 
-  if (module.code === 'tala' && module.enabled && talaPackageEnabled() && host) {
+  if (usesTalaPackage(module) && host) {
     return <talaModule.Root host={host} />;
   }
 
