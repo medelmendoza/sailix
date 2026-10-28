@@ -1,4 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { talaModule } from '@sailix/tala';
+import Constants from 'expo-constants';
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import type { AppStackParamList } from '@/app/navigation/types';
@@ -29,6 +31,22 @@ export function ModuleScreen({ route, navigation }: Props) {
           description="This service is not available for your account."
         />
       </Screen>
+    );
+  }
+
+  if (module.code === 'tala' && Constants.expoConfig?.extra?.talaPackage) {
+    return (
+      <talaModule.Root
+        host={{
+          scope: `org:${me?.tenant.id}`,
+          theme: { background: colors.background, text: colors.text, primary: colors.primary },
+          config: {
+            talaBaseUrl: String(Constants.expoConfig.extra.talaBaseUrl ?? ''),
+            progressWrites: !!Constants.expoConfig.extra.talaProgressWrites,
+          },
+          onExit: navigation.goBack,
+        }}
+      />
     );
   }
 

@@ -11,11 +11,16 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@sailix/tala": [
+        "../packages/tala/src/index.ts"
       ]
     }
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "../packages/**/*.ts",
+    "../packages/**/*.tsx"
   ]
 }

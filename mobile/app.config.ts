@@ -86,6 +86,10 @@ const build = ({ config }: ConfigContext): ExpoConfig => ({
     apiPrefix: process.env.API_PREFIX ?? '/api/v1',
     demo: process.env.DEMO_MODE === '1',
     demoTour: process.env.DEMO_TOUR === '1', // with DEMO_MODE=1: the screens open one after another by themselves
+    // the Tala package (packages/tala) instead of Sailix's own Tala screens, while the two are compared
+    talaPackage: process.env.TALA_PACKAGE === '1',
+    talaBaseUrl: process.env.TALA_API_BASE_URL ?? '',
+    talaProgressWrites: process.env.TALA_PROGRESS_WRITES === '1',
     privacyUrl:
       process.env.PRIVACY_URL ?? 'https://www.btsolve.com/privacy/data-privacy-sailix.html',
   },

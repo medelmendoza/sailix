@@ -4,6 +4,7 @@
   "private": true,
   "main": "index.ts",
   "scripts": {
+    "postinstall": "node scripts/link-packages.mjs",
     "start": "expo start --dev-client",
     "ios": "expo run:ios",
     "android": "expo run:android",
