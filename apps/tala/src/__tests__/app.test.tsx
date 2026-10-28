@@ -50,23 +50,22 @@ describe('the standalone Tala app', () => {
     fakeTala();
     await render(<App />);
     await signIn();
-    expect(await screen.findByText('My Stats')).toBeTruthy(); // the app opens on the dashboard
+    expect(await screen.findByText('Overall')).toBeTruthy(); // the app opens on the dashboard
     await fireEvent.press(screen.getByLabelText(/^My Courses/));
     expect(await screen.findByRole('button', { name: /Safety at sea/ })).toBeTruthy();
-    for (const tab of ['Dashboard', 'My Courses', 'Stats', 'Join a course']) {
+    for (const tab of ['Dashboard', 'My Courses', 'Stats']) {
       expect(screen.getByLabelText(new RegExp(`^${tab}`))).toBeTruthy();
     }
   });
 
-  it('signs out from the account menu, wiping tokens, and has no way "back" to a host', async () => {
+  it('signs out from the account screen, wiping tokens, and has no way "back" to a host', async () => {
     fakeTala();
     await render(<App />);
     await signIn();
-    await screen.findByText('My Stats');
-    await fireEvent.press(await screen.findByRole('button', { name: 'Account menu' }));
-    const buttons = jest.mocked(Alert.alert).mock.calls.at(-1)![2]!;
-    expect(buttons.map((b) => b.text)).toEqual(['Sign out', 'Cancel']);
-    await act(async () => buttons.find((b) => b.text === 'Sign out')!.onPress!());
+    await screen.findByText('Overall');
+    await fireEvent.press(await screen.findByRole('button', { name: 'Account' }));
+    expect(screen.queryByRole('button', { name: /^Back to/ })).toBeNull();
+    await act(async () => fireEvent.press(await screen.findByRole('button', { name: 'Sign out' })));
     expect(await screen.findByLabelText('Lodestar password')).toBeTruthy();
     expect(store().size).toBe(0);
     void paths;

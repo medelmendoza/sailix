@@ -11,7 +11,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   AppState,
   BackHandler,
   Pressable,
@@ -28,6 +27,7 @@ import { syncOutbox } from './offline/outbox';
 import type { TalaRoutes } from './routes';
 import { makeScope, setRuntime, setScope, type TalaRuntime } from './runtime';
 import { TalaCourseList } from './screens/TalaCourseList';
+import { TalaAccountScreen } from './screens/TalaAccountScreen';
 import { TalaCourseScreen } from './screens/TalaCourseScreen';
 import { TalaCourseStatsScreen } from './screens/TalaCourseStatsScreen';
 import { TalaDashboard } from './screens/TalaDashboard';
@@ -55,7 +55,7 @@ type State =
   | { step: 'loading' }
   | { step: 'signedOut'; expired: boolean }
   | { step: 'pickTeam'; teams: Team[] }
-  | { step: 'ready'; teams: Team[] };
+  | { step: 'ready'; teams: Team[]; teamId: string };
 
 let runtimes = 0;
 const Stack = createNativeStackNavigator<TalaRoutes>();
@@ -144,7 +144,7 @@ function Gate({ rt, extraTabs }: { rt: TalaRuntime; extraTabs: ExtraTab[] }) {
     async (userId: string, teamId: string, teams: Team[]) => {
       await session.setTeam(teamId);
       setScope(rt, makeScope(host.scope, userId, teamId));
-      setState({ step: 'ready', teams });
+      setState({ step: 'ready', teams, teamId });
     },
     [host.scope, rt, session],
   );
@@ -265,6 +265,7 @@ function Gate({ rt, extraTabs }: { rt: TalaRuntime; extraTabs: ExtraTab[] }) {
   return (
     <Navigation
       extraTabs={extraTabs}
+      teamName={state.teams.find((t) => t.id === state.teamId)?.name ?? null}
       canSwitchTeam={state.teams.length > 1}
       onSwitchTeam={() => void switchTeam()}
       onSignOut={() => void signOut()}
@@ -303,7 +304,6 @@ function TabsScreen({ extraTabs }: { extraTabs: ExtraTab[] }) {
     { name: 'TalaDashboard', title: 'Dashboard', icon: 'grid', component: TalaDashboard },
     { name: 'TalaCourses', title: 'My Courses', icon: 'video', component: Courses },
     { name: 'TalaStats', title: 'Stats', icon: 'chart', component: TalaStatsScreen },
-    { name: 'TalaJoinCourse', title: 'Join a course', icon: 'cards', component: TalaJoinCourseScreen },
   ];
   return (
     <Tabs.Navigator
@@ -366,16 +366,19 @@ function TabsScreen({ extraTabs }: { extraTabs: ExtraTab[] }) {
 
 function Navigation({
   extraTabs,
+  teamName,
   canSwitchTeam,
   onSwitchTeam,
   onSignOut,
 }: {
   extraTabs: ExtraTab[];
+  teamName: string | null;
   canSwitchTeam: boolean;
   onSwitchTeam: () => void;
   onSignOut: () => void;
 }) {
   const h = useHost();
+  const brand = useBrand();
   return (
     <NavigationIndependentTree>
         <NavigationContainer ref={navRef}>
@@ -402,23 +405,37 @@ function Navigation({
                 headerRight: () => (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Account menu"
-                    onPress={() =>
-                      Alert.alert('Lodestar', undefined, [
-                        ...(canSwitchTeam ? [{ text: 'Switch team', onPress: onSwitchTeam }] : []),
-                        { text: 'Sign out', style: 'destructive' as const, onPress: onSignOut },
-                        ...(h.onExit ? [{ text: 'Back', onPress: h.onExit }] : []),
-                        { text: 'Cancel', style: 'cancel' as const },
-                      ])
-                    }
+                    accessibilityLabel="Account"
+                    onPress={() => navRef.isReady() && navRef.navigate('TalaAccount')}
+                    hitSlop={8}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: brand.primary,
+                    }}
                   >
-                    <GlyphIcon name="person" color="#1260D8" size={24} />
+                    <GlyphIcon name="person" color="#FFFFFF" size={20} />
                   </Pressable>
                 ),
               }}
             >
               {() => <TabsScreen extraTabs={extraTabs} />}
             </Stack.Screen>
+            <Stack.Screen name="TalaAccount" options={{ title: 'Account' }}>
+              {() => (
+                <TalaAccountScreen
+                  teamName={teamName}
+                  canSwitchTeam={canSwitchTeam}
+                  onSwitchTeam={onSwitchTeam}
+                  onSignOut={onSignOut}
+                  onExit={h.onExit}
+                />
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="TalaJoinCourse" component={TalaJoinCourseScreen} options={{ title: 'Join a course' }} />
             <Stack.Screen name="TalaCourseStats" component={TalaCourseStatsScreen} options={({ route }) => ({ title: route.params.name })} />
             <Stack.Screen name="TalaCourse" component={TalaCourseScreen} options={({ route }) => ({ title: route.params.name })} />
             <Stack.Screen name="TalaFlashcards" component={TalaFlashcardsScreen} options={({ route }) => ({ title: route.params.name })} />

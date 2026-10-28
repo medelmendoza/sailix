@@ -106,27 +106,14 @@ describe('signing in', () => {
 });
 
 describe('the host', () => {
-  it('can be left through the account menu', async () => {
-    fakeTala();
-    const host = hostOf();
-    await renderTala(host);
-    await signIn();
-    await press('Account menu');
-    const buttons = jest.mocked(Alert.alert).mock.calls.at(-1)![2]!;
-    expect(buttons.map((b) => b.text)).toEqual(['Sign out', 'Back', 'Cancel']);
-    buttons.find((b) => b.text === 'Back')!.onPress!();
-    expect(host.onExit).toHaveBeenCalledTimes(1);
-  });
-
-  it('signs out, wiping the tokens and what was saved for offline use', async () => {
+  it('signs out from the account screen, wiping the tokens and what was saved for offline use', async () => {
     fakeTala();
     await renderTala();
     await signIn();
     await showCourses();
     await waitFor(async () => expect((await AsyncStorage.getAllKeys()).some((k) => k.startsWith('tala:'))).toBe(true));
-    await press('Account menu');
-    const out = jest.mocked(Alert.alert).mock.calls.at(-1)![2]!.find((b) => b.text === 'Sign out')!;
-    await act(async () => out.onPress!());
+    await press('Account');
+    await press('Sign out');
     expect(await screen.findByLabelText('Lodestar password')).toBeTruthy();
     expect(store().size).toBe(0);
     expect((await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('tala:'))).toEqual([]);
@@ -191,15 +178,59 @@ describe('studying', () => {
 });
 
 describe('the dashboard', () => {
-  it('opens first, with My Stats and Due Dates for each course, and opens nothing', async () => {
+  it('opens first with charts of the courses, and opens nothing', async () => {
     fakeTala();
     await renderTala();
     await signIn();
-    expect(await screen.findByText('My Stats')).toBeTruthy();
+    expect(await screen.findByText('Overall')).toBeTruthy();
+    // the donut: courses by state, with the overall percentage in its middle
+    expect(screen.getByLabelText('Courses by state: 0 completed, 1 in progress, 0 not started')).toBeTruthy();
+    expect(screen.getAllByText('40%').length).toBeGreaterThan(0);
+    expect(screen.getByText('2 of 5 items completed')).toBeTruthy();
+    // the bars: progress of each course
+    expect(screen.getByLabelText('Progress by course: Safety at sea 40%')).toBeTruthy();
+    // the pie: where the items still to do are
+    expect(screen.getByLabelText('Items still to do: Safety at sea 3')).toBeTruthy();
+    // the line: courses due in the coming weeks
+    expect(screen.getByLabelText(/^Courses due per week/)).toBeTruthy();
+    // what is due, as a list
     expect(screen.getByText('Due Dates')).toBeTruthy();
-    expect(screen.getAllByText('Safety at sea').length).toBe(2); // once in each card
     expect(screen.getByText(/due 2026-12-31/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Safety at sea/ })).toBeNull(); // read-only
+  });
+
+  it('says so when nothing is assigned', async () => {
+    fakeTala({ [`GET ${paths.T}/courses`]: { status: 200, data: [] } });
+    await renderTala();
+    await signIn();
+    expect(await screen.findByText('No courses yet')).toBeTruthy();
+  });
+});
+
+describe('the account screen', () => {
+  it('is opened by the profile button and holds Join a course, Sign out and the way back', async () => {
+    fakeTala();
+    const host = hostOf();
+    await renderTala(host);
+    await signIn();
+    await press('Account');
+    expect(await screen.findByRole('button', { name: 'Join a course' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Switch team' })).toBeNull(); // one team only
+    await press('Back to Services');
+    expect(host.onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers Switch team only when the account has several teams', async () => {
+    fakeTala({
+      [`GET ${paths.U}/teams`]: { status: 200, data: [{ teamId: 'TEAM-1', teamName: 'Deck crew' }, { teamId: 'TEAM-2', teamName: 'Engine crew' }] },
+    });
+    await renderTala();
+    await signIn();
+    await press('Deck crew');
+    await press('Account');
+    expect(await screen.findByRole('button', { name: 'Switch team' })).toBeTruthy();
+    expect(screen.getByText('Team: Deck crew')).toBeTruthy();
   });
 });
 
@@ -232,7 +263,8 @@ describe('joining a course', () => {
     const tala = fakeTala();
     await renderTala();
     await signIn();
-    await press(/Join a course/, 'button');
+    await press('Account');
+    await press('Join a course');
     await fireEvent.changeText(await screen.findByLabelText('Course code'), 'ABC-123');
     await press('Request to join');
     expect(await screen.findByText(/Request sent/)).toBeTruthy();
@@ -243,7 +275,8 @@ describe('joining a course', () => {
     fakeTala({ [`POST ${paths.T}/courses/apply`]: { status: 400 } });
     await renderTala();
     await signIn();
-    await press(/Join a course/, 'button');
+    await press('Account');
+    await press('Join a course');
     await fireEvent.changeText(await screen.findByLabelText('Course code'), 'NOPE');
     await press('Request to join');
     expect(await screen.findByText('That course code was not accepted.')).toBeTruthy();

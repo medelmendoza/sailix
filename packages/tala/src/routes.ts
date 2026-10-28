@@ -1,6 +1,7 @@
 /** The screens inside the Tala package, with the names the Sailix navigator used so the screens did not change. */
 export type TalaRoutes = {
   TalaTabs: undefined;
+  TalaAccount: undefined;
   TalaStats: undefined;
   TalaJoinCourse: undefined;
   TalaCourseStats: { assignId: string; name: string };
