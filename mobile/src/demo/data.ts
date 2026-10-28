@@ -21,7 +21,7 @@ export const demoMe = {
   },
   abilities: ['module.tala.use'],
   modules: [
-    { code: 'tala', label: 'Tala', enabled: true, linked: true, status: 'linked' },
+    { code: 'tala', label: 'Lodestar', enabled: true, linked: true, status: 'linked' },
     { code: 'astra', label: 'Astra', enabled: true, linked: true, status: 'available' },
     { code: 'callit', label: 'Call-it', enabled: true, linked: true, status: 'available' },
   ],

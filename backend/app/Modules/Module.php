@@ -18,7 +18,7 @@ enum Module: string
     public function label(): string
     {
         return match ($this) {
-            self::Tala => 'Tala',
+            self::Tala => 'Lodestar',
             self::Astra => 'Astra',
             self::CallIt => 'Call-it',
         };

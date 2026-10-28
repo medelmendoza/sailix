@@ -58,7 +58,7 @@ describe('my stats screen', () => {
   async function openStats(courses: unknown) {
     await home(courses);
     await goToTab('Services');
-    await fireEvent.press(await screen.findByRole('button', { name: 'Tala, Linked' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Lodestar, Linked' }));
     await fireEvent.press(await screen.findByRole('button', { name: 'My stats' }));
   }
 
@@ -81,7 +81,7 @@ describe('my stats screen', () => {
     await home({ data: { data: [] } }, {});
     // nothing to show on Home; open the stats from the module screen instead
     await goToTab('Services');
-    await fireEvent.press(await screen.findByRole('button', { name: 'Tala, Linked' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Lodestar, Linked' }));
     await fireEvent.press(await screen.findByRole('button', { name: 'My stats' }));
     expect(await screen.findByText('No courses yet')).toBeTruthy();
   });
@@ -156,7 +156,7 @@ describe('course detail: progress and achievements', () => {
       { 'GET /modules/tala/courses/A2': { data: { data: detail } } },
     );
     await goToTab('Services');
-    await fireEvent.press(await screen.findByRole('button', { name: 'Tala, Linked' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Lodestar, Linked' }));
     await fireEvent.press(
       await screen.findByRole('button', { name: /^First aid, 3 of 4 items completed/ }),
     );

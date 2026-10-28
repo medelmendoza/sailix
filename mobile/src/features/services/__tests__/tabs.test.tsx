@@ -24,7 +24,7 @@ describe('services tab', () => {
     signedInAs(makeMe({ modules: [TALA('not_linked')] }));
     await renderApp();
     await goTo(/^Services, tab/);
-    expect(await screen.findByRole('button', { name: 'Tala, Not linked' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Lodestar, Not linked' })).toBeTruthy();
   });
 
   it('lists the planned services as coming soon and does not let them be opened', async () => {
@@ -62,7 +62,7 @@ describe('services tab', () => {
     };
     await act(async () => control.props.onRefresh());
 
-    expect(await screen.findByRole('button', { name: 'Tala, Linked' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Lodestar, Linked' })).toBeTruthy();
     expect(api.callsTo('GET /me')).toHaveLength(1);
   });
 });

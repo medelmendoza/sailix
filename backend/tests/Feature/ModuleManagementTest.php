@@ -179,7 +179,7 @@ class ModuleManagementTest extends TestCase
 
         $this->provisionModule($tenant, 'TEAM-1');
         $this->getJson('/api/v1/me', $this->asUser('crew1'))
-            ->assertJsonPath('data.modules.0', ['code' => 'tala', 'label' => 'Tala', 'enabled' => true, 'linked' => false, 'status' => 'not_linked']);
+            ->assertJsonPath('data.modules.0', ['code' => 'tala', 'label' => 'Lodestar', 'enabled' => true, 'linked' => false, 'status' => 'not_linked']);
 
         $link = $this->link($tenant->id, $m->id, $user->id, 'TEAM-1');
         $res = $this->getJson('/api/v1/me', $this->asUser('crew1'))->assertJsonPath('data.modules.0.status', 'linked')->assertJsonPath('data.modules.0.linked', true);

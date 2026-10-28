@@ -41,7 +41,7 @@ export function makeGrant(overrides: Partial<TokenGrant> = {}): TokenGrant {
 
 export const TALA = (status: string, enabled = true) => ({
   code: 'tala' as const,
-  label: 'Tala',
+  label: 'Lodestar',
   enabled,
   linked: status === 'linked',
   status: status as 'disabled' | 'not_linked' | 'linked' | 'needs_relink' | 'revoked',

@@ -320,7 +320,7 @@ export function RootNavigator() {
         <AppStack.Screen
           name="Module"
           component={ModuleScreen}
-          options={({ route }) => ({ title: route.params.code === 'tala' ? 'Tala' : 'Service' })}
+          options={({ route }) => ({ title: route.params.code === 'tala' ? 'Lodestar' : 'Service' })}
         />
         <AppStack.Screen
           name="TalaStats"

@@ -18,10 +18,10 @@ export async function goToTab(
   await fireEvent.press(await screen.findByLabelText(label));
 }
 
-/** Opens a service from the Services tab by the start of its card's name, for example `openService('Tala,')`. */
+/** Opens a service from the Services tab by the start of its card's name, for example `openService('Lodestar,')`. */
 export async function openService(nameStart: string): Promise<void> {
   await goToTab('Services');
   await fireEvent.press(await screen.findByRole('button', { name: new RegExp(`^${nameStart}`) }));
 }
 
-export const openTala = () => openService('Tala,');
+export const openTala = () => openService('Lodestar,');
