@@ -25,7 +25,8 @@ export type GlyphName =
   | 'camera'
   | 'lock'
   | 'list'
-  | 'grid';
+  | 'grid'
+  | 'book';
 
 /**
  * A tiny icon set drawn from plain shapes: no icon font and no emoji (both rendered unreliably in this app's runtimes),
@@ -321,6 +322,30 @@ export function GlyphIcon({
             ]}
           />
           <View style={[fill, abs(10.5 * u, 10.5 * u, 3 * u, 3 * u), { borderRadius: 1.5 * u }]} />
+        </>
+      )}
+      {name === 'book' && (
+        <>
+          <View
+            style={[
+              fill,
+              abs(2 * u, 5 * u, 9.5 * u, 15 * u),
+              { borderTopLeftRadius: 4 * u, borderBottomLeftRadius: 2 * u },
+            ]}
+          />
+          <View
+            style={[
+              fill,
+              abs(12.5 * u, 5 * u, 9.5 * u, 15 * u),
+              { borderTopRightRadius: 4 * u, borderBottomRightRadius: 2 * u },
+            ]}
+          />
+          {[9.5, 13].map((y) => (
+            <View key={y} style={[abs(4.5 * u, y * u, 5 * u, 1.6 * u), { backgroundColor: colors.surface }]} />
+          ))}
+          {[9.5, 13].map((y) => (
+            <View key={`r${y}`} style={[abs(14.5 * u, y * u, 5 * u, 1.6 * u), { backgroundColor: colors.surface }]} />
+          ))}
         </>
       )}
       {name === 'chart' && (

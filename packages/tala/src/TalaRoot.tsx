@@ -303,7 +303,7 @@ function TabsScreen({ extraTabs }: { extraTabs: ExtraTab[] }) {
   const bottom = Math.max(insets.bottom, 8) + 8; // the bar floats this far above the bottom edge
   const own: { name: string; title: string; icon: GlyphName; component: ComponentType }[] = [
     { name: 'TalaDashboard', title: 'Dashboard', icon: 'grid', component: TalaDashboard },
-    { name: 'TalaCourses', title: 'My Courses', icon: 'video', component: Courses },
+    { name: 'TalaCourses', title: 'My Courses', icon: 'book', component: Courses },
     { name: 'TalaStats', title: 'Stats', icon: 'chart', component: TalaStatsScreen },
   ];
   return (
