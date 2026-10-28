@@ -182,7 +182,7 @@ describe('the dashboard', () => {
     fakeTala();
     await renderTala();
     await signIn();
-    expect(await screen.findByText('Overall')).toBeTruthy();
+    expect(await screen.findByText('Courses by state')).toBeTruthy();
     // the donut: courses by state, with the overall percentage in its middle
     expect(screen.getByLabelText('Courses by state: 0 completed, 1 in progress, 0 not started')).toBeTruthy();
     expect(screen.getAllByText('40%').length).toBeGreaterThan(0);

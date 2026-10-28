@@ -13,7 +13,7 @@ import { BarRows, Donut, Legend, LineChart, type Segment } from '../ui/charts';
 import { onTabScroll } from '../ui/tabBarCollapse';
 import { colors, spacing } from '../ui/theme';
 import { savedCopyText } from './TalaCourseList';
-import { byUrgency, overall, parseDay } from './stats';
+import { byUrgency, dueInfo, overall, parseDay } from './stats';
 
 const WEEKS = 12;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -50,6 +50,40 @@ export function dueByWeek(courses: readonly TalaCourse[], today: Date = new Date
   return { counts, ids, starts, labels, overdue, later, dated };
 }
 
+/** The banner at the top: how far the learner is overall, in a few numbers, on the organization's gradient. */
+function Hero({ percent, done, total, courses, next }: { percent: number; done: number; total: number; courses: number; next: string | null }) {
+  const brand = useBrand();
+  return (
+    <View
+      key={brand.gradients.header} // the gradient is rebuilt, not changed, when the look changes
+      style={[styles.hero, { backgroundColor: brand.primary, experimental_backgroundImage: brand.gradients.header }]}
+    >
+      <AppText variant="caption" style={styles.heroLabel}>
+        Your progress
+      </AppText>
+      <View style={styles.heroRow}>
+        <AppText style={styles.heroPercent}>{percent}%</AppText>
+        <AppText style={styles.heroSub}>
+          {done} of {total} items completed
+        </AppText>
+      </View>
+      <View style={styles.heroTrack}>
+        <View style={[styles.heroFill, { width: `${Math.min(100, Math.max(0, percent))}%` }]} />
+      </View>
+      <View style={styles.heroChips}>
+        <View style={styles.heroChip}>
+          <AppText style={styles.heroChipText}>{courses} course{courses === 1 ? '' : 's'}</AppText>
+        </View>
+        {next ? (
+          <View style={styles.heroChip}>
+            <AppText style={styles.heroChipText}>Next due: {next}</AppText>
+          </View>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 /**
  * The home tab of the Tala app: charts of how the learner is doing, from Tala's own counters (so it also works offline from
  * the saved copy). Read-only: it opens nothing; courses are opened from My Courses.
@@ -73,6 +107,8 @@ export function TalaDashboard() {
   const list = byUrgency(courses.data.data);
   const o = overall(list);
 
+  const nextCourse = list.find((c) => c.state !== 'completed' && dueInfo(c) !== null && c.date_to !== null);
+  const nextDue = nextCourse ? (dueInfo(nextCourse)?.text ?? null) : null;
   const drill = (title: string, ids: string[]) => () => navigation.navigate('TalaDrill', { title, ids });
   const idsOf = (state: TalaCourse['state']) => list.filter((c) => c.state === state).map((c) => c.id);
   const states: Segment[] = [
@@ -115,30 +151,31 @@ export function TalaDashboard() {
         <EmptyState title="No courses yet" description="Nothing has been assigned to you in Lodestar yet." />
       ) : (
         <>
-          <Dashlet title="Overall">
+          <Hero percent={o.percent} done={o.itemsDone} total={o.itemsTotal} courses={o.courses} next={nextDue} />
+
+          <Dashlet title="Courses by state" subtitle="Tap a part to see the courses" icon="grid">
             <View style={styles.center}>
               <Donut
                 segments={states}
+                size={176}
                 summary={`Courses by state: ${o.completed} completed, ${o.inProgress} in progress, ${o.notStarted} not started`}
               >
-                <AppText style={[styles.big, { color: brand.primary }]}>{o.percent}%</AppText>
+                <AppText style={[styles.big, { color: brand.primary }]}>{o.courses}</AppText>
                 <AppText variant="caption" muted>
-                  done
+                  course{o.courses === 1 ? '' : 's'}
                 </AppText>
               </Donut>
             </View>
             <Legend items={states} />
-            <AppText variant="caption" muted>
-              {o.itemsDone} of {o.itemsTotal} items completed
-            </AppText>
           </Dashlet>
 
-          <Dashlet title="Progress by course">
+          <Dashlet title="Progress by course" subtitle="Tap a course to open it" icon="chart">
             <BarRows
               rows={list.map((c) => ({
                 label: c.name,
                 value: c.percent,
                 text: `${c.percent}%`,
+                color: c.percent >= 100 ? colors.success : undefined,
                 onPress: () => navigation.navigate('TalaCourse', { assignId: c.id, name: c.name }),
               }))}
               max={100}
@@ -146,7 +183,7 @@ export function TalaDashboard() {
             />
           </Dashlet>
 
-          <Dashlet title="Items still to do">
+          <Dashlet title="Items still to do" subtitle="Where the remaining work is" icon="list">
             {pie.length === 0 ? (
               <AppText muted>Everything is done.</AppText>
             ) : (
@@ -154,10 +191,16 @@ export function TalaDashboard() {
                 <View style={styles.center}>
                   <Donut
                     segments={pie}
-                    thickness={75}
-                    size={150}
+                    thickness={22}
+                    rounded={false}
+                    size={176}
                     summary={`Items still to do: ${pie.map((s) => s.label).join(', ')}`}
-                  />
+                  >
+                    <AppText style={[styles.big, { color: brand.primary }]}>{left.reduce((n, c) => n + c.left, 0)}</AppText>
+                    <AppText variant="caption" muted>
+                      to do
+                    </AppText>
+                  </Donut>
                 </View>
                 <Legend items={pie} />
               </>
@@ -165,7 +208,7 @@ export function TalaDashboard() {
           </Dashlet>
 
           {weeks.dated > 0 ? (
-            <Dashlet title="Due in the coming weeks">
+            <Dashlet title="Due in the coming weeks" subtitle="Tap a week to see its courses" icon="clock">
               <LineChart
                 values={weeks.counts}
                 labels={weeks.labels}
@@ -206,4 +249,14 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.lg },
   center: { alignItems: 'center' },
   big: { fontFamily: 'Quicksand_700Bold', fontSize: 32, lineHeight: 38 },
+  hero: { borderRadius: 24, padding: spacing.xl, gap: spacing.md },
+  heroLabel: { color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: 1 },
+  heroRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.md },
+  heroPercent: { color: '#FFFFFF', fontFamily: 'Quicksand_700Bold', fontSize: 44, lineHeight: 50 },
+  heroSub: { color: '#FFFFFF', flex: 1 },
+  heroTrack: { height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
+  heroFill: { height: 8, borderRadius: 4, backgroundColor: '#FFFFFF' },
+  heroChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  heroChip: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 999, paddingVertical: 4, paddingHorizontal: 12 },
+  heroChipText: { color: '#FFFFFF', fontSize: 13, lineHeight: 18 },
 });

@@ -20,13 +20,16 @@ const hidden = { accessibilityElementsHidden: true, importantForAccessibility: '
 export function Donut({
   segments,
   size = 160,
-  thickness = 22,
+  thickness = 18,
+  rounded = true,
   summary,
   children,
 }: {
   segments: Segment[];
   size?: number;
   thickness?: number;
+  /** Round ends on the segments (good for a few segments; many small ones look better square). */
+  rounded?: boolean;
   summary: string;
   /** Shown in the middle of a donut. */
   children?: ReactNode;
@@ -34,7 +37,10 @@ export function Donut({
   const total = segments.reduce((n, s) => n + Math.max(0, s.value), 0);
   const radius = (size - thickness) / 2;
   const circumference = 2 * Math.PI * radius;
-  const gap = total > 0 && segments.filter((s) => s.value > 0).length > 1 ? 2 : 0;
+  const several = total > 0 && segments.filter((s) => s.value > 0).length > 1;
+  const round = rounded && several && thickness < size / 4; // a pie (thick) keeps square edges
+  const gap = several ? 4 : 0; // visible space between segments
+  const pad = round ? thickness : 0; // a round cap sticks out half a stroke at each end: take it out of the dash
   let offset = 0;
   const arcs =
     total > 0
@@ -42,7 +48,7 @@ export function Donut({
           .filter((s) => s.value > 0)
           .map((s) => {
             const len = (s.value / total) * circumference;
-            const arc = { key: s.label, color: s.color, dash: Math.max(0, len - gap), at: offset, onPress: s.onPress };
+            const arc = { key: s.label, color: s.color, dash: Math.max(0.01, len - gap - pad), at: offset, onPress: s.onPress };
             offset += len;
             return arc;
           })
@@ -63,8 +69,9 @@ export function Donut({
                   r={radius}
                   stroke={a.color}
                   strokeWidth={thickness}
-                  strokeDasharray={`${a.dash} ${circumference - a.dash}`}
-                  strokeDashoffset={-a.at}
+                  strokeDasharray={`${a.dash} ${circumference}`}
+                  strokeDashoffset={-(a.at + (gap + pad) / 2)}
+                  strokeLinecap={round ? 'round' : 'butt'}
                   fill="none"
                   onPress={a.onPress}
                 />
@@ -117,7 +124,7 @@ export function BarRows({
   max,
   color,
 }: {
-  rows: { label: string; value: number; text: string; onPress?: () => void }[];
+  rows: { label: string; value: number; text: string; color?: string; onPress?: () => void }[];
   max: number;
   color: string;
 }) {
@@ -138,7 +145,7 @@ export function BarRows({
               <View
                 style={[
                   styles.fill,
-                  { backgroundColor: color, width: `${Math.max(0, Math.min(1, max > 0 ? r.value / max : 0)) * 100}%` },
+                  { backgroundColor: r.color ?? color, width: `${Math.max(0, Math.min(1, max > 0 ? r.value / max : 0)) * 100}%` },
                 ]}
               />
             </View>
@@ -286,8 +293,8 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   dot: { width: 10, height: 10, borderRadius: 5 },
   barHead: { flexDirection: 'row', gap: spacing.sm, alignItems: 'baseline' },
-  track: { height: 10, borderRadius: 5, backgroundColor: colors.surfaceSunken, overflow: 'hidden' },
-  fill: { height: 10, borderRadius: 5 },
+  track: { height: 12, borderRadius: 6, backgroundColor: colors.surfaceSunken, overflow: 'hidden' },
+  fill: { height: 12, borderRadius: 6 },
   labels: { flexDirection: 'row' },
   columns: { position: 'absolute', left: 0, right: 0, top: 0, flexDirection: 'row' },
   axis: { fontSize: 11 },

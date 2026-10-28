@@ -50,7 +50,7 @@ describe('the standalone Tala app', () => {
     fakeTala();
     await render(<App />);
     await signIn();
-    expect(await screen.findByText('Overall')).toBeTruthy(); // the app opens on the dashboard
+    expect(await screen.findByText('Courses by state')).toBeTruthy(); // the app opens on the dashboard
     await fireEvent.press(screen.getByLabelText(/^My Courses/));
     expect(await screen.findByRole('button', { name: /Safety at sea/ })).toBeTruthy();
     for (const tab of ['Dashboard', 'My Courses', 'Stats']) {
@@ -62,7 +62,7 @@ describe('the standalone Tala app', () => {
     fakeTala();
     await render(<App />);
     await signIn();
-    await screen.findByText('Overall');
+    await screen.findByText('Courses by state');
     await fireEvent.press(await screen.findByRole('button', { name: 'Account' }));
     expect(screen.queryByRole('button', { name: /^Back to/ })).toBeNull();
     await act(async () => fireEvent.press(await screen.findByRole('button', { name: 'Sign out' })));
