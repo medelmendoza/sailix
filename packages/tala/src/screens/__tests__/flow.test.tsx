@@ -5,7 +5,13 @@ import { Alert } from 'react-native';
 import { talaModule } from '../../index';
 import { assignment, snapshot } from '../../direct/testing/fixtures';
 import { HostContext } from '../../host';
-import { CourseStatsSkeleton, DrillSkeleton, StatsSkeleton } from '../TalaSkeletons';
+import {
+  CourseStatsSkeleton,
+  DrillSkeleton,
+  FlashcardsSkeleton,
+  QuizSkeleton,
+  StatsSkeleton,
+} from '../TalaSkeletons';
 import { fakeTala, hostOf, paths, renderTala, stopFakeTala } from '../../testing/render';
 
 const store = () => (SecureStore as unknown as { __store: Map<string, string> }).__store;
@@ -168,6 +174,7 @@ describe('studying', () => {
     const tala = fakeTala();
     await openCourse();
     await press(/^Study flashcards/);
+    await waitFor(() => expect(screen.queryByRole('progressbar', { name: 'Loading' })).toBeNull()); // the placeholder has a Show answer button too
     for (const rating of ['Easy', 'Hard']) {
       await press('Show answer');
       await press(rating);
@@ -255,6 +262,8 @@ describe('loading placeholders', () => {
     ['My Stats', StatsSkeleton, ['Overall', 'Courses']],
     ['the courses behind a number', DrillSkeleton, []],
     ['a course record', CourseStatsSkeleton, ['Items']],
+    ['a quiz', QuizSkeleton, ['Submit answers', 'Answer every question to submit.']],
+    ['a flashcard set', FlashcardsSkeleton, ['Question', 'Show answer']],
   ])('exist for %s', async (_name, Skeleton, headings) => {
     await render(
       <HostContext.Provider value={hostOf()}>

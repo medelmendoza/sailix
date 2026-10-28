@@ -12,9 +12,9 @@ import {
   FormError,
   Notice,
   ProgressBar,
-  SkeletonList,
 } from '../ui';
 import { colors, fonts, minTouchTarget, radius, shadows, spacing } from '../ui/theme';
+import { QuizSkeleton } from './TalaSkeletons';
 import { describeError, toApiError } from '../errors';
 import type { TalaQuiz, TalaQuizResult } from '../types';
 import { scopedKey } from '../runtime';
@@ -59,7 +59,7 @@ export function TalaQuizScreen({ route, navigation }: Props) {
     return <ErrorState message={describeError(quizQuery.error)} onRetry={() => void reload()} />;
   }
   const quiz = quizQuery.data;
-  if (!quiz) return <SkeletonList />;
+  if (!quiz) return <QuizSkeleton />;
 
   const questions = quiz.sections.flatMap((s) => s.questions);
   const complete = questions.every((q) => answered(q, values[q.ref]));

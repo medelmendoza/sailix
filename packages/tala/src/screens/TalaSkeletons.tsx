@@ -1,7 +1,7 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { AppText, Card, ShimmerBlock } from '../ui';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { AppText, Button, Card, ShimmerBlock } from '../ui';
 import { Dashlet } from '../ui/Dashlet';
-import { colors, radius, spacing } from '../ui/theme';
+import { colors, radius, shadows, spacing } from '../ui/theme';
 import { HeroSkeleton } from './TalaHero';
 
 /** Loading placeholders drawn in the shape of the real thing, so nothing jumps when the content arrives. */
@@ -280,8 +280,108 @@ export function CourseStatsSkeleton() {
   );
 }
 
+/** A quiz while it loads: its title, the progress card, three questions with their options, and the (disabled) Submit button. */
+export function QuizSkeleton() {
+  return (
+    <ScrollView
+      contentContainerStyle={styles.dash}
+      accessible
+      accessibilityLabel="Loading"
+      accessibilityRole="progressbar"
+      importantForAccessibility="yes"
+    >
+      <ShimmerBlock style={[styles.line, { width: '60%', height: 36 }]} />
+      <ShimmerBlock style={[styles.line, { width: '80%', height: 18 }]} />
+      <Card variant="flat" style={styles.quizProgress}>
+        <ShimmerBlock style={[styles.line, { width: 120, height: 14 }]} />
+        <ShimmerBlock style={styles.slim} />
+      </Card>
+      {[0, 1, 2].map((q) => (
+        <Card key={q} variant="flat" style={styles.question}>
+          <ShimmerBlock style={[styles.line, { width: '85%', height: 20 }]} />
+          <ShimmerBlock style={[styles.line, { width: '55%', height: 20 }]} />
+          {[0, 1, 2].map((o) => (
+            <View key={o} style={styles.option}>
+              <ShimmerBlock style={styles.letter} />
+              <ShimmerBlock style={[styles.line, { flex: 1, height: 16 }]} />
+              <ShimmerBlock style={styles.mark} />
+            </View>
+          ))}
+        </Card>
+      ))}
+      <Button title="Submit answers" disabled onPress={() => undefined} />
+      <AppText variant="caption" muted>
+        Answer every question to submit.
+      </AppText>
+    </ScrollView>
+  );
+}
+
+/** A flashcard set while it loads: the progress card, the card (its "Question" label is fixed text) and Show answer. */
+export function FlashcardsSkeleton() {
+  const { height } = useWindowDimensions();
+  const cardHeight = Math.max(320, Math.round(height * 0.5));
+  return (
+    <ScrollView
+      contentContainerStyle={styles.dash}
+      accessible
+      accessibilityLabel="Loading"
+      accessibilityRole="progressbar"
+      importantForAccessibility="yes"
+    >
+      <Card variant="flat" style={styles.quizProgress}>
+        <ShimmerBlock style={[styles.line, { width: '70%', height: 14 }]} />
+        <ShimmerBlock style={styles.slim} />
+      </Card>
+      <View style={[styles.face, { height: cardHeight, marginVertical: spacing.sm }]}>
+        <View style={[styles.faceChip, { backgroundColor: colors.infoBg }]}>
+          <AppText variant="caption" style={{ color: colors.primary }}>
+            Question
+          </AppText>
+        </View>
+        <View style={styles.faceBody}>
+          <ShimmerBlock style={[styles.line, { width: '80%', height: 26 }]} />
+          <ShimmerBlock style={[styles.line, { width: '60%', height: 26 }]} />
+        </View>
+      </View>
+      <Button title="Show answer" disabled onPress={() => undefined} />
+    </ScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
   stack: { gap: spacing.lg },
+  quizProgress: { gap: spacing.sm, padding: spacing.lg },
+  question: { gap: spacing.md, padding: spacing.lg },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    minHeight: 60,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.borderSoft,
+  },
+  letter: { width: 32, height: 32, borderRadius: 16 },
+  mark: { width: 24, height: 24, borderRadius: 12 },
+  face: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.borderSoft,
+    padding: spacing.xl,
+    gap: spacing.md,
+    boxShadow: shadows.raised,
+  },
+  faceChip: {
+    alignSelf: 'flex-start',
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 2,
+  },
+  faceBody: { flexGrow: 1, justifyContent: 'center', gap: spacing.md },
   dash: { padding: spacing.lg, gap: spacing.lg },
   drill: { padding: spacing.lg, gap: spacing.md },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },

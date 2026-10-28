@@ -14,8 +14,9 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import type { TalaRoutes } from '../routes';
-import { AppText, Button, Card, ErrorState, Notice, ProgressBar, SkeletonList } from '../ui';
+import { AppText, Button, Card, ErrorState, Notice, ProgressBar } from '../ui';
 import { colors, fonts, radius, shadows, spacing } from '../ui/theme';
+import { FlashcardsSkeleton } from './TalaSkeletons';
 import { describeError, toApiError } from '../errors';
 import type { TalaDeck } from '../types';
 import { scopedKey } from '../runtime';
@@ -122,7 +123,7 @@ export function TalaFlashcardsScreen({ route, navigation }: Props) {
     );
   }
   const data = deckQuery.data;
-  if (!data) return <SkeletonList />;
+  if (!data) return <FlashcardsSkeleton />;
 
   return (
     <Study
