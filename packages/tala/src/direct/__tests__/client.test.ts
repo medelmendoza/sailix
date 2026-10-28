@@ -68,6 +68,14 @@ describe('tala client', () => {
     expect(seen[0]?.headers).toMatchObject({ Authorization: `Bearer ${token}` });
   });
 
+  it('lists the teams with their names, falling back to the id', async () => {
+    const { transport } = fakeTransport(ok([{ teamId: 't1', teamName: 'Deck crew' }, { teamId: 't2' }, { nope: 1 }]));
+    expect(await make(transport).teams('u')).toEqual([
+      { id: 't1', name: 'Deck crew' },
+      { id: 't2', name: 't2' },
+    ]);
+  });
+
   it('builds the course, progress, deck, quiz and material paths', async () => {
     const { transport, seen } = fakeTransport(ok([]), ok({}), ok({ a: 1 }), ok({ a: 1 }), ok({ a: 1 }));
     const c = make(transport);

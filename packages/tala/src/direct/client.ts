@@ -166,12 +166,19 @@ export function createTalaClient(cfg: TalaClientConfig, getToken: () => Promise<
       return { accessToken, userId, refreshToken: typeof refreshToken === 'string' ? refreshToken : null };
     },
 
-    async teamIds(userId: string): Promise<string[]> {
+    /** The teams the account belongs to, with the name Tala gives each (the id when it has none). */
+    async teams(userId: string): Promise<{ id: string; name: string }[]> {
       const rows = await getList(`/api/v1/auth/users/${seg(userId)}/teams`);
       return rows.flatMap((r) => {
-        const id = (r as Json | null)?.teamId;
-        return typeof id === 'string' && id ? [id] : [];
+        const row = r as Json | null;
+        const id = row?.teamId;
+        if (typeof id !== 'string' || !id) return [];
+        return [{ id, name: typeof row?.teamName === 'string' && row.teamName ? row.teamName : id }];
       });
+    },
+
+    async teamIds(userId: string): Promise<string[]> {
+      return (await this.teams(userId)).map((t) => t.id);
     },
 
     courses: (userId: string, teamId: string) => getList(`${user(userId, teamId)}/courses`),

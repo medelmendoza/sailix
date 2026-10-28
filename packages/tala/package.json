@@ -4,10 +4,24 @@
   "private": true,
   "main": "src/index.ts",
   "peerDependencies": {
+    "@hookform/resolvers": "*",
+    "@react-native-async-storage/async-storage": "*",
+    "@react-native-community/netinfo": "*",
+    "@react-navigation/bottom-tabs": "*",
+    "@react-navigation/native": "*",
+    "@react-navigation/native-stack": "*",
+    "@tanstack/react-query": "*",
+    "axios": "*",
+    "expo": "*",
     "expo-file-system": "*",
     "expo-secure-store": "*",
     "expo-video": "*",
     "react": "*",
-    "react-native": "*"
+    "react-hook-form": "*",
+    "react-native": "*",
+    "react-native-safe-area-context": "*",
+    "react-native-screens": "*",
+    "react-native-webview": "*",
+    "zod": "*"
   }
 }
