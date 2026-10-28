@@ -8,7 +8,7 @@ const tsPlugin = fromMobile('@typescript-eslint/eslint-plugin');
 
 module.exports = [
   ...expoConfig,
-  { ignores: ['**/node_modules/**', 'eslint.config.js'] },
+  { ignores: ['**/node_modules/**', 'eslint.config.js', '**/eslint.config.js'] },
   {
     plugins: { '@typescript-eslint': tsPlugin },
     rules: {

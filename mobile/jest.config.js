@@ -1,8 +1,8 @@
 module.exports = {
   preset: 'jest-expo',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-  roots: ['<rootDir>', '<rootDir>/../packages'],
-  // packages/ sits outside this folder: resolve their imports (react-native, ...) from here, and @sailix/tala to its source
+  roots: ['<rootDir>', '<rootDir>/../packages', '<rootDir>/../apps'],
+  // packages/ and apps/ sit outside this folder: resolve their imports (react-native, ...) from here, and @sailix/tala to its source
   modulePaths: ['<rootDir>/node_modules'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',

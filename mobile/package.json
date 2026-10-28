@@ -9,7 +9,7 @@
     "ios": "expo run:ios",
     "android": "expo run:android",
     "lint": "eslint . --max-warnings=0 && npm run lint:packages",
-    "lint:packages": "cd ../packages && ../mobile/node_modules/.bin/eslint . --max-warnings=0",
+    "lint:packages": "cd ../packages && ../mobile/node_modules/.bin/eslint . --max-warnings=0 && cd ../apps && ../mobile/node_modules/.bin/eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "format": "prettier --write .",

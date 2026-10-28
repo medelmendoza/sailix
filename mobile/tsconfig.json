@@ -21,6 +21,8 @@
     "**/*.ts",
     "**/*.tsx",
     "../packages/**/*.ts",
-    "../packages/**/*.tsx"
+    "../packages/**/*.tsx",
+    "../apps/**/*.ts",
+    "../apps/**/*.tsx"
   ]
 }
